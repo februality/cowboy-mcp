@@ -1,0 +1,60 @@
+name: Release
+
+# Cut a release by bumping the version (cowboy-mcp.php header + COWBOY_MCP_VERSION
+# + readme.txt Stable tag), then:
+#   git tag v1.3.1 && git push origin v1.3.1
+#
+# This workflow verifies the tag matches the in-code version, builds the plugin
+# zip wrapped in a top-level cowboy-mcp/ directory (required for WordPress to
+# install updates into the correct folder), and publishes a GitHub release with
+# the zip attached. The website's /updates/cowboy-mcp.json manifest derives from
+# this release automatically — no manual manifest edit needed.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version from tag
+        id: ver
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify version matches the tag
+        run: |
+          VERSION='${{ steps.ver.outputs.version }}'
+          HEADER_VER=$(grep -iE '^\s*\*?\s*Version:' cowboy-mcp.php | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          CONST_VER=$(grep -oE "COWBOY_MCP_VERSION'[, ]+'[0-9]+\.[0-9]+\.[0-9]+'" cowboy-mcp.php | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          README_VER=$(grep -iE 'Stable tag:' readme.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "tag=${VERSION} header=${HEADER_VER} constant=${CONST_VER} readme=${README_VER}"
+          if [ "$HEADER_VER" != "$VERSION" ] || [ "$CONST_VER" != "$VERSION" ] || [ "$README_VER" != "$VERSION" ]; then
+            echo "::error::Version mismatch. Bump the header, COWBOY_MCP_VERSION, and readme.txt Stable tag to ${VERSION} before tagging."
+            exit 1
+          fi
+
+      - name: Build plugin zip (wrapped in cowboy-mcp/)
+        run: |
+          git archive --format=zip --prefix=cowboy-mcp/ -o cowboy-mcp.zip HEAD \
+            cowboy-mcp.php includes admin readme.txt
+          echo "--- zip contents (top level) ---"
+          unzip -l cowboy-mcp.zip | head -15
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" cowboy-mcp.zip \
+            --repo "${{ github.repository }}" \
+            --title "Cowboy MCP ${{ steps.ver.outputs.version }}" \
+            --generate-notes
