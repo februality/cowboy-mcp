@@ -1,0 +1,21 @@
+# Build artifact — regenerated via the zip step in CLAUDE.md
+/cowboy-mcp.zip
+
+# macOS
+.DS_Store
+
+# Editor cruft
+*.swp
+*~
+
+# Reviewer correspondence — kept local, not part of the plugin
+/response.md
+
+# GitHub-style README — kept local, not part of the plugin distribution
+/README.md
+
+# Project / AI-assistant instructions — kept local, not part of the repo
+/CLAUDE.md
+
+# Design docs / specs / plans — kept local, not part of the repo
+/docs/
