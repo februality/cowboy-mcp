@@ -8,11 +8,11 @@
 *.swp
 *~
 
+# Playwright MCP session output
+/.playwright-mcp/
+
 # Reviewer correspondence — kept local, not part of the plugin
 /response.md
-
-# GitHub-style README — kept local, not part of the plugin distribution
-/README.md
 
 # Project / AI-assistant instructions — kept local, not part of the repo
 /CLAUDE.md
