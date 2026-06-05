@@ -17,7 +17,7 @@ Cowboy MCP turns your site into a full-featured [Model Context Protocol](https:/
 **Key features:**
 
 * **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint`
-* **157 tools** — Full CRUD for posts, taxonomies, options, users, comments, media, menus, database queries, WP-CLI, and more
+* **131 tools** — Full CRUD for posts, taxonomies, options, users, comments, media, menus, database queries, WP-CLI, and more
 * **Plugin integrations** — Conditional tools for WooCommerce, ACF, UpdraftPlus, Yoast/Rank Math, Elementor, Wordfence, WPForms/Gravity Forms/CF7, and cache plugins (WP Rocket, LiteSpeed, W3TC)
 * **17 read-only resources** — Site info, recent posts, plugin/theme lists, WooCommerce summaries, and more
 * **8 workflow prompts** — Site audit, content migration, SEO optimization, security hardening, and more
