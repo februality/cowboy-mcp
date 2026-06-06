@@ -1,24 +1,32 @@
-# Cowboy MCP 🤠
+# Cowboy MCP 🤠 — WordPress MCP Server for AI Coding Agents
 
-> Expose your WordPress site as a [Model Context Protocol](https://modelcontextprotocol.io/) server so AI coding agents can manage it — in plain English.
+Cowboy MCP is a WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so AI coding agents like **Claude Code**, **Codex**, and **Cursor** can manage it — in plain English.
 
 ![Version](https://img.shields.io/badge/version-1.3.0-34ff7a)
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
 ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)
 
-Cowboy MCP turns your WordPress site into a full-featured MCP server. AI coding agents — **Claude Code**, **Codex**, **Opencode**, and any MCP client that speaks Streamable HTTP — connect over a single authenticated endpoint and manage posts, pages, plugins, themes, users, media, WooCommerce, and much more.
-
 **Website:** [cowboymcp.com](https://cowboymcp.com) · **Download:** [latest release](https://github.com/februality/cowboy-mcp/releases/latest)
 
+Connect any MCP client that speaks Streamable HTTP over a single authenticated endpoint and manage posts, pages, plugins, themes, users, media, WooCommerce, and much more.
+
 ---
+
+## Why Cowboy MCP?
+
+- **Built for coding agents, not chat UIs** — designed for terminal-based workflows with Claude Code, Codex, Cursor, and any Streamable HTTP MCP client.
+- **No Node.js proxy** — the MCP endpoint is served natively from WordPress. Unlike adapter-based approaches that run a separate Node bridge to expose remote HTTP, there's nothing extra to install or keep running.
+- **131 tools across core + popular plugins** — full content CRUD plus deep integrations for WooCommerce, ACF, Elementor, Wordfence, UpdraftPlus, and cache plugins.
+- **Secure by default** — bcrypt-hashed API keys (shown once), per-key rate limiting, safe mode for destructive operations, and an always-on audit log.
+- **Zero dependencies** — native WordPress APIs, no Composer, no npm, no build step. Works even on hosts without WP-CLI or `shell_exec()`.
 
 ## Highlights
 
 - **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint` (MCP `2025-06-18` spec)
 - **131 tools** — full CRUD for posts, pages, CPTs, taxonomies, comments, options, users, media, plus database queries, WP-CLI, diagnostics, and conditional tools for popular plugins
 - **17 read-only resources**, **4 resource templates**, and **8 workflow prompts** with argument auto-completion
-- **Secure by default** — bcrypt-hashed API keys (shown once), per-key rate limiting, safe mode for destructive operations, and an always-on audit log
+- **Secure by default** — bcrypt-hashed API keys, per-key rate limiting, safe mode for destructive operations, and an always-on audit log
 - **Self-hosted auto-updates** — new versions appear in your WordPress updates screen, served straight from GitHub Releases
 - **Zero dependencies** — no Composer, no npm, no build step, no CDN. Native WordPress APIs, so it works even on hosts without WP-CLI or `shell_exec()`.
 
@@ -99,6 +107,32 @@ wordpress://users/{id}
 ### Prompts
 
 8 guided workflow prompts: `wordpress-site-audit`, `content-migration`, `seo-optimization`, `woocommerce-store-setup`, `troubleshoot-issue`, `bulk-content-update`, `security-hardening`, `performance-optimization`.
+
+## FAQ
+
+### What is a WordPress MCP server?
+
+A WordPress MCP server exposes your site's management capabilities through the Model Context Protocol — the open standard AI agents use to call tools. Cowboy MCP implements one as a plugin: it serves a single Streamable HTTP endpoint that lets agents like Claude Code read, create, update, and delete WordPress content securely.
+
+### How do I connect Claude Code to WordPress?
+
+Install Cowboy MCP, generate an API key under **Settings → Cowboy MCP**, then run `claude mcp add --transport http wordpress https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"`. Claude Code can then manage posts, plugins, themes, WooCommerce, and more by calling Cowboy MCP's tools over the MCP protocol.
+
+### Does Cowboy MCP work with WooCommerce?
+
+Yes. When WooCommerce is active, Cowboy MCP registers 40 extra tools for products and variations, orders and refunds, customers, coupons, tax/shipping/gateway settings, and sales reports — using WooCommerce's own CRUD classes rather than raw SQL. Tools for ACF, Elementor, Wordfence, UpdraftPlus, and cache plugins register automatically the same way.
+
+### Do I need Node.js or WP-CLI?
+
+No. Cowboy MCP serves the MCP endpoint natively from WordPress with zero external dependencies — no Node.js bridge, no Composer, no build step. It uses core WordPress APIs, so it works even on managed hosts that disable `shell_exec()` or lack WP-CLI. WP-CLI remains an optional power-user escape hatch when present.
+
+### Is it safe to give an AI agent access to my site?
+
+You're granting real control, so Cowboy MCP is built defensively. API keys are bcrypt-hashed and shown once, every request is rate-limited, safe mode requires explicit confirmation for destructive actions, and every tool call is recorded in an audit log. Sensitive options, dangerous SQL, and SSRF attempts are blocked by default.
+
+### Which AI agents are supported?
+
+Any MCP client that supports Streamable HTTP with a Bearer token — including Claude Code, Codex, and Cursor. The same endpoint works across clients: point the agent at your site's URL and supply the API key. More agents add MCP support regularly.
 
 ## Security
 
