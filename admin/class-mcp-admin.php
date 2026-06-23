@@ -89,6 +89,15 @@ class Cowboy_MCP_Admin {
             add_settings_error( 'cowboy_mcp', 'key_revoked', __( 'API key revoked.', 'cowboy-mcp' ), 'info' );
         }
 
+        // Revoke OAuth connection.
+        if ( isset( $_POST['cowboy_mcp_revoke_oauth'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_revoke_oauth' ) ) {
+            $cid = sanitize_text_field( wp_unslash( $_POST['oauth_client_id'] ?? '' ) );
+            if ( class_exists( 'Cowboy_MCP_OAuth' ) && $cid !== '' ) {
+                Cowboy_MCP_OAuth::revoke_connection( $cid );
+                add_settings_error( 'cowboy_mcp', 'oauth_revoked', __( 'Connection revoked.', 'cowboy-mcp' ), 'info' );
+            }
+        }
+
         // Save settings.
         if ( isset( $_POST['cowboy_mcp_save_settings'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_save_settings' ) ) {
             $existing = get_option( 'cowboy_mcp_settings', [] );
@@ -101,6 +110,7 @@ class Cowboy_MCP_Admin {
                 'allowed_tools' => $existing['allowed_tools'] ?? 'all',
                 'log_requests'  => ! empty( $_POST['cowboy_mcp_log_requests'] ),
                 'rate_limit'    => max( 10, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_rate_limit'] ?? '' ) ) ),
+                'oauth_enabled' => ! empty( $_POST['cowboy_mcp_oauth_enabled'] ),
             ];
             update_option( 'cowboy_mcp_settings', $settings );
             add_settings_error( 'cowboy_mcp', 'settings_saved', __( 'Settings saved.', 'cowboy-mcp' ), 'success' );
@@ -321,6 +331,84 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
             </div>
         </div>
         <?php endif;
+
+        /* ── Connect with Claude Desktop (OAuth) ──────────── */
+        $oauth_on    = class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::is_enabled();
+        $reachable   = ! class_exists( 'Cowboy_MCP_OAuth' ) || Cowboy_MCP_OAuth::site_is_publicly_reachable();
+        $connections = ( class_exists( 'Cowboy_MCP_OAuth' ) && $oauth_on ) ? Cowboy_MCP_OAuth::list_connections() : [];
+        $settings_url = admin_url( 'options-general.php?page=' . self::SLUG . '&tab=settings' );
+        ?>
+        <div class="postbox" style="margin-top:8px;">
+            <div class="postbox-header"><h2><?php esc_html_e( 'Connect with Claude Desktop (no terminal)', 'cowboy-mcp' ); ?></h2></div>
+            <div class="inside">
+                <?php if ( ! $reachable ): ?>
+                    <div class="notice notice-warning inline"><p><?php
+                        esc_html_e( 'This site does not appear to be on a public HTTPS address. The Claude apps connect from Anthropic\'s cloud, so the desktop connector cannot reach local, private, or non-HTTPS sites. You can still enable it for tunnels/staging, but it will not work on a purely local install.', 'cowboy-mcp' );
+                    ?></p></div>
+                <?php endif; ?>
+
+                <?php if ( ! $oauth_on ): ?>
+                    <p><?php
+                        printf(
+                            wp_kses( __( 'Let non-technical users connect from the Claude Desktop or web app — no terminal required. <a href="%s">Enable the Desktop Connector</a> in Settings to turn it on.', 'cowboy-mcp' ), [ 'a' => [ 'href' => [] ] ] ),
+                            esc_url( $settings_url )
+                        );
+                    ?></p>
+                <?php else: ?>
+                    <p><?php esc_html_e( 'In Claude Desktop or claude.ai, go to Settings → Connectors → Add custom connector, then paste this URL and approve the browser sign-in:', 'cowboy-mcp' ); ?></p>
+                    <div class="mcp-code-block">
+                        <code id="mcp-oauth-url"><?php echo esc_url( $endpoint ); ?></code>
+                    </div>
+                    <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-oauth-url" aria-label="<?php echo esc_attr__( 'Copy connector URL', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+                    <p class="description" style="margin-top:8px;"><?php esc_html_e( 'Custom connectors require a Claude Pro, Max, Team, or Enterprise plan.', 'cowboy-mcp' ); ?></p>
+
+                    <?php if ( ! empty( $connections ) ): ?>
+                        <h3 style="margin-top:20px;"><?php esc_html_e( 'Connected apps', 'cowboy-mcp' ); ?></h3>
+                        <div class="mcp-table-wrap">
+                        <table class="widefat striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col"><?php esc_html_e( 'App', 'cowboy-mcp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Authorized by', 'cowboy-mcp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Connected', 'cowboy-mcp' ); ?></th>
+                                    <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( $connections as $c ): ?>
+                                <tr>
+                                    <td><?php echo esc_html( $c['client_name'] ); ?></td>
+                                    <td><?php echo esc_html( $c['user'] ); ?></td>
+                                    <td><?php echo esc_html( $c['created'] ? wp_date( 'M j, Y', $c['created'] ) : '—' ); ?></td>
+                                    <td><?php
+                                        if ( $c['last_used'] ) {
+                                            /* translators: %s: human-readable time difference */
+                                            printf( esc_html__( '%s ago', 'cowboy-mcp' ), esc_html( human_time_diff( $c['last_used'] ) ) );
+                                        } else {
+                                            echo '<em>' . esc_html__( 'never', 'cowboy-mcp' ) . '</em>';
+                                        }
+                                    ?></td>
+                                    <td>
+                                        <form method="post" class="mcp-revoke-form">
+                                            <?php wp_nonce_field( 'cowboy_mcp_revoke_oauth' ); ?>
+                                            <input type="hidden" name="oauth_client_id" value="<?php echo esc_attr( $c['client_id'] ); ?>">
+                                            <button type="submit" name="cowboy_mcp_revoke_oauth" class="button button-small button-link-delete"
+                                                    data-confirm="<?php echo esc_attr__( 'Revoke this connection? The app will lose access immediately.', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Revoke', 'cowboy-mcp' ); ?></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        </div>
+                    <?php else: ?>
+                        <p class="description" style="margin-top:12px;"><em><?php esc_html_e( 'No apps connected yet.', 'cowboy-mcp' ); ?></em></p>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
     }
 
     /* ── Settings tab ─────────────────────────────────────── */
@@ -369,6 +457,21 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
                                         echo wp_kses(
                                             __( '<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, dangerous SQL, writing files anywhere, and requests to internal addresses. This grants effective <strong>remote code execution</strong> to anyone holding an API key. Only enable on a trusted, locked-down site you control. Your MCP API keys and the plugin&#8217;s own settings stay protected.', 'cowboy-mcp' ),
                                             [ 'strong' => [], 'code' => [] ]
+                                        );
+                                    ?></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><?php esc_html_e( 'Desktop Connector (OAuth)', 'cowboy-mcp' ); ?></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="cowboy_mcp_oauth_enabled" value="1" <?php checked( $settings['oauth_enabled'] ?? false ); ?>>
+                                        <?php esc_html_e( 'Allow connecting via Claude Desktop / web (OAuth)', 'cowboy-mcp' ); ?>
+                                    </label>
+                                    <p class="description"><?php
+                                        echo wp_kses(
+                                            __( 'Enables an OAuth 2.1 sign-in flow so the Claude apps can connect without the terminal. This exposes public OAuth discovery, registration, and token endpoints (no tokens are issued without an administrator approving in the browser). Leave off if you only connect via the terminal.', 'cowboy-mcp' ),
+                                            [ 'code' => [] ]
                                         );
                                     ?></p>
                                 </td>
