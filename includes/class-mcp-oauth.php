@@ -222,6 +222,9 @@ class Cowboy_MCP_OAuth {
         if ( time() > (int) $rec['expires'] ) {
             return new WP_Error( 'expired_token', 'Access token expired.' );
         }
+        if ( (string) ( $rec['aud'] ?? '' ) !== self::resource_url() ) {
+            return new WP_Error( 'invalid_token', 'Access token audience mismatch.' );
+        }
 
         // Fail closed: the bound user must still exist and remain an administrator.
         $user = get_user_by( 'id', (int) $rec['user_id'] );
@@ -297,6 +300,8 @@ class Cowboy_MCP_OAuth {
         }
 
         // Single-use: mark old refresh used, drop its access token, issue a new pair.
+        // used=true records are intentionally retained until TTL expiry — do NOT prune them early;
+        // they are the replay-detection proof that a token was already consumed.
         $refresh[ $id ]['used'] = true;
         update_option( self::REFRESH_OPTION, $refresh, false );
         if ( ! empty( $rec['access_id'] ) ) {
@@ -645,6 +650,11 @@ class Cowboy_MCP_OAuth {
         // PKCE is mandatory.
         if ( $challenge === '' || $challenge_m !== 'S256' ) {
             self::authorize_redirect_error( $redirect_uri, $state, 'invalid_request', 'PKCE S256 is required.' );
+        }
+
+        // Enforce RFC 8707 audience: only this server's resource is supported.
+        if ( $resource !== self::resource_url() ) {
+            self::authorize_redirect_error( $redirect_uri, $state, 'invalid_target', 'Unsupported resource.' );
         }
 
         // Must be a logged-in administrator.
