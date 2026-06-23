@@ -134,10 +134,35 @@ class Cowboy_MCP_Auth {
                 'ip'              => sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) ),
                 'x_forwarded_for' => $request->get_header( 'X-Forwarded-For' ) ?: null,
             ] );
+            self::send_www_authenticate();
             return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
         }
 
         $token = substr( $auth_header, 7 );
+
+        // ── OAuth access token branch ──
+        // OAuth tokens carry a distinct prefix and are validated against the OAuth
+        // store; everything downstream (current user, settings, rate limits) then
+        // behaves exactly like an API key.
+        if ( str_starts_with( $token, 'cmcp_at_' ) ) {
+            if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || ! Cowboy_MCP_OAuth::is_enabled() ) {
+                self::send_www_authenticate();
+                return new WP_Error( 'mcp_unauthorized', 'OAuth connector is not enabled.', [ 'status' => 401 ] );
+            }
+            $user_id = Cowboy_MCP_OAuth::validate_access_token( $token );
+            if ( is_wp_error( $user_id ) ) {
+                self::log( 'auth_invalid_oauth', [ 'reason' => $user_id->get_error_code() ] );
+                self::send_www_authenticate();
+                return new WP_Error( 'mcp_unauthorized', 'Invalid or expired access token.', [ 'status' => 401 ] );
+            }
+            self::$current_key_context = Cowboy_MCP_OAuth::$last_token_context;
+            if ( ! self::check_rate_limit( self::$current_key_context['key_id'] ?? 'oauth', $settings['rate_limit'] ?? 120 ) ) {
+                self::log( 'rate_limit_exceeded', self::$current_key_context );
+                return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
+            }
+            wp_set_current_user( $user_id );
+            return true;
+        }
 
         $keys = get_option( self::OPTION_KEY, [] );
 
@@ -181,7 +206,20 @@ class Cowboy_MCP_Auth {
         }
 
         self::log( 'auth_invalid_key', [ 'token_hash' => substr( hash( 'sha256', $token ), 0, 12 ) ] );
+        self::send_www_authenticate();
         return new WP_Error( 'mcp_unauthorized', 'Invalid API key.', [ 'status' => 401 ] );
+    }
+
+    /**
+     * Emit the RFC 9728 WWW-Authenticate breadcrumb so MCP clients can discover
+     * the OAuth metadata. No-op unless the OAuth connector is enabled.
+     */
+    private static function send_www_authenticate(): void {
+        if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || ! Cowboy_MCP_OAuth::is_enabled() || headers_sent() ) {
+            return;
+        }
+        $prm = Cowboy_MCP_OAuth::issuer() . '/.well-known/oauth-protected-resource';
+        header( 'WWW-Authenticate: Bearer resource_metadata="' . esc_url_raw( $prm ) . '"' );
     }
 
     /**
