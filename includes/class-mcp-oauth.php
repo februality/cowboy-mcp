@@ -379,8 +379,168 @@ class Cowboy_MCP_OAuth {
         return $found;
     }
 
-    /* ── Stubs filled in by later tasks ─────────────────────── */
+    /* ── Response helpers ──────────────────────────────────── */
 
-    public static function handle_root_requests(): void {}
-    public static function register_routes(): void {}
+    /** Emit a standalone JSON document and exit (for root .well-known routes). */
+    private static function emit_json( array $data, int $status = 200 ): void {
+        status_header( $status );
+        nocache_headers();
+        header( 'Content-Type: application/json; charset=utf-8' );
+        header( 'Access-Control-Allow-Origin: *' );
+        echo wp_json_encode( $data ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        exit;
+    }
+
+    private static function rest_json( array $data, int $status = 200 ): WP_REST_Response {
+        $resp = new WP_REST_Response( $data, $status );
+        $resp->header( 'Access-Control-Allow-Origin', '*' );
+        $resp->header( 'Cache-Control', 'no-store' );
+        return $resp;
+    }
+
+    /** OAuth-style error object (RFC 6749 §5.2). */
+    private static function rest_error( string $code, string $message, int $status ): WP_REST_Response {
+        return self::rest_json( [ 'error' => $code, 'error_description' => $message ], $status );
+    }
+
+    /* ── Root dispatch + discovery ─────────────────────────── */
+
+    /**
+     * Serve the root-level OAuth paths that cannot live under /wp-json/:
+     * the two .well-known discovery docs and the interactive /authorize page.
+     * Matched against the raw request path so it is permalink-independent.
+     */
+    public static function handle_root_requests(): void {
+        if ( ! self::is_enabled() ) {
+            return;
+        }
+        $uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+        $path = wp_parse_url( $uri, PHP_URL_PATH );
+        if ( ! is_string( $path ) || $path === '' ) {
+            return;
+        }
+        $path = untrailingslashit( $path );
+
+        if ( $path === '/.well-known/oauth-protected-resource' ) {
+            self::render_protected_resource_metadata();
+        } elseif ( $path === '/.well-known/oauth-authorization-server' ) {
+            self::render_as_metadata();
+        } elseif ( $path === '/cowboy-mcp-oauth/authorize' ) {
+            self::handle_authorize();
+        }
+    }
+
+    public static function render_protected_resource_metadata(): void {
+        self::emit_json( [
+            'resource'                 => self::resource_url(),
+            'authorization_servers'    => [ self::issuer() ],
+            'bearer_methods_supported' => [ 'header' ],
+            'scopes_supported'         => [ 'mcp' ],
+            'resource_documentation'   => 'https://cowboymcp.com',
+        ] );
+    }
+
+    public static function render_as_metadata(): void {
+        $issuer = self::issuer();
+        self::emit_json( [
+            'issuer'                                => $issuer,
+            'authorization_endpoint'                => $issuer . '/cowboy-mcp-oauth/authorize',
+            'token_endpoint'                        => rest_url( 'cowboy-mcp/v1/oauth/token' ),
+            'registration_endpoint'                 => rest_url( 'cowboy-mcp/v1/oauth/register' ),
+            'response_types_supported'              => [ 'code' ],
+            'grant_types_supported'                 => [ 'authorization_code', 'refresh_token' ],
+            'code_challenge_methods_supported'      => [ 'S256' ],
+            'token_endpoint_auth_methods_supported' => [ 'none' ],
+            'scopes_supported'                      => [ 'mcp' ],
+        ] );
+    }
+
+    public static function register_routes(): void {
+        register_rest_route( 'cowboy-mcp/v1', '/oauth/register', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_register' ],
+            'permission_callback' => '__return_true',
+        ] );
+        register_rest_route( 'cowboy-mcp/v1', '/oauth/token', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_token' ],
+            'permission_callback' => '__return_true',
+        ] );
+    }
+
+    /* ── Dynamic Client Registration (RFC 7591) ────────────── */
+
+    public static function handle_register( WP_REST_Request $request ) {
+        if ( ! self::is_enabled() ) {
+            return self::rest_error( 'oauth_disabled', 'OAuth connector is not enabled.', 404 );
+        }
+        $body = $request->get_json_params();
+        if ( ! is_array( $body ) ) {
+            $body = $request->get_params();
+        }
+
+        $redirect_uris = $body['redirect_uris'] ?? [];
+        if ( ! is_array( $redirect_uris ) || empty( $redirect_uris ) ) {
+            return self::rest_error( 'invalid_redirect_uri', 'redirect_uris is required.', 400 );
+        }
+        $clean = [];
+        foreach ( $redirect_uris as $uri ) {
+            $uri = esc_url_raw( (string) $uri, [ 'https', 'http' ] );
+            if ( $uri !== '' ) {
+                $clean[] = $uri;
+            }
+        }
+        if ( empty( $clean ) ) {
+            return self::rest_error( 'invalid_redirect_uri', 'No valid redirect_uris supplied.', 400 );
+        }
+
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        if ( count( $clients ) >= self::MAX_CLIENTS ) {
+            // Bound DCR abuse: drop the oldest clients that hold no active tokens.
+            $clients = self::prune_unused_clients( $clients );
+        }
+
+        $client_id = 'cmcp_client_' . bin2hex( random_bytes( 8 ) );
+        $now       = time();
+        $name      = sanitize_text_field( (string) ( $body['client_name'] ?? 'MCP Client' ) );
+
+        $clients[ $client_id ] = [
+            'client_id'                  => $client_id,
+            'client_name'                => $name,
+            'redirect_uris'              => $clean,
+            'created'                    => $now,
+            'last_used'                  => null,
+            'token_endpoint_auth_method' => 'none',
+        ];
+        update_option( self::CLIENTS_OPTION, $clients, false );
+
+        return self::rest_json( [
+            'client_id'                  => $client_id,
+            'client_id_issued_at'        => $now,
+            'client_name'                => $name,
+            'redirect_uris'              => $clean,
+            'grant_types'                => [ 'authorization_code', 'refresh_token' ],
+            'response_types'             => [ 'code' ],
+            'token_endpoint_auth_method' => 'none',
+        ], 201 );
+    }
+
+    /** Drop registered clients (oldest first) that currently hold no tokens. */
+    private static function prune_unused_clients( array $clients ): array {
+        $tokens     = get_option( self::TOKENS_OPTION, [] );
+        $active_ids = [];
+        foreach ( $tokens as $t ) {
+            if ( ! empty( $t['client_id'] ) ) {
+                $active_ids[ $t['client_id'] ] = true;
+            }
+        }
+        $unused = array_filter( $clients, fn( $c ) => empty( $active_ids[ $c['client_id'] ] ) );
+        uasort( $unused, fn( $a, $b ) => ( (int) $a['created'] ) <=> ( (int) $b['created'] ) );
+        // Remove up to half of MAX_CLIENTS worth of the oldest unused clients.
+        $remove = array_slice( array_keys( $unused ), 0, (int) ceil( self::MAX_CLIENTS / 2 ) );
+        foreach ( $remove as $cid ) {
+            unset( $clients[ $cid ] );
+        }
+        return $clients;
+    }
 }
