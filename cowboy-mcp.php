@@ -50,6 +50,7 @@ define( 'COWBOY_MCP_BASENAME', plugin_basename( __FILE__ ) );
 
 /* ── Autoload ─────────────────────────────────────────────── */
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-security.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-transport.php';
@@ -58,6 +59,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-resources.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-prompts.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-completion.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-updater.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-oauth.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
 
 /* ── Boot ─────────────────────────────────────────────────── */
@@ -67,6 +69,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
     Cowboy_MCP_Updater::init();
+    Cowboy_MCP_OAuth::init();
 });
 
 /* ── Cron resilience: re-schedule if cron event was lost ── */
@@ -88,6 +91,7 @@ register_activation_hook( __FILE__, function () {
             'allowed_tools'    => 'all',
             'log_requests'     => false,
             'rate_limit'       => 120,      // requests per minute
+            'oauth_enabled'    => false,    // OAuth desktop connector OFF by default
         ]);
     }
 
@@ -113,6 +117,9 @@ function cowboy_mcp_uninstall(): void {
     // Remove plugin options.
     delete_option( 'cowboy_mcp_api_keys' );
     delete_option( 'cowboy_mcp_settings' );
+    delete_option( 'cowboy_mcp_oauth_tokens' );
+    delete_option( 'cowboy_mcp_oauth_refresh' );
+    delete_option( 'cowboy_mcp_oauth_clients' );
 
     // Drop audit log table.
     global $wpdb;
@@ -134,6 +141,8 @@ function cowboy_mcp_cleanup_transients( bool $include_new_key ): void {
     $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_rl_%', '_transient_timeout_cowboy_mcp_rl_%' ) );
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_sess_%', '_transient_timeout_cowboy_mcp_sess_%' ) );
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+    $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_oauth_code_%', '_transient_timeout_cowboy_mcp_oauth_code_%' ) );
     if ( $include_new_key ) {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_new_key_%', '_transient_timeout_cowboy_mcp_new_key_%' ) );
