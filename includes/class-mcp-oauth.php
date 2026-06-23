@@ -543,4 +543,169 @@ class Cowboy_MCP_OAuth {
         }
         return $clients;
     }
+
+    /* ── Authorize + consent ───────────────────────────────── */
+
+    public static function handle_authorize(): void {
+        if ( ! self::is_enabled() ) {
+            self::authorize_fatal( __( 'The OAuth connector is not enabled on this site.', 'cowboy-mcp' ) );
+        }
+
+        $is_post = ( strtoupper( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST' );
+        // phpcs:ignore WordPress.Security.NonceVerification
+        $src = $is_post ? $_POST : $_GET;
+
+        $client_id    = sanitize_text_field( wp_unslash( $src['client_id'] ?? '' ) );
+        $redirect_uri = esc_url_raw( wp_unslash( $src['redirect_uri'] ?? '' ), [ 'https', 'http' ] );
+        $state        = sanitize_text_field( wp_unslash( $src['state'] ?? '' ) );
+        $challenge    = sanitize_text_field( wp_unslash( $src['code_challenge'] ?? '' ) );
+        $challenge_m  = sanitize_text_field( wp_unslash( $src['code_challenge_method'] ?? '' ) );
+        $scope        = sanitize_text_field( wp_unslash( $src['scope'] ?? 'mcp' ) );
+        $resource     = esc_url_raw( wp_unslash( $src['resource'] ?? self::resource_url() ), [ 'https', 'http' ] );
+
+        // Validate client + redirect_uri BEFORE trusting them for any redirect.
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        if ( $client_id === '' || empty( $clients[ $client_id ] ) ) {
+            self::authorize_fatal( __( 'Unknown OAuth client.', 'cowboy-mcp' ) );
+        }
+        $client = $clients[ $client_id ];
+        if ( $redirect_uri === '' || ! in_array( $redirect_uri, $client['redirect_uris'], true ) ) {
+            self::authorize_fatal( __( 'Invalid redirect_uri for this client.', 'cowboy-mcp' ) );
+        }
+
+        // PKCE is mandatory.
+        if ( $challenge === '' || $challenge_m !== 'S256' ) {
+            self::authorize_redirect_error( $redirect_uri, $state, 'invalid_request', 'PKCE S256 is required.' );
+        }
+
+        // Must be a logged-in administrator.
+        if ( ! is_user_logged_in() ) {
+            wp_safe_redirect( wp_login_url( self::current_authorize_url() ) );
+            exit;
+        }
+        if ( ! current_user_can( 'manage_options' ) ) {
+            self::authorize_fatal( __( 'You must be an administrator to authorize this connection.', 'cowboy-mcp' ) );
+        }
+
+        if ( $is_post ) {
+            if ( ! isset( $_POST['_wpnonce'] )
+                || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'cowboy_mcp_oauth_consent' ) ) {
+                self::authorize_fatal( __( 'Security check failed. Please try again.', 'cowboy-mcp' ) );
+            }
+            if ( empty( $_POST['cowboy_mcp_oauth_approve'] ) ) {
+                self::authorize_redirect_error( $redirect_uri, $state, 'access_denied', 'The request was denied.' );
+            }
+
+            $code = self::issue_authorization_code( [
+                'client_id'             => $client_id,
+                'redirect_uri'          => $redirect_uri,
+                'code_challenge'        => $challenge,
+                'code_challenge_method' => 'S256',
+                'user_id'               => get_current_user_id(),
+                'scope'                 => $scope,
+                'aud'                   => $resource,
+            ] );
+
+            $clients[ $client_id ]['last_used'] = time();
+            update_option( self::CLIENTS_OPTION, $clients, false );
+
+            $sep = ( strpos( $redirect_uri, '?' ) === false ) ? '?' : '&';
+            $loc = $redirect_uri . $sep . http_build_query( [ 'code' => $code, 'state' => $state ] );
+            wp_redirect( $loc ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- redirect_uri validated against the registered client
+            exit;
+        }
+
+        self::render_consent_screen( $client, $redirect_uri, $state, $challenge, $challenge_m, $scope, $resource );
+    }
+
+    private static function current_authorize_url(): string {
+        $uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/cowboy-mcp-oauth/authorize';
+        return self::issuer() . $uri;
+    }
+
+    private static function authorize_redirect_error( string $redirect_uri, string $state, string $error, string $desc ): void {
+        $sep = ( strpos( $redirect_uri, '?' ) === false ) ? '?' : '&';
+        $loc = $redirect_uri . $sep . http_build_query( [ 'error' => $error, 'error_description' => $desc, 'state' => $state ] );
+        wp_redirect( $loc ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- redirect_uri validated against the registered client
+        exit;
+    }
+
+    /** Render a minimal standalone error page (not the admin settings page). */
+    private static function authorize_fatal( string $message ): void {
+        status_header( 400 );
+        nocache_headers();
+        $title = esc_html__( 'Connection error', 'cowboy-mcp' );
+        $body  = '<h1>' . $title . '</h1><p>' . esc_html( $message ) . '</p>';
+        wp_die( wp_kses_post( $body ), $title, [ 'response' => 400 ] );
+    }
+
+    private static function render_consent_screen( array $client, string $redirect_uri, string $state, string $challenge, string $challenge_m, string $scope, string $resource ): void {
+        $site_name   = get_bloginfo( 'name' );
+        $client_name = $client['client_name'] ?? __( 'An application', 'cowboy-mcp' );
+        $user        = wp_get_current_user();
+        $action      = esc_url( self::issuer() . '/cowboy-mcp-oauth/authorize' );
+
+        nocache_headers();
+        header( 'Content-Type: text/html; charset=utf-8' );
+        ?><!doctype html>
+<html <?php language_attributes(); ?>>
+<head>
+<meta charset="<?php bloginfo( 'charset' ); ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title><?php echo esc_html__( 'Authorize connection', 'cowboy-mcp' ); ?></title>
+<style>
+ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f0f1;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+ .card{background:#fff;max-width:420px;width:90%;padding:32px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.13)}
+ h1{font-size:20px;margin:0 0 8px}
+ p{color:#3c434a;line-height:1.5}
+ .who{background:#f6f7f7;border:1px solid #dcdcde;border-radius:6px;padding:12px 14px;margin:16px 0;font-size:14px}
+ .who strong{display:inline-block}
+ .actions{display:flex;gap:10px;margin-top:24px}
+ button{flex:1;padding:11px 16px;border-radius:6px;border:1px solid;font-size:14px;cursor:pointer}
+ .approve{background:#2271b1;border-color:#2271b1;color:#fff}
+ .deny{background:#fff;border-color:#c3c4c7;color:#3c434a}
+ .muted{font-size:12px;color:#646970;margin-top:16px;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="card">
+ <h1><?php
+    /* translators: %s: application/client name */
+    printf( esc_html__( '%s wants to connect', 'cowboy-mcp' ), '<strong>' . esc_html( $client_name ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+ ?></h1>
+ <p><?php
+    /* translators: %s: site name */
+    printf( esc_html__( 'It will be able to read and manage %s through the MCP server, acting with your administrator permissions.', 'cowboy-mcp' ), '<strong>' . esc_html( $site_name ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+ ?></p>
+ <div class="who">
+    <?php
+    /* translators: %s: WordPress username */
+    printf( esc_html__( 'Authorizing as %s', 'cowboy-mcp' ), '<strong>' . esc_html( $user->user_login ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    ?>
+ </div>
+ <form method="post" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url above ?>">
+    <?php wp_nonce_field( 'cowboy_mcp_oauth_consent' ); ?>
+    <input type="hidden" name="client_id" value="<?php echo esc_attr( $client['client_id'] ); ?>">
+    <input type="hidden" name="redirect_uri" value="<?php echo esc_attr( $redirect_uri ); ?>">
+    <input type="hidden" name="state" value="<?php echo esc_attr( $state ); ?>">
+    <input type="hidden" name="code_challenge" value="<?php echo esc_attr( $challenge ); ?>">
+    <input type="hidden" name="code_challenge_method" value="<?php echo esc_attr( $challenge_m ); ?>">
+    <input type="hidden" name="scope" value="<?php echo esc_attr( $scope ); ?>">
+    <input type="hidden" name="resource" value="<?php echo esc_attr( $resource ); ?>">
+    <div class="actions">
+        <button class="deny" type="submit" name="cowboy_mcp_oauth_deny" value="1"><?php esc_html_e( 'Deny', 'cowboy-mcp' ); ?></button>
+        <button class="approve" type="submit" name="cowboy_mcp_oauth_approve" value="1"><?php esc_html_e( 'Approve', 'cowboy-mcp' ); ?></button>
+    </div>
+ </form>
+ <p class="muted"><?php
+    /* translators: %s: redirect URI */
+    printf( esc_html__( 'Redirects to: %s', 'cowboy-mcp' ), esc_html( $redirect_uri ) );
+ ?></p>
+</div>
+</body>
+</html>
+        <?php
+        exit;
+    }
 }
