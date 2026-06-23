@@ -544,6 +544,75 @@ class Cowboy_MCP_OAuth {
         return $clients;
     }
 
+    /* ── Token endpoint ────────────────────────────────────── */
+
+    public static function handle_token( WP_REST_Request $request ) {
+        if ( ! self::is_enabled() ) {
+            return self::rest_error( 'oauth_disabled', 'OAuth connector is not enabled.', 404 );
+        }
+        $grant = sanitize_text_field( (string) $request->get_param( 'grant_type' ) );
+
+        return match ( $grant ) {
+            'authorization_code' => self::token_authorization_code( $request ),
+            'refresh_token'      => self::token_refresh( $request ),
+            default              => self::rest_error( 'unsupported_grant_type', 'Unsupported grant_type.', 400 ),
+        };
+    }
+
+    private static function token_authorization_code( WP_REST_Request $request ) {
+        $code         = sanitize_text_field( (string) $request->get_param( 'code' ) );
+        $verifier     = (string) $request->get_param( 'code_verifier' );
+        $redirect_uri = esc_url_raw( (string) $request->get_param( 'redirect_uri' ), [ 'https', 'http' ] );
+        $client_id    = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
+
+        if ( $code === '' ) {
+            return self::rest_error( 'invalid_request', 'Missing code.', 400 );
+        }
+
+        $ctx = get_transient( self::CODE_PREFIX . $code );
+        delete_transient( self::CODE_PREFIX . $code ); // single use
+        if ( ! is_array( $ctx ) ) {
+            return self::rest_error( 'invalid_grant', 'Authorization code invalid or expired.', 400 );
+        }
+        if ( $client_id !== $ctx['client_id'] || $redirect_uri !== $ctx['redirect_uri'] ) {
+            return self::rest_error( 'invalid_grant', 'Client or redirect_uri mismatch.', 400 );
+        }
+        if ( ! self::verify_pkce( $verifier, (string) $ctx['code_challenge'], (string) $ctx['code_challenge_method'] ) ) {
+            return self::rest_error( 'invalid_grant', 'PKCE verification failed.', 400 );
+        }
+
+        $user = get_user_by( 'id', (int) $ctx['user_id'] );
+        if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+            return self::rest_error( 'invalid_grant', 'Authorizing user is no longer permitted.', 400 );
+        }
+
+        $t = self::issue_tokens( (int) $ctx['user_id'], $client_id, (string) $ctx['aud'], (string) $ctx['scope'] );
+        return self::rest_json( [
+            'access_token'  => $t['access_token'],
+            'token_type'    => 'Bearer',
+            'expires_in'    => $t['expires_in'],
+            'refresh_token' => $t['refresh_token'],
+            'scope'         => $t['scope'],
+        ] );
+    }
+
+    private static function token_refresh( WP_REST_Request $request ) {
+        $refresh   = (string) $request->get_param( 'refresh_token' );
+        $client_id = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
+
+        $t = self::rotate_refresh_token( $refresh, $client_id );
+        if ( is_wp_error( $t ) ) {
+            return self::rest_error( 'invalid_grant', $t->get_error_message(), 400 );
+        }
+        return self::rest_json( [
+            'access_token'  => $t['access_token'],
+            'token_type'    => 'Bearer',
+            'expires_in'    => $t['expires_in'],
+            'refresh_token' => $t['refresh_token'],
+            'scope'         => $t['scope'],
+        ] );
+    }
+
     /* ── Authorize + consent ───────────────────────────────── */
 
     public static function handle_authorize(): void {
