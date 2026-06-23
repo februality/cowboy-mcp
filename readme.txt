@@ -4,7 +4,7 @@ Tags: mcp, ai, claude, api, automation
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,9 @@ The `cowboy_mcp_tool_allowed` filter lets you block specific tools per-request. 
 
 = Unreleased =
 * Updated for WordPress.org plugin directory compliance.
+
+= 1.4.0 =
+* New: Connect via the Claude Desktop / web app using a one-click OAuth sign-in (custom connectors) — no terminal required. Off by default; enable under Settings → Cowboy MCP → Settings → Desktop Connector. The existing terminal/API-key method is unchanged.
 
 = 1.3.0 =
 * Feature: self-hosted one-click updates. The plugin checks cowboymcp.com for new versions and offers updates through the normal WordPress Plugins screen, including the per-plugin auto-update toggle (owner opt-in). Updates are delivered from GitHub release assets over HTTPS. Fails closed — any check error simply shows no update.
