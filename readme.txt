@@ -17,9 +17,9 @@ Cowboy MCP turns your site into a full-featured [Model Context Protocol](https:/
 **Key features:**
 
 * **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint`
-* **131 tools** — Full CRUD for posts, taxonomies, options, users, comments, media, menus, database queries, WP-CLI, and more
-* **Plugin integrations** — Conditional tools for WooCommerce, ACF, UpdraftPlus, Yoast/Rank Math, Elementor, Wordfence, WPForms/Gravity Forms/CF7, and cache plugins (WP Rocket, LiteSpeed, W3TC)
-* **17 read-only resources** — Site info, recent posts, plugin/theme lists, WooCommerce summaries, and more
+* **121 tools** — Full CRUD for posts, taxonomies, options, users, comments, media, menus, database queries, WP-CLI, and more
+* **Plugin integrations** — Conditional tools for WooCommerce, ACF, Yoast/Rank Math, Elementor, Wordfence, WPForms/Gravity Forms/CF7, and cache plugins (WP Rocket, LiteSpeed, W3TC)
+* **16 read-only resources** — Site info, recent posts, plugin/theme lists, WooCommerce summaries, and more
 * **8 workflow prompts** — Site audit, content migration, SEO optimization, security hardening, and more
 * **Secure by default** — API key authentication (bcrypt-hashed, shown once), per-key rate limiting, safe mode for destructive operations, comprehensive audit logging
 * **Zero external dependencies** — No Composer, no npm, no CDN. Fully self-contained.
@@ -83,6 +83,9 @@ The `cowboy_mcp_tool_allowed` filter lets you block specific tools per-request. 
 
 == Changelog ==
 
+= Unreleased =
+* Updated for WordPress.org plugin directory compliance.
+
 = 1.3.0 =
 * Feature: self-hosted one-click updates. The plugin checks cowboymcp.com for new versions and offers updates through the normal WordPress Plugins screen, including the per-plugin auto-update toggle (owner opt-in). Updates are delivered from GitHub release assets over HTTPS. Fails closed — any check error simply shows no update.
 
@@ -104,7 +107,6 @@ The `cowboy_mcp_tool_allowed` filter lets you block specific tools per-request. 
 * Prefix all admin identifiers with `cowboy_mcp_` to avoid namespace collisions
 * Change REST namespace from `mcp/v1` to `cowboy-mcp/v1`
 * Sanitize `$_SERVER['REMOTE_ADDR']` with `sanitize_text_field()`
-* Derive UpdraftPlus path from loaded class instead of `WP_PLUGIN_DIR`
 * Add capability checks to plugin activation/deactivation and theme switching
 
 = 1.0.1 =

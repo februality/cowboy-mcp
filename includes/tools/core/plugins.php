@@ -34,11 +34,7 @@ return [
     'handlers' => [
 
         'wp_list_plugins' => function ( array $a ): array {
-            if ( ! function_exists( 'get_plugins' ) ) {
-                require_once ABSPATH . 'wp-admin/includes/plugin.php';
-            }
-
-            $all_plugins    = get_plugins();
+            $all_plugins    = Cowboy_MCP_Compat::get_plugins();
             $active_plugins = get_option( 'active_plugins', [] );
             $status_filter  = $a['status'] ?? 'all';
 
@@ -71,20 +67,16 @@ return [
                 return new WP_Error( 'forbidden', 'Current user lacks the activate_plugins capability.' );
             }
 
-            if ( ! function_exists( 'activate_plugin' ) ) {
-                require_once ABSPATH . 'wp-admin/includes/plugin.php';
-            }
-
             $plugin_file = sanitize_text_field( $a['plugin_file'] );
 
             // Verify plugin exists.
-            $all_plugins = get_plugins();
+            $all_plugins = Cowboy_MCP_Compat::get_plugins();
             if ( ! isset( $all_plugins[ $plugin_file ] ) ) {
                 return new WP_Error( 'not_found', "Plugin '{$plugin_file}' is not installed." );
             }
 
             // Check if already active.
-            if ( is_plugin_active( $plugin_file ) ) {
+            if ( Cowboy_MCP_Compat::is_plugin_active( $plugin_file ) ) {
                 return [
                     'activated'   => true,
                     'plugin_file' => $plugin_file,
@@ -93,7 +85,7 @@ return [
                 ];
             }
 
-            $result = activate_plugin( $plugin_file );
+            $result = Cowboy_MCP_Compat::activate_plugin( $plugin_file );
             if ( is_wp_error( $result ) ) {
                 return $result;
             }
@@ -110,20 +102,16 @@ return [
                 return new WP_Error( 'forbidden', 'Current user lacks the activate_plugins capability.' );
             }
 
-            if ( ! function_exists( 'deactivate_plugins' ) ) {
-                require_once ABSPATH . 'wp-admin/includes/plugin.php';
-            }
-
             $plugin_file = sanitize_text_field( $a['plugin_file'] );
 
             // Verify plugin exists.
-            $all_plugins = get_plugins();
+            $all_plugins = Cowboy_MCP_Compat::get_plugins();
             if ( ! isset( $all_plugins[ $plugin_file ] ) ) {
                 return new WP_Error( 'not_found', "Plugin '{$plugin_file}' is not installed." );
             }
 
             // Check if already inactive.
-            if ( ! is_plugin_active( $plugin_file ) ) {
+            if ( ! Cowboy_MCP_Compat::is_plugin_active( $plugin_file ) ) {
                 return [
                     'deactivated'    => true,
                     'plugin_file'    => $plugin_file,
@@ -132,7 +120,7 @@ return [
                 ];
             }
 
-            deactivate_plugins( $plugin_file );
+            Cowboy_MCP_Compat::deactivate_plugin( $plugin_file );
 
             return [
                 'deactivated' => true,

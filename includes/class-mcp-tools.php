@@ -12,7 +12,7 @@ class Cowboy_MCP_Tools {
 
     /** Tool name prefixes, ordered from most-specific to least-specific. */
     private const TOOL_PREFIXES = [
-        'wp_woo_', 'wp_acf_', 'wp_updraft_', 'wp_seo_',
+        'wp_woo_', 'wp_acf_', 'wp_seo_',
         'wp_forms_', 'wp_cache_', 'wp_elementor_', 'wp_wordfence_', 'cowboy_mcp_', 'wp_',
     ];
 
@@ -33,7 +33,6 @@ class Cowboy_MCP_Tools {
         'core/taxonomies.php',
         'core/comments.php',
         'acf/tools-acf.php',
-        'updraftplus/tools-updraftplus.php',
         'woocommerce/products.php',
         'woocommerce/orders.php',
         'woocommerce/customers.php',
@@ -64,7 +63,6 @@ class Cowboy_MCP_Tools {
         'core/taxonomies.php'         => 'taxonomies',
         'core/comments.php'           => 'comments',
         'acf/tools-acf.php'                 => 'acf',
-        'updraftplus/tools-updraftplus.php'  => 'updraftplus',
         'woocommerce/products.php'          => 'woocommerce',
         'woocommerce/orders.php'            => 'woocommerce',
         'woocommerce/customers.php'         => 'woocommerce',
@@ -94,7 +92,6 @@ class Cowboy_MCP_Tools {
         'taxonomies'     => 'list, create, update, and delete taxonomy terms',
         'comments'       => 'list, create, update, and delete comments',
         'acf'            => 'ACF field groups, field CRUD, repeater operations',
-        'updraftplus'    => 'backup list/trigger/restore/delete, settings, logs, schedules',
         'woocommerce'    => 'products, orders, customers, coupons, settings, reports',
         'seo'            => 'SEO provider detection',
         'forms'          => 'form provider detection',
@@ -694,7 +691,7 @@ class Cowboy_MCP_Tools {
         }
         self::$loaded = true;
 
-        $dir = __DIR__ . '/tools/';
+        $dir = COWBOY_MCP_PATH . 'includes/tools/';
 
         foreach ( self::DOMAIN_FILES as $file ) {
             $domain   = require $dir . $file;

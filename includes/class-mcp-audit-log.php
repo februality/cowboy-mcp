@@ -31,7 +31,11 @@ class Cowboy_MCP_Audit_Log {
 	}
 
 	/**
-	 * Create the audit log table using dbDelta.
+	 * Create the audit log table.
+	 *
+	 * Uses a direct CREATE TABLE IF NOT EXISTS so it works in REST context
+	 * without loading wp-admin/includes/upgrade.php (dbDelta). The schema is
+	 * fixed; if it ever changes, add an explicit versioned migration here.
 	 */
 	public static function create_table(): void {
 		global $wpdb;
@@ -39,7 +43,7 @@ class Cowboy_MCP_Audit_Log {
 		$table   = self::table();
 		$charset = $wpdb->get_charset_collate();
 
-		$sql = "CREATE TABLE {$table} (
+		$sql = "CREATE TABLE IF NOT EXISTS {$table} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 			timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			key_id VARCHAR(12) DEFAULT NULL,
@@ -57,8 +61,10 @@ class Cowboy_MCP_Audit_Log {
 			KEY idx_tool (tool)
 		) {$charset};";
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql );
+		// Direct DDL — table name and charset come from trusted $wpdb internals,
+		// not user input; the statement is idempotent (IF NOT EXISTS).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.NotPrepared
+		$wpdb->query( $sql );
 	}
 
 	/**

@@ -87,13 +87,10 @@ class Cowboy_MCP_Completion {
     }
 
     private static function get_plugin_slugs(): array {
-        if ( ! function_exists( 'get_plugins' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
         // Return plugin file paths with / replaced by -- for URI safety
         return array_map(
             fn( string $file ) => str_replace( '/', '--', $file ),
-            array_keys( get_plugins() )
+            array_keys( Cowboy_MCP_Compat::get_plugins() )
         );
     }
 

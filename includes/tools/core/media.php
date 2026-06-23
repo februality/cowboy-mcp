@@ -24,10 +24,6 @@ return [
     ],
     'handlers' => [
         'wp_upload_media' => function ( array $a ) {
-            // Ensure required WP admin includes are loaded.
-            require_once ABSPATH . 'wp-admin/includes/image.php';
-            require_once ABSPATH . 'wp-admin/includes/file.php';
-            require_once ABSPATH . 'wp-admin/includes/media.php';
 
             $source_type = $a['source_type'];
             $post_id     = (int) ( $a['post_id'] ?? 0 );
@@ -73,7 +69,7 @@ return [
                     'tmp_name' => $tmp,
                 ];
 
-                $attachment_id = media_handle_sideload( $file_array, $post_id );
+                $attachment_id = Cowboy_MCP_Compat::handle_sideload( $file_array, $post_id );
                 if ( is_wp_error( $attachment_id ) ) {
                     wp_delete_file( $tmp );
                     return $attachment_id;
@@ -102,7 +98,7 @@ return [
                     'tmp_name' => $tmp,
                 ];
 
-                $attachment_id = media_handle_sideload( $file_array, $post_id );
+                $attachment_id = Cowboy_MCP_Compat::handle_sideload( $file_array, $post_id );
                 if ( is_wp_error( $attachment_id ) ) {
                     wp_delete_file( $tmp );
                     return $attachment_id;

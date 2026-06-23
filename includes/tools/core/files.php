@@ -16,7 +16,7 @@ function cowboy_mcp_resolve_wp_content_path( string $relative ): string|WP_Error
     if ( Cowboy_MCP_Security::power_mode_enabled() ) {
         $candidate = ( $relative !== '' && $relative[0] === '/' )
             ? $relative
-            : WP_CONTENT_DIR . '/' . $relative;
+            : Cowboy_MCP_Compat::content_dir() . '/' . $relative;
         $full = realpath( $candidate );
         if ( $full === false ) {
             $parent = realpath( dirname( $candidate ) );
@@ -30,8 +30,8 @@ function cowboy_mcp_resolve_wp_content_path( string $relative ): string|WP_Error
         return new WP_Error( 'path_escape', 'Path must not contain ".." segments.' );
     }
 
-    $base      = WP_CONTENT_DIR . '/';
-    $base_real = realpath( WP_CONTENT_DIR ) ?: WP_CONTENT_DIR;
+    $base      = Cowboy_MCP_Compat::content_dir() . '/';
+    $base_real = realpath( Cowboy_MCP_Compat::content_dir() ) ?: Cowboy_MCP_Compat::content_dir();
     $full      = realpath( $base . $relative );
 
     // For not-yet-existing targets (e.g. wp_write_file), resolve the closest existing
@@ -133,12 +133,9 @@ return [
                 wp_delete_file( $tmp );
                 return new WP_Error( 'write_failed', "Could not write to {$a['path']}. Check permissions." );
             }
-            global $wp_filesystem;
-            if ( ! function_exists( 'WP_Filesystem' ) ) {
-                require_once ABSPATH . 'wp-admin/includes/file.php';
-            }
-            WP_Filesystem();
-            if ( ! $wp_filesystem->move( $tmp, $path, true ) ) {
+            // Atomic replace via native rename. $tmp lives in the same directory as
+            // $path, so this is atomic and needs no WP_Filesystem/admin include.
+            if ( ! @rename( $tmp, $path ) ) {
                 wp_delete_file( $tmp );
                 return new WP_Error( 'write_failed', "Atomic rename failed for {$a['path']}." );
             }
@@ -148,7 +145,7 @@ return [
         'wp_list_directory' => function ( array $a ): array|WP_Error {
             $path = $a['path'] ?? '';
             if ( $path === '' ) {
-                $base = WP_CONTENT_DIR;
+                $base = Cowboy_MCP_Compat::content_dir();
             } else {
                 $base = cowboy_mcp_resolve_wp_content_path( $path );
                 if ( is_wp_error( $base ) ) return $base;
@@ -167,7 +164,7 @@ return [
                 if ( $item->isDot() ) continue;
                 if ( ++$count > 500 ) break;    // safety limit
 
-                $relative = str_replace( WP_CONTENT_DIR . '/', '', $item->getPathname() );
+                $relative = str_replace( Cowboy_MCP_Compat::content_dir() . '/', '', $item->getPathname() );
                 $items[]  = [
                     'name'     => $item->getFilename(),
                     'path'     => $relative,

@@ -11,20 +11,22 @@ Cowboy MCP is a WordPress plugin that turns any WordPress site into a [Model Con
 
 Connect any MCP client that speaks Streamable HTTP over a single authenticated endpoint and manage posts, pages, plugins, themes, users, media, WooCommerce, and much more.
 
+*Recently updated for WordPress.org plugin directory compliance.*
+
 ---
 
 ## Why Cowboy MCP?
 
 - **Built for coding agents, not chat UIs** — designed for terminal-based workflows with Claude Code, Codex, Cursor, and any Streamable HTTP MCP client.
 - **No Node.js proxy** — the MCP endpoint is served natively from WordPress. Unlike adapter-based approaches that run a separate Node bridge to expose remote HTTP, there's nothing extra to install or keep running.
-- **131 tools across core + popular plugins** — full content CRUD plus deep integrations for WooCommerce, ACF, Elementor, Wordfence, UpdraftPlus, and cache plugins.
+- **121 tools across core + popular plugins** — full content CRUD plus deep integrations for WooCommerce, ACF, Elementor, Wordfence, and cache plugins.
 - **Secure by default** — bcrypt-hashed API keys (shown once), per-key rate limiting, safe mode for destructive operations, and an always-on audit log.
 - **Zero dependencies** — native WordPress APIs, no Composer, no npm, no build step. Works even on hosts without WP-CLI or `shell_exec()`.
 
 ## Highlights
 
 - **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint` (MCP `2025-06-18` spec)
-- **131 tools** — full CRUD for posts, pages, CPTs, taxonomies, comments, options, users, media, plus database queries, WP-CLI, diagnostics, and conditional tools for popular plugins
+- **121 tools** — full CRUD for posts, pages, CPTs, taxonomies, comments, options, users, media, plus database queries, WP-CLI, diagnostics, and conditional tools for popular plugins
 - **17 read-only resources**, **4 resource templates**, and **8 workflow prompts** with argument auto-completion
 - **Secure by default** — bcrypt-hashed API keys, per-key rate limiting, safe mode for destructive operations, and an always-on audit log
 - **Self-hosted auto-updates** — new versions appear in your WordPress updates screen, served straight from GitHub Releases
@@ -85,13 +87,12 @@ Core tools are always available. Plugin-integration tools register only when the
 | **Core** | 42 | posts/pages/CPT CRUD, taxonomies, comments, plugins, themes, options, users, media, DB query/write, WP-CLI, search-replace, site info, site health, 9 diagnostics, batch execution, audit log |
 | **WooCommerce** | 40 | products & variations, orders & refunds, customers, coupons, tax/shipping/gateway settings, sales reports |
 | **Wordfence** | 17 | scans, IP/country blocks, firewall, live traffic, activity log, settings |
-| **UpdraftPlus** | 10 | list/trigger/restore/delete backups, settings, logs, schedules |
 | **ACF** | 9 | field groups, field CRUD, repeater operations |
 | **Elementor** | 7 | templates, page content, global styles, widgets |
 | **Cache** | 4 | provider detect, flush, preload, settings (WP Rocket / LiteSpeed / W3TC) |
 | **SEO** | 1 | provider detection (Yoast / Rank Math) |
 | **Forms** | 1 | provider detection (WPForms / Gravity Forms / CF7) |
-| **Total** | **131** | with every integration active |
+| **Total** | **121** | with every integration active |
 
 ### Resources
 
@@ -120,7 +121,7 @@ Install Cowboy MCP, generate an API key under **Settings → Cowboy MCP**, then 
 
 ### Does Cowboy MCP work with WooCommerce?
 
-Yes. When WooCommerce is active, Cowboy MCP registers 40 extra tools for products and variations, orders and refunds, customers, coupons, tax/shipping/gateway settings, and sales reports — using WooCommerce's own CRUD classes rather than raw SQL. Tools for ACF, Elementor, Wordfence, UpdraftPlus, and cache plugins register automatically the same way.
+Yes. When WooCommerce is active, Cowboy MCP registers 40 extra tools for products and variations, orders and refunds, customers, coupons, tax/shipping/gateway settings, and sales reports — using WooCommerce's own CRUD classes rather than raw SQL. Tools for ACF, Elementor, Wordfence, and cache plugins register automatically the same way.
 
 ### Do I need Node.js or WP-CLI?
 

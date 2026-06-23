@@ -2,7 +2,7 @@
 
 > Cowboy MCP is a WordPress plugin that turns any WordPress site into a Model Context Protocol (MCP) server over Streamable HTTP, so AI coding agents like Claude Code, Codex, and Cursor can manage the site through a single authenticated endpoint.
 
-Cowboy MCP exposes 131 tools (content CRUD plus WooCommerce, ACF, Elementor, Wordfence, UpdraftPlus, and cache plugins), 17 read-only resources, 4 resource templates, and 8 workflow prompts. It is open source (GPL-2.0), fully self-contained (no Node.js, Composer, or build step), and distributed via GitHub Releases. The MCP endpoint is `/wp-json/cowboy-mcp/v1/endpoint` — JSON-RPC 2.0 over Streamable HTTP (MCP 2025-06-18). Authentication is a per-site bcrypt-hashed Bearer API key.
+Cowboy MCP exposes 121 tools (content CRUD plus WooCommerce, ACF, Elementor, Wordfence, and cache plugins), 17 read-only resources, 4 resource templates, and 8 workflow prompts. It is open source (GPL-2.0), fully self-contained (no Node.js, Composer, or build step), and distributed via GitHub Releases. The MCP endpoint is `/wp-json/cowboy-mcp/v1/endpoint` — JSON-RPC 2.0 over Streamable HTTP (MCP 2025-06-18). Authentication is a per-site bcrypt-hashed Bearer API key.
 
 ## Docs
 

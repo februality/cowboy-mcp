@@ -199,8 +199,9 @@ return [
                 'wp-rocket' => get_option( 'wp_rocket_settings', [] ),
                 'litespeed' => (function () {
                     global $wpdb;
+                    $like = $wpdb->esc_like( 'litespeed.conf' ) . '%';
                     $rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-                        "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE 'litespeed.conf%' LIMIT 200",
+                        $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d", $like, 200 ),
                         ARRAY_A
                     );
                     $settings = [];

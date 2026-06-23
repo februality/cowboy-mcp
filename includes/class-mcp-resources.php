@@ -154,16 +154,6 @@ class Cowboy_MCP_Resources {
             ];
         }
 
-        // Conditionally add UpdraftPlus resource.
-        if ( class_exists( 'UpdraftPlus' ) ) {
-            $resources[] = [
-                'uri'         => 'updraftplus://backup/history',
-                'name'        => 'UpdraftPlus Backup History',
-                'description' => 'Recent backup history with timestamps, entities, and storage destinations.',
-                'mimeType'    => 'application/json',
-            ];
-        }
-
         return [ 'resources' => $resources ];
     }
 
@@ -195,7 +185,6 @@ class Cowboy_MCP_Resources {
             'woocommerce://store/info'           => class_exists( 'WooCommerce' ) ? self::resource_woo_store_info() : null,
             'woocommerce://products/schema'      => class_exists( 'WooCommerce' ) ? self::resource_woo_product_schema() : null,
             'woocommerce://shipping/zones'       => class_exists( 'WooCommerce' ) ? self::resource_woo_shipping_zones() : null,
-            'updraftplus://backup/history'        => class_exists( 'UpdraftPlus' ) ? self::resource_updraft_backup_history() : null,
             'wordfence://scan/status'            => class_exists( 'wordfence' ) ? self::resource_wordfence_scan_status() : null,
             'wordfence://firewall/status'        => class_exists( 'wordfence' ) ? self::resource_wordfence_firewall_status() : null,
             'wordfence://activity/summary'       => class_exists( 'wordfence' ) ? self::resource_wordfence_activity_summary() : null,
@@ -333,7 +322,7 @@ class Cowboy_MCP_Resources {
     }
 
     private static function resource_htaccess(): string {
-        $path = ABSPATH . '.htaccess';
+        $path = Cowboy_MCP_Compat::wp_root() . '.htaccess';
         if ( ! file_exists( $path ) ) {
             return '(.htaccess not found — server may use nginx)';
         }
@@ -364,45 +353,6 @@ class Cowboy_MCP_Resources {
 
     private static function resource_tool_catalog(): array {
         return Cowboy_MCP_Tools::get_tool_catalog();
-    }
-
-    /* ── UpdraftPlus resource (conditional) ─────────────────── */
-
-    private static function resource_updraft_backup_history(): array {
-        if ( ! class_exists( 'UpdraftPlus_Backup_History' ) ) {
-            return [ 'error' => 'UpdraftPlus_Backup_History class not available.' ];
-        }
-
-        $history = UpdraftPlus_Backup_History::get_history();
-        krsort( $history );
-
-        $backups = [];
-        $count   = 0;
-        foreach ( $history as $ts => $backup ) {
-            if ( ++$count > 50 ) break;
-
-            $entities = [];
-            foreach ( [ 'db', 'plugins', 'themes', 'uploads', 'others' ] as $entity ) {
-                if ( ! empty( $backup[ $entity ] ) ) {
-                    $entities[] = $entity;
-                }
-            }
-
-            $backups[] = [
-                'timestamp' => (int) $ts,
-                'date'      => gmdate( 'Y-m-d H:i:s', (int) $ts ),
-                'nonce'     => $backup['nonce'] ?? '',
-                'entities'  => $entities,
-                'service'   => $backup['service'] ?? 'none',
-                'label'     => $backup['label'] ?? '',
-            ];
-        }
-
-        return [
-            'total'   => count( $history ),
-            'showing' => count( $backups ),
-            'backups' => $backups,
-        ];
     }
 
     /* ── Wordfence resources (conditional) ─────────────────── */
@@ -660,12 +610,9 @@ class Cowboy_MCP_Resources {
     }
 
     private static function resource_single_plugin( string $slug ) {
-        if ( ! function_exists( 'get_plugins' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
         // Convert -- back to / for plugin file path lookup
         $file = str_replace( '--', '/', $slug );
-        $all  = get_plugins();
+        $all  = Cowboy_MCP_Compat::get_plugins();
         if ( ! isset( $all[ $file ] ) ) return null;
         $data   = $all[ $file ];
         $active = in_array( $file, get_option( 'active_plugins', [] ), true );

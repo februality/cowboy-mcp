@@ -2,27 +2,19 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Read the last N lines from a file using WP_Filesystem.
+ * Read the last N lines from a file.
  *
  * @param string $filepath Absolute path to the file.
  * @param int    $lines    Number of lines to read from the end.
  * @return string[] Array of lines (newest last).
  */
 function cowboy_mcp_tail_file( string $filepath, int $lines ): array {
-	global $wp_filesystem;
-
-	if ( ! function_exists( 'WP_Filesystem' ) ) {
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-	}
-	if ( ! WP_Filesystem() ) {
+	if ( ! is_readable( $filepath ) ) {
 		return [];
 	}
 
-	if ( ! $wp_filesystem->exists( $filepath ) || ! $wp_filesystem->is_readable( $filepath ) ) {
-		return [];
-	}
-
-	$all_lines = $wp_filesystem->get_contents_array( $filepath );
+	// Native read (require-free): no WP_Filesystem/admin include needed.
+	$all_lines = @file( $filepath );
 	if ( ! is_array( $all_lines ) ) {
 		return [];
 	}
@@ -102,7 +94,7 @@ function cowboy_mcp_describe_callback( mixed $callback ): array {
 
 	// Avoid leaking absolute server paths — report relative to the WordPress root.
 	if ( ! empty( $info['file'] ) ) {
-		$info['file'] = ltrim( str_replace( ABSPATH, '', $info['file'] ), '/' );
+		$info['file'] = ltrim( str_replace( Cowboy_MCP_Compat::wp_root(), '', $info['file'] ), '/' );
 	}
 
 	// Strip null values.
@@ -267,7 +259,7 @@ return [
 				}
 			}
 			if ( ! $path || ! is_file( $path ) ) {
-				$default = WP_CONTENT_DIR . '/debug.log';
+				$default = Cowboy_MCP_Compat::content_dir() . '/debug.log';
 				if ( is_file( $default ) ) {
 					$path = $default;
 				}
@@ -624,8 +616,6 @@ return [
 		 * 7. wp_regenerate_thumbnails
 		 * ---------------------------------------------------------------- */
 		'wp_regenerate_thumbnails' => function ( array $a ): array|WP_Error {
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-
 			$results = [];
 
 			if ( ! empty( $a['attachment_id'] ) ) {
@@ -644,7 +634,7 @@ return [
 					return new WP_Error( 'file_missing', "Source file not found for attachment {$id}." );
 				}
 
-				$metadata = wp_generate_attachment_metadata( $id, $file );
+				$metadata = Cowboy_MCP_Compat::generate_attachment_metadata( $id, $file );
 				if ( is_wp_error( $metadata ) ) {
 					return $metadata;
 				}
@@ -683,7 +673,7 @@ return [
 						continue;
 					}
 
-					$metadata = wp_generate_attachment_metadata( $id, $file );
+					$metadata = Cowboy_MCP_Compat::generate_attachment_metadata( $id, $file );
 					if ( is_wp_error( $metadata ) ) {
 						$results[] = [
 							'attachment_id' => $id,
@@ -804,12 +794,9 @@ return [
 			}
 
 			if ( in_array( 'plugins', $sections, true ) ) {
-				if ( ! function_exists( 'get_plugins' ) ) {
-					require_once ABSPATH . 'wp-admin/includes/plugin.php';
-				}
 				$active  = get_option( 'active_plugins', [] );
 				$plugins = [];
-				$all     = get_plugins();
+				$all     = Cowboy_MCP_Compat::get_plugins();
 				foreach ( $active as $plugin_file ) {
 					$data = $all[ $plugin_file ] ?? [];
 					$plugins[] = [

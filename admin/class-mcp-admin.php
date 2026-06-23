@@ -35,7 +35,12 @@ class Cowboy_MCP_Admin {
         if ( $hook !== 'settings_page_' . self::SLUG ) {
             return;
         }
-        wp_add_inline_style( 'wp-admin', self::admin_css() );
+        wp_enqueue_style(
+            'cowboy-mcp-admin',
+            COWBOY_MCP_URL . 'admin/css/mcp-admin.css',
+            [],
+            COWBOY_MCP_VERSION
+        );
         wp_enqueue_script(
             'cowboy-mcp-admin',
             COWBOY_MCP_URL . 'admin/js/mcp-admin.js',
@@ -147,9 +152,9 @@ class Cowboy_MCP_Admin {
             ?></p>
 
             <nav class="nav-tab-wrapper mcp-nav-tabs">
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=connection" class="nav-tab <?php echo $active_tab === 'connection' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Connection', 'cowboy-mcp' ); ?></a>
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=settings" class="nav-tab <?php echo $active_tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Settings', 'cowboy-mcp' ); ?></a>
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=logs" class="nav-tab <?php echo $active_tab === 'logs' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Logs', 'cowboy-mcp' ); ?></a>
+                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=connection" class="nav-tab <?php echo esc_attr( $active_tab === 'connection' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Connection', 'cowboy-mcp' ); ?></a>
+                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=settings" class="nav-tab <?php echo esc_attr( $active_tab === 'settings' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Settings', 'cowboy-mcp' ); ?></a>
+                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=logs" class="nav-tab <?php echo esc_attr( $active_tab === 'logs' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Logs', 'cowboy-mcp' ); ?></a>
             </nav>
 
             <?php
@@ -173,9 +178,9 @@ class Cowboy_MCP_Admin {
 
         /* ── Step 1: Generate an API Key ──────────────────── */
         ?>
-        <div class="mcp-step <?php echo $new_key ? 'mcp-step--completed' : 'mcp-step--active'; ?>">
+        <div class="mcp-step <?php echo esc_attr( $new_key ? 'mcp-step--completed' : 'mcp-step--active' ); ?>">
             <div class="mcp-step-header">
-                <span class="mcp-step-number"><?php echo $new_key ? '&#10003;' : '1'; ?></span>
+                <span class="mcp-step-number"><?php echo esc_html( $new_key ? '✓' : '1' ); ?></span>
                 <h3 style="margin:0;"><?php esc_html_e( 'Generate an API Key', 'cowboy-mcp' ); ?></h3>
             </div>
             <div class="mcp-step-body">
@@ -204,7 +209,7 @@ class Cowboy_MCP_Admin {
         </div>
 
         <?php /* ── Step 2: Choose Your AI Tool ────────────────── */ ?>
-        <div class="mcp-step <?php echo $new_key ? 'mcp-step--active' : ''; ?>">
+        <div class="mcp-step <?php echo esc_attr( $new_key ? 'mcp-step--active' : '' ); ?>">
             <div class="mcp-step-header">
                 <span class="mcp-step-number">2</span>
                 <h3 style="margin:0;"><?php esc_html_e( 'Choose Your AI Tool & Run the Command', 'cowboy-mcp' ); ?></h3>
@@ -371,7 +376,7 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
                             <tr>
                                 <th scope="row"><?php esc_html_e( 'Rate Limit', 'cowboy-mcp' ); ?></th>
                                 <td>
-                                    <input type="number" name="cowboy_mcp_rate_limit" value="<?php echo (int) ( $settings['rate_limit'] ?? 120 ); ?>" min="10" max="1000" class="small-text">
+                                    <input type="number" name="cowboy_mcp_rate_limit" value="<?php echo esc_attr( (int) ( $settings['rate_limit'] ?? 120 ) ); ?>" min="10" max="1000" class="small-text">
                                     <span><?php esc_html_e( 'requests per minute per key', 'cowboy-mcp' ); ?></span>
                                 </td>
                             </tr>
@@ -453,7 +458,7 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
                     <?php esc_html_e( 'Per page', 'cowboy-mcp' ); ?>
                     <select name="per_page">
                         <?php foreach ( [ 25, 50, 100 ] as $pp ): ?>
-                            <option value="<?php echo (int) $pp; ?>" <?php selected( $filters['per_page'], $pp ); ?>><?php echo (int) $pp; ?></option>
+                            <option value="<?php echo esc_attr( (int) $pp ); ?>" <?php selected( $filters['per_page'], $pp ); ?>><?php echo esc_html( (int) $pp ); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </label>
@@ -494,8 +499,8 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
                     <?php foreach ( $entries as $row ):
                         $has_args = ! empty( $row['args'] );
                     ?>
-                        <tr<?php echo $has_args ? ' class="mcp-log-row"' : ''; ?>>
-                            <td><span class="mcp-expand-arrow"><?php echo $has_args ? '&#x25B6; ' : ''; ?></span><code style="font-size:11px;"><?php echo esc_html( $row['timestamp'] ); ?></code></td>
+                        <tr class="<?php echo esc_attr( $has_args ? 'mcp-log-row' : '' ); ?>">
+                            <td><span class="mcp-expand-arrow"><?php echo esc_html( $has_args ? '▶ ' : '' ); ?></span><code style="font-size:11px;"><?php echo esc_html( $row['timestamp'] ); ?></code></td>
                             <td><?php echo esc_html( $row['key_label'] ?: $row['key_id'] ?: '—' ); ?></td>
                             <td><?php echo esc_html( $row['event'] ); ?></td>
                             <td><code><?php echo esc_html( $row['tool'] ?: '—' ); ?></code></td>
@@ -531,96 +536,4 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
         <?php
     }
 
-    /* ── Inline CSS ────────────────────────────────────────── */
-
-    private static function admin_css(): string {
-        return '
-.mcp-admin { max-width: 960px; }
-.mcp-admin .postbox { margin-bottom: 20px; }
-.mcp-admin .postbox-header { cursor: default; }
-.mcp-admin .postbox-header h2 { padding: 8px 12px; }
-
-.mcp-code-block {
-    background: #2c3338; padding: 12px 16px; border-radius: 4px;
-    margin: 4px 0;
-}
-.mcp-code-block code {
-    color: #50c878; font-size: 13px; background: none;
-    display: block; white-space: pre-wrap; overflow-wrap: break-word;
-}
-.mcp-copy-btn { margin-top: 4px; }
-.mcp-copy-btn--copied { color: #00a32a; }
-
-.mcp-tabs-nav {
-    display: flex; gap: 0; border-bottom: 1px solid #c3c4c7;
-    margin: 8px 0 0;
-}
-.mcp-tab-btn {
-    padding: 6px 14px; border: none; background: none;
-    font-size: 13px; font-weight: 500; color: #50575e;
-    cursor: pointer; border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-}
-.mcp-tab-btn:hover { color: #2271b1; }
-.mcp-tab-btn--active { color: #2271b1; border-bottom-color: #2271b1; }
-.mcp-tab-panel { display: none; padding-top: 8px; }
-.mcp-tab-panel--active { display: block; }
-
-.mcp-step {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-}
-.mcp-step--active { border-left: 4px solid #2271b1; }
-.mcp-step--completed { border-left: 4px solid #00a32a; }
-.mcp-step-header { display: flex; align-items: center; gap: 12px; }
-.mcp-step-number {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: #dcdcde; color: #50575e;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-weight: 600; flex-shrink: 0;
-}
-.mcp-step--active .mcp-step-number { background: #2271b1; color: #fff; }
-.mcp-step--completed .mcp-step-number { background: #00a32a; color: #fff; }
-.mcp-step-body { margin-left: 40px; margin-top: 8px; }
-
-.mcp-filter-form {
-    display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin: 12px 0;
-}
-.mcp-filter-label {
-    display: flex; flex-direction: column; gap: 2px; font-size: 12px;
-}
-.mcp-generate-form {
-    margin-top: 4px; display: flex; gap: 8px; align-items: center;
-}
-.mcp-pagination {
-    margin-top: 12px; display: flex; gap: 8px; align-items: center;
-}
-.mcp-clear-form { margin-bottom: 12px; }
-.mcp-nav-tabs { margin-bottom: 20px; }
-.mcp-revoke-form { display: inline; }
-.mcp-audit-table { font-size: 13px; }
-
-.mcp-filter-badge {
-    display: inline-block; background: #f0f6fc; color: #2271b1;
-    padding: 2px 8px; border-radius: 3px; font-size: 12px; margin-left: 8px;
-}
-.mcp-filter-badge a { text-decoration: none; }
-
-.mcp-log-detail { display: none; }
-.mcp-log-detail td { background: #f6f7f7; padding: 8px 12px; }
-.mcp-log-detail pre { margin: 0; white-space: pre-wrap; font-size: 12px; max-height: 300px; overflow-y: auto; }
-.mcp-log-row { cursor: pointer; }
-.mcp-log-row:hover td { background: #f0f6fc; }
-.mcp-expand-arrow { font-size: 10px; margin-right: 4px; }
-
-@media (max-width: 782px) {
-    .mcp-table-wrap {
-        overflow-x: auto; -webkit-overflow-scrolling: touch;
-    }
-}
-';
-    }
 }

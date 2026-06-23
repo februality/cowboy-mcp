@@ -35,6 +35,13 @@ return [
     'handlers' => [
         'wp_db_query' => function ( array $a ) {
             global $wpdb;
+
+            // Raw SQL execution is gated to administrators (defence in depth on top of the
+            // API-key auth that already maps the request to an admin user).
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return new WP_Error( 'forbidden', 'Running raw SQL requires the manage_options capability.' );
+            }
+
             $sql  = cowboy_mcp_prepare_sql( $a['sql'] );
             $norm = Cowboy_MCP_Security::normalize_sql( $sql );
 
@@ -62,6 +69,14 @@ return [
                 $sql .= ' LIMIT 100';
             }
 
+            // This tool runs an arbitrary, admin-supplied read query (a phpMyAdmin-style
+            // feature): the ENTIRE statement is the user's input, so $wpdb->prepare() cannot
+            // apply — there are no discrete values to bind, and per WordPress's own guidance a
+            // fully-formed query must not be passed to prepare() (it warns and secures nothing
+            // — see make.wordpress.org "Missing argument 2 for wpdb::prepare()"). Safety comes
+            // instead from the manage_options gate above, the SELECT-only verb check, the
+            // dangerous-statement blocklist, the credential-table guard, result redaction, and
+            // the auto-LIMIT; the {prefix} token is replaced with the trusted $wpdb->prefix.
             $results = $wpdb->get_results( $sql, ARRAY_A ) ?? []; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
             if ( $wpdb->last_error ) {
                 return new WP_Error( 'db_error', $wpdb->last_error );
@@ -73,6 +88,13 @@ return [
 
         'wp_db_write' => function ( array $a ) {
             global $wpdb;
+
+            // Raw SQL execution is gated to administrators (defence in depth on top of the
+            // API-key auth that already maps the request to an admin user).
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return new WP_Error( 'forbidden', 'Running raw SQL requires the manage_options capability.' );
+            }
+
             $sql  = cowboy_mcp_prepare_sql( $a['sql'] );
             $norm = Cowboy_MCP_Security::normalize_sql( $sql );
 
@@ -83,6 +105,10 @@ return [
                 return new WP_Error( 'blocked', "{$blocked} is blocked for safety. An administrator can enable Power mode to allow this." );
             }
 
+            // Arbitrary, admin-supplied write query (see the detailed note in wp_db_query):
+            // the whole statement is the user's input, so prepare() cannot be applied. Safety
+            // is enforced by the manage_options gate, the dangerous-statement blocklist, and
+            // Power-mode gating; the {prefix} token is replaced with the trusted $wpdb->prefix.
             $result = $wpdb->query( $sql );     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
             if ( $wpdb->last_error ) {
                 return new WP_Error( 'db_error', $wpdb->last_error );

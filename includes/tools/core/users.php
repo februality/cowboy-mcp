@@ -35,13 +35,11 @@ return [
                 }
             }
 
-            require_once ABSPATH . 'wp-admin/includes/user.php';
-
             $reassign = isset( $a['reassign_to'] ) ? (int) $a['reassign_to'] : null;
             if ( $reassign !== null && ! get_userdata( $reassign ) ) {
                 return new WP_Error( 'invalid_reassign', "reassign_to user {$reassign} does not exist." );
             }
-            $result = wp_delete_user( $user_id, $reassign );
+            $result = Cowboy_MCP_Compat::delete_user( $user_id, $reassign );
 
             if ( ! $result ) {
                 return new WP_Error( 'delete_failed', "Failed to delete user {$user_id}." );

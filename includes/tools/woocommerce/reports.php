@@ -429,12 +429,12 @@ return [
             // Paying customers (have at least 1 order) — HPOS-aware.
             global $wpdb;
             if ( cowboy_mcp_woo_is_hpos_enabled() ) {
-                $paying_count = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                    "SELECT COUNT( DISTINCT customer_id ) FROM {$wpdb->prefix}wc_orders WHERE customer_id > 0"
+                $paying_count = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+                    $wpdb->prepare( "SELECT COUNT( DISTINCT customer_id ) FROM %i WHERE customer_id > %d", $wpdb->prefix . 'wc_orders', 0 )
                 );
             } else {
                 $paying_count = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-                    "SELECT COUNT( DISTINCT meta_value ) FROM {$wpdb->postmeta} WHERE meta_key = '_customer_user' AND meta_value > 0"
+                    $wpdb->prepare( "SELECT COUNT( DISTINCT meta_value ) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value > %d", '_customer_user', 0 )
                 );
             }
 

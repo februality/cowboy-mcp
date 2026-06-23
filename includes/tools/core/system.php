@@ -53,10 +53,6 @@ return [
     ],
     'handlers' => [
         'wp_site_info' => function ( array $a = [] ): array {
-            if ( ! function_exists( 'get_plugins' ) ) {
-                require_once ABSPATH . 'wp-admin/includes/plugin.php';
-            }
-
             $theme = wp_get_theme();
 
             return [
@@ -168,7 +164,7 @@ return [
 
             // In Power mode the caller may pass their own --path; don't append a second one.
             $has_path = (bool) preg_match( '/(^|\s)--path(=|\s)/i', $command );
-            $wp_path  = ABSPATH;
+            $wp_path  = Cowboy_MCP_Compat::wp_root();
             $full     = $has_path
                 ? sprintf( 'wp %s --allow-root 2>&1', escapeshellcmd( $command ) )
                 : sprintf( 'wp %s --path=%s --allow-root 2>&1', escapeshellcmd( $command ), escapeshellarg( $wp_path ) );
