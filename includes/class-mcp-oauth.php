@@ -419,7 +419,7 @@ class Cowboy_MCP_OAuth {
         if ( ! self::is_enabled() ) {
             return;
         }
-        $uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+        $uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
         $path = wp_parse_url( $uri, PHP_URL_PATH );
         if ( ! is_string( $path ) || $path === '' ) {
             return;
@@ -625,7 +625,8 @@ class Cowboy_MCP_OAuth {
             self::authorize_fatal( __( 'The OAuth connector is not enabled on this site.', 'cowboy-mcp' ) );
         }
 
-        $is_post = ( strtoupper( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST' );
+        $method  = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
+        $is_post = ( strtoupper( $method ) === 'POST' );
         // phpcs:ignore WordPress.Security.NonceVerification
         $src = $is_post ? $_POST : $_GET;
 
@@ -698,7 +699,7 @@ class Cowboy_MCP_OAuth {
     }
 
     private static function current_authorize_url(): string {
-        $uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/cowboy-mcp-oauth/authorize';
+        $uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/cowboy-mcp-oauth/authorize';
         return self::issuer() . $uri;
     }
 
@@ -713,9 +714,9 @@ class Cowboy_MCP_OAuth {
     private static function authorize_fatal( string $message ): void {
         status_header( 400 );
         nocache_headers();
-        $title = esc_html__( 'Connection error', 'cowboy-mcp' );
-        $body  = '<h1>' . $title . '</h1><p>' . esc_html( $message ) . '</p>';
-        wp_die( wp_kses_post( $body ), $title, [ 'response' => 400 ] );
+        $heading = __( 'Connection error', 'cowboy-mcp' );
+        $body    = '<h1>' . esc_html( $heading ) . '</h1><p>' . esc_html( $message ) . '</p>';
+        wp_die( wp_kses_post( $body ), esc_html( $heading ), [ 'response' => 400 ] );
     }
 
     private static function render_consent_screen( array $client, string $redirect_uri, string $state, string $challenge, string $challenge_m, string $scope, string $resource ): void {

@@ -350,6 +350,7 @@ codex mcp add <?php echo esc_attr( $domain ); ?> --url <?php echo esc_url( $endp
                 <?php if ( ! $oauth_on ): ?>
                     <p><?php
                         printf(
+                            /* translators: %s is the URL of the Cowboy MCP settings page. */
                             wp_kses( __( 'Let non-technical users connect from the Claude Desktop or web app — no terminal required. <a href="%s">Enable the Desktop Connector</a> in Settings to turn it on.', 'cowboy-mcp' ), [ 'a' => [ 'href' => [] ] ] ),
                             esc_url( $settings_url )
                         );

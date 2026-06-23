@@ -63,7 +63,7 @@ class Cowboy_MCP_Audit_Log {
 
 		// Direct DDL — table name and charset come from trusted $wpdb internals,
 		// not user input; the statement is idempotent (IF NOT EXISTS).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$wpdb->query( $sql );
 	}
 

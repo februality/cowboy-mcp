@@ -416,7 +416,7 @@ class Cowboy_MCP_Compat {
 			$name = $filetype['proper_filename'];
 		}
 		if ( ! $type || ! $ext ) {
-			@unlink( $file['tmp_name'] );
+			wp_delete_file( $file['tmp_name'] );
 			return new WP_Error( 'invalid_type', 'Sorry, this file type is not permitted for security reasons.' );
 		}
 
@@ -431,16 +431,22 @@ class Cowboy_MCP_Compat {
 		$new_file = $uploads['path'] . "/$filename";
 
 		// Move the temp file into uploads (native, atomic where possible).
+		// WP_Filesystem::move() would require loading wp-admin/includes/file.php,
+		// which this plugin never does (see Cowboy_MCP_Compat); native rename is
+		// atomic here and falls back to copy+delete.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
 		if ( ! @rename( $file['tmp_name'], $new_file ) ) {
 			if ( ! @copy( $file['tmp_name'], $new_file ) ) {
 				return new WP_Error( 'move_failed', 'Failed to move the uploaded file into the uploads directory.' );
 			}
-			@unlink( $file['tmp_name'] );
+			wp_delete_file( $file['tmp_name'] );
 		}
 
-		// Match WordPress's file permissions.
+		// Match WordPress's file permissions. WP_Filesystem::chmod() would require
+		// loading wp-admin/includes/file.php, which this plugin never does.
 		$stat  = @stat( dirname( $new_file ) );
 		$perms = $stat ? ( $stat['mode'] & 0000666 ) : 0644;
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
 		@chmod( $new_file, $perms );
 
 		$url   = $uploads['url'] . "/$filename";
@@ -458,7 +464,7 @@ class Cowboy_MCP_Compat {
 
 		$attach_id = wp_insert_attachment( $attachment, $new_file, $post_id, true );
 		if ( is_wp_error( $attach_id ) ) {
-			@unlink( $new_file );
+			wp_delete_file( $new_file );
 			return $attach_id;
 		}
 
@@ -620,7 +626,11 @@ class Cowboy_MCP_Compat {
 		}
 
 		foreach ( [ 'title', 'caption', 'credit', 'copyright', 'camera' ] as $key ) {
-			if ( $meta[ $key ] && ! seems_utf8( $meta[ $key ] ) ) {
+			// Detect non-UTF-8 without WP's seems_utf8() (deprecated in 6.9) or
+			// wp_is_valid_utf8() (requires 6.9; min supported is 6.2). PCRE's /u
+			// flag makes preg_match() return false on a malformed UTF-8 subject.
+			$is_utf8 = ( preg_match( '//u', (string) $meta[ $key ] ) !== false );
+			if ( $meta[ $key ] && ! $is_utf8 ) {
 				if ( function_exists( 'mb_convert_encoding' ) ) {
 					$meta[ $key ] = mb_convert_encoding( $meta[ $key ], 'UTF-8', 'ISO-8859-1' );
 				} elseif ( function_exists( 'iconv' ) ) {

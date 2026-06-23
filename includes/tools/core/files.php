@@ -135,6 +135,7 @@ return [
             }
             // Atomic replace via native rename. $tmp lives in the same directory as
             // $path, so this is atomic and needs no WP_Filesystem/admin include.
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
             if ( ! @rename( $tmp, $path ) ) {
                 wp_delete_file( $tmp );
                 return new WP_Error( 'write_failed', "Atomic rename failed for {$a['path']}." );
