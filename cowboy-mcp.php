@@ -117,6 +117,9 @@ register_activation_hook( __FILE__, function () {
         wp_schedule_event( time(), 'daily', Cowboy_MCP_Audit_Log::CRON_HOOK );
     }
 
+    // Flag a one-time redirect to the connection page on next admin load.
+    set_transient( 'cowboy_mcp_activation_redirect', 1, 60 );
+
     flush_rewrite_rules();
 });
 
@@ -136,6 +139,9 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_oauth_tokens' );
     delete_option( 'cowboy_mcp_oauth_refresh' );
     delete_option( 'cowboy_mcp_oauth_clients' );
+
+    // Remove per-user admin preferences (remembered connection method).
+    delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
 
     // Drop audit log table.
     global $wpdb;
