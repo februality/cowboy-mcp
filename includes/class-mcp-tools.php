@@ -210,7 +210,16 @@ class Cowboy_MCP_Tools {
 
         $handler = self::$handlers[ $name ] ?? null;
         if ( ! $handler ) {
-            return new WP_Error( 'unknown_tool', "Tool not found: {$name}", [ 'code' => -32602 ] );
+            // Self-correcting: point the agent at the nearest real tool names so it can
+            // retry cowboy_run without a separate cowboy_discover round-trip.
+            $suggestions = self::closest_tool_names( $name, self::get_tool_definitions(), 5 );
+            $names       = implode( ', ', array_column( $suggestions, 'name' ) );
+            $hint        = $names !== '' ? " Did you mean: {$names}?" : '';
+            return new WP_Error(
+                'unknown_tool',
+                "Tool not found: {$name}.{$hint} Use cowboy_discover to search by keyword or category.",
+                [ 'code' => -32602 ]
+            );
         }
 
         // Validate required arguments against the tool's inputSchema.
@@ -219,9 +228,13 @@ class Cowboy_MCP_Tools {
             $required = $tool_def['inputSchema']['required'] ?? [];
             $missing  = array_diff( $required, array_keys( $args ) );
             if ( ! empty( $missing ) ) {
+                // Self-correcting: return the tool's inputSchema inline so the agent can
+                // supply the missing arguments without re-discovering the tool first.
+                $schema_json = wp_json_encode( $tool_def['inputSchema'], JSON_UNESCAPED_SLASHES );
                 return new WP_Error(
                     'invalid_params',
-                    'Missing required argument(s): ' . implode( ', ', $missing ),
+                    'Missing required argument(s): ' . implode( ', ', $missing )
+                        . '. Resend the call for "' . $name . '" including these arguments. inputSchema: ' . $schema_json,
                     [ 'code' => -32602 ]
                 );
             }
@@ -542,33 +555,53 @@ class Cowboy_MCP_Tools {
 
         // If no query, return all tools in the category.
         if ( $query === '' ) {
-            return [ 'tools' => array_values( $all_tools ) ];
+            $all = array_values( $all_tools );
+            return [
+                'total'    => count( $all ),
+                'returned' => count( $all ),
+                'hasMore'  => false,
+                'tools'    => $all,
+            ];
         }
 
-        // Score and rank by keyword relevance.
+        // Score and rank by fuzzy keyword relevance.
         $query_lower = strtolower( $query );
         $words       = preg_split( '/[\s_]+/', $query_lower, -1, PREG_SPLIT_NO_EMPTY );
         $scored      = [];
 
         foreach ( $all_tools as $tool ) {
-            $score      = 0;
+            $score      = 0.0;
             $name_lower = strtolower( $tool['name'] );
             $name_words = explode( '_', $name_lower );
             $desc_lower = strtolower( $tool['description'] ?? '' );
-            $desc_words = preg_split( '/[\s,.\-:;()\[\]]+/', $desc_lower, -1, PREG_SPLIT_NO_EMPTY );
+            $desc_words = preg_split( '/[\s,.\-:;()\[\]{}\/]+/', $desc_lower, -1, PREG_SPLIT_NO_EMPTY );
 
-            // Exact name match.
+            // Whole-query exact name match dominates.
             if ( $query_lower === $name_lower ) {
                 $score += 100;
             }
 
+            // Each query word scores against its best-matching name segment and
+            // description word using fuzzy similarity (exact > stem > substring >
+            // shared-prefix), so "products"/"creating" still find product/create tools.
             foreach ( $words as $w ) {
-                if ( in_array( $w, $name_words, true ) ) {
-                    $score += 10;
+                $best_name = 0.0;
+                foreach ( $name_words as $nw ) {
+                    $best_name = max( $best_name, self::word_similarity( $w, $nw ) );
+                    if ( $best_name >= 1.0 ) {
+                        break;
+                    }
                 }
-                if ( in_array( $w, $desc_words, true ) ) {
-                    $score += 3;
+                $score += 10 * $best_name;
+
+                $best_desc = 0.0;
+                foreach ( $desc_words as $dw ) {
+                    $best_desc = max( $best_desc, self::word_similarity( $w, $dw ) );
+                    if ( $best_desc >= 1.0 ) {
+                        break;
+                    }
                 }
+                $score += 3 * $best_desc;
             }
 
             if ( $score > 0 ) {
@@ -576,14 +609,140 @@ class Cowboy_MCP_Tools {
             }
         }
 
+        // No keyword hits — fail helpfully instead of returning an empty list:
+        // suggest the closest tool names and list the categories available to browse,
+        // so the agent can recover without a blind re-query.
+        if ( empty( $scored ) ) {
+            $present_categories = array_values( array_unique( array_values( self::$tool_categories ) ) );
+            sort( $present_categories );
+            return [
+                'total'       => 0,
+                'returned'    => 0,
+                'hasMore'     => false,
+                'tools'       => [],
+                'message'     => "No tools matched \"{$query}\". Try a broader keyword, browse a category, or pick from the suggestions below.",
+                'suggestions' => self::closest_tool_names( $query, $all_tools, 5 ),
+                'categories'  => $present_categories,
+            ];
+        }
+
         // Sort by score descending, then by name for stability.
         usort( $scored, function ( $a, $b ) {
             return $b['score'] <=> $a['score'] ?: strcmp( $a['tool']['name'], $b['tool']['name'] );
         } );
 
-        // Return top 10.
-        $results = array_map( fn( $s ) => $s['tool'], array_slice( $scored, 0, 10 ) );
-        return [ 'tools' => $results ];
+        // Return the top matches, signalling truncation so the agent knows to narrow
+        // its query rather than assuming it has seen everything.
+        $limit   = 15;
+        $total   = count( $scored );
+        $results = array_map( fn( $s ) => $s['tool'], array_slice( $scored, 0, $limit ) );
+        return [
+            'total'    => $total,
+            'returned' => count( $results ),
+            'hasMore'  => $total > $limit,
+            'tools'    => $results,
+        ];
+    }
+
+    /**
+     * Reduce a token to a loose stem so singular/plural forms match
+     * (e.g. "products" → "product", "categories" → "category").
+     */
+    private static function loose_stem( string $w ): string {
+        if ( strlen( $w ) <= 3 ) {
+            return $w;
+        }
+        if ( str_ends_with( $w, 'ies' ) ) {
+            return substr( $w, 0, -3 ) . 'y';            // categories → category
+        }
+        if ( str_ends_with( $w, 'ses' ) || str_ends_with( $w, 'xes' )
+            || str_ends_with( $w, 'zes' ) || str_ends_with( $w, 'ches' )
+            || str_ends_with( $w, 'shes' ) ) {
+            return substr( $w, 0, -2 );                  // statuses → status, boxes → box
+        }
+        if ( str_ends_with( $w, 's' ) && ! str_ends_with( $w, 'ss' ) && ! str_ends_with( $w, 'us' ) ) {
+            return substr( $w, 0, -1 );                  // products → product (not "class"/"status")
+        }
+        return $w;
+    }
+
+    /**
+     * Fuzzy similarity between a query word and a target word, 0.0–1.0.
+     * Tiered: exact (1.0) > stem (0.9) > substring (0.6) > shared-prefix (0.5).
+     * Short tokens (<4 chars after stemming) only match exactly, to limit noise.
+     */
+    private static function word_similarity( string $qw, string $tw ): float {
+        if ( $qw === $tw ) {
+            return 1.0;
+        }
+        $qs = self::loose_stem( $qw );
+        $ts = self::loose_stem( $tw );
+        if ( $qs === $ts ) {
+            return 0.9;
+        }
+        if ( strlen( $qs ) < 4 || strlen( $ts ) < 4 ) {
+            return 0.0;
+        }
+        if ( str_contains( $ts, $qs ) || str_contains( $qs, $ts ) ) {
+            return 0.6;                                  // permalink ⊃ perm
+        }
+        $min = min( strlen( $qs ), strlen( $ts ) );
+        $cp  = 0;
+        while ( $cp < $min && $qs[ $cp ] === $ts[ $cp ] ) {
+            $cp++;
+        }
+        if ( $cp >= 4 && $cp >= 0.6 * $min ) {
+            return 0.5;                                  // create ~ creating
+        }
+        return 0.0;
+    }
+
+    /**
+     * Rank tools by overall string similarity to a free-text query and return the
+     * closest { name, description } pairs — used for "did you mean" suggestions when a
+     * search or a tool name fails to resolve.
+     *
+     * @param array $tools Tool definition arrays (each with 'name' and 'description').
+     */
+    private static function closest_tool_names( string $query, array $tools, int $limit = 5 ): array {
+        $q      = strtolower( str_replace( '_', ' ', $query ) );
+        $ranked = [];
+        foreach ( $tools as $tool ) {
+            $name = $tool['name'] ?? '';
+            if ( $name === '' ) {
+                continue;
+            }
+            $hay = strtolower( str_replace( '_', ' ', $name ) );
+            $pct = 0.0;
+            similar_text( $q, $hay, $pct );
+            $ranked[] = [
+                'pct'         => $pct,
+                'name'        => $name,
+                'description' => self::short_description( $tool['description'] ?? '' ),
+            ];
+        }
+        usort( $ranked, fn( $a, $b ) => $b['pct'] <=> $a['pct'] ?: strcmp( $a['name'], $b['name'] ) );
+        return array_map(
+            fn( $r ) => [ 'name' => $r['name'], 'description' => $r['description'] ],
+            array_slice( $ranked, 0, $limit )
+        );
+    }
+
+    /**
+     * First sentence/line of a tool description, minus the leading "[Category]" tag,
+     * capped for compact catalog and suggestion listings.
+     */
+    private static function short_description( string $desc ): string {
+        $desc = preg_replace( '/^\s*\[[^\]]+\]\s*/', '', $desc );   // drop "[System] " tag
+        $desc = explode( "\n", $desc )[0];                          // first line only
+        if ( preg_match( '/^(.*?[.!?])(\s|$)/', $desc, $m ) ) {
+            $desc = $m[1];                                          // first sentence
+        }
+        $desc = trim( $desc );
+        if ( strlen( $desc ) > 160 ) {
+            $desc = rtrim( substr( $desc, 0, 157 ) ) . '...';
+        }
+        return $desc;
     }
 
     /**
@@ -593,27 +752,38 @@ class Cowboy_MCP_Tools {
     public static function get_tool_catalog(): array {
         self::load_domains();
 
-        // Build category → tool names map.
-        $categories = [];
+        // Build category → [ {name, description}, ... ] map so the catalog is a
+        // self-contained index: an agent can find the exact tool name and what it
+        // does in a single read, then call cowboy_run directly (or cowboy_discover
+        // for the full inputSchema) without a trial-and-error keyword search.
+        $grouped = [];
         foreach ( self::$tool_categories as $tool_name => $cat ) {
-            $categories[ $cat ]['tool_names'][] = $tool_name;
+            $grouped[ $cat ][] = [
+                'name'        => $tool_name,
+                'description' => self::short_description( self::$tool_map[ $tool_name ]['description'] ?? '' ),
+            ];
         }
-        foreach ( $categories as $cat => &$info ) {
-            $info['count']       = count( $info['tool_names'] );
-            $info['description'] = self::CATEGORY_DESCRIPTIONS[ $cat ] ?? '';
+
+        $categories = [];
+        foreach ( $grouped as $cat => $tools ) {
+            $categories[ $cat ] = [
+                'count'       => count( $tools ),
+                'description' => self::CATEGORY_DESCRIPTIONS[ $cat ] ?? '',
+                'tools'       => $tools,
+            ];
         }
-        unset( $info );
 
         $total = count( self::$tools );
 
-        $workflow = 'Call cowboy_discover to search tools by keyword or category, then cowboy_run to execute them. '
-            . "Example: cowboy_discover(query='login failures') → finds wp_wordfence_update_settings → "
-            . "cowboy_run(tool='wp_wordfence_update_settings', arguments={settings: {maxFailures: 8}})";
+        $workflow = 'This catalog lists every tool with a one-line description. To act: find the tool here, '
+            . 'then call cowboy_run(tool, arguments). Call cowboy_discover(query|category) only when you need a '
+            . "tool's full inputSchema or want to search by keyword. "
+            . "Example: cowboy_run(tool='wp_wordfence_update_settings', arguments={settings: {maxFailures: 8}})";
 
         return [
             'tool_mode'  => 'gateway',
             'total'      => $total,
-            'workflow'    => $workflow,
+            'workflow'   => $workflow,
             'categories' => $categories,
         ];
     }

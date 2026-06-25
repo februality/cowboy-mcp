@@ -317,7 +317,7 @@ class Cowboy_MCP_Transport {
         $text = "You are connected to the WordPress site \"{$name}\" at {$url} (domain: {$host}).\n"
             . "WordPress {$ver}, theme \"{$theme}\", table prefix \"{$prefix}\".\n"
             . "\n"
-            . "IMPORTANT: Read the wordpress://tools/catalog resource to discover all available tools and how to use them.\n"
+            . "IMPORTANT: Read the wordpress://tools/catalog resource first — it lists every available tool with a one-line description, grouped by category. Find the tool you need there, then call cowboy_run directly; use cowboy_discover only to search by keyword or to fetch a tool's full inputSchema.\n"
             . "\n"
             . "Safety: Safe mode is {$safe_mode}. When ON, destructive tools require confirm: true. All non-read-only tools support dry_run: true to preview changes without executing.\n"
             . "\n"
@@ -338,7 +338,7 @@ class Cowboy_MCP_Transport {
             }
             $text .= "\n\nThis site exposes {$total} tools via 2 gateway meta-tools. Categories:\n"
                 . implode( "\n", $lines ) . "\n\n"
-                . "Workflow: call cowboy_discover with a keyword or category to find tools, then cowboy_run to execute them.";
+                . "Workflow: read wordpress://tools/catalog to find a tool by name, then cowboy_run to execute it; use cowboy_discover to search by keyword or to get a tool's full inputSchema.";
         }
 
         return $text;
