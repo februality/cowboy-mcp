@@ -17,7 +17,7 @@ Cowboy MCP turns your site into a full-featured [Model Context Protocol](https:/
 **Key features:**
 
 * **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint`
-* **121 tools** — Full CRUD for posts, taxonomies, options, users, comments, media, menus, database queries, WP-CLI, and more
+* **124 tools** — Full CRUD for posts, taxonomies, options, users, comments, media, menus, database diagnostics, WP-CLI, and more
 * **Plugin integrations** — Conditional tools for WooCommerce, ACF, Yoast/Rank Math, Elementor, Wordfence, WPForms/Gravity Forms/CF7, and cache plugins (WP Rocket, LiteSpeed, W3TC)
 * **16 read-only resources** — Site info, recent posts, plugin/theme lists, WooCommerce summaries, and more
 * **8 workflow prompts** — Site audit, content migration, SEO optimization, security hardening, and more
@@ -85,6 +85,10 @@ The `cowboy_mcp_tool_allowed` filter lets you block specific tools per-request. 
 
 = Unreleased =
 * Updated for WordPress.org plugin directory compliance.
+* Removed: the self-hosted GitHub-backed auto-updater. The plugin is now distributed and updated through the WordPress.org plugin directory, so the bundled updater (and its cowboymcp.com manifest check) is no longer needed.
+* Changed: replaced the general-purpose `wp_db_query`/`wp_db_write` raw-SQL tools with fixed-query tools (`wp_db_health_report`, `wp_db_list_tables`, `wp_db_show_processlist`, `wp_db_check_table`, `wp_db_repair_table`) — no tool accepts free-form SQL anymore.
+* Fixed: OAuth consent screen now loads its CSS via `wp_enqueue_style()` instead of an inline `<style>` block.
+* Changed: the plugin-activation sandbox-load no longer defines `WP_SANDBOX_SCRAPING` — that constant existed only to signal third-party plugins during the scrape, and removing it avoids mutating global PHP state the plugin itself doesn't need.
 
 = 1.4.0 =
 * New: Connect via the Claude Desktop / web app using a one-click OAuth sign-in (custom connectors) — no terminal required. Off by default; enable under Settings → Cowboy MCP → Settings → Desktop Connector. The existing terminal/API-key method is unchanged.

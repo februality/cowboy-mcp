@@ -44,12 +44,6 @@ define( 'COWBOY_MCP_VERSION', '1.4.0' );
 define( 'COWBOY_MCP_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'COWBOY_MCP_URL',     plugin_dir_url( __FILE__ ) );
 
-// Self-hosted update source — consumed only by the optional GitHub-backed updater
-// module loaded below (absent from the WordPress.org build). Overridable in
-// wp-config.php for staging/testing.
-defined( 'COWBOY_MCP_UPDATE_URL' ) || define( 'COWBOY_MCP_UPDATE_URL', 'https://cowboymcp.com/updates/cowboy-mcp.json' );
-define( 'COWBOY_MCP_BASENAME', plugin_basename( __FILE__ ) );
-
 /* ── Autoload ─────────────────────────────────────────────── */
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-security.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
@@ -60,19 +54,6 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-tools.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-resources.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-prompts.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-completion.php';
-
-// Self-hosted GitHub-backed auto-updater. OMITTED from the WordPress.org build
-// (the .org repository serves its own updates and forbids self-updaters); ships
-// only in the GitHub release zip. The guards keep the plugin running identically
-// whether or not the file is present. Define COWBOY_MCP_DISABLE_SELF_UPDATE in
-// wp-config.php to force it off even when the file is present.
-if ( ! defined( 'COWBOY_MCP_DISABLE_SELF_UPDATE' ) || ! COWBOY_MCP_DISABLE_SELF_UPDATE ) {
-    $cowboy_mcp_updater_file = COWBOY_MCP_PATH . 'includes/class-mcp-updater.php';
-    if ( file_exists( $cowboy_mcp_updater_file ) ) {
-        require_once $cowboy_mcp_updater_file;
-    }
-}
-
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-oauth.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
 
@@ -82,9 +63,6 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
-    if ( class_exists( 'Cowboy_MCP_Updater' ) ) {
-        Cowboy_MCP_Updater::init();
-    }
     Cowboy_MCP_OAuth::init();
 });
 
