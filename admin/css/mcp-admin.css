@@ -14,21 +14,6 @@
 .mcp-copy-btn { margin-top: 4px; }
 .mcp-copy-btn--copied { color: #00a32a; }
 
-.mcp-tabs-nav {
-    display: flex; gap: 0; border-bottom: 1px solid #c3c4c7;
-    margin: 8px 0 0;
-}
-.mcp-tab-btn {
-    padding: 6px 14px; border: none; background: none;
-    font-size: 13px; font-weight: 500; color: #50575e;
-    cursor: pointer; border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-}
-.mcp-tab-btn:hover { color: #2271b1; }
-.mcp-tab-btn--active { color: #2271b1; border-bottom-color: #2271b1; }
-.mcp-tab-panel { display: none; padding-top: 8px; }
-.mcp-tab-panel--active { display: block; }
-
 .mcp-step {
     background: #fff;
     border: 1px solid #c3c4c7;
@@ -85,57 +70,44 @@
     }
 }
 
-/* ── The fork: choice cards ───────────────────────────────── */
 .mcp-chooser-q { font-size: 15px; font-weight: 600; color: #1d2327; margin: 0 0 4px; }
 .mcp-chooser-sub { color: #50575e; margin: 0 0 16px; font-size: 13px; }
 .mcp-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.mcp-choice-form { margin: 0; display: flex; }
-.mcp-choice {
-    flex: 1; text-align: left; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px;
-    padding: 20px; cursor: pointer; display: flex; flex-direction: column; gap: 12px;
-    transition: border-color .12s, box-shadow .12s; font-family: inherit;
-}
-.mcp-choice:hover { border-color: #2271b1; box-shadow: 0 2px 10px rgba(34,113,177,.13); }
-.mcp-choice:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
-.mcp-choice-head { display: flex; align-items: center; gap: 14px; }
-.mcp-choice-headings { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
-.mcp-choice-ic {
-    width: 46px; height: 46px; flex: 0 0 46px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center;
-    background: #f0f6fc; border: 1px solid #cfe3f4; color: #2271b1;
-}
-.mcp-choice-ic svg { width: 26px; height: 26px; }
-.mcp-choice-title { font-size: 16px; color: #1d2327; font-weight: 600; }
-.mcp-tag {
-    display: inline-block; align-self: flex-start; font-size: 11px; font-weight: 700;
-    letter-spacing: .02em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px;
-}
-.mcp-tag-easy { background: #f0fbf3; color: #008a20; border: 1px solid #b6e3c4; }
-.mcp-tag-dev  { background: #f3f1fb; color: #5a3fb8; border: 1px solid #d6cdf2; }
-.mcp-choice-desc { color: #50575e; font-size: 13px; }
-.mcp-choice-cta { margin-top: auto; padding-top: 6px; }
-.mcp-choice-cta .button {
-    display: inline-block; width: 100%; text-align: center; padding: 7px 14px;
-    font-size: 14px; font-weight: 500; border-radius: 3px; cursor: pointer;
-    background: #f6f7f7; border: 1px solid #2271b1; color: #2271b1;
-}
-.mcp-choice-cta .button-primary { background: #2271b1; border-color: #2271b1; color: #fff; }
-.mcp-choice:hover .mcp-choice-cta .button-primary { background: #135e96; border-color: #135e96; }
-
-/* ── Chosen-method bar ────────────────────────────────────── */
-.mcp-chosen-bar {
-    display: flex; align-items: center; gap: 12px; background: #fff;
-    border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 0 4px 4px 0;
-    padding: 11px 16px; margin: 12px 0 18px;
-}
-.mcp-chosen-ck {
-    width: 24px; height: 24px; border-radius: 50%; background: #00a32a; color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 700; flex: 0 0 24px;
-}
-.mcp-chosen-txt { flex: 1; }
-.mcp-chosen-txt b { color: #1d2327; }
-.mcp-chosen-txt span { color: #50575e; display: block; font-size: 12px; }
-.mcp-chosen-change { margin-left: auto; }
 .mcp-inline-form { display: inline; margin: 0; }
+
+/* ── Connection: client sidebar + panels ──────────────────── */
+.mcp-conn-layout { display: flex; gap: 20px; align-items: flex-start; }
+.mcp-conn-sidebar {
+    flex: 0 0 220px; background: #fff; border: 1px solid #c3c4c7;
+    border-radius: 6px; padding: 8px;
+}
+.mcp-conn-group-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; color: #646970; margin: 10px 10px 4px;
+}
+.mcp-conn-group-label:first-child { margin-top: 4px; }
+.mcp-conn-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    text-align: left; background: none; border: none; border-radius: 4px;
+    padding: 8px 10px; font-family: inherit; font-size: 13px; font-weight: 500;
+    color: #3c434a; cursor: pointer;
+}
+.mcp-conn-item:hover { background: #f0f6fc; color: #2271b1; }
+.mcp-conn-item:focus-visible { outline: 2px solid #2271b1; outline-offset: -2px; }
+.mcp-conn-item--active { background: #2271b1; color: #fff; }
+.mcp-conn-item--active:hover { background: #135e96; color: #fff; }
+.mcp-conn-ic { width: 18px; height: 18px; flex: 0 0 18px; display: inline-flex; }
+.mcp-conn-ic svg { width: 18px; height: 18px; }
+.mcp-conn-main { flex: 1; min-width: 0; }
+.mcp-client-panel { display: none; }
+.mcp-client-panel--active { display: block; }
+.mcp-conn-placeholder { padding: 28px 20px; text-align: center; }
+.mcp-conn-placeholder .mcp-chooser-sub { margin-bottom: 0; }
+
+@media (max-width: 782px) {
+    .mcp-conn-layout { flex-direction: column; }
+    .mcp-conn-sidebar { flex: none; width: 100%; box-sizing: border-box; }
+}
 
 /* ── Numbered substeps inside a step ──────────────────────── */
 .mcp-substeps { margin: 8px 0 0; padding: 0; counter-reset: mcpsub; list-style: none; }
