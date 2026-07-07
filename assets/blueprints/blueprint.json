@@ -1,0 +1,33 @@
+{
+    "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+    "landingPage": "/wp-admin/options-general.php?page=cowboy-mcp",
+    "preferredVersions": {
+        "php": "8.2",
+        "wp": "latest"
+    },
+    "phpExtensionBundles": [ "kitchen-sink" ],
+    "features": {
+        "networking": true
+    },
+    "login": true,
+    "siteOptions": {
+        "blogname": "Cowboy MCP Demo"
+    },
+    "constants": {
+        "WP_DEBUG": true,
+        "WP_DEBUG_LOG": true,
+        "WP_DEBUG_DISPLAY": false
+    },
+    "steps": [
+        {
+            "step": "installPlugin",
+            "pluginData": {
+                "resource": "wordpress.org/plugins",
+                "slug": "cowboy-mcp"
+            },
+            "options": {
+                "activate": true
+            }
+        }
+    ]
+}

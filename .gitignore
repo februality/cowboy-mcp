@@ -23,7 +23,10 @@
 
 # WordPress.org listing imagery (banners/icons) — lives only in the SVN working
 # copy's assets/ sibling, never in the plugin git source. See CLAUDE.md → SVN.
-/assets/
+# The Playground blueprint IS tracked (hand-authored source); git cannot
+# re-include inside an excluded dir, hence /assets/* + negation.
+/assets/*
+!/assets/blueprints/
 
 # wp-env local dev environment config
 /.wp-env.json
