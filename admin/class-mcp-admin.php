@@ -117,6 +117,7 @@ class Cowboy_MCP_Admin {
         return [
             'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth' ],
             'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth' ],
+            'chatgpt'        => [ 'label' => 'ChatGPT',        'group' => 'no-terminal', 'type' => 'oauth' ],
             'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'apikey' ],
             'codex'          => [ 'label' => 'Codex',          'group' => 'terminal',    'type' => 'apikey' ],
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'apikey' ],
@@ -130,7 +131,8 @@ class Cowboy_MCP_Admin {
         $icons = [
             'claude-ai'      => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg>',
             'claude-desktop' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M9 20h6M12 16v4"></path></svg>',
-            'claude-code'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9l3 3-3 3M13 15h4"></path></svg>',
+            'chatgpt'        => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"></path></svg>',
+            'claude-code'    =>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9l3 3-3 3M13 15h4"></path></svg>',
             'codex'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"></path></svg>',
             'opencode'       => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6M12 19h8"></path></svg>',
             'cursor'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3l7.5 18 2.6-7.9L22 10.5z"></path></svg>',
@@ -252,7 +254,7 @@ class Cowboy_MCP_Admin {
             ?></h1>
             <p class="description"><?php
                 echo wp_kses(
-                    __( 'Connect AI agents like <strong>Claude</strong>, <strong>Codex</strong>, or <strong>Opencode</strong> to this WordPress site over the Model Context Protocol.', 'cowboy-mcp' ),
+                    __( 'Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or <strong>Codex</strong> to this WordPress site over the Model Context Protocol.', 'cowboy-mcp' ),
                     [ 'strong' => [] ]
                 );
             ?></p>
@@ -411,14 +413,35 @@ class Cowboy_MCP_Admin {
         $reachable   = ! $oauth_avail || Cowboy_MCP_OAuth::site_is_publicly_reachable();
         $connections = ( $oauth_avail && $oauth_on ) ? Cowboy_MCP_OAuth::list_connections() : [];
         $is_desktop  = ( $slug === 'claude-desktop' );
+        $is_chatgpt  = ( $slug === 'chatgpt' );
+
+        // Whole sentences per client (not sprintf'd names) so translators get
+        // complete, grammatical strings.
+        $warning_text = $is_chatgpt
+            ? __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. ChatGPT connects from OpenAI\'s cloud, so it cannot reach local, private, or non-HTTPS sites. A terminal tool works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' )
+            : __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. The Claude apps connect from Anthropic\'s cloud, so they cannot reach local, private, or non-HTTPS sites. A terminal tool works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' );
+        $enable_text  = $is_chatgpt
+            ? __( 'This opens a secure sign-in so ChatGPT can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' )
+            : __( 'This opens a secure sign-in so the Claude apps can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' );
+        $paste_hint   = $is_chatgpt
+            ? __( "You'll paste this into ChatGPT in the next step.", 'cowboy-mcp' )
+            : __( "You'll paste this into Claude in the next step.", 'cowboy-mcp' );
+        $step2_title  = match ( true ) {
+            $is_chatgpt => __( 'Add it in ChatGPT', 'cowboy-mcp' ),
+            $is_desktop => __( 'Add it in the Claude app', 'cowboy-mcp' ),
+            default     => __( 'Add it on claude.ai', 'cowboy-mcp' ),
+        };
+        $approve_text = $is_chatgpt
+            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected.', 'cowboy-mcp' )
+            : __( 'Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected.', 'cowboy-mcp' );
+        $plan_note    = $is_chatgpt
+            ? __( 'Custom connectors require a paid ChatGPT plan with <strong>Developer mode</strong> (beta) enabled.', 'cowboy-mcp' )
+            : __( 'Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan.', 'cowboy-mcp' );
 
         if ( ! $reachable ) :
             ?>
             <div class="notice notice-warning inline"><p><?php
-                echo wp_kses(
-                    __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. The Claude apps connect from Anthropic\'s cloud, so they cannot reach local, private, or non-HTTPS sites. A terminal tool works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' ),
-                    [ 'strong' => [] ]
-                );
+                echo wp_kses( $warning_text, [ 'strong' => [] ] );
             ?></p></div>
             <?php
         endif;
@@ -432,7 +455,7 @@ class Cowboy_MCP_Admin {
                     <h3 style="margin:0;"><?php esc_html_e( 'Turn on the Desktop Connector', 'cowboy-mcp' ); ?></h3>
                 </div>
                 <div class="mcp-step-body">
-                    <p><?php esc_html_e( 'This opens a secure sign-in so the Claude apps can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' ); ?></p>
+                    <p><?php echo esc_html( $enable_text ); ?></p>
                     <form method="post" class="mcp-inline-form">
                         <?php wp_nonce_field( 'cowboy_mcp_enable_oauth' ); ?>
                         <button type="submit" name="cowboy_mcp_enable_oauth" class="button button-primary"><?php esc_html_e( 'Enable Desktop Connector', 'cowboy-mcp' ); ?></button>
@@ -449,7 +472,7 @@ class Cowboy_MCP_Admin {
                 <h3 style="margin:0;"><?php esc_html_e( 'Copy your connection link', 'cowboy-mcp' ); ?></h3>
             </div>
             <div class="mcp-step-body">
-                <p><?php esc_html_e( "You'll paste this into Claude in the next step.", 'cowboy-mcp' ); ?></p>
+                <p><?php echo esc_html( $paste_hint ); ?></p>
                 <div class="mcp-code-block">
                     <code id="mcp-oauth-url-<?php echo esc_attr( $slug ); ?>"><?php echo esc_url( $endpoint ); ?></code>
                 </div>
@@ -460,18 +483,25 @@ class Cowboy_MCP_Admin {
         <div class="mcp-step">
             <div class="mcp-step-header">
                 <span class="mcp-step-number">2</span>
-                <h3 style="margin:0;"><?php echo esc_html( $is_desktop ? __( 'Add it in the Claude app', 'cowboy-mcp' ) : __( 'Add it on claude.ai', 'cowboy-mcp' ) ); ?></h3>
+                <h3 style="margin:0;"><?php echo esc_html( $step2_title ); ?></h3>
             </div>
             <div class="mcp-step-body">
                 <ol class="mcp-substeps">
-                    <?php if ( $is_desktop ) : ?>
-                        <li><?php echo wp_kses( __( 'Open the <strong>Claude</strong> desktop app and sign in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                    <?php if ( $is_chatgpt ) : ?>
+                        <li><?php echo wp_kses( __( 'Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>Settings → Connectors → Advanced</code> and turn on <strong>Developer mode</strong> (one-time).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Back in <code>Connectors</code>, click <strong>Create</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Paste the link from step 1 as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     <?php else : ?>
-                        <li><?php echo wp_kses( __( 'Go to <code>claude.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <?php if ( $is_desktop ) : ?>
+                            <li><?php echo wp_kses( __( 'Open the <strong>Claude</strong> desktop app and sign in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                        <?php else : ?>
+                            <li><?php echo wp_kses( __( 'Go to <code>claude.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <?php endif; ?>
+                        <li><?php echo wp_kses( __( 'Go to <code>Settings → Connectors</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Click <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Paste the link from step 1 and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     <?php endif; ?>
-                    <li><?php echo wp_kses( __( 'Go to <code>Settings → Connectors</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
-                    <li><?php echo wp_kses( __( 'Click <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
-                    <li><?php echo wp_kses( __( 'Paste the link from step 1 and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                 </ol>
             </div>
         </div>
@@ -482,8 +512,8 @@ class Cowboy_MCP_Admin {
                 <h3 style="margin:0;"><?php esc_html_e( 'Approve access', 'cowboy-mcp' ); ?></h3>
             </div>
             <div class="mcp-step-body">
-                <p><?php echo wp_kses( __( 'Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
-                <p class="description"><?php echo wp_kses( __( 'Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                <p><?php echo wp_kses( $approve_text, [ 'strong' => [] ] ); ?></p>
+                <p class="description"><?php echo wp_kses( $plan_note, [ 'strong' => [] ] ); ?></p>
             </div>
         </div>
         <?php
