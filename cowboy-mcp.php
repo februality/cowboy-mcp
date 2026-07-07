@@ -120,6 +120,7 @@ function cowboy_mcp_uninstall(): void {
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
+    delete_metadata( 'user', 0, 'cowboy_mcp_conn_client', '', true );
 
     // Drop audit log table.
     global $wpdb;

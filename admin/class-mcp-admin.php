@@ -139,7 +139,7 @@ class Cowboy_MCP_Admin {
         echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
     }
 
-    /* ── Action handler (key gen / revoke / method / settings / audit log) ── */
+    /* ── Action handler (key gen / revoke / settings / audit log) ── */
 
     public static function handle_actions(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
