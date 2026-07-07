@@ -725,6 +725,18 @@ class Cowboy_MCP_OAuth {
         $user        = wp_get_current_user();
         $action      = esc_url( self::issuer() . '/cowboy-mcp-oauth/authorize' );
 
+        // This is a standalone document rendered outside the normal wp-admin/theme
+        // page lifecycle (no wp_head()/wp_footer() runs here), so the enqueued style
+        // is printed explicitly via wp_print_styles() rather than relying on a hook.
+        $css_path = COWBOY_MCP_PATH . 'admin/css/oauth-consent.css';
+        wp_register_style(
+            'cowboy-mcp-oauth-consent',
+            COWBOY_MCP_URL . 'admin/css/oauth-consent.css',
+            [],
+            file_exists( $css_path ) ? (string) filemtime( $css_path ) : COWBOY_MCP_VERSION
+        );
+        wp_enqueue_style( 'cowboy-mcp-oauth-consent' );
+
         nocache_headers();
         header( 'Content-Type: text/html; charset=utf-8' );
         ?><!doctype html>
@@ -734,22 +746,10 @@ class Cowboy_MCP_OAuth {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title><?php echo esc_html__( 'Authorize connection', 'cowboy-mcp' ); ?></title>
-<style>
- body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f0f1;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
- .card{background:#fff;max-width:420px;width:90%;padding:32px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.13)}
- h1{font-size:20px;margin:0 0 8px}
- p{color:#3c434a;line-height:1.5}
- .who{background:#f6f7f7;border:1px solid #dcdcde;border-radius:6px;padding:12px 14px;margin:16px 0;font-size:14px}
- .who strong{display:inline-block}
- .actions{display:flex;gap:10px;margin-top:24px}
- button{flex:1;padding:11px 16px;border-radius:6px;border:1px solid;font-size:14px;cursor:pointer}
- .approve{background:#2271b1;border-color:#2271b1;color:#fff}
- .deny{background:#fff;border-color:#c3c4c7;color:#3c434a}
- .muted{font-size:12px;color:#646970;margin-top:16px;word-break:break-all}
-</style>
+<?php wp_print_styles(); ?>
 </head>
 <body>
-<div class="card">
+<div class="cowboy-mcp-oauth-card">
  <h1><?php
     /* translators: %s: application/client name */
     printf( esc_html__( '%s wants to connect', 'cowboy-mcp' ), '<strong>' . esc_html( $client_name ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

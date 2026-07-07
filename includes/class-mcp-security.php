@@ -20,7 +20,7 @@ class Cowboy_MCP_Security {
         'upload_path', 'upload_url_path',
     ];
 
-    /** Dangerous SQL operations, keyed by detection pattern. Applied to BOTH db tools. */
+    /** Dangerous SQL operations, keyed by detection pattern. Applied to the wp_cli `db query`/`db search` escape hatch. */
     private const SQL_BLOCKED = [
         '/\bDROP\s+DATABASE\b/i'           => 'DROP DATABASE',
         '/\bDROP\s+TABLE\b/i'              => 'DROP TABLE',
@@ -177,42 +177,6 @@ class Cowboy_MCP_Security {
         }
         return stripos( $normalized, 'cowboy_mcp_api_keys' ) !== false
             || stripos( $normalized, 'cowboy_mcp_settings' ) !== false;
-    }
-
-    /**
-     * Defense-in-depth result redaction for db query rows: masks secret-named
-     * columns and key/value rows (options, *meta) whose key is sensitive.
-     *
-     * @param array<int,array<string,mixed>> $rows
-     * @return array<int,array<string,mixed>>
-     */
-    public static function redact_columns( array $rows ): array {
-        // 'meta_key'/'meta_value' here are literal column names for redacting
-        // already-fetched rows — not a meta query, so the slow-query warning
-        // does not apply.
-        $kv_pairs = [ 'option_name' => 'option_value', 'meta_key' => 'meta_value' ]; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-
-        foreach ( $rows as &$row ) {
-            if ( ! is_array( $row ) ) {
-                continue;
-            }
-            foreach ( $row as $col => &$val ) {
-                if ( is_string( $col ) && preg_match( '/^(user_pass|user_activation_key|session_tokens)$/i', $col ) ) {
-                    $val = '[REDACTED]';
-                } elseif ( is_string( $val ) ) {
-                    $val = self::scrub_secrets( $val );
-                }
-            }
-            unset( $val );
-
-            foreach ( $kv_pairs as $key_col => $val_col ) {
-                if ( isset( $row[ $key_col ], $row[ $val_col ] ) && self::is_sensitive_option( (string) $row[ $key_col ] ) ) {
-                    $row[ $val_col ] = '[REDACTED]';
-                }
-            }
-        }
-        unset( $row );
-        return $rows;
     }
 
     /* ── Secret scrubbing ──────────────────────────────────── */

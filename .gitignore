@@ -20,3 +20,10 @@
 
 # Design docs / specs / plans — kept local, not part of the repo
 /docs/
+
+# WordPress.org listing imagery (banners/icons) — lives only in the SVN working
+# copy's assets/ sibling, never in the plugin git source. See CLAUDE.md → SVN.
+/assets/
+
+# wp-env local dev environment config
+/.wp-env.json

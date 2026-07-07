@@ -2,118 +2,154 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Replace {prefix} placeholder with the actual WordPress table prefix.
+ * Validate a caller-supplied table name against this site's actual, prefixed tables.
+ *
+ * wpdb::prepare()'s %i (core 6.2+) safely quotes a value AS an identifier, but it has no
+ * way to know whether that identifier is a table this site actually owns — a caller could
+ * still name an unrelated table on a shared-database host. This closes that gap with an
+ * exact-match check against a live, prefix-scoped SHOW TABLES list; call sites still bind
+ * the result through %i for proper identifier quoting.
  */
-function cowboy_mcp_prepare_sql( string $sql ): string {
+function cowboy_mcp_validate_table_name( string $table ): string|WP_Error {
     global $wpdb;
-    return str_replace( '{prefix}', $wpdb->prefix, $sql );
+    $like   = $wpdb->esc_like( $wpdb->prefix ) . '%';
+    $tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+    if ( ! in_array( $table, $tables, true ) ) {
+        return new WP_Error( 'not_found', "Table '{$table}' does not exist or is outside this site's table prefix ({$wpdb->prefix})." );
+    }
+    return $table;
 }
 
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_db_query', '[Database] Run a read-only SQL query against the WordPress database. Supports SELECT, SHOW, DESCRIBE, and EXPLAIN. Returns up to 100 rows. Use {prefix} as the table prefix placeholder (e.g. SELECT * FROM {prefix}posts).', [
-            'sql' => [ 'type' => 'string', 'description' => 'SQL query. Use {prefix} as table prefix placeholder (e.g. "SELECT * FROM {prefix}posts WHERE post_status = \'publish\' LIMIT 10").', 'required' => true ],
-        ], [ 'title' => 'Database Query', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ], [
+        Cowboy_MCP_Tools::tool( 'wp_db_health_report', '[Database] Run a fixed set of read-only diagnostic checks against core WordPress tables: post revisions, auto-drafts, spam/trashed comments, transient count, autoloaded-options size, orphaned postmeta, and post counts by type/status.', [], [ 'title' => 'Database Health Report', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ], [
             'type' => 'object',
             'properties' => [
-                'rows' => [ 'type' => 'integer' ],
-                'data' => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
+                'revisions'         => [ 'type' => 'integer' ],
+                'auto_drafts'       => [ 'type' => 'integer' ],
+                'spam_comments'     => [ 'type' => 'integer' ],
+                'trashed_comments'  => [ 'type' => 'integer' ],
+                'transients'        => [ 'type' => 'integer' ],
+                'autoload_options'  => [ 'type' => 'integer' ],
+                'autoload_bytes'    => [ 'type' => 'integer' ],
+                'orphaned_postmeta' => [ 'type' => 'integer' ],
+                'post_counts'       => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
             ],
         ]),
 
-        Cowboy_MCP_Tools::tool( 'wp_db_write', '[Database] Run a write SQL query (INSERT, UPDATE, DELETE, CREATE TABLE). Blocked operations: DROP DATABASE, DROP TABLE, TRUNCATE, ALTER TABLE, RENAME TABLE, CREATE TRIGGER/PROCEDURE/FUNCTION, LOAD DATA, GRANT, REVOKE, INTO OUTFILE/DUMPFILE. Use {prefix} for table prefix.', [
-            'sql' => [ 'type' => 'string', 'description' => 'SQL write query. Use {prefix} as table prefix placeholder.', 'required' => true ],
-        ], [ 'title' => 'Database Write', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false ], [
+        Cowboy_MCP_Tools::tool( 'wp_db_list_tables', "[Database] List this site's database tables (matching its table prefix) with row-count estimates and sizes.", [], [ 'title' => 'List Database Tables', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ], [
             'type' => 'object',
             'properties' => [
-                'affected_rows' => [ 'type' => 'integer', 'description' => 'Number of rows affected by the query' ],
-                'insert_id'     => [ 'type' => 'integer', 'description' => 'Auto-increment ID from the last INSERT' ],
+                'tables' => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
+            ],
+        ]),
+
+        Cowboy_MCP_Tools::tool( 'wp_db_show_processlist', '[Database] Show currently running MySQL queries via SHOW FULL PROCESSLIST. Requires the PROCESS privilege — fails gracefully if unavailable on shared hosting.', [], [ 'title' => 'Show Process List', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ], [
+            'type' => 'object',
+            'properties' => [
+                'processes' => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
+            ],
+        ]),
+
+        Cowboy_MCP_Tools::tool( 'wp_db_check_table', '[Database] Run MySQL CHECK TABLE on one of this site\'s tables to test for corruption.', [
+            'table' => [ 'type' => 'string', 'description' => 'Table name including prefix, e.g. wp_posts.', 'required' => true ],
+        ], [ 'title' => 'Check Table', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ], [
+            'type' => 'object',
+            'properties' => [
+                'table'  => [ 'type' => 'string' ],
+                'result' => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
+            ],
+        ]),
+
+        Cowboy_MCP_Tools::tool( 'wp_db_repair_table', '[Database] Run MySQL REPAIR TABLE to fix a corrupted table.', [
+            'table' => [ 'type' => 'string', 'description' => 'Table name including prefix, e.g. wp_posts.', 'required' => true ],
+        ], [ 'title' => 'Repair Table', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => true, 'openWorldHint' => false ], [
+            'type' => 'object',
+            'properties' => [
+                'table'  => [ 'type' => 'string' ],
+                'result' => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
             ],
         ]),
 
     ],
     'handlers' => [
-        'wp_db_query' => function ( array $a ) {
+        'wp_db_health_report' => function ( array $a ) {
             global $wpdb;
 
-            // Raw SQL execution is gated to administrators (defence in depth on top of the
-            // API-key auth that already maps the request to an admin user).
-            if ( ! current_user_can( 'manage_options' ) ) {
-                return new WP_Error( 'forbidden', 'Running raw SQL requires the manage_options capability.' );
-            }
+            // Every query below is a fixed statement the plugin itself wrote, with no
+            // caller-supplied SQL text or values — there is nothing to bind via
+            // wpdb::prepare(), same as core's own dbDelta()/upgrade queries.
+            $revisions  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'revision'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $drafts     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'auto-draft'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $spam       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'spam'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $trashed    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'trash'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $transients = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( '_transient_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $autoload_n = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options} WHERE autoload = 'yes'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $autoload_b = (int) $wpdb->get_var( "SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload = 'yes'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $orphaned   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE post_id NOT IN ( SELECT ID FROM {$wpdb->posts} )" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $counts     = $wpdb->get_results( "SELECT post_type, post_status, COUNT(*) as count FROM {$wpdb->posts} GROUP BY post_type, post_status", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
-            $sql  = cowboy_mcp_prepare_sql( $a['sql'] );
-            $norm = Cowboy_MCP_Security::normalize_sql( $sql );
-
-            // Safety: only allow SELECT / SHOW / DESCRIBE / EXPLAIN (checked on the
-            // comment-stripped form so a leading /* */ cannot hide the real verb).
-            $first_word = strtoupper( strtok( $norm, " \t\n\r" ) );
-            if ( ! in_array( $first_word, [ 'SELECT', 'SHOW', 'DESCRIBE', 'EXPLAIN' ], true ) ) {
-                return new WP_Error( 'read_only', 'wp_db_query only allows SELECT/SHOW/DESCRIBE/EXPLAIN. Use wp_db_write for mutations.' );
-            }
-
-            // Even a SELECT can write/exfiltrate (e.g. INTO OUTFILE) — apply the blocklist
-            // unless Power mode lifts it. The credential-touch check below ALWAYS applies.
-            $blocked = Cowboy_MCP_Security::sql_blocked_reason( $norm );
-            if ( $blocked && ! Cowboy_MCP_Security::power_mode_enabled() ) {
-                return new WP_Error( 'blocked', "{$blocked} is blocked for safety. An administrator can enable Power mode to allow this." );
-            }
-
-            // Block direct reads of credential/secret data sources.
-            if ( Cowboy_MCP_Security::sql_touches_secret( $norm ) ) {
-                return new WP_Error( 'blocked', 'Query references protected credential data (password hashes or API keys) and is blocked.' );
-            }
-
-            // Append LIMIT only when the query has no top-level LIMIT clause.
-            if ( ! preg_match( '/\bLIMIT\s+\d/i', $norm ) ) {
-                $sql .= ' LIMIT 100';
-            }
-
-            // This tool runs an arbitrary, admin-supplied read query (a phpMyAdmin-style
-            // feature): the ENTIRE statement is the user's input, so $wpdb->prepare() cannot
-            // apply — there are no discrete values to bind, and per WordPress's own guidance a
-            // fully-formed query must not be passed to prepare() (it warns and secures nothing
-            // — see make.wordpress.org "Missing argument 2 for wpdb::prepare()"). Safety comes
-            // instead from the manage_options gate above, the SELECT-only verb check, the
-            // dangerous-statement blocklist, the credential-table guard, result redaction, and
-            // the auto-LIMIT; the {prefix} token is replaced with the trusted $wpdb->prefix.
-            $results = $wpdb->get_results( $sql, ARRAY_A ) ?? []; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-            if ( $wpdb->last_error ) {
-                return new WP_Error( 'db_error', $wpdb->last_error );
-            }
-            // Defense in depth: mask secret-named columns / sensitive option rows.
-            $results = Cowboy_MCP_Security::redact_columns( $results );
-            return [ 'rows' => count( $results ), 'data' => $results ];
+            return [
+                'revisions'         => $revisions,
+                'auto_drafts'       => $drafts,
+                'spam_comments'     => $spam,
+                'trashed_comments'  => $trashed,
+                'transients'        => $transients,
+                'autoload_options'  => $autoload_n,
+                'autoload_bytes'    => $autoload_b,
+                'orphaned_postmeta' => $orphaned,
+                'post_counts'       => $counts ?: [],
+            ];
         },
 
-        'wp_db_write' => function ( array $a ) {
+        'wp_db_list_tables' => function ( array $a ) {
             global $wpdb;
+            $like = $wpdb->esc_like( $wpdb->prefix ) . '%';
+            $rows = $wpdb->get_results( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $tables = array_map( static fn( $row ) => [
+                'name'       => $row['Name'] ?? '',
+                'rows'       => isset( $row['Rows'] ) ? (int) $row['Rows'] : null,
+                'size_bytes' => isset( $row['Data_length'], $row['Index_length'] ) ? ( (int) $row['Data_length'] + (int) $row['Index_length'] ) : null,
+                'engine'     => $row['Engine'] ?? null,
+            ], $rows ?: [] );
+            return [ 'tables' => $tables ];
+        },
 
-            // Raw SQL execution is gated to administrators (defence in depth on top of the
-            // API-key auth that already maps the request to an admin user).
-            if ( ! current_user_can( 'manage_options' ) ) {
-                return new WP_Error( 'forbidden', 'Running raw SQL requires the manage_options capability.' );
-            }
-
-            $sql  = cowboy_mcp_prepare_sql( $a['sql'] );
-            $norm = Cowboy_MCP_Security::normalize_sql( $sql );
-
-            // Block dangerous operations on the comment-stripped form so they can't be
-            // hidden with inline comments (e.g. DROP/**/TABLE) — unless Power mode lifts it.
-            $blocked = Cowboy_MCP_Security::sql_blocked_reason( $norm );
-            if ( $blocked && ! Cowboy_MCP_Security::power_mode_enabled() ) {
-                return new WP_Error( 'blocked', "{$blocked} is blocked for safety. An administrator can enable Power mode to allow this." );
-            }
-
-            // Arbitrary, admin-supplied write query (see the detailed note in wp_db_query):
-            // the whole statement is the user's input, so prepare() cannot be applied. Safety
-            // is enforced by the manage_options gate, the dangerous-statement blocklist, and
-            // Power-mode gating; the {prefix} token is replaced with the trusted $wpdb->prefix.
-            $result = $wpdb->query( $sql );     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+        'wp_db_show_processlist' => function ( array $a ) {
+            global $wpdb;
+            $rows = $wpdb->get_results( 'SHOW FULL PROCESSLIST', ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             if ( $wpdb->last_error ) {
                 return new WP_Error( 'db_error', $wpdb->last_error );
             }
-            return [ 'affected_rows' => $result, 'insert_id' => $wpdb->insert_id ];
+            return [ 'processes' => $rows ?: [] ];
+        },
+
+        'wp_db_check_table' => function ( array $a ) {
+            global $wpdb;
+            $table = cowboy_mcp_validate_table_name( (string) $a['table'] );
+            if ( is_wp_error( $table ) ) return $table;
+
+            // $table is already validated above against a live, prefix-scoped SHOW TABLES
+            // list; %i (core 6.2+) additionally binds it as a proper quoted identifier via
+            // wpdb::prepare() rather than manual string interpolation.
+            $result = $wpdb->get_results( $wpdb->prepare( 'CHECK TABLE %i', $table ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            if ( $wpdb->last_error ) {
+                return new WP_Error( 'db_error', $wpdb->last_error );
+            }
+            return [ 'table' => $table, 'result' => $result ?: [] ];
+        },
+
+        'wp_db_repair_table' => function ( array $a ) {
+            global $wpdb;
+            $table = cowboy_mcp_validate_table_name( (string) $a['table'] );
+            if ( is_wp_error( $table ) ) return $table;
+
+            // See wp_db_check_table — validated table name, bound via %i.
+            $result = $wpdb->get_results( $wpdb->prepare( 'REPAIR TABLE %i', $table ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            if ( $wpdb->last_error ) {
+                return new WP_Error( 'db_error', $wpdb->last_error );
+            }
+            return [ 'table' => $table, 'result' => $result ?: [] ];
         },
 
     ],

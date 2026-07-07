@@ -119,10 +119,9 @@ return [
                 }
             }
 
-            // `db query`/`db search` would otherwise bypass every guardrail in wp_db_query
-            // (blocklist, secret-table detection, result redaction). Apply the same SQL
-            // safety checks here so the wp_cli escape hatch can't run blocked or
-            // credential-touching SQL.
+            // `db query`/`db search` run arbitrary SQL via shell_exec with no guardrails of
+            // their own. Apply the same blocklist/secret-table checks used elsewhere so the
+            // wp_cli escape hatch can't run blocked or credential-touching SQL.
             if ( preg_match( '/^db\s+(query|search)\b(.*)$/i', $lower_cmd, $m ) ) {
                 $sql = Cowboy_MCP_Security::normalize_sql( trim( $m[2], " \t\"'" ) );
                 $why = Cowboy_MCP_Security::sql_blocked_reason( $sql );

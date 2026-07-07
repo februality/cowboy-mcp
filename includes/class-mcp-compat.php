@@ -18,11 +18,11 @@ defined( 'ABSPATH' ) || exit;
 
 // Cowboy_MCP_Compat reimplements WordPress *core* functions, so by design it refers
 // to core globals by their real names: it fires core hooks (activate_plugin,
-// deleted_user, intermediate_image_sizes_advanced, …), writes core options
-// (active_plugins, active_sitewide_plugins) and defines the core WP_SANDBOX_SCRAPING
-// constant. Prefixing any of those would break WordPress and other plugins, so the
-// global-prefix rule does not apply here. The only global symbol this file actually
-// DEFINES — the class below — is correctly prefixed Cowboy_MCP_.
+// deleted_user, intermediate_image_sizes_advanced, …) and writes core options
+// (active_plugins, active_sitewide_plugins). Prefixing any of those would break
+// WordPress and other plugins, so the global-prefix rule does not apply here. The
+// only global symbol this file actually DEFINES — the class below — is correctly
+// prefixed Cowboy_MCP_.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 // It also performs the same direct DB reads/writes core does (deleting a user touches the
 // posts, links and usermeta tables) — inherent, uncacheable operations, and every value is
@@ -209,9 +209,13 @@ class Cowboy_MCP_Compat {
 		// Sandbox-load the plugin before committing activation. Output buffering keeps
 		// any stray output emitted on load from corrupting the JSON-RPC response; a
 		// throwable aborts WITHOUT committing, so a broken plugin never gets activated.
-		if ( ! defined( 'WP_SANDBOX_SCRAPING' ) ) {
-			define( 'WP_SANDBOX_SCRAPING', true );
-		}
+		// WP core's own plugin_sandbox_scrape() (wp-admin/includes/plugin.php), which this
+		// otherwise mirrors, additionally defines a WP_SANDBOX_SCRAPING constant here — a
+		// process-wide, irreversible side effect that exists solely so a THIRD-PARTY plugin
+		// being activated can detect the scrape and skip its own one-time setup/redirects.
+		// We deliberately don't set it: our own activation safety comes entirely from the
+		// output buffering and try/catch below, not from that signal, so there's no reason
+		// to mutate global PHP state we don't need.
 		ob_start();
 		try {
 			include_once $file;

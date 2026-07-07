@@ -1,0 +1,40 @@
+== Changelog ==
+
+Full version history for Cowboy MCP. The readme.txt lists the most recent
+release; older entries are kept here.
+
+= 1.4.0 =
+* New: one-click sign-in for the Claude desktop and web apps — no terminal required.
+* Updated for WordPress.org plugin directory compliance.
+* Changed: database tools now use fixed, safe queries — no free-form SQL.
+* Removed: the self-hosted auto-updater; updates now come through WordPress.org.
+
+= 1.3.0 =
+* Feature: self-hosted one-click updates. The plugin checks cowboymcp.com for new versions and offers updates through the normal WordPress Plugins screen, including the per-plugin auto-update toggle (owner opt-in). Updates are delivered from GitHub release assets over HTTPS. Fails closed — any check error simply shows no update.
+
+= 1.2.0 =
+* Feature: optional **Power mode** (admin opt-in, off by default) — lifts curated safety restrictions for trusted power users: `wp_cli` `eval`/`shell` and other blocked commands, dangerous SQL (DDL), writing files outside `wp-content/`, and SSRF protection on outbound requests. The plugin's own API keys and settings, credential redaction, and self-delete protection remain enforced; `safe_mode` confirmation gating is unaffected.
+
+= 1.1.0 =
+* Security: lock down `wp_db_query` — apply the write blocklist (incl. INTO OUTFILE/DUMPFILE) to the read path, reject comment-obfuscated and credential-targeting queries, and redact secret columns
+* Security: block reads of sensitive options via resource templates, completions, and WooCommerce settings; block writes to payment-gateway/secret/role option groups
+* Security: harden SSRF protection — resolve all A/AAAA records, normalize IPv4-mapped IPv6, deny loopback/link-local/ULA, and use the safe HTTP transport so redirects are re-validated
+* Security: API-key validation no longer uses the secret-derived prefix as a fast path (timing side-channel); add a per-IP request throttle applied to all requests
+* Security: block `--require`/loader global flags and whitespace-obfuscated commands in `wp_cli`; normalize the SQL write blocklist against inline comments
+* Security: refuse executable file writes into the uploads directory; harden wp-content path confinement (null bytes, symlinked parents, sibling-prefix)
+* Security: prevent deleting the last administrator and validate `reassign_to` in `wp_delete_user`
+* Security: expand audit-log redaction, scrub secrets from error-log/transient output, relativize hook file paths, and add Origin validation
+* Hardening: apply the tool allowlist before dry-run/safe-mode, and guard against nested batch execution
+
+= 1.0.2 =
+* Prefix all admin identifiers with `cowboy_mcp_` to avoid namespace collisions
+* Change REST namespace from `mcp/v1` to `cowboy-mcp/v1`
+* Sanitize `$_SERVER['REMOTE_ADDR']` with `sanitize_text_field()`
+* Add capability checks to plugin activation/deactivation and theme switching
+
+= 1.0.1 =
+* Rename plugin integration files to avoid false-positive library detection
+* Update author metadata
+
+= 1.0.0 =
+* Initial release

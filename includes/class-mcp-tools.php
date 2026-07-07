@@ -467,7 +467,6 @@ class Cowboy_MCP_Tools {
             'invalid_params' => 'Check the tool definition for required parameters and valid types.',
             'option_blocked' => 'This option is protected. Use wp_cli with "option get <name>" to read it instead.',
             'path_escape'    => 'File paths must be relative to wp-content/. Example: themes/mytheme/style.css',
-            'read_only'      => 'Use wp_db_write for INSERT/UPDATE/DELETE queries.',
             'blocked'        => 'This SQL operation is blocked for safety. Use WordPress functions instead.',
             'tool_blocked'   => 'This tool has been blocked by a filter. Check with the site administrator.',
             'tool_disabled'  => 'This tool is disabled in Cowboy MCP settings.',
