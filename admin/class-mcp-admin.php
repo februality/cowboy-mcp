@@ -3,7 +3,7 @@
  * Cowboy MCP – Admin Settings
  *
  * Provides the Settings → Cowboy MCP admin page for:
- *   • Guided connection setup (pick Claude Desktop vs terminal, then follow tailored steps)
+ *   • Guided connection setup (per-client sidebar: pick your AI app, follow tailored steps)
  *   • Plugin settings (safe mode, power mode, rate limits, etc.)
  *   • Viewing the audit log
  */
@@ -20,6 +20,7 @@ class Cowboy_MCP_Admin {
         add_action( 'admin_init',            [ __CLASS__, 'handle_actions' ] );
         add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
         add_action( 'wp_ajax_cowboy_mcp_dismiss_new_key', [ __CLASS__, 'ajax_dismiss_new_key' ] );
+        add_action( 'wp_ajax_cowboy_mcp_set_conn_client', [ __CLASS__, 'ajax_set_conn_client' ] );
     }
 
     public static function add_menu(): void {
@@ -78,8 +79,9 @@ class Cowboy_MCP_Admin {
             true
         );
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpAdmin', [
-            'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-            'dismissNonce'  => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
+            'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+            'dismissNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
+            'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
         ] );
     }
 
@@ -91,6 +93,50 @@ class Cowboy_MCP_Admin {
             delete_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
         }
         wp_die();
+    }
+
+    /* ── AJAX: remember the client selected in the connection sidebar ── */
+
+    public static function ajax_set_conn_client(): void {
+        check_ajax_referer( 'cowboy_mcp_set_conn_client' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( '', '', 403 );
+        }
+        $client = sanitize_text_field( wp_unslash( $_POST['client'] ?? '' ) );
+        if ( array_key_exists( $client, self::client_registry() ) ) {
+            update_user_meta( get_current_user_id(), 'cowboy_mcp_conn_client', $client );
+            // Legacy pre-sidebar preference — no longer read; clean it up.
+            delete_user_meta( get_current_user_id(), 'cowboy_mcp_conn_method' );
+        }
+        wp_die();
+    }
+
+    /* ── Client registry: single source for sidebar, panels, and AJAX validation ── */
+
+    private static function client_registry(): array {
+        return [
+            'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth' ],
+            'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth' ],
+            'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'apikey' ],
+            'codex'          => [ 'label' => 'Codex',          'group' => 'terminal',    'type' => 'apikey' ],
+            'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'apikey' ],
+            'cursor'         => [ 'label' => 'Cursor',         'group' => 'terminal',    'type' => 'apikey' ],
+            'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'apikey' ],
+        ];
+    }
+
+    /** Echo the static inline SVG icon for a client (monochrome, stroke = currentColor). */
+    private static function render_client_icon( string $slug ): void {
+        $icons = [
+            'claude-ai'      => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg>',
+            'claude-desktop' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M9 20h6M12 16v4"></path></svg>',
+            'claude-code'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9l3 3-3 3M13 15h4"></path></svg>',
+            'codex'          => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"></path></svg>',
+            'opencode'       => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6M12 19h8"></path></svg>',
+            'cursor'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3l7.5 18 2.6-7.9L22 10.5z"></path></svg>',
+            'gemini-cli'     => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4z"></path></svg>',
+        ];
+        echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
     }
 
     /* ── Action handler (key gen / revoke / method / settings / audit log) ── */
@@ -125,25 +171,6 @@ class Cowboy_MCP_Admin {
                 Cowboy_MCP_OAuth::revoke_connection( $cid );
                 add_settings_error( 'cowboy_mcp', 'oauth_revoked', __( 'Connection revoked.', 'cowboy-mcp' ), 'info' );
             }
-        }
-
-        // Choose a connection method (remembered per user). Picking Claude Desktop
-        // turns the connector on right away, per the guided flow.
-        if ( isset( $_POST['cowboy_mcp_choose_method'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_choose_method' ) ) {
-            $method = sanitize_text_field( wp_unslash( $_POST['conn_method'] ?? '' ) );
-            if ( ! in_array( $method, [ 'desktop', 'terminal' ], true ) ) {
-                $method = '';
-            }
-            update_user_meta( get_current_user_id(), 'cowboy_mcp_conn_method', $method );
-
-            if ( $method === 'desktop' && class_exists( 'Cowboy_MCP_OAuth' ) ) {
-                self::enable_oauth_connector( __( 'Desktop Connector enabled — you can turn it off any time in Settings.', 'cowboy-mcp' ) );
-            }
-        }
-
-        // Change method (back to the chooser).
-        if ( isset( $_POST['cowboy_mcp_change_method'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_change_method' ) ) {
-            delete_user_meta( get_current_user_id(), 'cowboy_mcp_conn_method' );
         }
 
         // Explicitly enable the Desktop Connector (fallback button on the desktop path).
@@ -196,9 +223,9 @@ class Cowboy_MCP_Admin {
         $endpoint = rest_url( 'cowboy-mcp/v1/endpoint' );
         $new_key  = get_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
 
-        $active_method = (string) get_user_meta( get_current_user_id(), 'cowboy_mcp_conn_method', true );
-        if ( ! in_array( $active_method, [ 'desktop', 'terminal' ], true ) ) {
-            $active_method = '';
+        $active_client = (string) get_user_meta( get_current_user_id(), 'cowboy_mcp_conn_client', true );
+        if ( ! array_key_exists( $active_client, self::client_registry() ) ) {
+            $active_client = '';
         }
 
         // Tab routing with backwards compat.
@@ -242,7 +269,7 @@ class Cowboy_MCP_Admin {
                 'settings' => self::render_settings_tab( $settings ),
                 'logs'     => self::render_logs_tab(),
                 'about'    => self::render_about_tab(),
-                default    => self::render_connection_tab( $keys, $endpoint, $new_key, $active_method ),
+                default    => self::render_connection_tab( $keys, $endpoint, $new_key, $active_client ),
             };
             ?>
 
@@ -295,103 +322,97 @@ class Cowboy_MCP_Admin {
         <?php
     }
 
-    /* ── Connection tab ───────────────────────────────────── */
+    /* ── Connection tab: client sidebar + per-client panels ── */
 
-    private static function render_connection_tab( array $keys, string $endpoint, $new_key, string $active_method ): void {
-        $oauth_avail = class_exists( 'Cowboy_MCP_OAuth' );
-        $oauth_on    = $oauth_avail && Cowboy_MCP_OAuth::is_enabled();
-        $reachable   = ! $oauth_avail || Cowboy_MCP_OAuth::site_is_publicly_reachable();
-        $connections = ( $oauth_avail && $oauth_on ) ? Cowboy_MCP_OAuth::list_connections() : [];
-        $has_keys = ! empty( $keys );
-
-        if ( $active_method === '' ) {
-            self::render_method_chooser();
-            return;
-        }
-
-        // Chosen-method bar.
-        $is_desktop = ( $active_method === 'desktop' );
+    private static function render_connection_tab( array $keys, string $endpoint, $new_key, string $active_client ): void {
+        $registry = self::client_registry();
         ?>
-        <div class="mcp-chosen-bar">
-            <span class="mcp-chosen-ck" aria-hidden="true">&#10003;</span>
-            <span class="mcp-chosen-txt">
-                <b><?php echo esc_html( $is_desktop ? __( 'Connecting via Claude Desktop or web', 'cowboy-mcp' ) : __( 'Connecting via a terminal tool', 'cowboy-mcp' ) ); ?></b>
-                <span><?php echo esc_html( $is_desktop ? __( 'One-click browser sign-in — no terminal', 'cowboy-mcp' ) : __( 'Claude Code · Codex · Opencode', 'cowboy-mcp' ) ); ?></span>
-            </span>
-            <form method="post" class="mcp-inline-form mcp-chosen-change">
-                <?php wp_nonce_field( 'cowboy_mcp_change_method' ); ?>
-                <button type="submit" name="cowboy_mcp_change_method" class="button button-small"><?php esc_html_e( 'Change method', 'cowboy-mcp' ); ?></button>
-            </form>
-        </div>
-        <?php
+        <div class="mcp-conn-layout">
+            <?php self::render_client_sidebar( $registry, $active_client ); ?>
+            <div class="mcp-conn-main">
 
-        if ( $is_desktop ) {
-            self::render_desktop_path( $endpoint, $oauth_on, $reachable, $connections );
-        } else {
-            self::render_terminal_path( $keys, $endpoint, $new_key, $has_keys );
-        }
-    }
-
-    /* ── The fork: two choice cards (each a small POST form) ── */
-
-    private static function render_method_chooser(): void {
-        ?>
-        <div class="postbox">
-            <div class="inside">
-                <p class="mcp-chooser-q"><?php esc_html_e( 'How do you want to connect?', 'cowboy-mcp' ); ?></p>
-                <p class="mcp-chooser-sub"><?php esc_html_e( 'Choose the option that matches the tool you use. Not sure? The left one is the simplest.', 'cowboy-mcp' ); ?></p>
-                <div class="mcp-choice-grid">
-
-                    <form method="post" class="mcp-choice-form">
-                        <?php wp_nonce_field( 'cowboy_mcp_choose_method' ); ?>
-                        <input type="hidden" name="conn_method" value="desktop">
-                        <button type="submit" name="cowboy_mcp_choose_method" class="mcp-choice">
-                            <span class="mcp-choice-head">
-                                <span class="mcp-choice-ic" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M9 20h6M12 16v4"></path></svg>
-                                </span>
-                                <span class="mcp-choice-headings">
-                                    <span class="mcp-choice-title"><?php esc_html_e( 'Claude Desktop or web', 'cowboy-mcp' ); ?></span>
-                                    <span class="mcp-tag mcp-tag-easy"><?php esc_html_e( 'Easiest · no terminal', 'cowboy-mcp' ); ?></span>
-                                </span>
-                            </span>
-                            <span class="mcp-choice-desc"><?php esc_html_e( 'Connect from the Claude app or claude.ai with a one-click browser sign-in.', 'cowboy-mcp' ); ?></span>
-                            <span class="mcp-choice-cta"><span class="button button-primary"><?php esc_html_e( 'Use Claude Desktop', 'cowboy-mcp' ); ?> &rarr;</span></span>
-                        </button>
-                    </form>
-
-                    <form method="post" class="mcp-choice-form">
-                        <?php wp_nonce_field( 'cowboy_mcp_choose_method' ); ?>
-                        <input type="hidden" name="conn_method" value="terminal">
-                        <button type="submit" name="cowboy_mcp_choose_method" class="mcp-choice">
-                            <span class="mcp-choice-head">
-                                <span class="mcp-choice-ic" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9l3 3-3 3M13 15h4"></path></svg>
-                                </span>
-                                <span class="mcp-choice-headings">
-                                    <span class="mcp-choice-title"><?php esc_html_e( 'Terminal / coding agents', 'cowboy-mcp' ); ?></span>
-                                    <span class="mcp-tag mcp-tag-dev"><?php esc_html_e( 'For developers', 'cowboy-mcp' ); ?></span>
-                                </span>
-                            </span>
-                            <span class="mcp-choice-desc"><?php esc_html_e( 'Claude Code, Codex, or Opencode — copy one command into your terminal.', 'cowboy-mcp' ); ?></span>
-                            <span class="mcp-choice-cta"><span class="button"><?php esc_html_e( 'Use a terminal tool', 'cowboy-mcp' ); ?> &rarr;</span></span>
-                        </button>
-                    </form>
-
+                <div class="mcp-client-panel mcp-client-panel--placeholder <?php echo esc_attr( $active_client === '' ? 'mcp-client-panel--active' : '' ); ?>" data-client-panel="">
+                    <div class="postbox">
+                        <div class="inside mcp-conn-placeholder">
+                            <p class="mcp-chooser-q"><?php esc_html_e( 'Which app do you want to connect?', 'cowboy-mcp' ); ?></p>
+                            <p class="mcp-chooser-sub"><?php esc_html_e( 'Pick your AI app or coding tool from the list to see step-by-step setup instructions.', 'cowboy-mcp' ); ?></p>
+                        </div>
+                    </div>
                 </div>
+
+                <?php foreach ( $registry as $slug => $client ) : ?>
+                    <div id="mcp-client-panel-<?php echo esc_attr( $slug ); ?>"
+                         class="mcp-client-panel <?php echo esc_attr( $slug === $active_client ? 'mcp-client-panel--active' : '' ); ?>"
+                         data-client-panel="<?php echo esc_attr( $slug ); ?>"
+                         role="tabpanel"
+                         aria-labelledby="mcp-conn-item-<?php echo esc_attr( $slug ); ?>"
+                         tabindex="0">
+                        <?php
+                        if ( $client['type'] === 'oauth' ) {
+                            self::render_oauth_client_panel( $slug, $endpoint );
+                        } else {
+                            self::render_api_client_panel( $slug, $client['label'], $keys, $endpoint, $new_key );
+                        }
+                        ?>
+                    </div>
+                <?php endforeach; ?>
+
             </div>
         </div>
         <?php
     }
 
-    /* ── Desktop (no-terminal) path ───────────────────────── */
+    /* ── Sidebar: grouped client buttons ─────────────────── */
 
-    private static function render_desktop_path( string $endpoint, bool $oauth_on, bool $reachable, array $connections ): void {
+    private static function render_client_sidebar( array $registry, string $active_client ): void {
+        $groups = [
+            'no-terminal' => __( 'No terminal needed', 'cowboy-mcp' ),
+            'terminal'    => __( 'Terminal & IDE tools', 'cowboy-mcp' ),
+        ];
+        $first_slug = array_key_first( $registry );
+        ?>
+        <nav class="mcp-conn-sidebar" role="tablist" aria-orientation="vertical" aria-label="<?php echo esc_attr__( 'AI clients', 'cowboy-mcp' ); ?>">
+            <?php foreach ( $groups as $group_key => $group_label ) : ?>
+                <p class="mcp-conn-group-label" role="presentation"><?php echo esc_html( $group_label ); ?></p>
+                <?php foreach ( $registry as $slug => $client ) :
+                    if ( $client['group'] !== $group_key ) {
+                        continue;
+                    }
+                    $is_active = ( $slug === $active_client );
+                    // Roving tabindex: the active item is focusable — or the first item when nothing is selected yet.
+                    $tabindex = ( $is_active || ( $active_client === '' && $slug === $first_slug ) ) ? '0' : '-1';
+                    ?>
+                    <button type="button"
+                            id="mcp-conn-item-<?php echo esc_attr( $slug ); ?>"
+                            class="mcp-conn-item <?php echo esc_attr( $is_active ? 'mcp-conn-item--active' : '' ); ?>"
+                            data-client="<?php echo esc_attr( $slug ); ?>"
+                            role="tab"
+                            aria-selected="<?php echo esc_attr( $is_active ? 'true' : 'false' ); ?>"
+                            aria-controls="mcp-client-panel-<?php echo esc_attr( $slug ); ?>"
+                            tabindex="<?php echo esc_attr( $tabindex ); ?>">
+                        <span class="mcp-conn-ic" aria-hidden="true"><?php self::render_client_icon( $slug ); ?></span>
+                        <span class="mcp-conn-label"><?php echo esc_html( $client['label'] ); ?></span>
+                    </button>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+        </nav>
+        <?php
+    }
+
+    /* ── OAuth clients: claude.ai / Claude Desktop ────────── */
+
+    private static function render_oauth_client_panel( string $slug, string $endpoint ): void {
+        $oauth_avail = class_exists( 'Cowboy_MCP_OAuth' );
+        $oauth_on    = $oauth_avail && Cowboy_MCP_OAuth::is_enabled();
+        $reachable   = ! $oauth_avail || Cowboy_MCP_OAuth::site_is_publicly_reachable();
+        $connections = ( $oauth_avail && $oauth_on ) ? Cowboy_MCP_OAuth::list_connections() : [];
+        $is_desktop  = ( $slug === 'claude-desktop' );
+
         if ( ! $reachable ) :
             ?>
             <div class="notice notice-warning inline"><p><?php
                 echo wp_kses(
-                    __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. The Claude apps connect from Anthropic\'s cloud, so they cannot reach local, private, or non-HTTPS sites. The terminal option works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' ),
+                    __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. The Claude apps connect from Anthropic\'s cloud, so they cannot reach local, private, or non-HTTPS sites. A terminal tool works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' ),
                     [ 'strong' => [] ]
                 );
             ?></p></div>
@@ -399,7 +420,7 @@ class Cowboy_MCP_Admin {
         endif;
 
         if ( ! $oauth_on ) :
-            // Fallback: the connector was turned off (e.g. in Settings) — offer to turn it on.
+            // Browsing never flips settings — enabling the connector is an explicit click.
             ?>
             <div class="mcp-step mcp-step--active">
                 <div class="mcp-step-header">
@@ -426,20 +447,24 @@ class Cowboy_MCP_Admin {
             <div class="mcp-step-body">
                 <p><?php esc_html_e( "You'll paste this into Claude in the next step.", 'cowboy-mcp' ); ?></p>
                 <div class="mcp-code-block">
-                    <code id="mcp-oauth-url"><?php echo esc_url( $endpoint ); ?></code>
+                    <code id="mcp-oauth-url-<?php echo esc_attr( $slug ); ?>"><?php echo esc_url( $endpoint ); ?></code>
                 </div>
-                <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-oauth-url" aria-label="<?php echo esc_attr__( 'Copy connector URL', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+                <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-oauth-url-<?php echo esc_attr( $slug ); ?>" aria-label="<?php echo esc_attr__( 'Copy connector URL', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
             </div>
         </div>
 
         <div class="mcp-step">
             <div class="mcp-step-header">
                 <span class="mcp-step-number">2</span>
-                <h3 style="margin:0;"><?php esc_html_e( 'Add it in Claude', 'cowboy-mcp' ); ?></h3>
+                <h3 style="margin:0;"><?php echo esc_html( $is_desktop ? __( 'Add it in the Claude app', 'cowboy-mcp' ) : __( 'Add it on claude.ai', 'cowboy-mcp' ) ); ?></h3>
             </div>
             <div class="mcp-step-body">
                 <ol class="mcp-substeps">
-                    <li><?php echo wp_kses( __( 'Open the <strong>Claude</strong> desktop app, or go to <code>claude.ai</code> in your browser.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ); ?></li>
+                    <?php if ( $is_desktop ) : ?>
+                        <li><?php echo wp_kses( __( 'Open the <strong>Claude</strong> desktop app and sign in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                    <?php else : ?>
+                        <li><?php echo wp_kses( __( 'Go to <code>claude.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                    <?php endif; ?>
                     <li><?php echo wp_kses( __( 'Go to <code>Settings → Connectors</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
                     <li><?php echo wp_kses( __( 'Click <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     <li><?php echo wp_kses( __( 'Paste the link from step 1 and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
@@ -457,57 +482,31 @@ class Cowboy_MCP_Admin {
                 <p class="description"><?php echo wp_kses( __( 'Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
             </div>
         </div>
-
-        <?php if ( ! empty( $connections ) ) : ?>
-            <h3 class="mcp-table-cap"><?php esc_html_e( 'Connected apps', 'cowboy-mcp' ); ?></h3>
-            <div class="mcp-table-wrap">
-            <table class="widefat striped">
-                <thead>
-                    <tr>
-                        <th scope="col"><?php esc_html_e( 'App', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Authorized by', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Connected', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ( $connections as $c ) : ?>
-                    <tr>
-                        <td><?php echo esc_html( $c['client_name'] ); ?></td>
-                        <td><?php echo esc_html( $c['user'] ); ?></td>
-                        <td><?php echo esc_html( $c['created'] ? wp_date( 'M j, Y', $c['created'] ) : '—' ); ?></td>
-                        <td><?php
-                            if ( $c['last_used'] ) {
-                                /* translators: %s: human-readable time difference */
-                                printf( esc_html__( '%s ago', 'cowboy-mcp' ), esc_html( human_time_diff( $c['last_used'] ) ) );
-                            } else {
-                                echo '<em>' . esc_html__( 'never', 'cowboy-mcp' ) . '</em>';
-                            }
-                        ?></td>
-                        <td>
-                            <form method="post" class="mcp-revoke-form">
-                                <?php wp_nonce_field( 'cowboy_mcp_revoke_oauth' ); ?>
-                                <input type="hidden" name="oauth_client_id" value="<?php echo esc_attr( $c['client_id'] ); ?>">
-                                <button type="submit" name="cowboy_mcp_revoke_oauth" class="button button-small button-link-delete"
-                                        data-confirm="<?php echo esc_attr__( 'Revoke this connection? The app will lose access immediately.', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Revoke', 'cowboy-mcp' ); ?></button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-            </div>
-        <?php endif;
+        <?php
+        self::render_connections_table( $connections );
     }
 
-    /* ── Terminal (developer) path ────────────────────────── */
+    /* ── API-key clients: Claude Code / Codex / Opencode / Cursor / Gemini CLI ── */
 
-    private static function render_terminal_path( array $keys, string $endpoint, $new_key, bool $has_keys ): void {
+    private static function render_api_client_panel( string $slug, string $label, array $keys, string $endpoint, $new_key ): void {
         $domain      = str_replace( '.', '-', wp_parse_url( home_url(), PHP_URL_HOST ) );
         $key_display = $new_key ?: 'YOUR_API_KEY';
+        $has_keys    = ! empty( $keys );
+
+        self::render_key_step( $slug, $label, $new_key, $has_keys );
+        self::render_install_step( $slug, $domain, $endpoint, $key_display, (bool) $new_key );
+        self::render_verify_step( $slug, $domain );
+
+        if ( $has_keys ) {
+            self::render_keys_table( $keys );
+        }
+    }
+
+    /* ── Step 1 partial: create an API key (one per API-key panel) ── */
+
+    private static function render_key_step( string $slug, string $label, $new_key, bool $has_keys ): void {
         ?>
-        <div class="mcp-step <?php echo esc_attr( $new_key ? 'mcp-step--completed' : 'mcp-step--active' ); ?>">
+        <div class="mcp-step mcp-key-step <?php echo esc_attr( $new_key ? 'mcp-step--completed' : 'mcp-step--active' ); ?>">
             <div class="mcp-step-header">
                 <span class="mcp-step-number"><?php echo esc_html( $new_key ? '✓' : '1' ); ?></span>
                 <h3 style="margin:0;"><?php esc_html_e( 'Create an API key', 'cowboy-mcp' ); ?></h3>
@@ -516,52 +515,55 @@ class Cowboy_MCP_Admin {
                 <?php if ( $new_key ) : ?>
                     <div class="notice notice-success inline"><p><?php echo wp_kses( __( '<strong>Copy your key now</strong> — for security it will not be shown again.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p></div>
                     <div class="mcp-code-block">
-                        <code id="mcp-new-key"><?php echo esc_html( $new_key ); ?></code>
+                        <code id="mcp-new-key-<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $new_key ); ?></code>
                     </div>
-                    <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-new-key" aria-label="<?php echo esc_attr__( 'Copy API key', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
-                    <button type="button" id="mcp-dismiss-key" class="button button-small" style="margin-left:4px;"><?php esc_html_e( "I've saved my key", 'cowboy-mcp' ); ?></button>
+                    <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-new-key-<?php echo esc_attr( $slug ); ?>" aria-label="<?php echo esc_attr__( 'Copy API key', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+                    <button type="button" class="button button-small mcp-dismiss-key" style="margin-left:4px;"><?php esc_html_e( "I've saved my key", 'cowboy-mcp' ); ?></button>
                 <?php else : ?>
                     <p><?php esc_html_e( 'Give it a name so you can recognize it later, then generate.', 'cowboy-mcp' ); ?></p>
                     <form method="post" class="mcp-generate-form">
                         <?php wp_nonce_field( 'cowboy_mcp_generate_key' ); ?>
-                        <input type="text" name="key_label" value="" placeholder="<?php echo esc_attr__( 'e.g. Claude Code on my laptop', 'cowboy-mcp' ); ?>" class="regular-text" style="max-width: 240px;">
+                        <input type="text" name="key_label" value="" placeholder="<?php
+                            /* translators: %s: client name, e.g. "Claude Code" */
+                            echo esc_attr( sprintf( __( 'e.g. %s on my laptop', 'cowboy-mcp' ), $label ) );
+                        ?>" class="regular-text" style="max-width: 240px;">
                         <button type="submit" name="cowboy_mcp_generate_key" class="button button-primary"><?php echo $has_keys ? esc_html__( 'Generate another key', 'cowboy-mcp' ) : esc_html__( 'Generate API key', 'cowboy-mcp' ); ?></button>
                     </form>
                 <?php endif; ?>
             </div>
         </div>
+        <?php
+    }
 
-        <div class="mcp-step <?php echo esc_attr( $new_key ? 'mcp-step--active' : '' ); ?>">
+    /* ── Step 2 partial: client-specific install instructions ── */
+
+    private static function render_install_step( string $slug, string $domain, string $endpoint, string $key_display, bool $step_active ): void {
+        $code_id = 'mcp-cmd-' . $slug;
+        ?>
+        <div class="mcp-step <?php echo esc_attr( $step_active ? 'mcp-step--active' : '' ); ?>">
             <div class="mcp-step-header">
                 <span class="mcp-step-number">2</span>
                 <h3 style="margin:0;"><?php esc_html_e( 'Add the server to your tool', 'cowboy-mcp' ); ?></h3>
             </div>
             <div class="mcp-step-body">
-                <div class="mcp-tabs" data-tabs="connect-cmd">
-                    <nav class="mcp-tabs-nav" role="tablist">
-                        <button type="button" class="mcp-tab-btn mcp-tab-btn--active" data-tab="claude-code" role="tab" aria-selected="true" aria-controls="connect-cmd-panel-claude-code" tabindex="0">Claude Code</button>
-                        <button type="button" class="mcp-tab-btn" data-tab="codex" role="tab" aria-selected="false" aria-controls="connect-cmd-panel-codex" tabindex="-1">Codex</button>
-                        <button type="button" class="mcp-tab-btn" data-tab="opencode" role="tab" aria-selected="false" aria-controls="connect-cmd-panel-opencode" tabindex="-1">Opencode</button>
-                    </nav>
-                    <div class="mcp-tab-panel mcp-tab-panel--active" data-panel="claude-code" role="tabpanel" id="connect-cmd-panel-claude-code" tabindex="0">
+                <?php switch ( $slug ) :
+                    case 'claude-code': ?>
                         <p><?php esc_html_e( 'Run this in your terminal:', 'cowboy-mcp' ); ?></p>
                         <div class="mcp-code-block">
-                            <code id="mcp-cmd-claude">claude mcp add --transport http <?php echo esc_html( $domain ); ?> <?php echo esc_url( $endpoint ); ?> --header "Authorization: Bearer <?php echo esc_html( $key_display ); ?>"</code>
+                            <code id="<?php echo esc_attr( $code_id ); ?>">claude mcp add --transport http <?php echo esc_html( $domain ); ?> <?php echo esc_url( $endpoint ); ?> --header "Authorization: Bearer <?php echo esc_html( $key_display ); ?>"</code>
                         </div>
-                        <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-cmd-claude" aria-label="<?php echo esc_attr__( 'Copy Claude Code command', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
-                    </div>
-                    <div class="mcp-tab-panel" data-panel="codex" role="tabpanel" id="connect-cmd-panel-codex" tabindex="0">
+                        <?php break; ?>
+                    <?php case 'codex': ?>
                         <p><?php esc_html_e( 'Run these in your terminal:', 'cowboy-mcp' ); ?></p>
                         <div class="mcp-code-block">
-                            <code id="mcp-cmd-codex">export COWBOY_MCP_API_KEY="<?php echo esc_html( $key_display ); ?>"
+                            <code id="<?php echo esc_attr( $code_id ); ?>">export COWBOY_MCP_API_KEY="<?php echo esc_html( $key_display ); ?>"
 codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endpoint ); ?> --bearer-token-env-var COWBOY_MCP_API_KEY</code>
                         </div>
-                        <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-cmd-codex" aria-label="<?php echo esc_attr__( 'Copy Codex command', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
-                    </div>
-                    <div class="mcp-tab-panel" data-panel="opencode" role="tabpanel" id="connect-cmd-panel-opencode" tabindex="0">
+                        <?php break; ?>
+                    <?php case 'opencode': ?>
                         <p><?php echo wp_kses( __( 'Add this to your <code>opencode.json</code>:', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                         <div class="mcp-code-block">
-                            <code id="mcp-cmd-opencode">{
+                            <code id="<?php echo esc_attr( $code_id ); ?>">{
   "mcp": {
     "<?php echo esc_html( $domain ); ?>": {
       "type": "remote",
@@ -573,67 +575,157 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
   }
 }</code>
                         </div>
-                        <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-cmd-opencode" aria-label="<?php echo esc_attr__( 'Copy Opencode config', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
-                    </div>
-                </div>
+                        <?php break; ?>
+                    <?php case 'cursor': ?>
+                        <p><?php echo wp_kses( __( 'Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not exist), then reload Cursor:', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                        <div class="mcp-code-block">
+                            <code id="<?php echo esc_attr( $code_id ); ?>">{
+  "mcpServers": {
+    "<?php echo esc_html( $domain ); ?>": {
+      "url": "<?php echo esc_url( $endpoint ); ?>",
+      "headers": {
+        "Authorization": "Bearer <?php echo esc_html( $key_display ); ?>"
+      }
+    }
+  }
+}</code>
+                        </div>
+                        <?php break; ?>
+                    <?php case 'gemini-cli': ?>
+                        <p><?php esc_html_e( 'Run this in your terminal:', 'cowboy-mcp' ); ?></p>
+                        <div class="mcp-code-block">
+                            <code id="<?php echo esc_attr( $code_id ); ?>">gemini mcp add --transport http <?php echo esc_html( $domain ); ?> <?php echo esc_url( $endpoint ); ?> --header "Authorization: Bearer <?php echo esc_html( $key_display ); ?>"</code>
+                        </div>
+                        <?php break; ?>
+                <?php endswitch; ?>
+                <button type="button" class="button button-small mcp-copy-btn" data-copy-target="<?php echo esc_attr( $code_id ); ?>" aria-label="<?php echo esc_attr__( 'Copy setup command', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
             </div>
         </div>
+        <?php
+    }
 
+    /* ── Step 3 partial: client-specific verification ─────── */
+
+    private static function render_verify_step( string $slug, string $domain ): void {
+        $text = match ( $slug ) {
+            /* translators: %s: the MCP server name shown in the client. */
+            'claude-code' => sprintf( __( 'Open a new Claude Code session and run <code>/mcp</code> — <code>%s</code> should be listed as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'codex'       => sprintf( __( 'Run <code>codex mcp list</code> — <code>%s</code> should appear in the list.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'opencode'    => sprintf( __( 'Restart Opencode and ask it to list its MCP servers — <code>%s</code> should be available.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'cursor'      => sprintf( __( 'Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with a green status dot.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'gemini-cli'  => sprintf( __( 'Run <code>gemini mcp list</code> — <code>%s</code> should show as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            default       => '',
+        };
+        ?>
         <div class="mcp-step">
             <div class="mcp-step-header">
                 <span class="mcp-step-number">3</span>
                 <h3 style="margin:0;"><?php esc_html_e( 'Check it worked', 'cowboy-mcp' ); ?></h3>
             </div>
             <div class="mcp-step-body">
-                <p><?php echo wp_kses(
-                    /* translators: %s: the MCP server name shown in the client. */
-                    sprintf( __( 'Open your tool and confirm the server is connected. In Claude Code, run <code>/mcp</code> and look for <code>%s</code> in the list.', 'cowboy-mcp' ), esc_html( $domain ) ),
-                    [ 'code' => [] ]
-                ); ?></p>
+                <p><?php echo wp_kses( $text, [ 'code' => [] ] ); ?></p>
             </div>
         </div>
+        <?php
+    }
 
-        <?php if ( $has_keys ) : ?>
-            <h3 class="mcp-table-cap"><?php esc_html_e( 'Existing keys', 'cowboy-mcp' ); ?></h3>
-            <div class="mcp-table-wrap">
-            <table class="widefat striped">
-                <thead>
-                    <tr>
-                        <th scope="col"><?php esc_html_e( 'Label', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Prefix', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Created', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ( $keys as $k ) : ?>
-                    <tr>
-                        <td><?php echo esc_html( $k['label'] ); ?></td>
-                        <td><code><?php echo esc_html( $k['prefix'] ); ?>&hellip;</code></td>
-                        <td><?php echo esc_html( wp_date( 'M j, Y', $k['created'] ) ); ?></td>
-                        <td><?php
-                            if ( $k['last_used'] ) {
-                                /* translators: %s: human-readable time difference, e.g. "2 hours" */
-                                printf( esc_html__( '%s ago', 'cowboy-mcp' ), esc_html( human_time_diff( $k['last_used'] ) ) );
-                            } else {
-                                echo '<em>' . esc_html__( 'never', 'cowboy-mcp' ) . '</em>';
-                            }
-                        ?></td>
-                        <td>
-                            <form method="post" class="mcp-revoke-form">
-                                <?php wp_nonce_field( 'cowboy_mcp_revoke_key' ); ?>
-                                <input type="hidden" name="key_id" value="<?php echo esc_attr( $k['id'] ); ?>">
-                                <button type="submit" name="cowboy_mcp_revoke_key" class="button button-small button-link-delete"
-                                        data-confirm="<?php echo esc_attr__( 'Revoke this key? Any client using it will lose access.', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Revoke', 'cowboy-mcp' ); ?></button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-            </div>
-        <?php endif;
+    /* ── Table partial: existing API keys ─────────────────── */
+
+    private static function render_keys_table( array $keys ): void {
+        ?>
+        <h3 class="mcp-table-cap"><?php esc_html_e( 'Existing keys', 'cowboy-mcp' ); ?></h3>
+        <div class="mcp-table-wrap">
+        <table class="widefat striped">
+            <thead>
+                <tr>
+                    <th scope="col"><?php esc_html_e( 'Label', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Prefix', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Created', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ( $keys as $k ) : ?>
+                <tr>
+                    <td><?php echo esc_html( $k['label'] ); ?></td>
+                    <td><code><?php echo esc_html( $k['prefix'] ); ?>&hellip;</code></td>
+                    <td><?php echo esc_html( wp_date( 'M j, Y', $k['created'] ) ); ?></td>
+                    <td><?php
+                        if ( $k['last_used'] ) {
+                            /* translators: %s: human-readable time difference, e.g. "2 hours" */
+                            printf( esc_html__( '%s ago', 'cowboy-mcp' ), esc_html( human_time_diff( $k['last_used'] ) ) );
+                        } else {
+                            echo '<em>' . esc_html__( 'never', 'cowboy-mcp' ) . '</em>';
+                        }
+                    ?></td>
+                    <td>
+                        <form method="post" class="mcp-revoke-form">
+                            <?php wp_nonce_field( 'cowboy_mcp_revoke_key' ); ?>
+                            <input type="hidden" name="key_id" value="<?php echo esc_attr( $k['id'] ); ?>">
+                            <button type="submit" name="cowboy_mcp_revoke_key" class="button button-small button-link-delete"
+                                    data-confirm="<?php echo esc_attr__( 'Revoke this key? Any client using it will lose access.', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Revoke', 'cowboy-mcp' ); ?></button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+        <?php
+    }
+
+    /* ── Table partial: connected OAuth apps ──────────────── */
+
+    private static function render_connections_table( array $connections ): void {
+        if ( empty( $connections ) ) {
+            return;
+        }
+        ?>
+        <h3 class="mcp-table-cap"><?php esc_html_e( 'Connected apps', 'cowboy-mcp' ); ?></h3>
+        <div class="mcp-table-wrap">
+        <table class="widefat striped">
+            <thead>
+                <tr>
+                    <th scope="col"><?php esc_html_e( 'App', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Authorized by', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Connected', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ( $connections as $c ) : ?>
+                <tr>
+                    <td><?php echo esc_html( $c['client_name'] ); ?></td>
+                    <td><?php echo esc_html( $c['user'] ); ?></td>
+                    <td><?php echo esc_html( $c['created'] ? wp_date( 'M j, Y', $c['created'] ) : '—' ); ?></td>
+                    <td><?php
+                        if ( $c['last_used'] ) {
+                            /* translators: %s: human-readable time difference */
+                            printf( esc_html__( '%s ago', 'cowboy-mcp' ), esc_html( human_time_diff( $c['last_used'] ) ) );
+                        } else {
+                            echo '<em>' . esc_html__( 'never', 'cowboy-mcp' ) . '</em>';
+                        }
+                    ?></td>
+                    <td>
+                        <form method="post" class="mcp-revoke-form">
+                            <?php wp_nonce_field( 'cowboy_mcp_revoke_oauth' ); ?>
+                            <input type="hidden" name="oauth_client_id" value="<?php echo esc_attr( $c['client_id'] ); ?>">
+                            <button type="submit" name="cowboy_mcp_revoke_oauth" class="button button-small button-link-delete"
+                                    data-confirm="<?php echo esc_attr__( 'Revoke this connection? The app will lose access immediately.', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Revoke', 'cowboy-mcp' ); ?></button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+        <?php
     }
 
     /* ── Settings tab ─────────────────────────────────────── */
