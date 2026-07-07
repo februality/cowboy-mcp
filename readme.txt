@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, ai-agent, wp-cli
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -83,11 +83,11 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.4.0 =
-* New: one-click sign-in for the Claude desktop and web apps — no terminal required.
-* Updated for WordPress.org plugin directory compliance.
-* Changed: database tools now use fixed, safe queries — no free-form SQL.
-* Removed: the self-hosted auto-updater; updates now come through WordPress.org.
+= 1.4.1 =
+* New: redesigned connection page — pick your app (claude.ai, Claude Desktop, ChatGPT, Claude Code, Codex, Opencode, Cursor, Gemini CLI) from a sidebar and follow steps tailored to it.
+* New: connect from ChatGPT — custom connectors (Developer mode) work with the built-in one-click sign-in.
+* Fixed: OAuth setup steps now appear immediately after enabling the Desktop Connector.
+* Fixed: the connection-page preference is now cleaned up on uninstall.
 
 = Earlier versions =
 
