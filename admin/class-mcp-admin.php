@@ -498,7 +498,7 @@ class Cowboy_MCP_Admin {
                         <?php else : ?>
                             <li><?php echo wp_kses( __( 'Go to <code>claude.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
                         <?php endif; ?>
-                        <li><?php echo wp_kses( __( 'Go to <code>Settings → Connectors</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>Customize → Connections</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
                         <li><?php echo wp_kses( __( 'Click <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                         <li><?php echo wp_kses( __( 'Paste the link from step 1 and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     <?php endif; ?>
