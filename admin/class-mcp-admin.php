@@ -403,7 +403,11 @@ class Cowboy_MCP_Admin {
 
     private static function render_oauth_client_panel( string $slug, string $endpoint ): void {
         $oauth_avail = class_exists( 'Cowboy_MCP_OAuth' );
-        $oauth_on    = $oauth_avail && Cowboy_MCP_OAuth::is_enabled();
+        // Read the option directly instead of Cowboy_MCP_OAuth::is_enabled(): that
+        // helper memoizes settings at request start, so it still reports "off" in
+        // the very response that enable_oauth_connector() just turned it on.
+        $settings    = get_option( 'cowboy_mcp_settings', [] );
+        $oauth_on    = $oauth_avail && ! empty( $settings['enabled'] ) && ! empty( $settings['oauth_enabled'] );
         $reachable   = ! $oauth_avail || Cowboy_MCP_OAuth::site_is_publicly_reachable();
         $connections = ( $oauth_avail && $oauth_on ) ? Cowboy_MCP_OAuth::list_connections() : [];
         $is_desktop  = ( $slug === 'claude-desktop' );
