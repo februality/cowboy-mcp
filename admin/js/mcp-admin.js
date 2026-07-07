@@ -4,35 +4,6 @@
 	/* ── Helpers ─────────────────────────────────────────── */
 
 	/**
-	 * Activate a tab by name across ALL tab groups on the page.
-	 */
-	function activateTab( tabName ) {
-		document.querySelectorAll( '.mcp-tabs' ).forEach( function( tabs ) {
-			var btn = tabs.querySelector( '.mcp-tab-btn[data-tab="' + tabName + '"]' );
-			if ( ! btn ) {
-				return;
-			}
-			var buttons = tabs.querySelectorAll( '.mcp-tab-btn' );
-			buttons.forEach( function( b ) {
-				b.classList.remove( 'mcp-tab-btn--active' );
-				b.setAttribute( 'aria-selected', 'false' );
-				b.setAttribute( 'tabindex', '-1' );
-			} );
-			tabs.querySelectorAll( '.mcp-tab-panel' ).forEach( function( p ) {
-				p.classList.remove( 'mcp-tab-panel--active' );
-			} );
-			btn.classList.add( 'mcp-tab-btn--active' );
-			btn.setAttribute( 'aria-selected', 'true' );
-			btn.setAttribute( 'tabindex', '0' );
-			var panel = tabs.querySelector( '[data-panel="' + tabName + '"]' );
-			if ( panel ) {
-				panel.classList.add( 'mcp-tab-panel--active' );
-			}
-		} );
-		window.location.hash = tabName;
-	}
-
-	/**
 	 * Copy text to clipboard with fallback for older browsers.
 	 */
 	function copyToClipboard( text, onSuccess, onFailure ) {
@@ -63,42 +34,6 @@
 		}
 		document.body.removeChild( textarea );
 	}
-
-	/* ── Tab switching ────────────────────────────────────── */
-	document.querySelectorAll( '.mcp-tabs' ).forEach( function( tabs ) {
-		tabs.querySelectorAll( '.mcp-tab-btn' ).forEach( function( btn ) {
-			btn.addEventListener( 'click', function() {
-				activateTab( btn.getAttribute( 'data-tab' ) );
-			} );
-		} );
-
-		/* ── Keyboard navigation (roving tabindex) ────────── */
-		var nav = tabs.querySelector( '.mcp-tabs-nav' );
-		if ( nav ) {
-			nav.addEventListener( 'keydown', function( e ) {
-				var buttons = Array.prototype.slice.call( nav.querySelectorAll( '.mcp-tab-btn' ) );
-				var index = buttons.indexOf( document.activeElement );
-				if ( index === -1 ) {
-					return;
-				}
-				var next = -1;
-				if ( e.key === 'ArrowRight' ) {
-					next = ( index + 1 ) % buttons.length;
-				} else if ( e.key === 'ArrowLeft' ) {
-					next = ( index - 1 + buttons.length ) % buttons.length;
-				} else if ( e.key === 'Home' ) {
-					next = 0;
-				} else if ( e.key === 'End' ) {
-					next = buttons.length - 1;
-				}
-				if ( next !== -1 ) {
-					e.preventDefault();
-					buttons[ next ].focus();
-					activateTab( buttons[ next ].getAttribute( 'data-tab' ) );
-				}
-			} );
-		}
-	} );
 
 	/* ── Copy-to-clipboard buttons ────────────────────────── */
 	document.querySelectorAll( '.mcp-copy-btn' ).forEach( function( btn ) {
@@ -141,16 +76,11 @@
 		} );
 	} );
 
-	/* ── "I've copied my key" dismiss button ─────────────── */
-	var dismissBtn = document.getElementById( 'mcp-dismiss-key' );
-	if ( dismissBtn && typeof cowboyMcpAdmin !== 'undefined' ) {
-		dismissBtn.addEventListener( 'click', function() {
-			var xhr = new XMLHttpRequest();
-			xhr.open( 'POST', cowboyMcpAdmin.ajaxUrl );
-			xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-			xhr.send( 'action=cowboy_mcp_dismiss_new_key&_wpnonce=' + encodeURIComponent( cowboyMcpAdmin.dismissNonce ) );
-			var step = dismissBtn.closest( '.mcp-step' );
-			if ( step ) {
+	/* ── "I've saved my key" dismiss buttons (one per client panel) ── */
+	var dismissBtns = document.querySelectorAll( '.mcp-dismiss-key' );
+	if ( dismissBtns.length && typeof cowboyMcpAdmin !== 'undefined' ) {
+		var dismissKeySteps = function() {
+			document.querySelectorAll( '.mcp-key-step' ).forEach( function( step ) {
 				step.classList.remove( 'mcp-step--completed' );
 				step.classList.add( 'mcp-step--active' );
 				var number = step.querySelector( '.mcp-step-number' );
@@ -161,7 +91,16 @@
 				if ( body ) {
 					body.innerHTML = '<p><em>Key dismissed. Reload the page to generate a new one.</em></p>';
 				}
-			}
+			} );
+		};
+		dismissBtns.forEach( function( btn ) {
+			btn.addEventListener( 'click', function() {
+				var xhr = new XMLHttpRequest();
+				xhr.open( 'POST', cowboyMcpAdmin.ajaxUrl );
+				xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+				xhr.send( 'action=cowboy_mcp_dismiss_new_key&_wpnonce=' + encodeURIComponent( cowboyMcpAdmin.dismissNonce ) );
+				dismissKeySteps();
+			} );
 		} );
 	}
 
@@ -187,12 +126,64 @@
 		} );
 	} );
 
-	/* ── Restore tab state from URL hash ─────────────────── */
-	var hash = window.location.hash.replace( '#', '' );
-	if ( hash ) {
-		var match = document.querySelector( '.mcp-tab-btn[data-tab="' + hash + '"]' );
-		if ( match ) {
-			activateTab( hash );
+	/* ── Connection client sidebar ────────────────────────── */
+	var connSidebar = document.querySelector( '.mcp-conn-sidebar' );
+	if ( connSidebar ) {
+		var connItems = Array.prototype.slice.call( connSidebar.querySelectorAll( '.mcp-conn-item' ) );
+
+		var activateClient = function( slug, persist ) {
+			connItems.forEach( function( item ) {
+				var on = item.getAttribute( 'data-client' ) === slug;
+				item.classList.toggle( 'mcp-conn-item--active', on );
+				item.setAttribute( 'aria-selected', on ? 'true' : 'false' );
+				item.setAttribute( 'tabindex', on ? '0' : '-1' );
+			} );
+			document.querySelectorAll( '.mcp-client-panel' ).forEach( function( panel ) {
+				panel.classList.toggle( 'mcp-client-panel--active', panel.getAttribute( 'data-client-panel' ) === slug );
+			} );
+			if ( persist && typeof cowboyMcpAdmin !== 'undefined' && cowboyMcpAdmin.connNonce ) {
+				var xhr = new XMLHttpRequest();
+				xhr.open( 'POST', cowboyMcpAdmin.ajaxUrl );
+				xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+				xhr.send( 'action=cowboy_mcp_set_conn_client&client=' + encodeURIComponent( slug ) + '&_wpnonce=' + encodeURIComponent( cowboyMcpAdmin.connNonce ) );
+			}
+		};
+
+		connItems.forEach( function( item ) {
+			item.addEventListener( 'click', function() {
+				var slug = item.getAttribute( 'data-client' );
+				activateClient( slug, true );
+				window.location.hash = slug;
+			} );
+		} );
+
+		/* Vertical keyboard navigation (roving tabindex) */
+		connSidebar.addEventListener( 'keydown', function( e ) {
+			var index = connItems.indexOf( document.activeElement );
+			if ( index === -1 ) {
+				return;
+			}
+			var next = -1;
+			if ( e.key === 'ArrowDown' ) {
+				next = ( index + 1 ) % connItems.length;
+			} else if ( e.key === 'ArrowUp' ) {
+				next = ( index - 1 + connItems.length ) % connItems.length;
+			} else if ( e.key === 'Home' ) {
+				next = 0;
+			} else if ( e.key === 'End' ) {
+				next = connItems.length - 1;
+			}
+			if ( next !== -1 ) {
+				e.preventDefault();
+				connItems[ next ].focus();
+				connItems[ next ].click();
+			}
+		} );
+
+		/* Deep link: #<client-slug> overrides the server-selected panel */
+		var connHash = window.location.hash.replace( '#', '' ).replace( /[^a-z0-9-]/g, '' );
+		if ( connHash && connSidebar.querySelector( '.mcp-conn-item[data-client="' + connHash + '"]' ) ) {
+			activateClient( connHash, false );
 		}
 	}
 } )();
