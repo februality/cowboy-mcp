@@ -68,6 +68,17 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
     Cowboy_MCP_OAuth::init();
+
+    // Activation hooks don't re-run on plugin updates: create any missing
+    // tables once per version bump so upgraded installs get the undo journal
+    // and checkpoint tables without reactivation. All create_table() calls
+    // are idempotent (CREATE TABLE IF NOT EXISTS).
+    if ( get_option( 'cowboy_mcp_db_version' ) !== COWBOY_MCP_VERSION ) {
+        Cowboy_MCP_Audit_Log::create_table();
+        Cowboy_MCP_Rollback::create_table();
+        Cowboy_MCP_Checkpoint::create_table();
+        update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
+    }
 });
 
 /* ── Cron resilience: re-schedule if cron event was lost ── */
@@ -100,6 +111,7 @@ register_activation_hook( __FILE__, function () {
     Cowboy_MCP_Audit_Log::create_table();
     Cowboy_MCP_Rollback::create_table();
     Cowboy_MCP_Checkpoint::create_table();
+    update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
 
     if ( ! wp_next_scheduled( Cowboy_MCP_Audit_Log::CRON_HOOK ) ) {
         wp_schedule_event( time(), 'daily', Cowboy_MCP_Audit_Log::CRON_HOOK );
@@ -127,6 +139,7 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_oauth_tokens' );
     delete_option( 'cowboy_mcp_oauth_refresh' );
     delete_option( 'cowboy_mcp_oauth_clients' );
+    delete_option( 'cowboy_mcp_db_version' );
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
