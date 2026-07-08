@@ -9,6 +9,7 @@
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: cowboy-mcp
+ * Domain Path: /languages
  * Requires PHP: 8.0
  * Requires at least: 6.2
  *
@@ -91,6 +92,15 @@ add_action( 'init', function () {
     if ( class_exists( 'Cowboy_MCP_Audit_Log' ) && ! wp_next_scheduled( Cowboy_MCP_Audit_Log::CRON_HOOK ) ) {
         wp_schedule_event( time(), 'daily', Cowboy_MCP_Audit_Log::CRON_HOOK );
     }
+});
+
+/* ── Translations ─────────────────────────────────────────── */
+// Load bundled translations from /languages. Community language packs from
+// translate.wordpress.org (in wp-content/languages/plugins/) load via
+// just-in-time and take precedence — this is safe belt-and-suspenders.
+// Hooked on `init` (not earlier) to avoid the WP 6.7 pre-init _doing_it_wrong.
+add_action( 'init', static function () {
+    load_plugin_textdomain( 'cowboy-mcp', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 });
 
 /* ── Activation ───────────────────────────────────────────── */
