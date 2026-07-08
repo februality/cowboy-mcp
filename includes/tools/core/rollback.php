@@ -67,20 +67,10 @@ return [
         },
 
         'wp_restore_checkpoint' => function ( array $a ) {
-            $result = Cowboy_MCP_Checkpoint::restore( (int) $a['checkpoint_id'] );
+            $result = Cowboy_MCP_Checkpoint::restore( (int) $a['checkpoint_id'], Cowboy_MCP_Auth::$current_key_context['key_id'] ?? 'mcp' );
             if ( is_wp_error( $result ) ) {
                 return $result;
             }
-            // Ledger entry: the restore itself (reversible via the pre-restore checkpoint).
-            Cowboy_MCP_Rollback::insert_row( [
-                'tool'                => 'wp_restore_checkpoint',
-                'action'              => 'update',
-                'object_type'         => 'checkpoint',
-                'object_id'           => (string) $a['checkpoint_id'],
-                'object_label'        => 'Database restore from checkpoint #' . $a['checkpoint_id'],
-                'status'              => Cowboy_MCP_Rollback::STATUS_NOT_UNDOABLE,
-                'not_undoable_reason' => 'Whole-DB restore. To reverse it, restore pre-restore checkpoint #' . $result['pre_restore_checkpoint_id'] . '.',
-            ] );
             return $result;
         },
 

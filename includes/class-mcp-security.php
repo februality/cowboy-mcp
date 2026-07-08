@@ -89,6 +89,26 @@ class Cowboy_MCP_Security {
         );
     }
 
+    /* ── Private storage path protection ──────────────────── */
+
+    /**
+     * Whether an absolute path is inside the plugin's private storage subtree
+     * (uploads/cowboy-mcp — DB checkpoint dumps). Never lifted by Power mode:
+     * these files are full-database plaintext and must stay unreachable by the
+     * file tools, which would otherwise bypass DB-result secret redaction.
+     */
+    public static function is_protected_storage_path( string $abs_path ): bool {
+        $uploads = wp_upload_dir();
+        $base    = $uploads['basedir'] ?? '';
+        if ( $base === '' ) {
+            return false;
+        }
+        $storage = ( realpath( $base ) ?: $base ) . '/cowboy-mcp';
+        $real    = realpath( $abs_path );
+        $target  = $real !== false ? $real : $abs_path;
+        return $target === $storage || str_starts_with( $target . '/', $storage . '/' );
+    }
+
     /* ── Power mode ────────────────────────────────────────── */
 
     /**

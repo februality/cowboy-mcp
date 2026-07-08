@@ -22,6 +22,9 @@ function cowboy_mcp_resolve_wp_content_path( string $relative ): string|WP_Error
             $parent = realpath( dirname( $candidate ) );
             $full   = ( $parent !== false ) ? $parent . '/' . basename( $candidate ) : $candidate;
         }
+        if ( Cowboy_MCP_Security::is_protected_storage_path( $full ) ) {
+            return new WP_Error( 'path_protected', 'This path is inside Cowboy MCP private storage and cannot be accessed via file tools.' );
+        }
         return $full;
     }
 
@@ -47,6 +50,9 @@ function cowboy_mcp_resolve_wp_content_path( string $relative ): string|WP_Error
     // sibling-prefix matches (e.g. wp-content-evil).
     if ( ! str_starts_with( $full . '/', $base_real . '/' ) ) {
         return new WP_Error( 'path_escape', 'Path must be within wp-content/.' );
+    }
+    if ( Cowboy_MCP_Security::is_protected_storage_path( $full ) ) {
+        return new WP_Error( 'path_protected', 'This path is inside Cowboy MCP private storage and cannot be accessed via file tools.' );
     }
     return $full;
 }
@@ -163,6 +169,9 @@ return [
             $count = 0;
             foreach ( $iterator as $item ) {
                 if ( $item->isDot() ) continue;
+                if ( Cowboy_MCP_Security::is_protected_storage_path( $item->getPathname() ) ) {
+                    continue;
+                }
                 if ( ++$count > 500 ) break;    // safety limit
 
                 $relative = str_replace( Cowboy_MCP_Compat::content_dir() . '/', '', $item->getPathname() );

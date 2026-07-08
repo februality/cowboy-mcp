@@ -77,7 +77,12 @@ add_action( 'plugins_loaded', function () {
         Cowboy_MCP_Audit_Log::create_table();
         Cowboy_MCP_Rollback::create_table();
         Cowboy_MCP_Checkpoint::create_table();
-        update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
+        global $wpdb;
+        $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $journal ) ) === $journal ) {
+            update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
+        }
     }
 });
 

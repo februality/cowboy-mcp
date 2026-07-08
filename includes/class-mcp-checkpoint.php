@@ -224,7 +224,7 @@ class Cowboy_MCP_Checkpoint {
 		'cowboy_mcp_oauth_clients',
 	];
 
-	public static function restore( int $id ): array|WP_Error {
+	public static function restore( int $id, string $actor = 'mcp' ): array|WP_Error {
 		global $wpdb;
 		$row = self::get( $id );
 		if ( ! $row ) {
@@ -302,6 +302,20 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 
+		// Ledger entry: the restore itself (reversible via the pre-restore checkpoint).
+		if ( class_exists( 'Cowboy_MCP_Rollback' ) ) {
+			Cowboy_MCP_Rollback::insert_row( [
+				'tool'                => 'wp_restore_checkpoint',
+				'action'              => 'update',
+				'object_type'         => 'checkpoint',
+				'object_id'           => (string) $id,
+				'object_label'        => 'Database restore from checkpoint #' . $id,
+				'key_id'              => $actor,
+				'status'              => Cowboy_MCP_Rollback::STATUS_NOT_UNDOABLE,
+				'not_undoable_reason' => 'Whole-DB restore. To reverse it, restore pre-restore checkpoint #' . $pre['checkpoint_id'] . '.',
+			] );
+		}
+
 		return [
 			'restored'                  => true,
 			'checkpoint_id'             => $id,
@@ -341,13 +355,24 @@ class Cowboy_MCP_Checkpoint {
 			if ( str_starts_with( $stmt, 'INSERT INTO ' ) || str_starts_with( $stmt, 'DROP TABLE IF EXISTS ' ) ) {
 				// Data-bearing statements: rewrite only the leading identifier — a
 				// backticked table name inside a row VALUE must never be touched.
+				// Fail closed on an unmapped identifier: a tampered dump could smuggle
+				// an unrecognized table reference that would otherwise execute as-is.
+				$unknown = false;
 				$stmt = preg_replace_callback(
 					'/^(INSERT INTO|DROP TABLE IF EXISTS) `([^`]+)`/',
-					function ( $m ) use ( $temp_map ) {
-						return $m[1] . ' `' . ( $temp_map[ $m[2] ] ?? $m[2] ) . '`';
+					function ( $m ) use ( $temp_map, &$unknown ) {
+						if ( ! isset( $temp_map[ $m[2] ] ) ) {
+							$unknown = true;
+							return $m[0];
+						}
+						return $m[1] . ' `' . $temp_map[ $m[2] ] . '`';
 					},
 					$stmt
 				);
+				if ( $unknown ) {
+					gzclose( $gz );
+					return new WP_Error( 'checkpoint_failed', 'Checkpoint contains an unrecognized table reference; aborting restore (originals untouched).' );
+				}
 			} else {
 				// Schema statements (CREATE TABLE): whole-statement rewrite so any
 				// self-references (e.g. FK REFERENCES) follow the temp prefix too.
