@@ -231,6 +231,16 @@ class Cowboy_MCP_Rollback {
 	/* ── Object id/label extraction ────────────────────────── */
 
 	private static function extract_id( string $tool, array $strategy, array $args ): ?string {
+		// wp_woo_update_setting normalizes its key (prepends woocommerce_ when
+		// missing) before writing; capture must target the same option.
+		if ( $tool === 'wp_woo_update_setting' ) {
+			$key = (string) ( $args['key'] ?? '' );
+			if ( $key === '' ) {
+				return null;
+			}
+			return strpos( $key, 'woocommerce_' ) === 0 ? $key : 'woocommerce_' . $key;
+		}
+
 		$arg = $strategy['id_arg'] ?? null;
 		if ( $arg !== null && isset( $args[ $arg ] ) && $args[ $arg ] !== '' ) {
 			return (string) $args[ $arg ];
