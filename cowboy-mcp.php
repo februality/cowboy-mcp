@@ -48,6 +48,7 @@ define( 'COWBOY_MCP_URL',     plugin_dir_url( __FILE__ ) );
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-security.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-rollback.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-transport.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-tools.php';
@@ -60,6 +61,7 @@ require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
 /* ── Boot ─────────────────────────────────────────────────── */
 add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Audit_Log::init();
+    Cowboy_MCP_Rollback::init();
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
@@ -86,10 +88,15 @@ register_activation_hook( __FILE__, function () {
             'log_requests'     => false,
             'rate_limit'       => 120,      // requests per minute
             'oauth_enabled'    => false,    // OAuth desktop connector OFF by default
+            'undo_enabled'           => true,
+            'undo_retention_days'    => 7,
+            'checkpoint_max'         => 5,
+            'auto_checkpoint_wp_cli' => true,
         ]);
     }
 
     Cowboy_MCP_Audit_Log::create_table();
+    Cowboy_MCP_Rollback::create_table();
 
     if ( ! wp_next_scheduled( Cowboy_MCP_Audit_Log::CRON_HOOK ) ) {
         wp_schedule_event( time(), 'daily', Cowboy_MCP_Audit_Log::CRON_HOOK );
@@ -127,6 +134,10 @@ function cowboy_mcp_uninstall(): void {
     $table = $wpdb->prefix . 'cowboy_mcp_audit_log';
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
     $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $table ) );
+
+    $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+    $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $journal ) );
 
     cowboy_mcp_cleanup_transients( true );
 }

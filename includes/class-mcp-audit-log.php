@@ -197,7 +197,7 @@ class Cowboy_MCP_Audit_Log {
 	/**
 	 * Strip sensitive values from args before logging.
 	 */
-	private static function redact_sensitive( array $args ): array {
+	public static function redact_sensitive( array $args ): array {
 		foreach ( $args as $key => &$value ) {
 			if ( is_array( $value ) ) {
 				$value = self::redact_sensitive( $value );
