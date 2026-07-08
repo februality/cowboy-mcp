@@ -187,3 +187,12 @@
 		}
 	}
 } )();
+
+/* Rollback: confirm dialogs (one or two stage) for undo/restore forms. */
+document.addEventListener('submit', function (e) {
+	var form = e.target.closest('form[data-mcp-confirm]');
+	if (!form) return;
+	if (!window.confirm(form.getAttribute('data-mcp-confirm'))) { e.preventDefault(); return; }
+	var second = form.getAttribute('data-mcp-confirm-2');
+	if (second && !window.confirm(second)) e.preventDefault();
+}, true);
