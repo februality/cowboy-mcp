@@ -149,8 +149,10 @@ function cowboy_mcp_uninstall(): void {
     // Remove checkpoint files.
     $cp_dir = ( wp_upload_dir()['basedir'] ?? '' ) . '/cowboy-mcp/checkpoints';
     if ( is_dir( $cp_dir ) ) {
-        foreach ( glob( $cp_dir . '/*' ) ?: [] as $f ) {
-            wp_delete_file( $f );
+        foreach ( array_merge( glob( $cp_dir . '/*' ) ?: [], [ $cp_dir . '/.htaccess', $cp_dir . '/index.php' ] ) as $f ) {
+            if ( is_file( $f ) ) {
+                wp_delete_file( $f );
+            }
         }
         @rmdir( $cp_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
         @rmdir( dirname( $cp_dir ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
