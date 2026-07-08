@@ -54,6 +54,14 @@ class Cowboy_MCP_Rollback {
 
 		'wp_write_file'  => [ 'type' => 'file', 'action' => 'update', 'id_arg' => 'path' ],
 		'wp_delete_file' => [ 'type' => 'file', 'action' => 'delete', 'id_arg' => 'path' ],
+
+		'wp_create_term'      => [ 'type' => 'term', 'action' => 'create', 'result_id' => 'term_id' ],
+		'wp_update_term'      => [ 'type' => 'term', 'action' => 'update' ],
+		'wp_delete_term'      => [ 'type' => 'term', 'action' => 'delete' ],
+		'wp_create_comment'   => [ 'type' => 'comment', 'action' => 'create', 'result_id' => 'comment_id' ],
+		'wp_update_comment'   => [ 'type' => 'comment', 'action' => 'update', 'id_arg' => 'comment_id' ],
+		'wp_delete_comment'   => [ 'type' => 'comment', 'action' => 'delete', 'id_arg' => 'comment_id' ],
+		'wp_woo_add_order_note' => [ 'type' => 'comment', 'action' => 'create', 'result_id' => 'note_id' ],
 	];
 
 	/**
@@ -142,6 +150,7 @@ class Cowboy_MCP_Rollback {
 				'rows'         => [],
 				'reason'       => null,
 				'result_id'    => $strategy['result_id'] ?? null,
+				'ctx'          => [ 'taxonomy' => (string) ( $args['taxonomy'] ?? '' ) ],
 			];
 			self::$pending = $handle;
 			return $handle;
@@ -221,7 +230,9 @@ class Cowboy_MCP_Rollback {
 						'not_undoable_reason' => 'Could not identify the created object from the tool result.',
 					] );
 				}
-				$capture['object_id'] = (string) $rid;
+				$capture['object_id'] = $capture['type'] === 'term'
+					? ( $capture['ctx']['taxonomy'] ?? '' ) . ':' . $rid
+					: (string) $rid;
 			}
 
 			$after = self::snapshot( $capture['type'], $capture['object_id'] );
@@ -271,6 +282,9 @@ class Cowboy_MCP_Rollback {
 		if ( isset( $strategy['static_id'] ) ) {
 			return $strategy['static_id'];
 		}
+		if ( $strategy['type'] === 'term' && isset( $args['taxonomy'], $args['term_id'] ) ) {
+			return $args['taxonomy'] . ':' . $args['term_id'];
+		}
 		$arg = $strategy['id_arg'] ?? null;
 		if ( $arg !== null && isset( $args[ $arg ] ) && $args[ $arg ] !== '' ) {
 			return (string) $args[ $arg ];
@@ -284,6 +298,8 @@ class Cowboy_MCP_Rollback {
 			'option'    => $id,
 			'post', 'media' => $state['post']['post_title'] ?? ( $id !== null ? "post #{$id}" : null ),
 			'acf_value' => 'ACF ' . str_replace( '@', ' on ', (string) $id ),
+			'term'    => $state['term']['name'] ?? $id,
+			'comment' => $id !== null ? "comment #{$id}" : null,
 			default     => $id,
 		};
 	}
@@ -349,6 +365,31 @@ class Cowboy_MCP_Rollback {
 					return null;
 				}
 				return [ 'content_b64' => base64_encode( $content ), 'size' => strlen( $content ) ];
+
+			case 'term': {
+				global $wpdb;
+				[ $tax, $tid ] = array_pad( explode( ':', $id, 2 ), 2, '' );
+				$tid = (int) $tid;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$term = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE term_id = %d', $wpdb->terms, $tid ), ARRAY_A );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$tt = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE term_id = %d AND taxonomy = %s', $wpdb->term_taxonomy, $tid, $tax ), ARRAY_A );
+				if ( ! $term || ! $tt ) {
+					return null;
+				}
+				$objects = get_objects_in_term( $tid, $tax );
+				$objects = is_wp_error( $objects ) ? [] : array_map( 'intval', $objects );
+				sort( $objects );
+				return [ 'term' => $term, 'tt' => $tt, 'meta' => get_term_meta( $tid ), 'objects' => $objects ];
+			}
+
+			case 'comment': {
+				$c = get_comment( (int) $id, ARRAY_A );
+				if ( ! $c ) {
+					return null;
+				}
+				return [ 'comment' => $c, 'meta' => get_comment_meta( (int) $id ) ];
+			}
 		}
 		return null;
 	}
@@ -392,6 +433,12 @@ class Cowboy_MCP_Rollback {
 
 			case 'file':
 				return self::restore_file( $id, $state );
+
+			case 'term':
+				return self::restore_term( $id, $state );
+
+			case 'comment':
+				return self::restore_comment( (int) $id, $state );
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
 	}
@@ -492,6 +539,75 @@ class Cowboy_MCP_Rollback {
 			wp_delete_file( $tmp );
 			return new WP_Error( 'undo_failed', "Atomic rename failed for {$relpath}." );
 		}
+		return true;
+	}
+
+	/** Restore (or recreate with the original ID) a term + term_taxonomy row + meta + object relationships. */
+	private static function restore_term( string $composite, ?array $state ): true|WP_Error {
+		global $wpdb;
+		[ $tax, $tid ] = array_pad( explode( ':', $composite, 2 ), 2, '' );
+		$tid = (int) $tid;
+		if ( $state === null ) {
+			$r = wp_delete_term( $tid, $tax );
+			return is_wp_error( $r ) ? $r : true;
+		}
+		$exists = term_exists( $tid, $tax );
+		if ( ! $exists ) {
+			// Recreate rows with the original IDs (wp_insert_term cannot force an id).
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->insert( $wpdb->terms, $state['term'] );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->insert( $wpdb->term_taxonomy, $state['tt'] );
+		} else {
+			$r = wp_update_term( $tid, $tax, wp_slash( [
+				'name'        => $state['term']['name'],
+				'slug'        => $state['term']['slug'],
+				'description' => $state['tt']['description'],
+				'parent'      => (int) $state['tt']['parent'],
+			] ) );
+			if ( is_wp_error( $r ) ) {
+				return $r;
+			}
+		}
+		foreach ( array_keys( get_term_meta( $tid ) ) as $k ) {
+			delete_term_meta( $tid, $k );
+		}
+		foreach ( $state['meta'] as $k => $values ) {
+			foreach ( (array) $values as $v ) {
+				add_term_meta( $tid, $k, wp_slash( maybe_unserialize( $v ) ) );
+			}
+		}
+		foreach ( $state['objects'] as $object_id ) {
+			wp_set_object_terms( (int) $object_id, [ $tid ], $tax, true );
+		}
+		clean_term_cache( $tid, $tax );
+		return true;
+	}
+
+	/** Restore (or recreate with the original ID) a comment row + meta. Null state = delete. */
+	private static function restore_comment( int $cid, ?array $state ): true|WP_Error {
+		global $wpdb;
+		if ( $state === null ) {
+			return wp_delete_comment( $cid, true ) ? true : new WP_Error( 'undo_failed', "Could not delete comment #{$cid}." );
+		}
+		if ( get_comment( $cid ) ) {
+			$row = $state['comment'];
+			$row['comment_ID'] = $cid;
+			wp_update_comment( wp_slash( $row ) );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->insert( $wpdb->comments, $state['comment'] );
+			wp_update_comment_count( (int) $state['comment']['comment_post_ID'] );
+		}
+		foreach ( array_keys( get_comment_meta( $cid ) ) as $k ) {
+			delete_comment_meta( $cid, $k );
+		}
+		foreach ( $state['meta'] as $k => $values ) {
+			foreach ( (array) $values as $v ) {
+				add_comment_meta( $cid, $k, wp_slash( maybe_unserialize( $v ) ) );
+			}
+		}
+		clean_comment_cache( $cid );
 		return true;
 	}
 
