@@ -277,6 +277,191 @@ class Cowboy_MCP_Rollback {
 		return null;
 	}
 
+	/* ── Restore (inverse application; per-type cases extended in Tasks 4-9) ── */
+
+	/**
+	 * Write a captured state back wholesale. $state null = delete the object.
+	 */
+	public static function restore( string $type, string $id, ?array $state ): true|WP_Error {
+		if ( class_exists( 'Cowboy_MCP_Tools' ) ) {
+			Cowboy_MCP_Tools::boot_domains(); // domain helper functions (file paths etc.)
+		}
+		switch ( $type ) {
+			case 'option':
+				if ( $state === null ) {
+					delete_option( $id );
+					return true;
+				}
+				update_option( $id, $state['value'] ); // false = value unchanged; still success
+				return true;
+
+			case 'db_rows':
+				return self::restore_db_rows( $state );
+		}
+		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
+	}
+
+	/** Re-apply captured old values row by row (wp_search_replace inverse). */
+	private static function restore_db_rows( ?array $state ): true|WP_Error {
+		global $wpdb;
+		$rows = $state['rows'] ?? [];
+		if ( empty( $rows ) ) {
+			return new WP_Error( 'undo_failed', 'No captured rows to restore.' );
+		}
+		foreach ( $rows as $r ) {
+			// Table/column names come from our own capture code (trusted), values are data.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update( $r['table'], [ $r['col'] => $r['old'] ], [ $r['pk_col'] => $r['pk_val'] ] );
+		}
+		if ( isset( $rows[0]['table'] ) && $rows[0]['table'] === $wpdb->posts ) {
+			foreach ( $rows as $r ) {
+				clean_post_cache( (int) $r['pk_val'] );
+			}
+		}
+		return true;
+	}
+
+	/** Current values of captured db_rows, for conflict hashing. */
+	private static function db_rows_current_values( array $rows ): array {
+		global $wpdb;
+		$values = [];
+		foreach ( $rows as $r ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$values[] = $wpdb->get_var( $wpdb->prepare(
+				"SELECT {$r['col']} FROM %i WHERE {$r['pk_col']} = %s", $r['table'], $r['pk_val']
+			) );
+		}
+		return $values;
+	}
+
+	/* ── Undo engine ───────────────────────────────────────── */
+
+	public static function undo( int $change_id, bool $force = false, string $actor = 'mcp' ): array|WP_Error {
+		global $wpdb;
+		$row = self::get_row( $change_id );
+		if ( $row === null ) {
+			return new WP_Error( 'not_found', "Change #{$change_id} not found in the undo journal." );
+		}
+		if ( $row['status'] === self::STATUS_UNDONE ) {
+			return new WP_Error( 'already_undone', "Change #{$change_id} was already undone (by {$row['undone_by']} at {$row['undone_at']})." );
+		}
+		if ( $row['status'] === self::STATUS_NOT_UNDOABLE ) {
+			return new WP_Error( 'not_undoable', "Change #{$change_id} is not undoable: {$row['not_undoable_reason']}" );
+		}
+
+		$type = $row['object_type'];
+		$id   = $row['object_id'];
+
+		// ── Conflict check: has the object changed since this edit? ──
+		if ( $type === 'db_rows' ) {
+			$current      = [ 'values' => self::db_rows_current_values( $row['before_state']['rows'] ?? [] ) ];
+			$current_hash = self::state_hash( $current );
+			$pre_undo     = null; // redo state built by swapping old/new below
+		} else {
+			$pre_undo     = self::snapshot( $type, $id );
+			$current_hash = self::state_hash( $pre_undo );
+		}
+		if ( ! $force && $row['after_hash'] !== null && $row['after_hash'] !== '' && $current_hash !== $row['after_hash'] ) {
+			return new WP_Error(
+				'undo_conflict',
+				"Conflict: '{$row['object_label']}' ({$type} {$id}) has been modified since change #{$change_id} was made. "
+					. 'Undoing now would clobber the later change.',
+				[ 'suggestion' => 'Inspect the object, then resend with force: true to undo anyway.' ]
+			);
+		}
+
+		// ── Apply the inverse ──
+		$restored = self::restore( $type, $id, $row['before_state'] );
+		if ( is_wp_error( $restored ) ) {
+			return $restored;
+		}
+
+		// ── Journal the undo itself (redo capability) ──
+		$redo_action = match ( $row['action'] ) {
+			'create' => 'delete',
+			'delete' => 'create',
+			default  => $row['action'],
+		};
+		if ( $type === 'db_rows' ) {
+			$swapped = array_map(
+				fn( $r ) => array_merge( $r, [ 'old' => $r['new'], 'new' => $r['old'] ] ),
+				$row['before_state']['rows'] ?? []
+			);
+			$pre_undo = [ 'rows' => $swapped ];
+		}
+		$after_undo      = $type === 'db_rows'
+			? [ 'values' => self::db_rows_current_values( $row['before_state']['rows'] ?? [] ) ]
+			: self::snapshot( $type, $id );
+		$redo_supported  = ! ( $type === 'media' && $redo_action === 'delete' );
+		$redo_change_id  = self::insert_row( [
+			'tool'                => 'wp_undo_change',
+			'action'              => $redo_action,
+			'object_type'         => $type,
+			'object_id'           => $id,
+			'object_label'        => $row['object_label'],
+			'before_state'        => $pre_undo,
+			'after_hash'          => self::state_hash( $after_undo ),
+			'undo_of'             => $change_id,
+			'key_id'              => $actor,
+			'status'              => $redo_supported ? self::STATUS_ACTIVE : self::STATUS_NOT_UNDOABLE,
+			'not_undoable_reason' => $redo_supported ? null : 'Re-creating a deleted attachment is not supported.',
+		] );
+
+		// ── Mark the original row undone ──
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->update( self::table(), [
+			'status'    => self::STATUS_UNDONE,
+			'undone_at' => gmdate( 'Y-m-d H:i:s' ),
+			'undone_by' => substr( $actor, 0, 64 ),
+		], [ 'id' => $change_id ] );
+
+		$note = null;
+		if ( $type === 'user' && $row['action'] === 'delete' && ! empty( $row['before_state']['reassigned_to'] ) ) {
+			$note = 'User restored. Content reassigned to user #' . $row['before_state']['reassigned_to']
+				. ' during deletion was NOT re-reassigned; move it back explicitly if needed.';
+		}
+		if ( $type === 'wc_object' && $row['action'] === 'delete' ) {
+			$note = 'WooCommerce object recreated with a NEW id (original id could not be preserved). Check references.';
+		}
+
+		return [ 'undone' => true, 'change_id' => $change_id, 'redo_change_id' => $redo_change_id, 'note' => $note ];
+	}
+
+	/** Undo several entries newest-first; stop at the first failure/conflict. */
+	public static function undo_many( array $ids, bool $force = false, string $actor = 'mcp' ): array {
+		$ids = array_unique( array_map( 'intval', $ids ) );
+		rsort( $ids );
+		$results = [];
+		$stopped = false;
+		foreach ( $ids as $id ) {
+			$r = self::undo( $id, $force, $actor );
+			if ( is_wp_error( $r ) ) {
+				$results[] = [ 'change_id' => $id, 'undone' => false, 'error' => $r->get_error_code(), 'message' => $r->get_error_message() ];
+				$stopped   = true;
+				break;
+			}
+			$results[] = $r;
+		}
+		return [
+			'results'       => $results,
+			'undone_count'  => count( array_filter( $results, fn( $r ) => ! empty( $r['undone'] ) ) ),
+			'stopped_early' => $stopped,
+		];
+	}
+
+	public static function undo_batch( string $batch_id, bool $force = false, string $actor = 'mcp' ): array|WP_Error {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ids = $wpdb->get_col( $wpdb->prepare(
+			'SELECT id FROM %i WHERE batch_id = %s AND status = %s ORDER BY id DESC',
+			self::table(), $batch_id, self::STATUS_ACTIVE
+		) );
+		if ( empty( $ids ) ) {
+			return new WP_Error( 'not_found', "No active journal entries for batch '{$batch_id}'." );
+		}
+		return self::undo_many( array_map( 'intval', $ids ), $force, $actor );
+	}
+
 	private static function table(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'cowboy_mcp_undo_journal';
