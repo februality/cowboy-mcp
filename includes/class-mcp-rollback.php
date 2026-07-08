@@ -62,6 +62,12 @@ class Cowboy_MCP_Rollback {
 		'wp_update_comment'   => [ 'type' => 'comment', 'action' => 'update', 'id_arg' => 'comment_id' ],
 		'wp_delete_comment'   => [ 'type' => 'comment', 'action' => 'delete', 'id_arg' => 'comment_id' ],
 		'wp_woo_add_order_note' => [ 'type' => 'comment', 'action' => 'create', 'result_id' => 'note_id' ],
+
+		'wp_activate_plugin'   => [ 'type' => 'plugin', 'action' => 'toggle', 'id_arg' => 'plugin_file' ],
+		'wp_deactivate_plugin' => [ 'type' => 'plugin', 'action' => 'toggle', 'id_arg' => 'plugin_file' ],
+		'wp_switch_theme'      => [ 'type' => 'theme', 'action' => 'toggle', 'static_id' => 'active' ],
+		'wp_upload_media'      => [ 'type' => 'media', 'action' => 'create', 'result_id' => 'attachment_id' ],
+		'wp_delete_user'       => [ 'type' => 'user', 'action' => 'delete', 'id_arg' => 'user_id' ],
 	];
 
 	/**
@@ -138,6 +144,9 @@ class Cowboy_MCP_Rollback {
 					return $handle;
 				}
 				$before = self::snapshot( $strategy['type'], $object_id );
+				if ( $strategy['type'] === 'user' && $before !== null && ! empty( $args['reassign_to'] ) ) {
+					$before['reassigned_to'] = (int) $args['reassign_to'];
+				}
 			}
 
 			$handle = [
@@ -300,6 +309,9 @@ class Cowboy_MCP_Rollback {
 			'acf_value' => 'ACF ' . str_replace( '@', ' on ', (string) $id ),
 			'term'    => $state['term']['name'] ?? $id,
 			'comment' => $id !== null ? "comment #{$id}" : null,
+			'plugin' => $id,
+			'theme'  => 'active theme',
+			'user'   => $state['user']['user_login'] ?? ( $id !== null ? "user #{$id}" : null ),
 			default     => $id,
 		};
 	}
@@ -390,6 +402,24 @@ class Cowboy_MCP_Rollback {
 				}
 				return [ 'comment' => $c, 'meta' => get_comment_meta( (int) $id ) ];
 			}
+
+			case 'plugin':
+				return [ 'active' => Cowboy_MCP_Compat::is_plugin_active( $id ) ];
+
+			case 'theme':
+				return [ 'stylesheet' => get_stylesheet() ];
+
+			case 'user': {
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$user = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE ID = %d', $wpdb->users, (int) $id ), ARRAY_A );
+				if ( ! $user ) {
+					return null;
+				}
+				$meta = get_user_meta( (int) $id );
+				unset( $meta['session_tokens'] ); // stale sessions must not be resurrected
+				return [ 'user' => $user, 'meta' => $meta, 'reassigned_to' => null ];
+			}
 		}
 		return null;
 	}
@@ -439,6 +469,35 @@ class Cowboy_MCP_Rollback {
 
 			case 'comment':
 				return self::restore_comment( (int) $id, $state );
+
+			case 'plugin':
+				if ( $state === null ) {
+					return new WP_Error( 'undo_unsupported', 'No captured plugin state.' );
+				}
+				if ( ! empty( $state['active'] ) ) {
+					$r = Cowboy_MCP_Compat::activate_plugin( $id );
+					return is_wp_error( $r ) ? $r : true;
+				}
+				Cowboy_MCP_Compat::deactivate_plugin( $id );
+				return true;
+
+			case 'theme':
+				if ( $state === null || empty( $state['stylesheet'] ) ) {
+					return new WP_Error( 'undo_unsupported', 'No captured theme state.' );
+				}
+				switch_theme( $state['stylesheet'] );
+				return true;
+
+			case 'media':
+				if ( $state === null ) {
+					return wp_delete_attachment( (int) $id, true )
+						? true
+						: new WP_Error( 'undo_failed', "Could not delete attachment #{$id}." );
+				}
+				return new WP_Error( 'undo_unsupported', 'Re-creating a deleted attachment is not supported.' );
+
+			case 'user':
+				return self::restore_user( (int) $id, $state );
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
 	}
@@ -608,6 +667,29 @@ class Cowboy_MCP_Rollback {
 			}
 		}
 		clean_comment_cache( $cid );
+		return true;
+	}
+
+	/** Recreate a deleted user with the original ID + all usermeta. */
+	private static function restore_user( int $uid, ?array $state ): true|WP_Error {
+		global $wpdb;
+		if ( $state === null ) {
+			return new WP_Error( 'undo_unsupported', 'Undoing a user creation is not supported (no user-create tool exists).' );
+		}
+		if ( get_user_by( 'id', $uid ) ) {
+			return new WP_Error( 'undo_conflict', "User #{$uid} already exists." );
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$ok = $wpdb->insert( $wpdb->users, $state['user'] );
+		if ( ! $ok ) {
+			return new WP_Error( 'undo_failed', "Could not reinsert user #{$uid}." );
+		}
+		foreach ( $state['meta'] as $k => $values ) {
+			foreach ( (array) $values as $v ) {
+				add_user_meta( $uid, $k, maybe_unserialize( $v ) );
+			}
+		}
+		clean_user_cache( $uid );
 		return true;
 	}
 
