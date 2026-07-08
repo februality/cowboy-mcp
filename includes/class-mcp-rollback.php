@@ -336,7 +336,11 @@ class Cowboy_MCP_Rollback {
 		if ( $strategy['type'] === 'wf_config' ) {
 			$keys = array_keys( (array) ( $args['settings'] ?? [] ) );
 			if ( $keys === [] && isset( $args['mode'] ) ) {
-				$keys = [ 'wafStatus' ]; // set_firewall_mode writes this config key
+				// set_firewall_mode writes wafStatus always, firewallEnabled for enabled/disabled.
+				$keys = [ 'wafStatus' ];
+				if ( in_array( $args['mode'], [ 'enabled', 'disabled' ], true ) ) {
+					$keys[] = 'firewallEnabled';
+				}
 			}
 			sort( $keys );
 			return 'wfconfig:' . implode( ',', $keys );
@@ -495,6 +499,7 @@ class Cowboy_MCP_Rollback {
 				return [ 'keys' => $vals ];
 			}
 
+			// Currently unreachable: no strategy maps to wf_block (handlers return no block id); kept as forward-compat scaffolding.
 			case 'wf_block':
 				return null; // creates only; nothing to snapshot before
 		}
@@ -616,6 +621,7 @@ class Cowboy_MCP_Rollback {
 				}
 				return true;
 
+			// Currently unreachable: no strategy maps to wf_block (handlers return no block id); kept as forward-compat scaffolding.
 			case 'wf_block':
 				if ( $state === null ) {
 					if ( class_exists( 'wfBlock' ) && method_exists( 'wfBlock', 'removeBlockIDs' ) ) {
