@@ -311,10 +311,11 @@ class Cowboy_MCP_Rollback {
 		foreach ( $rows as $r ) {
 			// Table/column names come from our own capture code (trusted), values are data.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update( $r['table'], [ $r['col'] => $r['old'] ], [ $r['pk_col'] => $r['pk_val'] ] );
-		}
-		if ( isset( $rows[0]['table'] ) && $rows[0]['table'] === $wpdb->posts ) {
-			foreach ( $rows as $r ) {
+			$updated = $wpdb->update( $r['table'], [ $r['col'] => $r['old'] ], [ $r['pk_col'] => $r['pk_val'] ] );
+			if ( $updated === false ) {
+				return new WP_Error( 'undo_failed', "Row restore failed for {$r['table']} {$r['pk_col']}={$r['pk_val']}: " . $wpdb->last_error );
+			}
+			if ( $r['table'] === $wpdb->posts ) {
 				clean_post_cache( (int) $r['pk_val'] );
 			}
 		}
@@ -409,11 +410,11 @@ class Cowboy_MCP_Rollback {
 
 		// ── Mark the original row undone ──
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->update( self::table(), [
+		$marked = $wpdb->update( self::table(), [
 			'status'    => self::STATUS_UNDONE,
 			'undone_at' => gmdate( 'Y-m-d H:i:s' ),
 			'undone_by' => substr( $actor, 0, 64 ),
-		], [ 'id' => $change_id ] );
+		], [ 'id' => $change_id, 'status' => self::STATUS_ACTIVE ] );
 
 		$note = null;
 		if ( $type === 'user' && $row['action'] === 'delete' && ! empty( $row['before_state']['reassigned_to'] ) ) {
@@ -424,7 +425,11 @@ class Cowboy_MCP_Rollback {
 			$note = 'WooCommerce object recreated with a NEW id (original id could not be preserved). Check references.';
 		}
 
-		return [ 'undone' => true, 'change_id' => $change_id, 'redo_change_id' => $redo_change_id, 'note' => $note ];
+		$response = [ 'undone' => true, 'change_id' => $change_id, 'redo_change_id' => $redo_change_id, 'note' => $note ];
+		if ( $marked === false || $marked === 0 ) {
+			$response['warning'] = 'Object restored, but the journal row could not be marked undone (possible concurrent undo).';
+		}
+		return $response;
 	}
 
 	/** Undo several entries newest-first; stop at the first failure/conflict. */
