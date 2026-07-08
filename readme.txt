@@ -1,4 +1,4 @@
-=== Cowboy MCP – Connect Claude, ChatGPT & AI Agents to WordPress ===
+=== Cowboy MCP - manage your site with Claude, ChatGPT and other AI agents ===
 Contributors: februality
 Tags: mcp, mcp-server, claude, ai-agent, wp-cli
 Requires at least: 6.2
@@ -28,7 +28,7 @@ Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets you
 
 = Why site owners choose it =
 
-* **You stay in control.** Safe mode asks before anything destructive, every change can be previewed first, and every action your agent takes is logged so you can see exactly what happened.
+* **You stay in control — and you can undo.** Safe mode asks before anything destructive, every change can be previewed first, and every action your agent takes is logged. If something's not right, undo most individual changes with one click, or roll the whole database back to a checkpoint — all from the Activity tab.
 * **Your data stays yours.** Self-hosted, no external services, no accounts, no phone-home. Your agent connects *to* your site — nothing leaves your server.
 * **Set up in two minutes.** Generate a key (or one-click sign-in for the Claude desktop and web apps), paste one command, and you're connected.
 * **No subscription.** Free and open source. Bring the AI agent you already use.
@@ -63,7 +63,7 @@ Any MCP-compatible client over Streamable HTTP — including Claude Code, Codex,
 
 = Is it safe to use on a live site? =
 
-Yes, with care. You're handing an AI real control, so Cowboy MCP is built to keep you in charge: keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, changes can be previewed before they run, and everything is written to an audit log. Review it regularly.
+Yes, with care. You're handing an AI real control, so Cowboy MCP is built to keep you in charge: keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, and changes can be previewed before they run. If a change turns out wrong, you can usually undo it — or restore the database to an earlier checkpoint — from the Activity tab, and every action is written to an audit log. Review it regularly.
 
 = Does it send my data anywhere? =
 
@@ -75,11 +75,11 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Screenshots ==
 
-1. Settings > Cowboy MCP — generate and manage API keys.
-2. One-time API key display with a ready-to-paste setup command.
-3. Safe-mode confirmation before a destructive action.
-4. Audit log of everything your agent has done.
-5. One-click sign-in for the Claude desktop and web connector.
+1. Connection tab — pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Existing API keys are listed with one-click revoke.
+2. Settings tab — turn the server on or off, require Safe Mode confirmation for destructive actions, enable the one-click Desktop/web (OAuth) connector, set a per-key rate limit, and opt in to advanced Power Mode.
+3. Logs tab — a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
+4. About tab — what Cowboy MCP does, with links to the project site and source.
+5. One-click browser sign-in — the connector opens a consent screen on your own site; no access is granted until you approve it as an administrator.
 
 == Changelog ==
 

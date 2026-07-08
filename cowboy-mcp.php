@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Cowboy MCP
+ * Plugin Name: Cowboy MCP - manage your site with Claude, ChatGPT and other AI agents
  * Plugin URI:  https://cowboymcp.com
  * Description: Exposes your WordPress site as a Model Context Protocol (MCP) server so AI coding agents like Claude Code can read, edit, and manage everything on the site.
  * Version:     1.4.1
@@ -172,8 +172,8 @@ function cowboy_mcp_uninstall(): void {
                 wp_delete_file( $f );
             }
         }
-        @rmdir( $cp_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-        @rmdir( dirname( $cp_dir ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+        @rmdir( $cp_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+        @rmdir( dirname( $cp_dir ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
     }
 
     cowboy_mcp_cleanup_transients( true );

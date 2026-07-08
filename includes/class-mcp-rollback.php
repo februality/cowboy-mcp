@@ -892,10 +892,8 @@ class Cowboy_MCP_Rollback {
 		global $wpdb;
 		$values = [];
 		foreach ( $rows as $r ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$values[] = $wpdb->get_var( $wpdb->prepare(
-				"SELECT {$r['col']} FROM %i WHERE {$r['pk_col']} = %s", $r['table'], $r['pk_val']
-			) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$values[] = $wpdb->get_var( $wpdb->prepare( "SELECT {$r['col']} FROM %i WHERE {$r['pk_col']} = %s", $r['table'], $r['pk_val'] ) );
 		}
 		return $values;
 	}
@@ -974,7 +972,7 @@ class Cowboy_MCP_Rollback {
 		] );
 
 		// ── Mark the original row undone ──
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$marked = $wpdb->update( self::table(), [
 			'status'    => self::STATUS_UNDONE,
 			'undone_at' => gmdate( 'Y-m-d H:i:s' ),

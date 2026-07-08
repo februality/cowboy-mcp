@@ -213,7 +213,7 @@ class Cowboy_MCP_Admin {
 
         // Undo a journal entry (Activity tab).
         if ( isset( $_POST['cowboy_mcp_undo_change'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
-            $change_id = (int) ( $_POST['change_id'] ?? 0 );
+            $change_id = absint( wp_unslash( $_POST['change_id'] ?? 0 ) );
             $force     = ! empty( $_POST['force'] );
             $result    = Cowboy_MCP_Rollback::undo( $change_id, $force, 'admin' );
             if ( is_wp_error( $result ) ) {
@@ -263,25 +263,25 @@ class Cowboy_MCP_Admin {
             }
         }
         if ( isset( $_POST['cowboy_mcp_restore_checkpoint'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
-            $r = Cowboy_MCP_Checkpoint::restore( (int) ( $_POST['checkpoint_id'] ?? 0 ), 'admin' );
+            $r = Cowboy_MCP_Checkpoint::restore( absint( wp_unslash( $_POST['checkpoint_id'] ?? 0 ) ), 'admin' );
             if ( is_wp_error( $r ) ) {
                 add_settings_error( 'cowboy_mcp', 'cp_failed', esc_html( $r->get_error_message() ), 'error' );
             } else {
                 /* translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number */
                 add_settings_error( 'cowboy_mcp', 'cp_restored', sprintf( esc_html__( 'Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: #%2$d.', 'cowboy-mcp' ), (int) $r['checkpoint_id'], (int) $r['pre_restore_checkpoint_id'] ), 'success' );
                 if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
-                    Cowboy_MCP_Audit_Log::log( 'admin_restore_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_restore_checkpoint', 'args' => [ 'checkpoint_id' => (int) ( $_POST['checkpoint_id'] ?? 0 ) ] ] );
+                    Cowboy_MCP_Audit_Log::log( 'admin_restore_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_restore_checkpoint', 'args' => [ 'checkpoint_id' => absint( wp_unslash( $_POST['checkpoint_id'] ?? 0 ) ) ] ] );
                 }
             }
         }
         if ( isset( $_POST['cowboy_mcp_delete_checkpoint'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
-            $r = Cowboy_MCP_Checkpoint::delete( (int) ( $_POST['checkpoint_id'] ?? 0 ) );
+            $r = Cowboy_MCP_Checkpoint::delete( absint( wp_unslash( $_POST['checkpoint_id'] ?? 0 ) ) );
             if ( is_wp_error( $r ) ) {
                 add_settings_error( 'cowboy_mcp', 'cp_failed', esc_html( $r->get_error_message() ), 'error' );
             } else {
                 add_settings_error( 'cowboy_mcp', 'cp_deleted', esc_html__( 'Checkpoint deleted.', 'cowboy-mcp' ), 'info' );
                 if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
-                    Cowboy_MCP_Audit_Log::log( 'admin_delete_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_delete_checkpoint', 'args' => [ 'checkpoint_id' => (int) ( $_POST['checkpoint_id'] ?? 0 ) ] ] );
+                    Cowboy_MCP_Audit_Log::log( 'admin_delete_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_delete_checkpoint', 'args' => [ 'checkpoint_id' => absint( wp_unslash( $_POST['checkpoint_id'] ?? 0 ) ) ] ] );
                 }
             }
         }
@@ -1130,7 +1130,7 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
     private static function render_activity_tab(): void {
         $per_page = 25;
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $page   = max( 1, (int) ( $_GET['activity_page'] ?? 1 ) );
+        $page   = max( 1, absint( wp_unslash( $_GET['activity_page'] ?? 1 ) ) );
         $result = Cowboy_MCP_Rollback::query( [ 'per_page' => $per_page, 'page' => $page ] );
         $nonce  = wp_create_nonce( 'cowboy_mcp_activity' );
 
