@@ -3,6 +3,13 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.5.0 =
+* New: Activity tab — a per-change undo journal. Every change an AI agent makes (posts, options, terms, comments, files, users, media, plugins/themes, WooCommerce, ACF, Wordfence) is recorded, and you can roll any of them back individually from wp-admin. Conflict detection warns you if something else changed in the meantime.
+* New: database checkpoints — take a one-click snapshot of your database and restore the whole site to it later. A checkpoint is also taken automatically before mutating WP-CLI commands.
+* New: batch undo — reverse every change made by a single batched request together.
+* New: six rollback tools for agents (list changes, undo a change, and create/list/restore/delete checkpoints), plus settings to tune undo-history retention and how many checkpoints to keep.
+* Your MCP API keys and the plugin's own settings are never touched by undo or checkpoint restore.
+
 = 1.4.1 =
 * New: redesigned connection page — pick your app (claude.ai, Claude Desktop, ChatGPT, Claude Code, Codex, Opencode, Cursor, Gemini CLI) from a sidebar and follow steps tailored to it.
 * New: connect from ChatGPT — custom connectors (Developer mode) work with the built-in one-click sign-in.

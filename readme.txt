@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, ai-agent, wp-cli
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.4.1
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,18 +76,20 @@ No. Publishing content and running your store work through plain conversation. T
 == Screenshots ==
 
 1. Connection tab — pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Existing API keys are listed with one-click revoke.
-2. Settings tab — turn the server on or off, require Safe Mode confirmation for destructive actions, enable the one-click Desktop/web (OAuth) connector, set a per-key rate limit, and opt in to advanced Power Mode.
-3. Logs tab — a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
-4. About tab — what Cowboy MCP does, with links to the project site and source.
-5. One-click browser sign-in — the connector opens a consent screen on your own site; no access is granted until you approve it as an administrator.
+2. Settings tab — turn the server on or off, require Safe Mode confirmation for destructive actions, enable the one-click Desktop/web (OAuth) connector, set a per-key rate limit, tune the undo journal and database checkpoints, and opt in to advanced Power Mode.
+3. Activity tab — a per-change undo journal: review every change your agents made and roll any of them back individually, plus one-click database checkpoints you can restore the whole site to.
+4. Logs tab — a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
+5. About tab — what Cowboy MCP does, with links to the project site and source.
+6. One-click browser sign-in — the connector opens a consent screen on your own site; no access is granted until you approve it as an administrator.
 
 == Changelog ==
 
-= 1.4.1 =
-* New: redesigned connection page — pick your app (claude.ai, Claude Desktop, ChatGPT, Claude Code, Codex, Opencode, Cursor, Gemini CLI) from a sidebar and follow steps tailored to it.
-* New: connect from ChatGPT — custom connectors (Developer mode) work with the built-in one-click sign-in.
-* Fixed: OAuth setup steps now appear immediately after enabling the Desktop Connector.
-* Fixed: the connection-page preference is now cleaned up on uninstall.
+= 1.5.0 =
+* New: Activity tab — a per-change undo journal. Every change an AI agent makes (posts, options, terms, comments, files, users, media, plugins/themes, WooCommerce, ACF, Wordfence) is recorded, and you can roll any of them back individually from wp-admin. Conflict detection warns you if something else changed in the meantime.
+* New: database checkpoints — take a one-click snapshot of your database and restore the whole site to it later. A checkpoint is also taken automatically before mutating WP-CLI commands.
+* New: batch undo — reverse every change made by a single batched request together.
+* New: six rollback tools for agents (list changes, undo a change, and create/list/restore/delete checkpoints), plus settings to tune undo-history retention and how many checkpoints to keep.
+* Your MCP API keys and the plugin's own settings are never touched by undo or checkpoint restore.
 
 = Earlier versions =
 
