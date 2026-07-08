@@ -40,6 +40,17 @@ class Cowboy_MCP_Rollback {
 	private const STRATEGIES = [
 		'wp_update_option'      => [ 'type' => 'option', 'action' => 'update', 'id_arg' => 'option_name' ],
 		'wp_woo_update_setting' => [ 'type' => 'option', 'action' => 'update', 'id_arg' => 'key' ],
+
+		'wp_create_post'        => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'ID' ],
+		'wp_update_post'        => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
+		'wp_delete_post'        => [ 'type' => 'post', 'action' => 'delete', 'id_arg' => 'post_id' ],
+		'wp_elementor_update_template'      => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'template_id' ],
+		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
+		'wp_acf_update_field'   => [ 'type' => 'acf_value', 'action' => 'update' ],
+		'wp_acf_delete_field'   => [ 'type' => 'acf_value', 'action' => 'delete' ],
+		'wp_acf_add_row'        => [ 'type' => 'acf_value', 'action' => 'update' ],
+		'wp_acf_update_row'     => [ 'type' => 'acf_value', 'action' => 'update' ],
+		'wp_acf_delete_row'     => [ 'type' => 'acf_value', 'action' => 'update' ],
 	];
 
 	/**
@@ -241,6 +252,22 @@ class Cowboy_MCP_Rollback {
 			return strpos( $key, 'woocommerce_' ) === 0 ? $key : 'woocommerce_' . $key;
 		}
 
+		// Tools whose target is not in the args.
+		if ( $tool === 'wp_elementor_update_global_styles' ) {
+			if ( class_exists( '\Elementor\Plugin' ) && isset( \Elementor\Plugin::$instance->kits_manager ) ) {
+				$kit = \Elementor\Plugin::$instance->kits_manager->get_active_id();
+				return $kit ? (string) $kit : null;
+			}
+			return null;
+		}
+		if ( $strategy['type'] === 'acf_value' ) {
+			$f = $args['field_name'] ?? '';
+			$o = $args['object_id'] ?? '';
+			return ( $f !== '' && $o !== '' ) ? "{$f}@{$o}" : null;
+		}
+		if ( isset( $strategy['static_id'] ) ) {
+			return $strategy['static_id'];
+		}
 		$arg = $strategy['id_arg'] ?? null;
 		if ( $arg !== null && isset( $args[ $arg ] ) && $args[ $arg ] !== '' ) {
 			return (string) $args[ $arg ];
@@ -251,8 +278,10 @@ class Cowboy_MCP_Rollback {
 	/** Short human label for the Activity list. Extended per-type in later tasks. */
 	private static function object_label( string $type, ?string $id, ?array $state, array $args ): ?string {
 		return match ( $type ) {
-			'option' => $id,
-			default  => $id,
+			'option'    => $id,
+			'post', 'media' => $state['post']['post_title'] ?? ( $id !== null ? "post #{$id}" : null ),
+			'acf_value' => 'ACF ' . str_replace( '@', ' on ', (string) $id ),
+			default     => $id,
 		};
 	}
 
@@ -273,6 +302,33 @@ class Cowboy_MCP_Rollback {
 					return null;
 				}
 				return [ 'value' => $v ];
+
+			case 'post':
+			case 'media':
+				$post = get_post( (int) $id, ARRAY_A );
+				if ( ! $post ) {
+					return null;
+				}
+				$meta = get_post_meta( (int) $id );
+				unset( $meta['_edit_lock'], $meta['_edit_last'] ); // volatile; false conflicts
+				$terms = [];
+				foreach ( get_object_taxonomies( $post['post_type'] ) as $tax ) {
+					$t = wp_get_object_terms( (int) $id, $tax, [ 'fields' => 'ids' ] );
+					if ( ! is_wp_error( $t ) && $t ) {
+						sort( $t );
+						$terms[ $tax ] = array_map( 'intval', $t );
+					}
+				}
+				return [ 'post' => $post, 'meta' => $meta, 'terms' => $terms ];
+
+			case 'acf_value':
+				if ( ! function_exists( 'get_field' ) ) {
+					return null;
+				}
+				[ $field, $object ] = array_pad( explode( '@', $id, 2 ), 2, '' );
+				$object = is_numeric( $object ) ? (int) $object : $object;
+				$value  = get_field( $field, $object, false ); // raw/unformatted round-trips with update_field
+				return [ 'exists' => $value !== null && $value !== false, 'value' => $value ];
 		}
 		return null;
 	}
@@ -297,8 +353,62 @@ class Cowboy_MCP_Rollback {
 
 			case 'db_rows':
 				return self::restore_db_rows( $state );
+
+			case 'post':
+				return self::restore_post( (int) $id, $state );
+
+			case 'acf_value':
+				if ( ! function_exists( 'update_field' ) ) {
+					return new WP_Error( 'undo_unsupported', 'ACF is not active; cannot restore field value.' );
+				}
+				[ $field, $object ] = array_pad( explode( '@', $id, 2 ), 2, '' );
+				$object = is_numeric( $object ) ? (int) $object : $object;
+				if ( $state === null || empty( $state['exists'] ) ) {
+					delete_field( $field, $object );
+				} else {
+					update_field( $field, $state['value'], $object );
+				}
+				return true;
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
+	}
+
+	/** Restore (or recreate with original ID) a post + meta + terms. Null state = delete. */
+	private static function restore_post( int $post_id, ?array $state ): true|WP_Error {
+		if ( $state === null ) {
+			$deleted = wp_delete_post( $post_id, true );
+			return $deleted ? true : new WP_Error( 'undo_failed', "Could not delete post #{$post_id}." );
+		}
+		$postarr = $state['post'];
+		if ( get_post( $post_id ) ) {
+			$postarr['ID'] = $post_id;
+			$result = wp_update_post( wp_slash( $postarr ), true );
+		} else {
+			unset( $postarr['ID'] );
+			$postarr['import_id'] = $post_id; // preserve the original ID on reinsert
+			$result = wp_insert_post( wp_slash( $postarr ), true );
+		}
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$live_id = (int) $result;
+
+		// Meta: clear current, re-add captured (values are stored serialized-raw arrays).
+		foreach ( array_keys( get_post_meta( $live_id ) ) as $k ) {
+			delete_post_meta( $live_id, $k );
+		}
+		foreach ( $state['meta'] as $k => $values ) {
+			foreach ( (array) $values as $v ) {
+				add_post_meta( $live_id, $k, wp_slash( maybe_unserialize( $v ) ) );
+			}
+		}
+
+		// Terms: restore per-taxonomy assignments exactly.
+		foreach ( get_object_taxonomies( $postarr['post_type'] ?? 'post' ) as $tax ) {
+			wp_set_object_terms( $live_id, $state['terms'][ $tax ] ?? [], $tax );
+		}
+		clean_post_cache( $live_id );
+		return true;
 	}
 
 	/** Re-apply captured old values row by row (wp_search_replace inverse). */
