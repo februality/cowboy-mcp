@@ -68,6 +68,28 @@ class Cowboy_MCP_Rollback {
 		'wp_switch_theme'      => [ 'type' => 'theme', 'action' => 'toggle', 'static_id' => 'active' ],
 		'wp_upload_media'      => [ 'type' => 'media', 'action' => 'create', 'result_id' => 'attachment_id' ],
 		'wp_delete_user'       => [ 'type' => 'user', 'action' => 'delete', 'id_arg' => 'user_id' ],
+
+		'wp_woo_create_product'   => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'product', 'result_id' => 'product_id' ],
+		'wp_woo_update_product'   => [ 'type' => 'wc_object', 'action' => 'update', 'kind' => 'product', 'id_arg' => 'product_id' ],
+		'wp_woo_delete_product'   => [ 'type' => 'wc_object', 'action' => 'delete', 'kind' => 'product', 'id_arg' => 'product_id' ],
+		'wp_woo_create_variation' => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'product', 'result_id' => 'variation_id' ],
+		'wp_woo_update_variation' => [ 'type' => 'wc_object', 'action' => 'update', 'kind' => 'product', 'id_arg' => 'variation_id' ],
+		'wp_woo_delete_variation' => [ 'type' => 'wc_object', 'action' => 'delete', 'kind' => 'product', 'id_arg' => 'variation_id' ],
+		'wp_woo_create_order'     => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'order', 'result_id' => 'order_id' ],
+		'wp_woo_update_order'     => [ 'type' => 'wc_object', 'action' => 'update', 'kind' => 'order', 'id_arg' => 'order_id' ],
+		'wp_woo_delete_order'     => [ 'type' => 'wc_object', 'action' => 'delete', 'kind' => 'order', 'id_arg' => 'order_id' ],
+		'wp_woo_create_refund'    => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'order', 'result_id' => 'refund_id' ],
+		'wp_woo_create_customer'  => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'customer', 'result_id' => 'customer_id' ],
+		'wp_woo_update_customer'  => [ 'type' => 'wc_object', 'action' => 'update', 'kind' => 'customer', 'id_arg' => 'customer_id' ],
+		'wp_woo_create_coupon'    => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'coupon', 'result_id' => 'coupon_id' ],
+		'wp_woo_update_coupon'    => [ 'type' => 'wc_object', 'action' => 'update', 'kind' => 'coupon', 'id_arg' => 'coupon_id' ],
+		'wp_woo_delete_coupon'    => [ 'type' => 'wc_object', 'action' => 'delete', 'kind' => 'coupon', 'id_arg' => 'coupon_id' ],
+		// wp_woo_manage_stock is NOT registered here: its args are `{ updates: [{product_id,...}] }`
+		// with no top-level product_id, so it cannot be captured as a single wc_object (see NOT_UNDOABLE).
+		// wp_wordfence_block_ip/block_country/block_pattern are NOT registered here: verified none of
+		// their handlers return a created block id (see NOT_UNDOABLE).
+		'wp_wordfence_update_settings'   => [ 'type' => 'wf_config', 'action' => 'update' ],
+		'wp_wordfence_set_firewall_mode' => [ 'type' => 'wf_config', 'action' => 'update' ],
 	];
 
 	/**
@@ -87,6 +109,13 @@ class Cowboy_MCP_Rollback {
 		'wp_flush_rewrite_rules'   => 'Rewrite rules are derived data; flushing regenerates them.',
 		'wp_wordfence_start_scan'  => 'A started scan cannot be un-started.',
 		'wp_woo_create_tax_rate'   => 'Tax-rate rows are not journaled in v1.',
+		'wp_woo_manage_stock'      => 'Bulk stock updates touch multiple products via a single updates[] array with no per-call product_id; not journaled as a single object in v1.',
+		'wp_wordfence_block_ip'           => 'Wordfence does not return the created block id; remove blocks via wp_wordfence_unblock_ip.',
+		'wp_wordfence_block_country'      => 'Wordfence does not return the created block id; remove blocks via wp_wordfence_unblock_ip.',
+		'wp_wordfence_block_pattern'      => 'Wordfence does not return the created block id; remove blocks via wp_wordfence_unblock_ip.',
+		'wp_wordfence_unblock_ip'         => 'Re-creating a removed block is not journaled in v1; re-block explicitly if needed.',
+		'wp_wordfence_resolve_scan_issue' => 'Scan issue state is managed by Wordfence and not journaled.',
+		'wp_wordfence_delete_scan_issues' => 'Scan issue state is managed by Wordfence and not journaled.',
 	];
 
 	/* ── Capture plumbing (called from Cowboy_MCP_Tools::call_tool) ── */
@@ -159,7 +188,10 @@ class Cowboy_MCP_Rollback {
 				'rows'         => [],
 				'reason'       => null,
 				'result_id'    => $strategy['result_id'] ?? null,
-				'ctx'          => [ 'taxonomy' => (string) ( $args['taxonomy'] ?? '' ) ],
+				'ctx'          => [
+					'taxonomy' => (string) ( $args['taxonomy'] ?? '' ),
+					'kind'     => (string) ( $strategy['kind'] ?? '' ),
+				],
 			];
 			self::$pending = $handle;
 			return $handle;
@@ -239,9 +271,11 @@ class Cowboy_MCP_Rollback {
 						'not_undoable_reason' => 'Could not identify the created object from the tool result.',
 					] );
 				}
-				$capture['object_id'] = $capture['type'] === 'term'
-					? ( $capture['ctx']['taxonomy'] ?? '' ) . ':' . $rid
-					: (string) $rid;
+				$capture['object_id'] = match ( $capture['type'] ) {
+					'term'      => ( $capture['ctx']['taxonomy'] ?? '' ) . ':' . $rid,
+					'wc_object' => ( $capture['ctx']['kind'] ?? 'product' ) . ':' . $rid,
+					default     => (string) $rid,
+				};
 			}
 
 			$after = self::snapshot( $capture['type'], $capture['object_id'] );
@@ -294,6 +328,19 @@ class Cowboy_MCP_Rollback {
 		if ( $strategy['type'] === 'term' && isset( $args['taxonomy'], $args['term_id'] ) ) {
 			return $args['taxonomy'] . ':' . $args['term_id'];
 		}
+		if ( $strategy['type'] === 'wc_object' ) {
+			$arg = $strategy['id_arg'] ?? null;
+			$oid = $arg !== null ? ( $args[ $arg ] ?? null ) : null;
+			return $oid !== null ? $strategy['kind'] . ':' . $oid : null;
+		}
+		if ( $strategy['type'] === 'wf_config' ) {
+			$keys = array_keys( (array) ( $args['settings'] ?? [] ) );
+			if ( $keys === [] && isset( $args['mode'] ) ) {
+				$keys = [ 'wafStatus' ]; // set_firewall_mode writes this config key
+			}
+			sort( $keys );
+			return 'wfconfig:' . implode( ',', $keys );
+		}
 		$arg = $strategy['id_arg'] ?? null;
 		if ( $arg !== null && isset( $args[ $arg ] ) && $args[ $arg ] !== '' ) {
 			return (string) $args[ $arg ];
@@ -312,6 +359,9 @@ class Cowboy_MCP_Rollback {
 			'plugin' => $id,
 			'theme'  => 'active theme',
 			'user'   => $state['user']['user_login'] ?? ( $id !== null ? "user #{$id}" : null ),
+			'wc_object' => ucfirst( str_replace( ':', ' #', (string) $id ) ),
+			'wf_config' => 'Wordfence settings (' . substr( (string) $id, strlen( 'wfconfig:' ) ) . ')',
+			'wf_block'  => $id !== null ? "Wordfence block #{$id}" : null,
 			default     => $id,
 		};
 	}
@@ -420,8 +470,63 @@ class Cowboy_MCP_Rollback {
 				unset( $meta['session_tokens'] ); // stale sessions must not be resurrected
 				return [ 'user' => $user, 'meta' => $meta, 'reassigned_to' => null ];
 			}
+
+			case 'wc_object': {
+				if ( ! class_exists( 'WooCommerce' ) ) {
+					return null;
+				}
+				[ $kind, $oid ] = array_pad( explode( ':', $id, 2 ), 2, '' );
+				$obj = self::wc_get_object( $kind, (int) $oid );
+				if ( ! $obj || ! $obj->get_id() ) {
+					return null;
+				}
+				return [ 'class' => get_class( $obj ), 'data' => self::wc_clean_data( $obj->get_data() ) ];
+			}
+
+			case 'wf_config': {
+				if ( ! class_exists( 'wfConfig' ) ) {
+					return null;
+				}
+				$keys = explode( ',', substr( $id, strlen( 'wfconfig:' ) ) );
+				$vals = [];
+				foreach ( array_filter( $keys ) as $k ) {
+					$vals[ $k ] = wfConfig::get( $k );
+				}
+				return [ 'keys' => $vals ];
+			}
+
+			case 'wf_block':
+				return null; // creates only; nothing to snapshot before
 		}
 		return null;
+	}
+
+	private static function wc_get_object( string $kind, int $id ): ?object {
+		try {
+			return match ( $kind ) {
+				'product'  => wc_get_product( $id ) ?: null,
+				'order'    => wc_get_order( $id ) ?: null,
+				'customer' => new WC_Customer( $id ),
+				'coupon'   => new WC_Coupon( $id ),
+				default    => null,
+			};
+		} catch ( \Throwable $e ) {
+			return null;
+		}
+	}
+
+	/** Recursively convert WC_DateTime/DateTime values to ISO strings for JSON round-trips. */
+	private static function wc_clean_data( mixed $data ): mixed {
+		if ( $data instanceof \DateTimeInterface ) {
+			return $data->format( DATE_ATOM );
+		}
+		if ( is_object( $data ) && method_exists( $data, 'get_data' ) ) {
+			return self::wc_clean_data( $data->get_data() ); // WC_Meta_Data and friends
+		}
+		if ( is_array( $data ) ) {
+			return array_map( [ __CLASS__, 'wc_clean_data' ], $data );
+		}
+		return $data;
 	}
 
 	/* ── Restore (inverse application; per-type cases extended in Tasks 4-9) ── */
@@ -498,6 +603,28 @@ class Cowboy_MCP_Rollback {
 
 			case 'user':
 				return self::restore_user( (int) $id, $state );
+
+			case 'wc_object':
+				return self::restore_wc_object( $id, $state );
+
+			case 'wf_config':
+				if ( ! class_exists( 'wfConfig' ) ) {
+					return new WP_Error( 'undo_unsupported', 'Wordfence is not active.' );
+				}
+				foreach ( (array) ( $state['keys'] ?? [] ) as $k => $v ) {
+					wfConfig::set( $k, $v );
+				}
+				return true;
+
+			case 'wf_block':
+				if ( $state === null ) {
+					if ( class_exists( 'wfBlock' ) && method_exists( 'wfBlock', 'removeBlockIDs' ) ) {
+						wfBlock::removeBlockIDs( [ (int) $id ] );
+						return true;
+					}
+					return new WP_Error( 'undo_unsupported', 'Wordfence block removal API unavailable.' );
+				}
+				return new WP_Error( 'undo_unsupported', 'Re-creating a removed Wordfence block is not supported.' );
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
 	}
@@ -690,6 +817,42 @@ class Cowboy_MCP_Rollback {
 			}
 		}
 		clean_user_cache( $uid );
+		return true;
+	}
+
+	/** Restore (or recreate with a NEW id) a WooCommerce object. Null state = delete. */
+	private static function restore_wc_object( string $composite, ?array $state ): true|WP_Error {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return new WP_Error( 'undo_unsupported', 'WooCommerce is not active.' );
+		}
+		[ $kind, $oid ] = array_pad( explode( ':', $composite, 2 ), 2, '' );
+		$oid = (int) $oid;
+		if ( $state === null ) {
+			$obj = self::wc_get_object( $kind, $oid );
+			if ( $obj && $obj->get_id() ) {
+				$obj->delete( true );
+			}
+			return true;
+		}
+		$obj = self::wc_get_object( $kind, $oid );
+		if ( ! $obj || ! $obj->get_id() ) {
+			// Recreate: WC data stores cannot force an id → NEW id, flagged in undo() note.
+			$class = $state['class'];
+			if ( ! class_exists( $class ) ) {
+				return new WP_Error( 'undo_failed', "Class {$class} unavailable." );
+			}
+			$obj = new $class();
+		}
+		$data = $state['data'];
+		$meta = $data['meta_data'] ?? [];
+		unset( $data['id'], $data['meta_data'] );
+		$obj->set_props( $data );
+		foreach ( $meta as $m ) {
+			if ( isset( $m['key'] ) ) {
+				$obj->update_meta_data( $m['key'], $m['value'] ?? '' );
+			}
+		}
+		$obj->save();
 		return true;
 	}
 
