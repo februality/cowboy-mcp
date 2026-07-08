@@ -1144,8 +1144,12 @@ class Cowboy_MCP_Rollback {
 				'not_undoable_reason' => isset( $data['not_undoable_reason'] ) ? substr( (string) $data['not_undoable_reason'], 0, 255 ) : null,
 				'undo_of'             => $data['undo_of'] ?? null,
 			];
+			$formats = [ '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' ];
+			// Explicit formats: wpdb's global field_types maps the column NAME object_id
+			// to %d (core tables use it for ints); ours is a string — without this, option
+			// names and file paths get silently zeroed. Live-verified failure mode.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$ok = $wpdb->insert( self::table(), $row );
+			$ok = $wpdb->insert( self::table(), $row, $formats );
 			return $ok ? (int) $wpdb->insert_id : null;
 		} catch ( \Throwable $e ) {
 			return null;
@@ -1212,7 +1216,7 @@ class Cowboy_MCP_Rollback {
 
 		foreach ( $rows as &$row ) {
 			$state = self::decode_blob( $row['before_state'] );
-			$row['before_state'] = $state === null ? null : self::preview_state( $state );
+			$row['before_state'] = $state === null ? null : self::preview_state( $state, $row['object_type'], $row['object_id'] );
 			unset( $row['after_hash'] ); // internal detail, not useful to callers
 		}
 		unset( $row );
@@ -1221,7 +1225,11 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Redact secrets and truncate long values for listing display. */
-	private static function preview_state( array $state ): array {
+	private static function preview_state( array $state, string $object_type, string $object_id ): array {
+		if ( $object_type === 'option' && class_exists( 'Cowboy_MCP_Security' )
+			&& Cowboy_MCP_Security::is_sensitive_option( $object_id ) ) {
+			$state['value'] = '[REDACTED]';
+		}
 		$state = Cowboy_MCP_Audit_Log::redact_sensitive( $state );
 		array_walk_recursive( $state, function ( &$v, $k ) {
 			if ( $k === 'content_b64' ) {
