@@ -1125,7 +1125,7 @@ class Cowboy_MCP_Rollback {
 				'key_id'              => substr( (string) ( $data['key_id'] ?? $ctx['key_id'] ?? '' ), 0, 64 ) ?: null,
 				'key_label'           => substr( (string) ( $ctx['key_label'] ?? '' ), 0, 255 ) ?: null,
 				'session_id'          => substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_MCP_SESSION_ID'] ?? '' ) ), 0, 64 ) ?: null,
-				'batch_id'            => self::$batch_id,
+				'batch_id'            => self::$batch_id !== null ? substr( self::$batch_id, 0, 36 ) : null,
 				'tool'                => substr( (string) ( $data['tool'] ?? '' ), 0, 100 ),
 				'action'              => substr( (string) ( $data['action'] ?? '' ), 0, 20 ),
 				'object_type'         => substr( (string) ( $data['object_type'] ?? '' ), 0, 32 ),
