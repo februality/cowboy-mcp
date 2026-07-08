@@ -686,7 +686,7 @@ class Cowboy_MCP_Rollback {
 		}
 		foreach ( $state['meta'] as $k => $values ) {
 			foreach ( (array) $values as $v ) {
-				add_user_meta( $uid, $k, maybe_unserialize( $v ) );
+				add_user_meta( $uid, $k, wp_slash( maybe_unserialize( $v ) ) );
 			}
 		}
 		clean_user_cache( $uid );
