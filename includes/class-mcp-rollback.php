@@ -245,6 +245,8 @@ class Cowboy_MCP_Rollback {
 		try {
 			if ( $capture['reason'] !== null || $capture['type'] === 'none' ) {
 				$reason = $capture['reason'] ?? 'No capture strategy.';
+				// Consumes the id set by wp_cli's auto-checkpoint earlier in THIS call;
+				// relies on the system.php invariant that commit() always runs for wp_cli.
 				if ( $capture['tool'] === 'wp_cli' && self::$last_checkpoint_id !== null ) {
 					$reason .= ' Checkpoint #' . self::$last_checkpoint_id . ' was taken before this command.';
 					self::$last_checkpoint_id = null;

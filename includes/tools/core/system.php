@@ -162,6 +162,10 @@ return [
             }
 
             // Auto-checkpoint before mutating-looking commands (fail-open).
+            // INVARIANT: no error/early-return path may exist between this call and the
+            // handler's final return — commit() must run for this call so it clears
+            // Cowboy_MCP_Rollback::$last_checkpoint_id; a post-checkpoint early return
+            // would leak the id into a later call's journal row within the same request.
             $checkpoint_id = class_exists( 'Cowboy_MCP_Checkpoint' )
                 ? Cowboy_MCP_Checkpoint::maybe_auto_checkpoint( $command )
                 : null;
