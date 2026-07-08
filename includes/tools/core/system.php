@@ -32,7 +32,7 @@ return [
             ],
         ]),
 
-        Cowboy_MCP_Tools::tool( 'wp_cli', '[System] Execute a WP-CLI command on the server. Blocked commands: db drop, db reset, db import, db export, site empty, core download, eval, eval-file, config set, config create, shell, package install. In safe mode, only known-safe commands run without confirm: true.', [
+        Cowboy_MCP_Tools::tool( 'wp_cli', '[System] Execute a WP-CLI command on the server. Blocked commands: db drop, db reset, db import, db export, site empty, core download, eval, eval-file, config set, config create, shell, package install. In safe mode, only known-safe commands run without confirm: true. When auto-checkpointing is enabled, a DB checkpoint is taken automatically before mutating commands (response includes checkpoint_id); read commands (list/get/search/info/...) skip it.', [
             'command' => [ 'type' => 'string', 'description' => 'WP-CLI command without "wp" prefix (e.g. "cache flush", "rewrite flush", "plugin list")', 'required' => true ],
         ], [ 'title' => 'WP-CLI Command', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false ], [
             'type' => 'object',
@@ -161,6 +161,11 @@ return [
                 }
             }
 
+            // Auto-checkpoint before mutating-looking commands (fail-open).
+            $checkpoint_id = class_exists( 'Cowboy_MCP_Checkpoint' )
+                ? Cowboy_MCP_Checkpoint::maybe_auto_checkpoint( $command )
+                : null;
+
             // In Power mode the caller may pass their own --path; don't append a second one.
             $has_path = (bool) preg_match( '/(^|\s)--path(=|\s)/i', $command );
             $wp_path  = Cowboy_MCP_Compat::wp_root();
@@ -169,10 +174,15 @@ return [
                 : sprintf( 'wp %s --path=%s --allow-root 2>&1', escapeshellcmd( $command ), escapeshellarg( $wp_path ) );
             $output   = shell_exec( $full );
 
-            return [
+            $response = [
                 'command' => 'wp ' . $command,
                 'output'  => $output ?: '(no output)',
             ];
+            if ( $checkpoint_id !== null ) {
+                $response['checkpoint_id']   = $checkpoint_id;
+                $response['checkpoint_note'] = 'A DB checkpoint was taken before this command. Restore with wp_restore_checkpoint if it went wrong.';
+            }
+            return $response;
         },
 
         'wp_search_replace' => function ( array $a ) {

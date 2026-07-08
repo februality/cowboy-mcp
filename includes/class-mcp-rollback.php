@@ -244,6 +244,11 @@ class Cowboy_MCP_Rollback {
 		self::$pending = null;
 		try {
 			if ( $capture['reason'] !== null || $capture['type'] === 'none' ) {
+				$reason = $capture['reason'] ?? 'No capture strategy.';
+				if ( $capture['tool'] === 'wp_cli' && self::$last_checkpoint_id !== null ) {
+					$reason .= ' Checkpoint #' . self::$last_checkpoint_id . ' was taken before this command.';
+					self::$last_checkpoint_id = null;
+				}
 				return self::insert_row( [
 					'tool'                => $capture['tool'],
 					'action'              => $capture['action'],
@@ -253,7 +258,7 @@ class Cowboy_MCP_Rollback {
 					'before_state'        => null,
 					'after_hash'          => null,
 					'status'              => self::STATUS_NOT_UNDOABLE,
-					'not_undoable_reason' => $capture['reason'] ?? 'No capture strategy.',
+					'not_undoable_reason' => $reason,
 				] );
 			}
 
