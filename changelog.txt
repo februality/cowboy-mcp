@@ -3,6 +3,10 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.5.1 =
+* New: Russian (ru_RU) and Ukrainian (uk) translations for the admin settings page and the OAuth consent screen.
+* The plugin now registers a Domain Path and loads its text domain on init, so bundled translations apply on WordPress 6.2+.
+
 = 1.5.0 =
 * New: Activity tab — a per-change undo journal. Every change an AI agent makes (posts, options, terms, comments, files, users, media, plugins/themes, WooCommerce, ACF, Wordfence) is recorded, and you can roll any of them back individually from wp-admin. Conflict detection warns you if something else changed in the meantime.
 * New: database checkpoints — take a one-click snapshot of your database and restore the whole site to it later. A checkpoint is also taken automatically before mutating WP-CLI commands.

@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, ai-agent, wp-cli
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,12 +84,9 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.5.0 =
-* New: Activity tab — a per-change undo journal. Every change an AI agent makes (posts, options, terms, comments, files, users, media, plugins/themes, WooCommerce, ACF, Wordfence) is recorded, and you can roll any of them back individually from wp-admin. Conflict detection warns you if something else changed in the meantime.
-* New: database checkpoints — take a one-click snapshot of your database and restore the whole site to it later. A checkpoint is also taken automatically before mutating WP-CLI commands.
-* New: batch undo — reverse every change made by a single batched request together.
-* New: six rollback tools for agents (list changes, undo a change, and create/list/restore/delete checkpoints), plus settings to tune undo-history retention and how many checkpoints to keep.
-* Your MCP API keys and the plugin's own settings are never touched by undo or checkpoint restore.
+= 1.5.1 =
+* New: Russian and Ukrainian translations for the settings page and the connection sign-in screen.
+* The plugin now loads its bundled translations, so the admin interface appears in your site language.
 
 = Earlier versions =
 
