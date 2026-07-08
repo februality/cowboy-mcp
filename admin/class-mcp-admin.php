@@ -370,7 +370,11 @@ class Cowboy_MCP_Admin {
             <div class="inside">
                 <p class="mcp-about-lead"><?php
                     echo wp_kses(
-                        __( '<strong>Cowboy MCP</strong> turns this WordPress site into a <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">Model Context Protocol</a> server, so AI coding agents like Claude Code, Codex, and Opencode can read, edit, and manage the whole site through a single authenticated endpoint.', 'cowboy-mcp' ),
+                        sprintf(
+                            /* translators: %s: Model Context Protocol website URL. */
+                            __( '<strong>Cowboy MCP</strong> turns this WordPress site into a <a href="%s" target="_blank" rel="noopener noreferrer">Model Context Protocol</a> server, so AI coding agents like Claude Code, Codex, and Opencode can read, edit, and manage the whole site through a single authenticated endpoint.', 'cowboy-mcp' ),
+                            esc_url( 'https://modelcontextprotocol.io/' )
+                        ),
                         [
                             'strong' => [],
                             'a'      => [ 'href' => [], 'target' => [], 'rel' => [] ],
