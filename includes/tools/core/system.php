@@ -198,17 +198,37 @@ return [
 
             $updated = 0;
             if ( ! $dry_run && $count > 0 ) {
-                // Batch updates to avoid long-running table locks.
-                $batch_size = 500;
-                $remaining  = min( $count, $limit );
-                while ( $remaining > 0 ) {
-                    $batch      = min( $batch_size, $remaining );
-                    $update_sql = $wpdb->prepare( "UPDATE %i SET post_content = REPLACE(post_content, %s, %s)", $wpdb->posts, $search, $replace ) . " $where_sql " . $wpdb->prepare( "LIMIT %d", $batch );
+                // Capture the affected rows first (row-level undo), then update those
+                // exact IDs in batches. LIMIT applies to the capture query.
+                $select_sql = $wpdb->prepare( "SELECT ID, post_content FROM %i", $wpdb->posts )
+                    . " $where_sql " . $wpdb->prepare( "ORDER BY ID LIMIT %d", $limit );
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $targets = $wpdb->get_results( $select_sql, ARRAY_A ) ?: [];
+
+                if ( class_exists( 'Cowboy_MCP_Rollback' ) ) {
+                    Cowboy_MCP_Rollback::add_rows( array_map( fn( $r ) => [
+                        'table'  => $wpdb->posts,
+                        'pk_col' => 'ID',
+                        'pk_val' => (int) $r['ID'],
+                        'col'    => 'post_content',
+                        'old'    => $r['post_content'],
+                        'new'    => str_replace( $search, $replace, $r['post_content'] ),
+                    ], $targets ) );
+                }
+
+                foreach ( array_chunk( array_column( $targets, 'ID' ), 500 ) as $chunk ) {
+                    $ids_sql    = implode( ',', array_map( 'intval', $chunk ) );
+                    $update_sql = $wpdb->prepare(
+                        "UPDATE %i SET post_content = REPLACE(post_content, %s, %s)",
+                        $wpdb->posts, $search, $replace
+                    ) . " WHERE ID IN ({$ids_sql})";
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
                     $rows = $wpdb->query( $update_sql );
-                    if ( $rows === false || $rows === 0 ) break;
-                    $updated   += $rows;
-                    $remaining -= $rows;
+                    if ( $rows === false ) break;
+                    $updated += $rows;
+                }
+                foreach ( array_column( $targets, 'ID' ) as $pid ) {
+                    clean_post_cache( (int) $pid );
                 }
             }
 

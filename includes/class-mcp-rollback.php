@@ -90,6 +90,8 @@ class Cowboy_MCP_Rollback {
 		// their handlers return a created block id (see NOT_UNDOABLE).
 		'wp_wordfence_update_settings'   => [ 'type' => 'wf_config', 'action' => 'update' ],
 		'wp_wordfence_set_firewall_mode' => [ 'type' => 'wf_config', 'action' => 'update' ],
+
+		'wp_search_replace' => [ 'type' => 'db_rows', 'action' => 'update', 'static_id' => 'posts:post_content' ],
 	];
 
 	/**
@@ -155,6 +157,22 @@ class Cowboy_MCP_Rollback {
 					'tool' => $tool, 'type' => 'none', 'action' => 'update',
 					'object_id' => '', 'object_label' => null, 'before' => null, 'rows' => [],
 					'reason' => 'No capture strategy registered for this tool.',
+				];
+				self::$pending = $handle;
+				return $handle;
+			}
+
+			if ( $strategy['type'] === 'db_rows' ) {
+				$handle = [
+					'tool'         => $tool,
+					'type'         => 'db_rows',
+					'action'       => 'update',
+					'object_id'    => $strategy['static_id'] ?? '',
+					'object_label' => sprintf( 'Replace "%s" → "%s"', (string) ( $args['search'] ?? '' ), (string) ( $args['replace'] ?? '' ) ),
+					'before'       => null,
+					'rows'         => [],
+					'reason'       => null,
+					'ctx'          => [],
 				];
 				self::$pending = $handle;
 				return $handle;
