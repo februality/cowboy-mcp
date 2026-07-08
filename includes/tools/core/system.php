@@ -32,7 +32,7 @@ return [
             ],
         ]),
 
-        Cowboy_MCP_Tools::tool( 'wp_cli', '[System] Execute a WP-CLI command on the server. Blocked commands: db drop, db reset, db import, db export, site empty, core download, eval, eval-file, config set, config create, shell, package install. In safe mode, only known-safe commands run without confirm: true.', [
+        Cowboy_MCP_Tools::tool( 'wp_cli', '[System] Execute a WP-CLI command on the server. Blocked commands: db drop, db reset, db import, db export, site empty, core download, eval, eval-file, config set, config create, shell, package install. In safe mode, only known-safe commands run without confirm: true. When auto-checkpointing is enabled, a DB checkpoint is taken automatically before mutating commands (response includes checkpoint_id); read commands (list/get/search/info/...) skip it.', [
             'command' => [ 'type' => 'string', 'description' => 'WP-CLI command without "wp" prefix (e.g. "cache flush", "rewrite flush", "plugin list")', 'required' => true ],
         ], [ 'title' => 'WP-CLI Command', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false ], [
             'type' => 'object',
@@ -161,6 +161,15 @@ return [
                 }
             }
 
+            // Auto-checkpoint before mutating-looking commands (fail-open).
+            // INVARIANT: no error/early-return path may exist between this call and the
+            // handler's final return — commit() must run for this call so it clears
+            // Cowboy_MCP_Rollback::$last_checkpoint_id; a post-checkpoint early return
+            // would leak the id into a later call's journal row within the same request.
+            $checkpoint_id = class_exists( 'Cowboy_MCP_Checkpoint' )
+                ? Cowboy_MCP_Checkpoint::maybe_auto_checkpoint( $command )
+                : null;
+
             // In Power mode the caller may pass their own --path; don't append a second one.
             $has_path = (bool) preg_match( '/(^|\s)--path(=|\s)/i', $command );
             $wp_path  = Cowboy_MCP_Compat::wp_root();
@@ -169,10 +178,15 @@ return [
                 : sprintf( 'wp %s --path=%s --allow-root 2>&1', escapeshellcmd( $command ), escapeshellarg( $wp_path ) );
             $output   = shell_exec( $full );
 
-            return [
+            $response = [
                 'command' => 'wp ' . $command,
                 'output'  => $output ?: '(no output)',
             ];
+            if ( $checkpoint_id !== null ) {
+                $response['checkpoint_id']   = $checkpoint_id;
+                $response['checkpoint_note'] = 'A DB checkpoint was taken before this command. Restore with wp_restore_checkpoint if it went wrong.';
+            }
+            return $response;
         },
 
         'wp_search_replace' => function ( array $a ) {
@@ -198,17 +212,53 @@ return [
 
             $updated = 0;
             if ( ! $dry_run && $count > 0 ) {
-                // Batch updates to avoid long-running table locks.
-                $batch_size = 500;
-                $remaining  = min( $count, $limit );
-                while ( $remaining > 0 ) {
-                    $batch      = min( $batch_size, $remaining );
-                    $update_sql = $wpdb->prepare( "UPDATE %i SET post_content = REPLACE(post_content, %s, %s)", $wpdb->posts, $search, $replace ) . " $where_sql " . $wpdb->prepare( "LIMIT %d", $batch );
+                // Capture the affected rows first (row-level undo), then update those
+                // exact IDs in batches. LIMIT applies to the capture query.
+                $select_sql = $wpdb->prepare( "SELECT ID, post_content FROM %i", $wpdb->posts )
+                    . " $where_sql " . $wpdb->prepare( "ORDER BY ID LIMIT %d", $limit );
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $targets = $wpdb->get_results( $select_sql, ARRAY_A ) ?: [];
+
+                foreach ( array_chunk( array_column( $targets, 'ID' ), 500 ) as $chunk ) {
+                    $ids_sql    = implode( ',', array_map( 'intval', $chunk ) );
+                    $update_sql = $wpdb->prepare(
+                        "UPDATE %i SET post_content = REPLACE(post_content, %s, %s)",
+                        $wpdb->posts, $search, $replace
+                    ) . " WHERE ID IN ({$ids_sql})";
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
                     $rows = $wpdb->query( $update_sql );
-                    if ( $rows === false || $rows === 0 ) break;
-                    $updated   += $rows;
-                    $remaining -= $rows;
+                    if ( $rows === false ) break;
+                    $updated += $rows;
+                }
+                foreach ( array_column( $targets, 'ID' ) as $pid ) {
+                    clean_post_cache( (int) $pid );
+                }
+
+                if ( class_exists( 'Cowboy_MCP_Rollback' ) ) {
+                    // Re-read actual post-update content so the journal reflects reality,
+                    // not a predicted str_replace() — a broken chunk loop must not lie
+                    // about rows it never reached.
+                    $target_ids = array_map( 'intval', array_column( $targets, 'ID' ) );
+                    $after_map  = [];
+                    if ( $target_ids ) {
+                        $ids_sql   = implode( ',', $target_ids );
+                        $after_sql = $wpdb->prepare( "SELECT ID, post_content FROM %i", $wpdb->posts )
+                            . " WHERE ID IN ({$ids_sql})";
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+                        $after_rows = $wpdb->get_results( $after_sql, ARRAY_A ) ?: [];
+                        foreach ( $after_rows as $r ) {
+                            $after_map[ (int) $r['ID'] ] = $r['post_content'];
+                        }
+                    }
+
+                    Cowboy_MCP_Rollback::add_rows( array_map( fn( $r ) => [
+                        'table'  => $wpdb->posts,
+                        'pk_col' => 'ID',
+                        'pk_val' => (int) $r['ID'],
+                        'col'    => 'post_content',
+                        'old'    => $r['post_content'],
+                        'new'    => $after_map[ (int) $r['ID'] ] ?? $r['post_content'],
+                    ], $targets ) );
                 }
             }
 

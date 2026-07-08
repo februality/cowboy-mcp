@@ -48,6 +48,8 @@ define( 'COWBOY_MCP_URL',     plugin_dir_url( __FILE__ ) );
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-security.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-rollback.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-checkpoint.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-transport.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-tools.php';
@@ -60,10 +62,28 @@ require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
 /* ── Boot ─────────────────────────────────────────────────── */
 add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Audit_Log::init();
+    Cowboy_MCP_Rollback::init();
+    Cowboy_MCP_Checkpoint::init();
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
     Cowboy_MCP_OAuth::init();
+
+    // Activation hooks don't re-run on plugin updates: create any missing
+    // tables once per version bump so upgraded installs get the undo journal
+    // and checkpoint tables without reactivation. All create_table() calls
+    // are idempotent (CREATE TABLE IF NOT EXISTS).
+    if ( get_option( 'cowboy_mcp_db_version' ) !== COWBOY_MCP_VERSION ) {
+        Cowboy_MCP_Audit_Log::create_table();
+        Cowboy_MCP_Rollback::create_table();
+        Cowboy_MCP_Checkpoint::create_table();
+        global $wpdb;
+        $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $journal ) ) === $journal ) {
+            update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
+        }
+    }
 });
 
 /* ── Cron resilience: re-schedule if cron event was lost ── */
@@ -86,10 +106,17 @@ register_activation_hook( __FILE__, function () {
             'log_requests'     => false,
             'rate_limit'       => 120,      // requests per minute
             'oauth_enabled'    => false,    // OAuth desktop connector OFF by default
+            'undo_enabled'           => true,
+            'undo_retention_days'    => 7,
+            'checkpoint_max'         => 5,
+            'auto_checkpoint_wp_cli' => true,
         ]);
     }
 
     Cowboy_MCP_Audit_Log::create_table();
+    Cowboy_MCP_Rollback::create_table();
+    Cowboy_MCP_Checkpoint::create_table();
+    update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
 
     if ( ! wp_next_scheduled( Cowboy_MCP_Audit_Log::CRON_HOOK ) ) {
         wp_schedule_event( time(), 'daily', Cowboy_MCP_Audit_Log::CRON_HOOK );
@@ -117,6 +144,7 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_oauth_tokens' );
     delete_option( 'cowboy_mcp_oauth_refresh' );
     delete_option( 'cowboy_mcp_oauth_clients' );
+    delete_option( 'cowboy_mcp_db_version' );
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
@@ -127,6 +155,26 @@ function cowboy_mcp_uninstall(): void {
     $table = $wpdb->prefix . 'cowboy_mcp_audit_log';
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
     $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $table ) );
+
+    $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+    $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $journal ) );
+
+    $checkpoints = $wpdb->prefix . 'cowboy_mcp_checkpoints';
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
+    $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $checkpoints ) );
+
+    // Remove checkpoint files.
+    $cp_dir = ( wp_upload_dir()['basedir'] ?? '' ) . '/cowboy-mcp/checkpoints';
+    if ( is_dir( $cp_dir ) ) {
+        foreach ( array_merge( glob( $cp_dir . '/*' ) ?: [], [ $cp_dir . '/.htaccess', $cp_dir . '/index.php' ] ) as $f ) {
+            if ( is_file( $f ) ) {
+                wp_delete_file( $f );
+            }
+        }
+        @rmdir( $cp_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+        @rmdir( dirname( $cp_dir ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+    }
 
     cowboy_mcp_cleanup_transients( true );
 }

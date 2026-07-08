@@ -79,6 +79,11 @@ return [
             }
 
             $in_batch = true;
+            $batch_uuid = null;
+            if ( class_exists( 'Cowboy_MCP_Rollback' ) ) {
+                $batch_uuid                    = wp_generate_uuid4();
+                Cowboy_MCP_Rollback::$batch_id = $batch_uuid;
+            }
             try {
                 foreach ( $calls as $i => $call ) {
                     $name = $call['name'] ?? '';
@@ -103,9 +108,12 @@ return [
                 }
             } finally {
                 $in_batch = false;
+                if ( class_exists( 'Cowboy_MCP_Rollback' ) ) {
+                    Cowboy_MCP_Rollback::$batch_id = null;
+                }
             }
 
-            return [ 'results' => $results, 'total' => count( $results ) ];
+            return [ 'results' => $results, 'total' => count( $results ), 'batch_id' => $batch_uuid ];
         },
 
         'cowboy_mcp_get_audit_log' => function ( array $a ) {

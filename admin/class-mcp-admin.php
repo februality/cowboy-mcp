@@ -193,6 +193,11 @@ class Cowboy_MCP_Admin {
                 'log_requests'  => ! empty( $_POST['cowboy_mcp_log_requests'] ),
                 'rate_limit'    => max( 10, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_rate_limit'] ?? '' ) ) ),
                 'oauth_enabled' => ! empty( $_POST['cowboy_mcp_oauth_enabled'] ),
+
+                'undo_enabled'           => ! empty( $_POST['cowboy_mcp_undo_enabled'] ),
+                'undo_retention_days'    => max( 1, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_undo_retention_days'] ?? '7' ) ) ),
+                'checkpoint_max'         => max( 1, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_checkpoint_max'] ?? '5' ) ) ),
+                'auto_checkpoint_wp_cli' => ! empty( $_POST['cowboy_mcp_auto_checkpoint_wp_cli'] ),
             ];
             update_option( 'cowboy_mcp_settings', $settings );
             add_settings_error( 'cowboy_mcp', 'settings_saved', __( 'Settings saved.', 'cowboy-mcp' ), 'success' );
@@ -203,6 +208,81 @@ class Cowboy_MCP_Admin {
             if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
                 Cowboy_MCP_Audit_Log::clear();
                 add_settings_error( 'cowboy_mcp', 'log_cleared', __( 'Audit log cleared.', 'cowboy-mcp' ), 'info' );
+            }
+        }
+
+        // Undo a journal entry (Activity tab).
+        if ( isset( $_POST['cowboy_mcp_undo_change'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
+            $change_id = (int) ( $_POST['change_id'] ?? 0 );
+            $force     = ! empty( $_POST['force'] );
+            $result    = Cowboy_MCP_Rollback::undo( $change_id, $force, 'admin' );
+            if ( is_wp_error( $result ) ) {
+                if ( $result->get_error_code() === 'undo_conflict' ) {
+                    set_transient( 'cowboy_mcp_undo_conflict_' . get_current_user_id(), [ 'change_id' => $change_id, 'message' => $result->get_error_message() ], 300 );
+                } else {
+                    add_settings_error( 'cowboy_mcp', 'undo_failed', esc_html( $result->get_error_message() ), 'error' );
+                }
+            } else {
+                $note = ! empty( $result['note'] ) ? ' ' . $result['note'] : '';
+                /* translators: 1: change ID number, 2: optional note appended after the message */
+                add_settings_error( 'cowboy_mcp', 'undo_ok', sprintf( esc_html__( 'Change #%1$d undone.%2$s', 'cowboy-mcp' ), $change_id, esc_html( $note ) ), 'success' );
+                if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
+                    Cowboy_MCP_Audit_Log::log( 'admin_undo_change', [ 'key_id' => 'admin', 'tool' => 'wp_undo_change', 'args' => [ 'change_id' => $change_id, 'force' => $force ] ] );
+                }
+            }
+        }
+
+        // Undo an entire batch.
+        if ( isset( $_POST['cowboy_mcp_undo_batch'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
+            $batch  = sanitize_text_field( wp_unslash( $_POST['batch_id'] ?? '' ) );
+            $result = Cowboy_MCP_Rollback::undo_batch( $batch, ! empty( $_POST['force'] ), 'admin' );
+            if ( is_wp_error( $result ) ) {
+                add_settings_error( 'cowboy_mcp', 'undo_failed', esc_html( $result->get_error_message() ), 'error' );
+            } else {
+                /* translators: 1: number of entries undone, 2: total number of entries in the batch */
+                $msg = sprintf( esc_html__( '%1$d of %2$d batch entries undone.', 'cowboy-mcp' ), (int) $result['undone_count'], count( $result['results'] ) );
+                add_settings_error( 'cowboy_mcp', 'undo_batch', $msg, $result['stopped_early'] ? 'warning' : 'success' );
+                if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
+                    Cowboy_MCP_Audit_Log::log( 'admin_undo_batch', [ 'key_id' => 'admin', 'tool' => 'wp_undo_change', 'args' => [ 'batch_id' => $batch, 'force' => ! empty( $_POST['force'] ) ] ] );
+                }
+            }
+        }
+
+        // Checkpoints: create / restore / delete.
+        if ( isset( $_POST['cowboy_mcp_create_checkpoint'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
+            $label = sanitize_text_field( wp_unslash( $_POST['checkpoint_label'] ?? '' ) );
+            $r     = Cowboy_MCP_Checkpoint::create( $label, 'manual' );
+            if ( is_wp_error( $r ) ) {
+                add_settings_error( 'cowboy_mcp', 'cp_failed', esc_html( $r->get_error_message() ), 'error' );
+            } else {
+                /* translators: 1: checkpoint ID number, 2: human-readable file size */
+                add_settings_error( 'cowboy_mcp', 'cp_ok', sprintf( esc_html__( 'Checkpoint #%1$d created (%2$s).', 'cowboy-mcp' ), (int) $r['checkpoint_id'], esc_html( size_format( (int) $r['size_bytes'] ) ) ), 'success' );
+                if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
+                    Cowboy_MCP_Audit_Log::log( 'admin_create_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_create_checkpoint', 'args' => [ 'label' => $label, 'checkpoint_id' => (int) $r['checkpoint_id'] ] ] );
+                }
+            }
+        }
+        if ( isset( $_POST['cowboy_mcp_restore_checkpoint'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
+            $r = Cowboy_MCP_Checkpoint::restore( (int) ( $_POST['checkpoint_id'] ?? 0 ), 'admin' );
+            if ( is_wp_error( $r ) ) {
+                add_settings_error( 'cowboy_mcp', 'cp_failed', esc_html( $r->get_error_message() ), 'error' );
+            } else {
+                /* translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number */
+                add_settings_error( 'cowboy_mcp', 'cp_restored', sprintf( esc_html__( 'Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: #%2$d.', 'cowboy-mcp' ), (int) $r['checkpoint_id'], (int) $r['pre_restore_checkpoint_id'] ), 'success' );
+                if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
+                    Cowboy_MCP_Audit_Log::log( 'admin_restore_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_restore_checkpoint', 'args' => [ 'checkpoint_id' => (int) ( $_POST['checkpoint_id'] ?? 0 ) ] ] );
+                }
+            }
+        }
+        if ( isset( $_POST['cowboy_mcp_delete_checkpoint'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_activity' ) ) {
+            $r = Cowboy_MCP_Checkpoint::delete( (int) ( $_POST['checkpoint_id'] ?? 0 ) );
+            if ( is_wp_error( $r ) ) {
+                add_settings_error( 'cowboy_mcp', 'cp_failed', esc_html( $r->get_error_message() ), 'error' );
+            } else {
+                add_settings_error( 'cowboy_mcp', 'cp_deleted', esc_html__( 'Checkpoint deleted.', 'cowboy-mcp' ), 'info' );
+                if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
+                    Cowboy_MCP_Audit_Log::log( 'admin_delete_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_delete_checkpoint', 'args' => [ 'checkpoint_id' => (int) ( $_POST['checkpoint_id'] ?? 0 ) ] ] );
+                }
             }
         }
     }
@@ -237,6 +317,7 @@ class Cowboy_MCP_Admin {
         $tab_map = [
             'connection' => 'connection',
             'settings'   => 'settings',
+            'activity'   => 'activity',
             'audit-log'  => 'logs',
             'logs'       => 'logs',
             'about'      => 'about',
@@ -262,6 +343,7 @@ class Cowboy_MCP_Admin {
             <nav class="nav-tab-wrapper mcp-nav-tabs">
                 <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=connection" class="nav-tab <?php echo esc_attr( $active_tab === 'connection' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Connection', 'cowboy-mcp' ); ?></a>
                 <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=settings" class="nav-tab <?php echo esc_attr( $active_tab === 'settings' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Settings', 'cowboy-mcp' ); ?></a>
+                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=activity" class="nav-tab <?php echo esc_attr( $active_tab === 'activity' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Activity', 'cowboy-mcp' ); ?></a>
                 <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=logs" class="nav-tab <?php echo esc_attr( $active_tab === 'logs' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Logs', 'cowboy-mcp' ); ?></a>
                 <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=about" class="nav-tab <?php echo esc_attr( $active_tab === 'about' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'About', 'cowboy-mcp' ); ?></a>
             </nav>
@@ -269,6 +351,7 @@ class Cowboy_MCP_Admin {
             <?php
             match ( $active_tab ) {
                 'settings' => self::render_settings_tab( $settings ),
+                'activity' => self::render_activity_tab(),
                 'logs'     => self::render_logs_tab(),
                 'about'    => self::render_about_tab(),
                 default    => self::render_connection_tab( $keys, $endpoint, $new_key, $active_client ),
@@ -833,6 +916,48 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                 </div>
             </div>
 
+            <div class="postbox">
+                <div class="postbox-header"><h2><?php esc_html_e( 'Undo & Checkpoints', 'cowboy-mcp' ); ?></h2></div>
+                <div class="inside">
+                    <table class="form-table" role="presentation">
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Undo Journal', 'cowboy-mcp' ); ?></th>
+                            <td>
+                                <label class="mcp-switch-label">
+                                    <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_undo_enabled" value="1" <?php checked( ! isset( $settings['undo_enabled'] ) || $settings['undo_enabled'] ); ?>><span class="mcp-switch-track"></span></span>
+                                    <?php esc_html_e( 'Undo journal — capture before-state of every mutating tool call', 'cowboy-mcp' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( 'Lets changes made through MCP be undone from the Activity tab. Disabling stops new entries from being captured; existing history is kept until it expires.', 'cowboy-mcp' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Undo Retention', 'cowboy-mcp' ); ?></th>
+                            <td>
+                                <input type="number" name="cowboy_mcp_undo_retention_days" value="<?php echo esc_attr( (int) ( $settings['undo_retention_days'] ?? 7 ) ); ?>" min="1" class="small-text">
+                                <span><?php esc_html_e( 'days to keep undo history', 'cowboy-mcp' ); ?></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Checkpoint Limit', 'cowboy-mcp' ); ?></th>
+                            <td>
+                                <input type="number" name="cowboy_mcp_checkpoint_max" value="<?php echo esc_attr( (int) ( $settings['checkpoint_max'] ?? 5 ) ); ?>" min="1" class="small-text">
+                                <span><?php esc_html_e( 'checkpoints to keep', 'cowboy-mcp' ); ?></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Auto-Checkpoint', 'cowboy-mcp' ); ?></th>
+                            <td>
+                                <label class="mcp-switch-label">
+                                    <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_auto_checkpoint_wp_cli" value="1" <?php checked( ! isset( $settings['auto_checkpoint_wp_cli'] ) || $settings['auto_checkpoint_wp_cli'] ); ?>><span class="mcp-switch-track"></span></span>
+                                    <?php esc_html_e( 'Auto-checkpoint before mutating WP-CLI commands', 'cowboy-mcp' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( 'Takes a full-database checkpoint before running a WP-CLI command that is not read-only, so it can be rolled back even if the command itself cannot be undone.', 'cowboy-mcp' ); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
             <div class="postbox mcp-danger-zone">
                 <div class="postbox-header"><h2><?php esc_html_e( 'Power Mode', 'cowboy-mcp' ); ?> <span class="mcp-h2-sub"><?php esc_html_e( 'advanced · off by default', 'cowboy-mcp' ); ?></span></h2></div>
                 <div class="inside">
@@ -998,6 +1123,139 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                 <?php endif; ?>
             <?php endif; ?>
         <?php
+    }
+
+    /* ── Activity / Undo tab ─────────────────────────────── */
+
+    private static function render_activity_tab(): void {
+        $per_page = 25;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $page   = max( 1, (int) ( $_GET['activity_page'] ?? 1 ) );
+        $result = Cowboy_MCP_Rollback::query( [ 'per_page' => $per_page, 'page' => $page ] );
+        $nonce  = wp_create_nonce( 'cowboy_mcp_activity' );
+
+        // Pending conflict from a previous undo attempt → force prompt.
+        $conflict = get_transient( 'cowboy_mcp_undo_conflict_' . get_current_user_id() );
+        if ( $conflict ) {
+            delete_transient( 'cowboy_mcp_undo_conflict_' . get_current_user_id() );
+            ?>
+            <div class="notice notice-warning">
+                <p><strong><?php esc_html_e( 'Undo conflict:', 'cowboy-mcp' ); ?></strong> <?php echo esc_html( $conflict['message'] ); ?></p>
+                <form method="post" style="margin-bottom:10px">
+                    <input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+                    <input type="hidden" name="change_id" value="<?php echo esc_attr( $conflict['change_id'] ); ?>">
+                    <input type="hidden" name="force" value="1">
+                    <button type="submit" name="cowboy_mcp_undo_change" value="1" class="button button-secondary"><?php esc_html_e( 'Force undo anyway', 'cowboy-mcp' ); ?></button>
+                </form>
+            </div>
+            <?php
+        }
+
+        // ── Checkpoints panel ──
+        $checkpoints = Cowboy_MCP_Checkpoint::list_all();
+        ?>
+        <h2><?php esc_html_e( 'Database Checkpoints', 'cowboy-mcp' ); ?></h2>
+        <form method="post" class="mcp-cp-create">
+            <input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+            <input type="text" name="checkpoint_label" placeholder="<?php esc_attr_e( 'Label (optional)', 'cowboy-mcp' ); ?>">
+            <button type="submit" name="cowboy_mcp_create_checkpoint" value="1" class="button"><?php esc_html_e( 'Create checkpoint now', 'cowboy-mcp' ); ?></button>
+        </form>
+        <table class="widefat striped">
+            <thead><tr>
+                <th><?php esc_html_e( 'ID', 'cowboy-mcp' ); ?></th><th><?php esc_html_e( 'Created', 'cowboy-mcp' ); ?></th>
+                <th><?php esc_html_e( 'Label', 'cowboy-mcp' ); ?></th><th><?php esc_html_e( 'Trigger', 'cowboy-mcp' ); ?></th>
+                <th><?php esc_html_e( 'Size', 'cowboy-mcp' ); ?></th><th></th>
+            </tr></thead>
+            <tbody>
+            <?php if ( empty( $checkpoints ) ) : ?>
+                <tr><td colspan="6"><?php esc_html_e( 'No checkpoints yet.', 'cowboy-mcp' ); ?></td></tr>
+            <?php endif; ?>
+            <?php foreach ( $checkpoints as $cp ) : ?>
+                <tr>
+                    <td>#<?php echo (int) $cp['id']; ?></td>
+                    <td><?php echo esc_html( $cp['created'] ); ?></td>
+                    <td><?php echo esc_html( $cp['label'] ); ?></td>
+                    <td><span class="mcp-badge mcp-badge-<?php echo esc_attr( $cp['trigger_type'] ); ?>"><?php echo esc_html( $cp['trigger_type'] ); ?></span></td>
+                    <td><?php echo esc_html( size_format( (int) $cp['size_bytes'] ) ); ?></td>
+                    <td>
+                        <form method="post" style="display:inline" data-mcp-confirm="<?php
+                            /* translators: 1: checkpoint ID number, 2: checkpoint creation date/time */
+                            echo esc_attr( sprintf( __( 'Restore the database to checkpoint #%1$s (%2$s)? EVERYTHING changed since then — including changes made outside MCP — will be lost. A pre-restore safety checkpoint is taken first.', 'cowboy-mcp' ), $cp['id'], $cp['created'] ) );
+                        ?>" data-mcp-confirm-2="<?php esc_attr_e( 'Really sure? This rewrites every site table.', 'cowboy-mcp' ); ?>">
+                            <input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+                            <input type="hidden" name="checkpoint_id" value="<?php echo (int) $cp['id']; ?>">
+                            <button type="submit" name="cowboy_mcp_restore_checkpoint" value="1" class="button button-small"><?php esc_html_e( 'Restore', 'cowboy-mcp' ); ?></button>
+                        </form>
+                        <form method="post" style="display:inline" data-mcp-confirm="<?php esc_attr_e( 'Delete this checkpoint?', 'cowboy-mcp' ); ?>">
+                            <input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+                            <input type="hidden" name="checkpoint_id" value="<?php echo (int) $cp['id']; ?>">
+                            <button type="submit" name="cowboy_mcp_delete_checkpoint" value="1" class="button button-small button-link-delete"><?php esc_html_e( 'Delete', 'cowboy-mcp' ); ?></button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <h2 style="margin-top:24px"><?php esc_html_e( 'Change Journal', 'cowboy-mcp' ); ?></h2>
+        <table class="widefat striped">
+            <thead><tr>
+                <th><?php esc_html_e( 'ID', 'cowboy-mcp' ); ?></th><th><?php esc_html_e( 'Time', 'cowboy-mcp' ); ?></th>
+                <th><?php esc_html_e( 'Tool', 'cowboy-mcp' ); ?></th><th><?php esc_html_e( 'Object', 'cowboy-mcp' ); ?></th>
+                <th><?php esc_html_e( 'Action', 'cowboy-mcp' ); ?></th><th><?php esc_html_e( 'Key', 'cowboy-mcp' ); ?></th>
+                <th><?php esc_html_e( 'Status', 'cowboy-mcp' ); ?></th><th></th>
+            </tr></thead>
+            <tbody>
+            <?php if ( empty( $result['entries'] ) ) : ?>
+                <tr><td colspan="8"><?php esc_html_e( 'No journaled changes yet.', 'cowboy-mcp' ); ?></td></tr>
+            <?php endif; ?>
+            <?php foreach ( $result['entries'] as $e ) : ?>
+                <tr>
+                    <td>#<?php echo (int) $e['id']; ?></td>
+                    <td><?php echo esc_html( $e['timestamp'] ); ?></td>
+                    <td><code><?php echo esc_html( $e['tool'] ); ?></code></td>
+                    <td title="<?php echo esc_attr( $e['object_type'] . ' ' . $e['object_id'] ); ?>"><?php echo esc_html( $e['object_label'] ?: $e['object_id'] ); ?></td>
+                    <td><?php echo esc_html( $e['action'] ); ?></td>
+                    <td><?php echo esc_html( $e['key_label'] ?: $e['key_id'] ); ?></td>
+                    <td>
+                        <span class="mcp-badge mcp-badge-<?php echo esc_attr( $e['status'] ); ?>"><?php echo esc_html( str_replace( '_', ' ', $e['status'] ) ); ?></span>
+                        <?php if ( $e['status'] === 'not_undoable' && $e['not_undoable_reason'] ) : ?>
+                            <span class="dashicons dashicons-info-outline" title="<?php echo esc_attr( $e['not_undoable_reason'] ); ?>"></span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ( $e['status'] === 'active' ) : ?>
+                            <form method="post" style="display:inline" data-mcp-confirm="<?php
+                                /* translators: %s: change ID number */
+                                echo esc_attr( sprintf( __( 'Undo change #%s?', 'cowboy-mcp' ), $e['id'] ) );
+                            ?>">
+                                <input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+                                <input type="hidden" name="change_id" value="<?php echo (int) $e['id']; ?>">
+                                <button type="submit" name="cowboy_mcp_undo_change" value="1" class="button button-small"><?php esc_html_e( 'Undo', 'cowboy-mcp' ); ?></button>
+                            </form>
+                            <?php if ( $e['batch_id'] ) : ?>
+                                <form method="post" style="display:inline" data-mcp-confirm="<?php esc_attr_e( 'Undo ALL active changes in this batch (newest first)?', 'cowboy-mcp' ); ?>">
+                                    <input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+                                    <input type="hidden" name="batch_id" value="<?php echo esc_attr( $e['batch_id'] ); ?>">
+                                    <button type="submit" name="cowboy_mcp_undo_batch" value="1" class="button button-small"><?php esc_html_e( 'Undo batch', 'cowboy-mcp' ); ?></button>
+                                </form>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php
+        $pages = (int) ceil( $result['total'] / $per_page );
+        if ( $pages > 1 ) {
+            echo '<p class="mcp-pagination">';
+            for ( $i = 1; $i <= $pages; $i++ ) {
+                $url = add_query_arg( [ 'page' => self::SLUG, 'tab' => 'activity', 'activity_page' => $i ], admin_url( 'options-general.php' ) );
+                printf( '<a class="button button-small%s" href="%s">%d</a> ', $i === $page ? ' button-primary' : '', esc_url( $url ), (int) $i );
+            }
+            echo '</p>';
+        }
     }
 
 }

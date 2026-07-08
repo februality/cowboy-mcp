@@ -26,6 +26,7 @@ class Cowboy_MCP_Tools {
         'core/users.php',
         'core/media.php',
         'core/batch.php',
+        'core/rollback.php',
         'core/diagnostics.php',
         'core/posts.php',
         'core/plugins.php',
@@ -56,6 +57,7 @@ class Cowboy_MCP_Tools {
         'core/users.php'              => 'users',
         'core/media.php'              => 'media',
         'core/batch.php'              => 'batch',
+        'core/rollback.php'           => 'rollback',
         'core/diagnostics.php'        => 'diagnostics',
         'core/posts.php'              => 'content',
         'core/plugins.php'            => 'plugins',
@@ -85,6 +87,7 @@ class Cowboy_MCP_Tools {
         'users'          => 'delete users (with self-delete protection)',
         'media'          => 'upload media (with SSRF protection)',
         'batch'          => 'multi-tool sequencing, audit log retrieval',
+        'rollback'       => 'undo changes from the journal, create/list/restore/delete database checkpoints',
         'diagnostics'    => 'error logs, HTTP requests, email testing, hooks, transients, REST routes, thumbnails, rewrite rules, site snapshots',
         'content'        => 'create, read, update, delete posts, pages, and custom post types',
         'plugins'        => 'list, activate, and deactivate plugins',
@@ -276,9 +279,16 @@ class Cowboy_MCP_Tools {
 
         self::mcp_log( 'tool_call', [ 'tool' => $name, 'args' => $args, 'power_mode' => Cowboy_MCP_Security::power_mode_enabled() ] );
 
+        $capture = class_exists( 'Cowboy_MCP_Rollback' )
+            ? Cowboy_MCP_Rollback::begin( $name, $args, self::$tool_map[ $name ]['annotations'] ?? [] )
+            : null;
+
         try {
             $result = call_user_func( $handler, $args );
             if ( is_wp_error( $result ) ) {
+                if ( $capture !== null ) {
+                    Cowboy_MCP_Rollback::discard( $capture );
+                }
                 self::mcp_log( 'tool_error', [ 'tool' => $name, 'error' => $result->get_error_message() ] );
 
                 // Enhanced error response with suggestions.
@@ -300,6 +310,17 @@ class Cowboy_MCP_Tools {
                     'isError' => true,
                 ];
             }
+
+            if ( $capture !== null ) {
+                $change_id = Cowboy_MCP_Rollback::commit( $capture, $result );
+                if ( $change_id !== null && is_array( $result ) ) {
+                    $result['change_id'] = $change_id;
+                    if ( Cowboy_MCP_Rollback::$batch_id !== null ) {
+                        $result['batch_id'] = Cowboy_MCP_Rollback::$batch_id;
+                    }
+                }
+            }
+
             $text = is_string( $result ) ? $result : wp_json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
             if ( $text === false ) {
                 $text = '(Tool result could not be encoded as JSON.)';
@@ -317,6 +338,9 @@ class Cowboy_MCP_Tools {
 
             return $response;
         } catch ( \Throwable $e ) {
+            if ( $capture !== null ) {
+                Cowboy_MCP_Rollback::discard( $capture );
+            }
             self::mcp_log( 'tool_exception', [ 'tool' => $name, 'exception' => $e->getMessage() ] );
             return [
                 'content' => [
@@ -334,6 +358,15 @@ class Cowboy_MCP_Tools {
         self::load_domains();
         $handler = self::$handlers['wp_site_info'] ?? null;
         return $handler ? $handler( [] ) : [];
+    }
+
+    /**
+     * Public wrapper so Cowboy_MCP_Rollback can load domain helper functions
+     * (e.g. cowboy_mcp_resolve_wp_content_path) outside a tools/call, such as
+     * when an undo is triggered from the wp-admin Activity tab.
+     */
+    public static function boot_domains(): void {
+        self::load_domains();
     }
 
     /* ================================================================

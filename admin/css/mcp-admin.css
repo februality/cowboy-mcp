@@ -163,3 +163,14 @@
 .mcp-res-title { font-size: 16px; font-weight: 600; color: #2271b1; }
 .mcp-res-sub { font-size: 13px; color: #50575e; }
 .mcp-about-foot { margin: 18px 0 0; color: #646970; font-size: 12px; }
+
+/* Rollback / Activity tab */
+.mcp-badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; line-height:18px; }
+.mcp-badge-active { background:#e7f5ea; color:#116329; }
+.mcp-badge-undone { background:#eef1f4; color:#57606a; text-decoration:line-through; }
+.mcp-badge-not_undoable { background:#fff3e0; color:#9a6700; }
+.mcp-badge-manual { background:#e7f0fe; color:#0550ae; }
+.mcp-badge-auto_wp_cli { background:#f4ebff; color:#6639ba; }
+.mcp-badge-pre_restore { background:#ffebe9; color:#a40e26; }
+.mcp-cp-create { margin:8px 0 12px; }
+.mcp-pagination { margin-top:10px; }
