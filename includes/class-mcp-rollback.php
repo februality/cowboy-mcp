@@ -51,6 +51,9 @@ class Cowboy_MCP_Rollback {
 		'wp_acf_add_row'        => [ 'type' => 'acf_value', 'action' => 'update' ],
 		'wp_acf_update_row'     => [ 'type' => 'acf_value', 'action' => 'update' ],
 		'wp_acf_delete_row'     => [ 'type' => 'acf_value', 'action' => 'update' ],
+
+		'wp_write_file'  => [ 'type' => 'file', 'action' => 'update', 'id_arg' => 'path' ],
+		'wp_delete_file' => [ 'type' => 'file', 'action' => 'delete', 'id_arg' => 'path' ],
 	];
 
 	/**
@@ -329,6 +332,23 @@ class Cowboy_MCP_Rollback {
 				$object = is_numeric( $object ) ? (int) $object : $object;
 				$value  = get_field( $field, $object, false ); // raw/unformatted round-trips with update_field
 				return [ 'exists' => $value !== null && $value !== false, 'value' => $value ];
+
+			case 'file':
+				if ( class_exists( 'Cowboy_MCP_Tools' ) ) {
+					Cowboy_MCP_Tools::boot_domains();
+				}
+				if ( ! function_exists( 'cowboy_mcp_resolve_wp_content_path' ) ) {
+					return null;
+				}
+				$full = cowboy_mcp_resolve_wp_content_path( $id );
+				if ( is_wp_error( $full ) || ! is_file( $full ) ) {
+					return null;
+				}
+				$content = file_get_contents( $full ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				if ( $content === false ) {
+					return null;
+				}
+				return [ 'content_b64' => base64_encode( $content ), 'size' => strlen( $content ) ];
 		}
 		return null;
 	}
@@ -369,6 +389,9 @@ class Cowboy_MCP_Rollback {
 					update_field( $field, $state['value'], $object );
 				}
 				return true;
+
+			case 'file':
+				return self::restore_file( $id, $state );
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
 	}
@@ -428,6 +451,46 @@ class Cowboy_MCP_Rollback {
 			if ( $r['table'] === $wpdb->posts ) {
 				clean_post_cache( (int) $r['pk_val'] );
 			}
+		}
+		return true;
+	}
+
+	/** Rewrite a file's captured bytes atomically, or delete it (null state). */
+	private static function restore_file( string $relpath, ?array $state ): true|WP_Error {
+		if ( ! function_exists( 'cowboy_mcp_resolve_wp_content_path' ) ) {
+			return new WP_Error( 'undo_failed', 'File helpers unavailable.' );
+		}
+		$full = cowboy_mcp_resolve_wp_content_path( $relpath );
+		if ( is_wp_error( $full ) ) {
+			return $full;
+		}
+		if ( $state === null ) {
+			if ( file_exists( $full ) ) {
+				wp_delete_file( $full );
+			}
+			return true;
+		}
+		if ( function_exists( 'cowboy_mcp_is_blocked_upload_write' ) && cowboy_mcp_is_blocked_upload_write( $full ) ) {
+			return new WP_Error( 'blocked_extension', 'Refusing to restore an executable file into the uploads directory.' );
+		}
+		$content = base64_decode( (string) ( $state['content_b64'] ?? '' ), true );
+		if ( $content === false ) {
+			return new WP_Error( 'undo_failed', 'Captured file content is corrupted.' );
+		}
+		$dir = dirname( $full );
+		if ( ! is_dir( $dir ) ) {
+			wp_mkdir_p( $dir );
+		}
+		$tmp = $full . '.mcp_tmp_' . uniqid( '', true );
+		if ( file_put_contents( $tmp, $content ) === false ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			wp_delete_file( $tmp );
+			return new WP_Error( 'undo_failed', "Could not write {$relpath}." );
+		}
+		// Atomic same-directory rename; same justification as wp_write_file.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename
+		if ( ! @rename( $tmp, $full ) ) {
+			wp_delete_file( $tmp );
+			return new WP_Error( 'undo_failed', "Atomic rename failed for {$relpath}." );
 		}
 		return true;
 	}
