@@ -181,16 +181,16 @@ msgid "Add it on claude.ai"
 msgstr "Добавьте это на claude.ai"
 
 #: admin/class-mcp-admin.php:522
-msgid "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected."
-msgstr "ChatGPT откроет страницу входа на <strong>вашем сайте</strong>. Проверьте запрашиваемые разрешения и нажмите <strong>Разрешить</strong>. Готово — вы подключены."
+msgid "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. That is it — you are connected."
+msgstr "ChatGPT откроет страницу входа на <strong>вашем сайте</strong>. Проверьте запрашиваемые разрешения и нажмите <strong>Подтвердить</strong>. Готово — вы подключены."
 
 #: admin/class-mcp-admin.php:523
-msgid "Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected."
-msgstr "Claude откроет страницу входа на <strong>вашем сайте</strong>. Проверьте запрашиваемые разрешения и нажмите <strong>Разрешить</strong>. Готово — вы подключены."
+msgid "Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. That is it — you are connected."
+msgstr "Claude откроет страницу входа на <strong>вашем сайте</strong>. Проверьте запрашиваемые разрешения и нажмите <strong>Подтвердить</strong>. Готово — вы подключены."
 
 #: admin/class-mcp-admin.php:525
 msgid "Custom connectors require a paid ChatGPT plan with <strong>Developer mode</strong> (beta) enabled."
-msgstr "Пользовательские коннекторы требуют платного тарифа ChatGPT с включённым <strong>режимом разработчика</strong> (бета)."
+msgstr "Пользовательские коннекторы требуют платного тарифа ChatGPT с включённым <strong>Developer mode</strong> (бета)."
 
 #: admin/class-mcp-admin.php:526
 msgid "Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan."
@@ -223,7 +223,7 @@ msgstr "Перейдите на <code>chatgpt.com</code> (или откройт�
 
 #: admin/class-mcp-admin.php:579
 msgid "Go to <code>Settings → Connectors → Advanced</code> and turn on <strong>Developer mode</strong> (one-time)."
-msgstr "Перейдите в <code>Settings → Connectors → Advanced</code> и включите <strong>режим разработчика</strong> (однократно)."
+msgstr "Перейдите в <code>Settings → Connectors → Advanced</code> и включите <strong>Developer mode</strong> (однократно)."
 
 #: admin/class-mcp-admin.php:580
 msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
@@ -275,7 +275,7 @@ msgstr "Я сохранил ключ"
 
 #: admin/class-mcp-admin.php:644
 msgid "Give it a name so you can recognize it later, then generate."
-msgstr "Дайте ему название, чтобы узнать его позже, затем сгенерируйте."
+msgstr "Дайте ему название, чтобы позже вы могли его узнать, затем сгенерируйте."
 
 #. translators: %s: client name, e.g. "Claude Code"
 #: admin/class-mcp-admin.php:649
@@ -506,7 +506,7 @@ msgstr "Автоматическая контрольная точка пере�
 
 #: admin/class-mcp-admin.php:958
 msgid "Takes a full-database checkpoint before running a WP-CLI command that is not read-only, so it can be rolled back even if the command itself cannot be undone."
-msgstr "Создаёт полную контрольную точку базы данных перед выполнением команды WP-CLI, которая не только для чтения, чтобы её можно было откатить, даже если саму команду отменить нельзя."
+msgstr "Создаёт полную контрольную точку базы данных перед выполнением команды WP-CLI, не предназначенной только для чтения, чтобы её можно было откатить, даже если саму команду отменить нельзя."
 
 #: admin/class-mcp-admin.php:966 admin/class-mcp-admin.php:970
 msgid "Power Mode"
@@ -665,7 +665,7 @@ msgstr "Пока нет контрольных точек."
 #: admin/class-mcp-admin.php:1187
 #, php-format
 msgid "Restore the database to checkpoint #%1$s (%2$s)? EVERYTHING changed since then — including changes made outside MCP — will be lost. A pre-restore safety checkpoint is taken first."
-msgstr "Восстановить базу данных до контрольной точки №%1$s (%2$s)? ВСЁ, что изменилось с этого момента — включая изменения, сделанные вне MCP — будет потеряно. Сначала создаётся резервная контрольная точка перед восстановлением."
+msgstr "Восстановить базу данных до контрольной точки №%1$s (%2$s)? ВСЁ, что изменилось с того момента — включая изменения, сделанные вне MCP — будет потеряно. Сначала создаётся резервная контрольная точка перед восстановлением."
 
 #: admin/class-mcp-admin.php:1188
 msgid "Really sure? This rewrites every site table."

@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, ai-agent, wp-cli
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,9 +84,8 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.5.1 =
-* New: Russian and Ukrainian translations for the settings page and the connection sign-in screen.
-* The plugin now loads its bundled translations, so the admin interface appears in your site language.
+= 1.5.2 =
+* New: translations for the settings page and the connection sign-in screen in ten more languages — Simplified Chinese, Japanese, Korean, German, Spanish, French, Italian, Portuguese (Brazil), Hindi, and Indonesian.
 
 = Earlier versions =
 

@@ -519,8 +519,8 @@ class Cowboy_MCP_Admin {
             default     => __( 'Add it on claude.ai', 'cowboy-mcp' ),
         };
         $approve_text = $is_chatgpt
-            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected.', 'cowboy-mcp' )
-            : __( 'Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Allow</strong>. That is it — you are connected.', 'cowboy-mcp' );
+            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. That is it — you are connected.', 'cowboy-mcp' )
+            : __( 'Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. That is it — you are connected.', 'cowboy-mcp' );
         $plan_note    = $is_chatgpt
             ? __( 'Custom connectors require a paid ChatGPT plan with <strong>Developer mode</strong> (beta) enabled.', 'cowboy-mcp' )
             : __( 'Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan.', 'cowboy-mcp' );

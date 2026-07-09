@@ -3,6 +3,9 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.5.2 =
+* New: bundled translations for the admin settings page and the OAuth consent screen in ten more locales — Simplified Chinese (zh_CN), Japanese (ja), Korean (ko_KR), German (de_DE), Spanish (es_ES), French (fr_FR), Italian (it_IT), Portuguese – Brazil (pt_BR), Hindi (hi_IN), and Indonesian (id_ID).
+
 = 1.5.1 =
 * New: Russian (ru_RU) and Ukrainian (uk) translations for the admin settings page and the OAuth consent screen.
 * The plugin now registers a Domain Path and loads its text domain on init, so bundled translations apply on WordPress 6.2+.
