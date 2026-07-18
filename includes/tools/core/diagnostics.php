@@ -237,6 +237,22 @@ return [
 			'idempotentHint'  => true,
 			'openWorldHint'   => false,
 		] ),
+
+		/* ----------------------------------------------------------------
+		 * 10. wp_connection_doctor
+		 * ---------------------------------------------------------------- */
+		Cowboy_MCP_Tools::tool(
+			'wp_connection_doctor',
+			'[Diagnostics] Run the MCP connection self-test: config, loopback reachability, OAuth discovery. Returns per-check pass/warn/fail with fingerprinted causes, fix hints, and a plain-text report. The authenticated-path check auto-passes (calling this tool proves it).',
+			[],
+			[ 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ],
+			[
+				'summary' => [ 'type' => 'string', 'description' => 'pass | warn | fail' ],
+				'counts'  => [ 'type' => 'object', 'description' => 'Totals per status' ],
+				'checks'  => [ 'type' => 'array', 'description' => 'Per-check results with fingerprint and fix' ],
+				'report'  => [ 'type' => 'string', 'description' => 'Copy-pasteable plain-text report' ],
+			]
+		),
 	],
 
 	'handlers' => [
@@ -861,6 +877,15 @@ return [
 				'timestamp' => gmdate( 'Y-m-d H:i:s' ),
 				'sections'  => $snapshot,
 			];
+		},
+
+		/* ----------------------------------------------------------------
+		 * 10. wp_connection_doctor
+		 * ---------------------------------------------------------------- */
+		'wp_connection_doctor' => function ( array $a ): array {
+			$results           = Cowboy_MCP_Doctor::run_checks( [ 'skip_auth_roundtrip' => true ] );
+			$results['report'] = Cowboy_MCP_Doctor::render_report( $results );
+			return $results;
 		},
 	],
 ];
