@@ -83,6 +83,10 @@ class Cowboy_MCP_Admin {
             'dismissNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
         ] );
+        wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'cowboy_mcp_doctor' ),
+        ] );
     }
 
     /* ── AJAX: dismiss new key notice ─────────────────────── */
@@ -447,6 +451,14 @@ class Cowboy_MCP_Admin {
                 <?php endforeach; ?>
 
             </div>
+        </div>
+
+        <div class="cowboy-doctor" id="cowboy-doctor">
+            <h2><?php esc_html_e( 'Connection Doctor', 'cowboy-mcp' ); ?></h2>
+            <p><?php esc_html_e( 'Test whether AI clients can reach this site and get a copy-pasteable diagnosis for anything broken.', 'cowboy-mcp' ); ?></p>
+            <button type="button" class="button button-secondary" id="cowboy-doctor-run"><?php esc_html_e( 'Run checks', 'cowboy-mcp' ); ?></button>
+            <button type="button" class="button" id="cowboy-doctor-copy" hidden><?php esc_html_e( 'Copy report', 'cowboy-mcp' ); ?></button>
+            <div id="cowboy-doctor-results" aria-live="polite"></div>
         </div>
         <?php
     }
@@ -898,6 +910,9 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                                         [ 'code' => [] ]
                                     );
                                 ?></p>
+                                <?php if ( ! empty( $settings['oauth_enabled'] ) ) : ?>
+                                    <p class="description"><?php esc_html_e( 'Tip: run the Connection Doctor on the Connection tab to verify the connector end to end.', 'cowboy-mcp' ); ?></p>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <tr>

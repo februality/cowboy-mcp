@@ -389,6 +389,24 @@ class Cowboy_MCP_Doctor {
 	}
 
 	// AJAX + CLI adapters implemented in Tasks 4 and 7.
-	public static function ajax_run(): void {}
+	public static function ajax_run(): void {
+		check_ajax_referer( 'cowboy_mcp_doctor' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => 'Forbidden' ], 403 );
+		}
+		$settings = Cowboy_MCP_Tools::get_settings();
+		$results  = self::run_checks();
+		wp_send_json_success( [
+			'results'      => $results,
+			'report'       => self::render_report( $results ),
+			'fingerprints' => self::fingerprints_for_js(),
+			'probes'       => [
+				'endpoint'   => rest_url( 'cowboy-mcp/v1/endpoint' ),
+				'well_known' => ! empty( $settings['oauth_enabled'] )
+					? [ home_url( '/.well-known/oauth-protected-resource' ), home_url( '/.well-known/oauth-authorization-server' ) ]
+					: [],
+			],
+		] );
+	}
 	public static function cli_run( array $args, array $assoc_args ): void {}
 }
