@@ -565,7 +565,7 @@ msgstr ""
 msgid ""
 "Tip: run the Connection Doctor on the Connection tab to verify the connector "
 "end to end."
-msgstr "提示：在\"连接\"标签页运行连接诊断，端到端验证连接器是否正常工作。"
+msgstr "提示：在“连接”标签页运行连接诊断，端到端验证连接器是否正常工作。"
 
 #: admin/class-mcp-admin.php:919
 msgid "Rate Limit"

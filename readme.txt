@@ -4,11 +4,11 @@ Tags: mcp, mcp-server, claude, chatgpt, ai-agent
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-MCP server for Claude, ChatGPT & Gemini. Vibe code your site with an undo button. 130 tools incl. WooCommerce, ACF & Elementor. Free.
+MCP server for Claude, ChatGPT & Gemini. Vibe code your site with an undo button. 131 tools incl. WooCommerce, ACF & Elementor. Free.
 
 == Description ==
 
@@ -32,7 +32,7 @@ Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets you
 * **You stay in control - and you can undo.** Safe mode asks before anything destructive, every change can be previewed first, and every action your agent takes is logged. If something's not right, undo most individual changes with one click, or roll the whole database back to a checkpoint - all from the Activity tab.
 * **Your data stays yours.** Self-hosted, no external services, no accounts, no phone-home. Your agent connects *to* your site - nothing leaves your server.
 * **Set up in two minutes.** Generate a key (or one-click sign-in for the Claude desktop and web apps), paste one command, and you're connected.
-* **All 130 tools, free and open source.** WordPress core plus deep WooCommerce, ACF, Elementor, and Wordfence coverage - no Pro tier, no subscription. Bring the AI agent you already use.
+* **All 131 tools, free and open source.** WordPress core plus deep WooCommerce, ACF, Elementor, and Wordfence coverage - no Pro tier, no subscription. Bring the AI agent you already use.
 
 = Works with =
 
@@ -97,8 +97,8 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.5.2 =
-* New: translations for the settings page and the connection sign-in screen in ten more languages - Simplified Chinese, Japanese, Korean, German, Spanish, French, Italian, Portuguese (Brazil), Hindi, and Indonesian.
+= 1.5.3 =
+* New: Connection Doctor - a one-click self-test on the Connection tab that checks HTTPS, public reachability, REST availability, and OAuth discovery, names the likely blocker (Cloudflare, ModSecurity, Basic Auth, cache plugins), and gives you a copy-pasteable report. Also available as the wp_connection_doctor MCP tool and the `wp cowboy-mcp doctor` WP-CLI command.
 
 = Earlier versions =
 
