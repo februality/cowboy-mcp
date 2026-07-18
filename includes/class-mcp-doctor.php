@@ -213,7 +213,8 @@ class Cowboy_MCP_Doctor {
 		} else {
 			$code = (int) wp_remote_retrieve_response_code( $r );
 			$body = (string) wp_remote_retrieve_body( $r );
-			$ok   = 200 === $code && str_contains( $body, 'cowboy-mcp/v1' );
+			$json = json_decode( $body, true );
+			$ok   = 200 === $code && is_array( $json ) && in_array( 'cowboy-mcp/v1', (array) ( $json['namespaces'] ?? [] ), true );
 			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), $body );
 			$checks[] = self::result( 'loopback_rest_index', 'REST API reachable (loopback)', $ok ? 'pass' : 'fail', $ok ? 'REST index responds and lists the cowboy-mcp/v1 namespace.' : "REST index did not return the expected JSON (HTTP {$code}).", [ 'HTTP ' . $code ], $fp, $fix ?? 'The REST API may be disabled or blocked. See the evidence line.' );
 			$env_headers = wp_remote_retrieve_headers( $r )->getAll();
