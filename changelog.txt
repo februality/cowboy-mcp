@@ -4,41 +4,41 @@ Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
 = 1.5.2 =
-* New: bundled translations for the admin settings page and the OAuth consent screen in ten more locales — Simplified Chinese (zh_CN), Japanese (ja), Korean (ko_KR), German (de_DE), Spanish (es_ES), French (fr_FR), Italian (it_IT), Portuguese – Brazil (pt_BR), Hindi (hi_IN), and Indonesian (id_ID).
+* New: bundled translations for the admin settings page and the OAuth consent screen in ten more locales - Simplified Chinese (zh_CN), Japanese (ja), Korean (ko_KR), German (de_DE), Spanish (es_ES), French (fr_FR), Italian (it_IT), Portuguese - Brazil (pt_BR), Hindi (hi_IN), and Indonesian (id_ID).
 
 = 1.5.1 =
 * New: Russian (ru_RU) and Ukrainian (uk) translations for the admin settings page and the OAuth consent screen.
 * The plugin now registers a Domain Path and loads its text domain on init, so bundled translations apply on WordPress 6.2+.
 
 = 1.5.0 =
-* New: Activity tab — a per-change undo journal. Every change an AI agent makes (posts, options, terms, comments, files, users, media, plugins/themes, WooCommerce, ACF, Wordfence) is recorded, and you can roll any of them back individually from wp-admin. Conflict detection warns you if something else changed in the meantime.
-* New: database checkpoints — take a one-click snapshot of your database and restore the whole site to it later. A checkpoint is also taken automatically before mutating WP-CLI commands.
-* New: batch undo — reverse every change made by a single batched request together.
+* New: Activity tab - a per-change undo journal. Every change an AI agent makes (posts, options, terms, comments, files, users, media, plugins/themes, WooCommerce, ACF, Wordfence) is recorded, and you can roll any of them back individually from wp-admin. Conflict detection warns you if something else changed in the meantime.
+* New: database checkpoints - take a one-click snapshot of your database and restore the whole site to it later. A checkpoint is also taken automatically before mutating WP-CLI commands.
+* New: batch undo - reverse every change made by a single batched request together.
 * New: six rollback tools for agents (list changes, undo a change, and create/list/restore/delete checkpoints), plus settings to tune undo-history retention and how many checkpoints to keep.
 * Your MCP API keys and the plugin's own settings are never touched by undo or checkpoint restore.
 
 = 1.4.1 =
-* New: redesigned connection page — pick your app (claude.ai, Claude Desktop, ChatGPT, Claude Code, Codex, Opencode, Cursor, Gemini CLI) from a sidebar and follow steps tailored to it.
-* New: connect from ChatGPT — custom connectors (Developer mode) work with the built-in one-click sign-in.
+* New: redesigned connection page - pick your app (claude.ai, Claude Desktop, ChatGPT, Claude Code, Codex, Opencode, Cursor, Gemini CLI) from a sidebar and follow steps tailored to it.
+* New: connect from ChatGPT - custom connectors (Developer mode) work with the built-in one-click sign-in.
 * Fixed: OAuth setup steps now appear immediately after enabling the Desktop Connector.
 * Fixed: the connection-page preference is now cleaned up on uninstall.
 
 = 1.4.0 =
-* New: one-click sign-in for the Claude desktop and web apps — no terminal required.
+* New: one-click sign-in for the Claude desktop and web apps - no terminal required.
 * Updated for WordPress.org plugin directory compliance.
-* Changed: database tools now use fixed, safe queries — no free-form SQL.
+* Changed: database tools now use fixed, safe queries - no free-form SQL.
 * Removed: the self-hosted auto-updater; updates now come through WordPress.org.
 
 = 1.3.0 =
-* Feature: self-hosted one-click updates. The plugin checks cowboymcp.com for new versions and offers updates through the normal WordPress Plugins screen, including the per-plugin auto-update toggle (owner opt-in). Updates are delivered from GitHub release assets over HTTPS. Fails closed — any check error simply shows no update.
+* Feature: self-hosted one-click updates. The plugin checks cowboymcp.com for new versions and offers updates through the normal WordPress Plugins screen, including the per-plugin auto-update toggle (owner opt-in). Updates are delivered from GitHub release assets over HTTPS. Fails closed - any check error simply shows no update.
 
 = 1.2.0 =
-* Feature: optional **Power mode** (admin opt-in, off by default) — lifts curated safety restrictions for trusted power users: `wp_cli` `eval`/`shell` and other blocked commands, dangerous SQL (DDL), writing files outside `wp-content/`, and SSRF protection on outbound requests. The plugin's own API keys and settings, credential redaction, and self-delete protection remain enforced; `safe_mode` confirmation gating is unaffected.
+* Feature: optional **Power mode** (admin opt-in, off by default) - lifts curated safety restrictions for trusted power users: `wp_cli` `eval`/`shell` and other blocked commands, dangerous SQL (DDL), writing files outside `wp-content/`, and SSRF protection on outbound requests. The plugin's own API keys and settings, credential redaction, and self-delete protection remain enforced; `safe_mode` confirmation gating is unaffected.
 
 = 1.1.0 =
-* Security: lock down `wp_db_query` — apply the write blocklist (incl. INTO OUTFILE/DUMPFILE) to the read path, reject comment-obfuscated and credential-targeting queries, and redact secret columns
+* Security: lock down `wp_db_query` - apply the write blocklist (incl. INTO OUTFILE/DUMPFILE) to the read path, reject comment-obfuscated and credential-targeting queries, and redact secret columns
 * Security: block reads of sensitive options via resource templates, completions, and WooCommerce settings; block writes to payment-gateway/secret/role option groups
-* Security: harden SSRF protection — resolve all A/AAAA records, normalize IPv4-mapped IPv6, deny loopback/link-local/ULA, and use the safe HTTP transport so redirects are re-validated
+* Security: harden SSRF protection - resolve all A/AAAA records, normalize IPv4-mapped IPv6, deny loopback/link-local/ULA, and use the safe HTTP transport so redirects are re-validated
 * Security: API-key validation no longer uses the secret-derived prefix as a fast path (timing side-channel); add a per-IP request throttle applied to all requests
 * Security: block `--require`/loader global flags and whitespace-obfuscated commands in `wp_cli`; normalize the SQL write blocklist against inline comments
 * Security: refuse executable file writes into the uploads directory; harden wp-content path confinement (null bytes, symlinked parents, sibling-prefix)
