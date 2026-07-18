@@ -245,12 +245,16 @@ return [
 			'wp_connection_doctor',
 			'[Diagnostics] Run the MCP connection self-test: config, loopback reachability, OAuth discovery. Returns per-check pass/warn/fail with fingerprinted causes, fix hints, and a plain-text report. The authenticated-path check auto-passes (calling this tool proves it).',
 			[],
-			[ 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ],
+			[ 'title' => 'Connection Doctor', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ],
 			[
-				'summary' => [ 'type' => 'string', 'description' => 'pass | warn | fail' ],
-				'counts'  => [ 'type' => 'object', 'description' => 'Totals per status' ],
-				'checks'  => [ 'type' => 'array', 'description' => 'Per-check results with fingerprint and fix' ],
-				'report'  => [ 'type' => 'string', 'description' => 'Copy-pasteable plain-text report' ],
+				'type'       => 'object',
+				'properties' => [
+					'summary'     => [ 'type' => 'string', 'description' => 'pass | warn | fail' ],
+					'counts'      => [ 'type' => 'object', 'description' => 'Totals per status' ],
+					'checks'      => [ 'type' => 'array', 'description' => 'Per-check results with fingerprint and fix' ],
+					'report'      => [ 'type' => 'string', 'description' => 'Copy-pasteable plain-text report' ],
+					'environment' => [ 'type' => 'object', 'description' => 'WP/PHP/plugin versions and server context' ],
+				],
 			]
 		),
 	],
