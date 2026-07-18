@@ -227,7 +227,7 @@ class Cowboy_MCP_Doctor {
 			$code    = (int) wp_remote_retrieve_response_code( $r );
 			$headers = wp_remote_retrieve_headers( $r )->getAll();
 			$body    = (string) wp_remote_retrieve_body( $r );
-			$clean   = 401 === $code && null !== json_decode( $body, true ) && "\xEF\xBB\xBF" !== substr( $body, 0, 3 ) && '{' === ltrim( $body )[0];
+			$clean   = 401 === $code && null !== json_decode( $body, true ) && "\xEF\xBB\xBF" !== substr( $body, 0, 3 ) && '' !== ltrim( $body ) && '{' === ltrim( $body )[0];
 			$breadcrumb_missing = $oauth_on && empty( $headers['www-authenticate'] );
 			[ $fp, $fix ] = $clean ? [ null, null ] : self::classify( $code, $headers, $body );
 			$status = $clean ? ( $breadcrumb_missing ? 'warn' : 'pass' ) : 'fail';
@@ -280,9 +280,79 @@ class Cowboy_MCP_Doctor {
 		return [ 'checks' => $checks, 'env_headers' => $env_headers ];
 	}
 
-	/** Stub - implemented with the fingerprint table in Task 3. */
+	/**
+	 * Declarative fingerprint table - shared verbatim with admin JS, so keep
+	 * matchers to: status list, one header regex, one body regex (all optional,
+	 * all present ones must match). First match wins. English on purpose.
+	 */
+	public static function fingerprints_for_js(): array {
+		return [
+			[ 'id' => 'cloudflare_challenge', 'status' => [ 403, 503 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/just a moment|cf-chl|challenge-platform/i', 'fix' => 'Cloudflare is challenging the request. Add a WAF skip rule (or disable Bot Fight Mode) for /wp-json/cowboy-mcp/* and /.well-known/oauth-*.' ],
+			[ 'id' => 'modsecurity', 'status' => [ 403, 406 ], 'header' => null, 'body_regex' => '/mod_security|modsecurity|not acceptable/i', 'fix' => 'A web application firewall (likely ModSecurity) is blocking JSON POSTs. Ask your host to allowlist POST /wp-json/cowboy-mcp/v1/endpoint.' ],
+			[ 'id' => 'basic_auth', 'status' => [ 401 ], 'header' => [ 'www-authenticate', '/basic/i' ], 'body_regex' => null, 'fix' => 'Server-level Basic Auth answers before WordPress. Exclude /wp-json/cowboy-mcp/ and /.well-known/ from Basic Auth - MCP clients cannot send two Authorization headers.' ],
+			[ 'id' => 'dirty_json', 'status' => null, 'header' => null, 'body_regex' => '/^(\xEF\xBB\xBF|\s+)[\{\[]/', 'fix' => 'The JSON response has junk before it (BOM, whitespace, or a PHP notice). Set WP_DEBUG_DISPLAY to false and deactivate plugins one by one to find the one printing output.' ],
+			[ 'id' => 'html_error_page', 'status' => null, 'header' => null, 'body_regex' => '/^\s*<(!doctype|html)/i', 'fix' => 'An HTML page came back where JSON was expected - commonly a maintenance page, a login redirect, or a cache plugin. Exclude /wp-json/cowboy-mcp/ from page caching.' ],
+		];
+	}
+
+	/** Match a response against the table. Returns [fingerprint_id|null, fix|null]. */
 	private static function classify( int $code, array $headers, string $body ): array {
+		$headers = array_change_key_case( $headers, CASE_LOWER );
+		foreach ( self::fingerprints_for_js() as $fp ) {
+			if ( $fp['status'] && ! in_array( $code, $fp['status'], true ) ) {
+				continue;
+			}
+			if ( $fp['header'] ) {
+				[ $name, $rx ] = $fp['header'];
+				$val = $headers[ $name ] ?? '';
+				$val = is_array( $val ) ? implode( ',', $val ) : $val;
+				if ( ! preg_match( $rx, $val ) ) {
+					continue;
+				}
+			}
+			if ( $fp['body_regex'] && ! preg_match( $fp['body_regex'], $body ) ) {
+				continue;
+			}
+			return [ $fp['id'], $fp['fix'] ];
+		}
 		return [ null, null ];
+	}
+
+	/** Plain-text copy-paste report. English on purpose (support threads + AI agents). */
+	public static function render_report( array $results ): string {
+		$e     = $results['environment'];
+		$chain = $e['proxy_headers']['server'] ?? '';
+		$lines = [
+			'=== Cowboy MCP Connection Doctor - ' . gmdate( 'Y-m-d H:i' ) . ' UTC ===',
+			sprintf( 'Site: %s | WP %s | PHP %s | Cowboy MCP %s | Server: %s', home_url(), $e['wp'] ?? '?', $e['php'] ?? '?', $e['plugin'] ?? '?', $chain ?: ( $e['server_software'] ?? '?' ) ),
+			sprintf( 'Summary: %d failed, %d warnings, %d passed, %d skipped', $results['counts']['fail'] + $results['counts']['error'], $results['counts']['warn'], $results['counts']['pass'], $results['counts']['skip'] ),
+			'',
+		];
+		foreach ( $results['checks'] as $c ) {
+			$tag = '[' . strtoupper( 'error' === $c['status'] ? 'FAIL' : $c['status'] ) . ']';
+			if ( in_array( $c['status'], [ 'pass', 'skip' ], true ) ) {
+				$lines[] = "{$tag} {$c['label']}";
+				continue;
+			}
+			$lines[] = "{$tag} {$c['label']} - {$c['detail']}";
+			foreach ( $c['evidence'] as $ev ) {
+				$lines[] = '       ' . $ev;
+			}
+			if ( $c['fingerprint'] ) {
+				$lines[] = '       Fingerprint: ' . $c['fingerprint'];
+			}
+			if ( $c['fix'] ) {
+				$lines[] = '       Fix: ' . $c['fix'];
+			}
+			$lines[] = '';
+		}
+		if ( isset( $e['shell_exec'] ) && ! $e['shell_exec'] ) {
+			$lines[] = 'Note: shell_exec is disabled on this host - the wp_cli tool will not work (all native tools are unaffected).';
+		}
+		if ( false !== stripos( $chain, 'litespeed' ) ) {
+			$lines[] = 'Note: LiteSpeed server detected - if LiteSpeed Cache is active, exclude /wp-json/cowboy-mcp/ from caching.';
+		}
+		return implode( "\n", $lines );
 	}
 
 	/** Group 3: environment context (not pass/fail). */
