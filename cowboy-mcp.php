@@ -51,6 +51,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-rollback.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-checkpoint.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-doctor.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-transport.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-tools.php';
@@ -65,6 +66,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Audit_Log::init();
     Cowboy_MCP_Rollback::init();
     Cowboy_MCP_Checkpoint::init();
+    Cowboy_MCP_Doctor::init();
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
