@@ -24,11 +24,29 @@ class Cowboy_MCP_Doctor {
 	 *              skip_auth_roundtrip (reaching the tool proves the authed path).
 	 */
 	public static function run_checks( array $opts = [] ): array {
-		$checks = [];
-		foreach ( self::config_checks() as $c ) {
-			$checks[] = $c;
+		$checks      = [];
+		$env_headers = [];
+
+		// Group 1: config checks
+		try {
+			foreach ( self::config_checks() as $c ) {
+				$checks[] = $c;
+			}
+		} catch ( Throwable $e ) {
+			$checks[] = self::result( 'engine_error', 'Doctor internal error', 'error', $e->getMessage() );
 		}
-		// Loopback checks appended in Task 2; environment in Task 2.
+
+		// Group 2: loopback checks
+		try {
+			$lb          = self::loopback_checks( $opts );
+			$env_headers = $lb['env_headers'];
+			foreach ( $lb['checks'] as $c ) {
+				$checks[] = $c;
+			}
+		} catch ( Throwable $e ) {
+			$checks[] = self::result( 'engine_error', 'Doctor internal error', 'error', $e->getMessage() );
+		}
+
 		$counts = [ 'pass' => 0, 'warn' => 0, 'fail' => 0, 'skip' => 0, 'error' => 0 ];
 		foreach ( $checks as $c ) {
 			++$counts[ $c['status'] ];
@@ -41,7 +59,7 @@ class Cowboy_MCP_Doctor {
 			'summary'     => $summary,
 			'counts'      => $counts,
 			'checks'      => $checks,
-			'environment' => [],
+			'environment' => self::environment( $env_headers ),
 		];
 	}
 
@@ -150,6 +168,139 @@ class Cowboy_MCP_Doctor {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Loopback request against the site's OWN configured URL.
+	 * Deliberately bypasses Cowboy_MCP_Security::validate_url_ssrf(): a host's
+	 * public name may resolve to a private IP from inside its own network. The
+	 * URL is always built here from rest_url()/home_url() - never caller input.
+	 */
+	private static function loopback( string $method, string $url, array $args = [] ): array|WP_Error {
+		return wp_remote_request( $url, array_merge( [
+			'method'      => $method,
+			'timeout'     => 10,
+			'redirection' => 2,
+			'headers'     => [ 'Accept' => 'application/json, text/event-stream' ],
+		], $args ) );
+	}
+
+	private static function initialize_body(): string {
+		return (string) wp_json_encode( [
+			'jsonrpc' => '2.0',
+			'id'      => 1,
+			'method'  => 'initialize',
+			'params'  => [
+				'protocolVersion' => '2025-06-18',
+				'capabilities'    => (object) [],
+				'clientInfo'      => [ 'name' => 'cowboy-doctor', 'version' => COWBOY_MCP_VERSION ],
+			],
+		] );
+	}
+
+	/** Group 2: loopback HTTP checks. Returns checks plus response headers for the environment block. */
+	private static function loopback_checks( array $opts ): array {
+		$checks     = [];
+		$env_headers = [];
+		$settings   = Cowboy_MCP_Tools::get_settings();
+		$oauth_on   = ! empty( $settings['oauth_enabled'] );
+		$endpoint   = rest_url( 'cowboy-mcp/v1/endpoint' );
+
+		// loopback_rest_index
+		$r = self::loopback( 'GET', rest_url() );
+		if ( is_wp_error( $r ) ) {
+			$checks[] = self::result( 'loopback_rest_index', 'REST API reachable (loopback)', 'fail', 'Could not reach the REST API from the server: ' . $r->get_error_message(), [], null, 'The server cannot request its own public URL. Check DNS/firewall from the host, or ask your host about loopback requests.' );
+		} else {
+			$code = (int) wp_remote_retrieve_response_code( $r );
+			$body = (string) wp_remote_retrieve_body( $r );
+			$ok   = 200 === $code && str_contains( $body, 'cowboy-mcp/v1' );
+			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), $body );
+			$checks[] = self::result( 'loopback_rest_index', 'REST API reachable (loopback)', $ok ? 'pass' : 'fail', $ok ? 'REST index responds and lists the cowboy-mcp/v1 namespace.' : "REST index did not return the expected JSON (HTTP {$code}).", [ 'HTTP ' . $code ], $fp, $fix ?? 'The REST API may be disabled or blocked. See the evidence line.' );
+			$env_headers = wp_remote_retrieve_headers( $r )->getAll();
+		}
+
+		// loopback_endpoint_unauth - expect clean 401 JSON
+		$r = self::loopback( 'POST', $endpoint, [ 'headers' => [ 'Content-Type' => 'application/json', 'Accept' => 'application/json, text/event-stream' ], 'body' => self::initialize_body() ] );
+		if ( is_wp_error( $r ) ) {
+			$checks[] = self::result( 'loopback_endpoint_unauth', 'MCP endpoint answers POST (loopback)', 'fail', 'POST failed: ' . $r->get_error_message() );
+		} else {
+			$code    = (int) wp_remote_retrieve_response_code( $r );
+			$headers = wp_remote_retrieve_headers( $r )->getAll();
+			$body    = (string) wp_remote_retrieve_body( $r );
+			$clean   = 401 === $code && null !== json_decode( $body, true ) && "\xEF\xBB\xBF" !== substr( $body, 0, 3 ) && '{' === ltrim( $body )[0];
+			$breadcrumb_missing = $oauth_on && empty( $headers['www-authenticate'] );
+			[ $fp, $fix ] = $clean ? [ null, null ] : self::classify( $code, $headers, $body );
+			$status = $clean ? ( $breadcrumb_missing ? 'warn' : 'pass' ) : 'fail';
+			$detail = $clean
+				? ( $breadcrumb_missing ? 'Endpoint returns clean 401 JSON but the WWW-Authenticate OAuth breadcrumb header is missing (a proxy may be stripping it).' : 'Endpoint returns a clean 401 JSON challenge - auth layer reachable.' )
+				: "Expected a JSON 401 challenge, got HTTP {$code}.";
+			$evidence = [ 'HTTP ' . $code, 'content-type: ' . ( $headers['content-type'] ?? '?' ), 'body: ' . Cowboy_MCP_Security::scrub_secrets( substr( $body, 0, 200 ) ) ];
+			$checks[] = self::result( 'loopback_endpoint_unauth', 'MCP endpoint answers POST (loopback)', $status, $detail, $evidence, $fp, $fix );
+		}
+
+		// loopback_endpoint_auth - ephemeral key round-trip
+		if ( ! empty( $opts['skip_auth_roundtrip'] ) ) {
+			$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'pass', 'You reached this tool through the authenticated endpoint - the path is proven working.' );
+		} else {
+			$minted = Cowboy_MCP_Auth::generate_key( 'Connection Doctor self-test (auto-revoked)' );
+			try {
+				$r = self::loopback( 'POST', $endpoint, [ 'headers' => [ 'Content-Type' => 'application/json', 'Accept' => 'application/json, text/event-stream', 'Authorization' => 'Bearer ' . $minted['key'] ], 'body' => self::initialize_body() ] );
+				if ( is_wp_error( $r ) ) {
+					$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', 'POST failed: ' . $r->get_error_message() );
+				} else {
+					$code = (int) wp_remote_retrieve_response_code( $r );
+					$json = json_decode( (string) wp_remote_retrieve_body( $r ), true );
+					$ok   = 200 === $code && isset( $json['result']['serverInfo'] );
+					$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', $ok ? 'pass' : 'fail', $ok ? 'Full initialize handshake succeeded with a self-test key.' : "Handshake failed (HTTP {$code}).", [ 'HTTP ' . $code ], null, $ok ? null : 'Auth or dispatch layer problem - check the Logs tab for the matching error.' );
+				}
+			} finally {
+				Cowboy_MCP_Auth::revoke_key( $minted['id'] );
+			}
+		}
+
+		// well_known_* (OAuth discovery at site root)
+		foreach ( [ 'well_known_pr' => '/.well-known/oauth-protected-resource', 'well_known_as' => '/.well-known/oauth-authorization-server' ] as $id => $path ) {
+			if ( ! $oauth_on ) {
+				$checks[] = self::result( $id, 'OAuth discovery: ' . $path, 'skip', 'Desktop Connector disabled - skipped.' );
+				continue;
+			}
+			$r = self::loopback( 'GET', home_url( $path ) );
+			if ( is_wp_error( $r ) ) {
+				$checks[] = self::result( $id, 'OAuth discovery: ' . $path, 'fail', 'Request failed: ' . $r->get_error_message() );
+				continue;
+			}
+			$code = (int) wp_remote_retrieve_response_code( $r );
+			$json = json_decode( (string) wp_remote_retrieve_body( $r ), true );
+			$want = 'well_known_pr' === $id ? 'resource' : 'issuer';
+			$ok   = 200 === $code && isset( $json[ $want ] );
+			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), (string) wp_remote_retrieve_body( $r ) );
+			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $fix ?? 'A cache plugin or server rule is likely intercepting root .well-known paths - exclude them from caching/rewrites.' );
+		}
+
+		return [ 'checks' => $checks, 'env_headers' => $env_headers ];
+	}
+
+	/** Stub - implemented with the fingerprint table in Task 3. */
+	private static function classify( int $code, array $headers, string $body ): array {
+		return [ null, null ];
+	}
+
+	/** Group 3: environment context (not pass/fail). */
+	private static function environment( array $env_headers ): array {
+		$proxy = [];
+		foreach ( [ 'server', 'cf-ray', 'x-litespeed-cache', 'x-cache', 'via' ] as $h ) {
+			if ( isset( $env_headers[ $h ] ) ) {
+				$proxy[ $h ] = is_array( $env_headers[ $h ] ) ? implode( ',', $env_headers[ $h ] ) : $env_headers[ $h ];
+			}
+		}
+		return [
+			'wp'              => get_bloginfo( 'version' ),
+			'php'             => PHP_VERSION,
+			'plugin'          => COWBOY_MCP_VERSION,
+			'server_software' => sanitize_text_field( $_SERVER['SERVER_SOFTWARE'] ?? 'unknown' ),
+			'proxy_headers'   => $proxy,
+			'shell_exec'      => function_exists( 'shell_exec' ) && ! in_array( 'shell_exec', array_map( 'trim', explode( ',', (string) ini_get( 'disable_functions' ) ) ), true ),
+		];
 	}
 
 	/** True when a hostname is local-only or resolves to a private/reserved IP. */
