@@ -216,7 +216,7 @@ class Cowboy_MCP_Doctor {
 			$json = json_decode( $body, true );
 			$ok   = 200 === $code && is_array( $json ) && in_array( 'cowboy-mcp/v1', (array) ( $json['namespaces'] ?? [] ), true );
 			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), $body );
-			$checks[] = self::result( 'loopback_rest_index', 'REST API reachable (loopback)', $ok ? 'pass' : 'fail', $ok ? 'REST index responds and lists the cowboy-mcp/v1 namespace.' : "REST index did not return the expected JSON (HTTP {$code}).", [ 'HTTP ' . $code ], $fp, $fix ?? 'The REST API may be disabled or blocked. See the evidence line.' );
+			$checks[] = self::result( 'loopback_rest_index', 'REST API reachable (loopback)', $ok ? 'pass' : 'fail', $ok ? 'REST index responds and lists the cowboy-mcp/v1 namespace.' : "REST index did not return the expected JSON (HTTP {$code}).", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? 'The REST API may be disabled or blocked. See the evidence line.' ) );
 			$env_headers = wp_remote_retrieve_headers( $r )->getAll();
 		}
 
@@ -244,6 +244,7 @@ class Cowboy_MCP_Doctor {
 			$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'pass', 'You reached this tool through the authenticated endpoint - the path is proven working.' );
 		} else {
 			$minted = Cowboy_MCP_Auth::generate_key( 'Connection Doctor self-test (auto-revoked)' );
+			Cowboy_MCP_Audit_Log::log( 'doctor_key_minted', [ 'key_id' => $minted['id'] ] );
 			try {
 				$r = self::loopback( 'POST', $endpoint, [ 'headers' => [ 'Content-Type' => 'application/json', 'Accept' => 'application/json, text/event-stream', 'Authorization' => 'Bearer ' . $minted['key'] ], 'body' => self::initialize_body() ] );
 				if ( is_wp_error( $r ) ) {
@@ -256,6 +257,7 @@ class Cowboy_MCP_Doctor {
 				}
 			} finally {
 				Cowboy_MCP_Auth::revoke_key( $minted['id'] );
+				Cowboy_MCP_Audit_Log::log( 'doctor_key_revoked', [ 'key_id' => $minted['id'] ] );
 			}
 		}
 
@@ -275,7 +277,7 @@ class Cowboy_MCP_Doctor {
 			$want = 'well_known_pr' === $id ? 'resource' : 'issuer';
 			$ok   = 200 === $code && isset( $json[ $want ] );
 			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), (string) wp_remote_retrieve_body( $r ) );
-			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $fix ?? 'A cache plugin or server rule is likely intercepting root .well-known paths - exclude them from caching/rewrites.' );
+			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? 'A cache plugin or server rule is likely intercepting root .well-known paths - exclude them from caching/rewrites.' ) );
 		}
 
 		return [ 'checks' => $checks, 'env_headers' => $env_headers ];
@@ -368,7 +370,7 @@ class Cowboy_MCP_Doctor {
 			'wp'              => get_bloginfo( 'version' ),
 			'php'             => PHP_VERSION,
 			'plugin'          => COWBOY_MCP_VERSION,
-			'server_software' => sanitize_text_field( $_SERVER['SERVER_SOFTWARE'] ?? 'unknown' ),
+			'server_software' => sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ?? 'unknown' ) ),
 			'proxy_headers'   => $proxy,
 			'shell_exec'      => function_exists( 'shell_exec' ) && ! in_array( 'shell_exec', array_map( 'trim', explode( ',', (string) ini_get( 'disable_functions' ) ) ), true ),
 		];
