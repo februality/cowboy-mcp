@@ -186,6 +186,121 @@
 			activateClient( connHash, false );
 		}
 	}
+
+	/* ── Connection Doctor ───────────────────────────────── */
+	function doctorInit() {
+		var run = document.getElementById( 'cowboy-doctor-run' );
+		if ( ! run || typeof cowboyMcpDoctor === 'undefined' ) {
+			return;
+		}
+		var resultsEl = document.getElementById( 'cowboy-doctor-results' );
+		var copyBtn   = document.getElementById( 'cowboy-doctor-copy' );
+		var reportText = '';
+
+		run.addEventListener( 'click', function() {
+			run.disabled = true;
+			resultsEl.textContent = 'Running checks...';
+			var data = new URLSearchParams( { action: 'cowboy_mcp_doctor', _ajax_nonce: cowboyMcpDoctor.nonce } );
+			fetch( cowboyMcpDoctor.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: data } )
+				.then( function( r ) { return r.json(); } )
+				.then( function( json ) {
+					if ( ! json.success ) { throw new Error( 'AJAX error' ); }
+					reportText = json.data.report;
+					renderChecks( json.data.results.checks, 'Server-side checks' );
+					return browserProbes( json.data.probes, json.data.fingerprints );
+				} )
+				.then( function( probeChecks ) {
+					renderChecks( probeChecks, 'From your browser (outside the server)' );
+					reportText += '\n--- From your browser (outside the server) ---\n' +
+						'Note: your browser IP is not a datacenter IP - a pass here can still be blocked for cloud AI clients.\n' +
+						probeChecks.map( function( c ) {
+							return '[' + c.status.toUpperCase() + '] ' + c.label + ( c.detail ? ' - ' + c.detail : '' ) + ( c.fix ? '\n       Fix: ' + c.fix : '' );
+						} ).join( '\n' );
+					copyBtn.hidden = false;
+					run.disabled = false;
+				} )
+				.catch( function( err ) {
+					resultsEl.textContent = 'Doctor failed to run: ' + err.message;
+					run.disabled = false;
+				} );
+		} );
+
+		copyBtn.addEventListener( 'click', function() {
+			copyToClipboard( reportText, function() { copyBtn.textContent = 'Copied!'; }, function() {} );
+		} );
+
+		function renderChecks( checks, heading ) {
+			if ( resultsEl.textContent === 'Running checks...' ) { resultsEl.textContent = ''; }
+			var h = document.createElement( 'div' );
+			h.className = 'cowboy-doctor-group';
+			h.textContent = heading;
+			resultsEl.appendChild( h );
+			checks.forEach( function( c ) {
+				var el = document.createElement( 'div' );
+				el.className = 'cowboy-doctor-check is-' + c.status;
+				el.textContent = '[' + c.status.toUpperCase() + '] ' + c.label + ( c.detail ? ' - ' + c.detail : '' );
+				if ( c.fix ) {
+					var fix = document.createElement( 'span' );
+					fix.className = 'fix';
+					fix.textContent = 'Fix: ' + c.fix;
+					el.appendChild( fix );
+				}
+				resultsEl.appendChild( el );
+			} );
+		}
+	}
+
+	/** Probe the public endpoint from the admin's browser. Same-origin, no CORS needed. */
+	function browserProbes( probes, fingerprints ) {
+		var jobs = [];
+		jobs.push( probeOne( 'GET', probes.endpoint, null, 'GET MCP endpoint', fingerprints ) );
+		jobs.push( probeOne( 'POST', probes.endpoint, JSON.stringify( { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'cowboy-doctor-browser', version: '0' } } } ), 'POST MCP endpoint', fingerprints ) );
+		probes.well_known.forEach( function( url ) {
+			jobs.push( probeOne( 'GET', url, null, 'OAuth discovery ' + url.split( '/.well-known' )[ 1 ], fingerprints ) );
+		} );
+		return Promise.all( jobs );
+	}
+
+	function probeOne( method, url, body, label, fingerprints ) {
+		var opts = { method: method, credentials: 'omit', headers: { Accept: 'application/json, text/event-stream' } };
+		if ( body ) {
+			opts.headers[ 'Content-Type' ] = 'application/json';
+			opts.body = body;
+		}
+		return fetch( url, opts ).then( function( r ) {
+			return r.text().then( function( text ) {
+				var isWellKnown = url.indexOf( '.well-known' ) !== -1;
+				var okStatus    = isWellKnown ? r.status === 200 : r.status === 401;
+				var isJson      = true;
+				try { JSON.parse( text ); } catch ( e ) { isJson = false; }
+				var ok = okStatus && isJson;
+				var fp = ok ? null : matchFingerprint( r, text, fingerprints );
+				return {
+					label: label, status: ok ? 'pass' : 'fail',
+					detail: ok ? '' : 'HTTP ' + r.status + ( isJson ? '' : ', non-JSON body' ),
+					fix: fp ? fp.fix : ( ok ? null : 'See the server-side result for this URL; if that passed, the block is at your network edge (CDN/WAF).' )
+				};
+			} );
+		} ).catch( function( err ) {
+			return { label: label, status: 'fail', detail: 'Network error: ' + err.message, fix: 'Your browser could not reach the site at all (DNS, TLS, or connection refused). Remote AI clients will hit the same wall.' };
+		} );
+	}
+
+	function matchFingerprint( response, bodyText, fingerprints ) {
+		for ( var i = 0; i < fingerprints.length; i++ ) {
+			var fp = fingerprints[ i ];
+			if ( fp.status && fp.status.indexOf( response.status ) === -1 ) { continue; }
+			if ( fp.header ) {
+				var val = response.headers.get( fp.header[ 0 ] ) || '';
+				if ( ! new RegExp( fp.header[ 1 ].replace( /^\/|\/i?$/g, '' ), 'i' ).test( val ) ) { continue; }
+			}
+			if ( fp.body_regex && ! new RegExp( fp.body_regex.replace( /^\/|\/i?$/g, '' ), 'i' ).test( bodyText ) ) { continue; }
+			return fp;
+		}
+		return null;
+	}
+
+	doctorInit();
 } )();
 
 /* Rollback: confirm dialogs (one or two stage) for undo/restore forms. */

@@ -88,7 +88,7 @@ class Cowboy_MCP_Tools {
         'media'          => 'upload media (with SSRF protection)',
         'batch'          => 'multi-tool sequencing, audit log retrieval',
         'rollback'       => 'undo changes from the journal, create/list/restore/delete database checkpoints',
-        'diagnostics'    => 'error logs, HTTP requests, email testing, hooks, transients, REST routes, thumbnails, rewrite rules, site snapshots',
+        'diagnostics'    => 'error logs, HTTP requests, email testing, hooks, transients, REST routes, thumbnails, rewrite rules, site snapshots, connection self-test',
         'content'        => 'create, read, update, delete posts, pages, and custom post types',
         'plugins'        => 'list, activate, and deactivate plugins',
         'themes'         => 'list themes and switch the active theme',

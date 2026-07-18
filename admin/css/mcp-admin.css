@@ -174,3 +174,14 @@
 .mcp-badge-pre_restore { background:#ffebe9; color:#a40e26; }
 .mcp-cp-create { margin:8px 0 12px; }
 .mcp-pagination { margin-top:10px; }
+
+/* Connection Doctor */
+.cowboy-doctor { margin-top: 24px; padding-top: 16px; border-top: 1px solid #dcdcde; }
+#cowboy-doctor-results { margin-top: 12px; }
+.cowboy-doctor-check { padding: 6px 10px; border-left: 4px solid #dcdcde; margin: 4px 0; background: #fff; }
+.cowboy-doctor-check.is-pass { border-left-color: #00a32a; }
+.cowboy-doctor-check.is-warn { border-left-color: #dba617; }
+.cowboy-doctor-check.is-fail, .cowboy-doctor-check.is-error { border-left-color: #d63638; }
+.cowboy-doctor-check.is-skip { border-left-color: #c3c4c7; color: #646970; }
+.cowboy-doctor-check .fix { display: block; color: #646970; margin-top: 2px; }
+.cowboy-doctor-group { font-weight: 600; margin: 12px 0 4px; }
