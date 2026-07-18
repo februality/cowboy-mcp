@@ -408,5 +408,20 @@ class Cowboy_MCP_Doctor {
 			],
 		] );
 	}
-	public static function cli_run( array $args, array $assoc_args ): void {}
+	public static function cli_run( array $args, array $assoc_args ): void {
+		$results = self::run_checks();
+		if ( 'json' === ( $assoc_args['format'] ?? 'table' ) ) {
+			\WP_CLI::print_value( $results, [ 'format' => 'json' ] );
+		} else {
+			\WP_CLI\Utils\format_items( 'table', array_map( static fn( $c ) => [
+				'status' => $c['status'],
+				'check'  => $c['label'],
+				'detail' => $c['detail'],
+			], $results['checks'] ), [ 'status', 'check', 'detail' ] );
+			\WP_CLI::log( "\n" . self::render_report( $results ) );
+		}
+		if ( 'fail' === $results['summary'] ) {
+			\WP_CLI::halt( 1 );
+		}
+	}
 }
