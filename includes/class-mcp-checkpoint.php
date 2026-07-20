@@ -494,4 +494,18 @@ class Cowboy_MCP_Checkpoint {
 		}
 		return false; // single-token command → assume mutating
 	}
+
+	/** Auto-checkpoint before a plugin/theme update (setting: auto_checkpoint_updates). Fail-open. */
+	public static function maybe_update_checkpoint( string $label ): ?int {
+		$s = Cowboy_MCP_Tools::get_settings();
+		if ( isset( $s['auto_checkpoint_updates'] ) && empty( $s['auto_checkpoint_updates'] ) ) {
+			return null;
+		}
+		$result = self::create( substr( $label, 0, 190 ), 'auto_update' );
+		if ( is_wp_error( $result ) ) {
+			Cowboy_MCP_Auth::log( 'checkpoint_failed', [ 'tool' => 'installer', 'error' => $result->get_error_message() ] );
+			return null;
+		}
+		return (int) $result['checkpoint_id'];
+	}
 }
