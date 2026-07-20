@@ -134,6 +134,12 @@ class Cowboy_MCP_Rollback {
 			if ( in_array( $tool, [ 'wp_undo_change', 'wp_create_checkpoint', 'wp_list_checkpoints', 'wp_restore_checkpoint', 'wp_delete_checkpoint', 'wp_list_changes', 'cowboy_mcp_get_audit_log' ], true ) ) {
 				return null;
 			}
+			// Installer tools journal per-item from inside the handler (all: true
+			// updates produce several rows per call — the one-row dispatch capture
+			// cannot represent that). See Cowboy_MCP_Installer.
+			if ( class_exists( 'Cowboy_MCP_Installer' ) && in_array( $tool, Cowboy_MCP_Installer::TOOLS, true ) ) {
+				return null;
+			}
 
 			if ( isset( self::NOT_UNDOABLE[ $tool ] ) ) {
 				$handle = [
@@ -527,6 +533,20 @@ class Cowboy_MCP_Rollback {
 			// Currently unreachable: no strategy maps to wf_block (handlers return no block id); kept as forward-compat scaffolding.
 			case 'wf_block':
 				return null; // creates only; nothing to snapshot before
+
+			case 'plugin_files': {
+				$file = Cowboy_MCP_Installer::find_plugin_file( $id );
+				if ( $file === null ) {
+					return null;
+				}
+				$v = Cowboy_MCP_Compat::get_plugins()[ $file ]['Version'] ?? '';
+				return [ 'version' => (string) $v ];
+			}
+
+			case 'theme_files': {
+				$theme = wp_get_theme( $id );
+				return $theme->exists() ? [ 'version' => (string) $theme->get( 'Version' ) ] : null;
+			}
 		}
 		return null;
 	}
@@ -656,6 +676,43 @@ class Cowboy_MCP_Rollback {
 					return new WP_Error( 'undo_unsupported', 'Wordfence block removal API unavailable.' );
 				}
 				return new WP_Error( 'undo_unsupported', 'Re-creating a removed Wordfence block is not supported.' );
+
+			case 'plugin_files':
+			case 'theme_files': {
+				$root    = $type === 'plugin_files' ? Cowboy_MCP_Compat::plugins_dir() : get_theme_root();
+				$current = $root . '/' . $id;
+				$flush   = static function () use ( $type ) {
+					if ( $type === 'plugin_files' ) {
+						Cowboy_MCP_Compat::flush_plugins_cache();
+					} else {
+						wp_clean_themes_cache();
+					}
+				};
+				if ( $state === null ) { // undo-install / redo-delete → remove the package
+					if ( is_dir( $current ) ) {
+						Cowboy_MCP_Installer::delete_dir( $current );
+					} elseif ( is_file( $current ) ) {
+						wp_delete_file( $current );
+					}
+					$flush();
+					return true;
+				}
+				if ( empty( $state['backup_zip'] ) ) {
+					return new WP_Error( 'undo_unsupported', 'No file backup in this journal entry; re-run the install/update tool to re-apply it.' );
+				}
+				$backups = Cowboy_MCP_Installer::backups_dir();
+				if ( is_wp_error( $backups ) || ! str_starts_with( (string) $state['backup_zip'], $backups . '/' ) || ! is_file( $state['backup_zip'] ) ) {
+					return new WP_Error( 'backup_missing', 'The backup archive for this change no longer exists (pruned or removed).' );
+				}
+				if ( is_dir( $current ) ) {
+					Cowboy_MCP_Installer::delete_dir( $current );
+				} elseif ( is_file( $current ) ) {
+					wp_delete_file( $current );
+				}
+				$r = Cowboy_MCP_Installer::extract_backup( $state['backup_zip'], $root );
+				$flush();
+				return is_wp_error( $r ) ? $r : true;
+			}
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
 	}
@@ -956,7 +1013,14 @@ class Cowboy_MCP_Rollback {
 		$after_undo      = $type === 'db_rows'
 			? [ 'values' => self::db_rows_current_values( $row['before_state']['rows'] ?? [] ) ]
 			: self::snapshot( $type, $id );
-		$redo_supported  = ! ( $type === 'media' && $redo_action === 'delete' );
+		$redo_supported = ! ( $type === 'media' && $redo_action === 'delete' );
+		$redo_reason    = 'Re-creating a deleted attachment is not supported.';
+		if ( in_array( $type, [ 'plugin_files', 'theme_files' ], true ) && $pre_undo !== null ) {
+			// Redo would need the removed version's bytes, which are not re-zipped
+			// on undo; only "remove the package again" redos are journaled.
+			$redo_supported = false;
+			$redo_reason    = 'Package redo is not journaled; re-run the install/update tool to re-apply it.';
+		}
 		$redo_change_id  = self::insert_row( [
 			'tool'                => 'wp_undo_change',
 			'action'              => $redo_action,
@@ -968,7 +1032,7 @@ class Cowboy_MCP_Rollback {
 			'undo_of'             => $change_id,
 			'key_id'              => $actor,
 			'status'              => $redo_supported ? self::STATUS_ACTIVE : self::STATUS_NOT_UNDOABLE,
-			'not_undoable_reason' => $redo_supported ? null : 'Re-creating a deleted attachment is not supported.',
+			'not_undoable_reason' => $redo_supported ? null : $redo_reason,
 		] );
 
 		// ── Mark the original row undone ──
@@ -986,6 +1050,9 @@ class Cowboy_MCP_Rollback {
 		}
 		if ( $type === 'wc_object' && $row['action'] === 'delete' ) {
 			$note = 'WooCommerce object recreated with a NEW id (original id could not be preserved). Check references.';
+		}
+		if ( in_array( $type, [ 'plugin_files', 'theme_files' ], true ) && $row['action'] === 'update' ) {
+			$note = 'Files restored to the previous version. Database changes made by the update (migrations) are NOT reverted — restore the pre-update checkpoint if the update ran migrations.';
 		}
 
 		$response = [ 'undone' => true, 'change_id' => $change_id, 'redo_change_id' => $redo_change_id, 'note' => $note ];
@@ -1243,6 +1310,18 @@ class Cowboy_MCP_Rollback {
 
 	public static function prune( int $days ): int {
 		global $wpdb;
+		// Package rows own a backup zip on disk; delete it with the row.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$blobs = $wpdb->get_col( $wpdb->prepare( "SELECT before_state FROM %i WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY) AND object_type IN ('plugin_files','theme_files') AND before_state IS NOT NULL", self::table(), $days ) );
+		$backups = class_exists( 'Cowboy_MCP_Installer' ) ? Cowboy_MCP_Installer::backups_dir() : null;
+		foreach ( $blobs as $blob ) {
+			$state = json_decode( (string) @gzuncompress( (string) $blob ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			$zip   = is_array( $state ) ? (string) ( $state['backup_zip'] ?? '' ) : '';
+			// Containment check: only ever delete inside our own backups dir.
+			if ( $zip !== '' && is_string( $backups ) && str_starts_with( $zip, $backups . '/' ) && is_file( $zip ) ) {
+				wp_delete_file( $zip );
+			}
+		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( $wpdb->prepare(
 			'DELETE FROM %i WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY)',
