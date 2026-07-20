@@ -14,7 +14,9 @@ MCP server for Claude, ChatGPT & Gemini. Vibe code your site, run WooCommerce, f
 
 **Stop clicking around wp-admin. Just tell your AI what you want.**
 
-* 💬 **Run your whole site by chat** - content, media, WooCommerce, files, the database, WP-CLI, and diagnostics, not just blog posts.
+You type what you want in plain English, and your AI does the real work inside WordPress for you - no menus to hunt through, no code to write.
+
+* 💬 **Do everything by chat** - create and edit posts and pages, run your WooCommerce shop, upload media, change settings, and fix errors when they crop up.
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
 * 🛡️ **Safe by default** - safe mode confirms before anything destructive, you can preview any change before it runs, and every action is written to an audit log.
 * 🆓 **Free and open source** - every tool included, with deep WooCommerce, ACF, Elementor, and Wordfence support. No Pro tier, no subscription.
