@@ -975,7 +975,7 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"></th>
+                            <th scope="row"><?php esc_html_e( 'Auto-Checkpoint', 'cowboy-mcp' ); ?></th>
                             <td>
                                 <label class="mcp-switch-label">
                                     <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_auto_checkpoint_updates" value="1" <?php checked( ! isset( $settings['auto_checkpoint_updates'] ) || $settings['auto_checkpoint_updates'] ); ?>><span class="mcp-switch-track"></span></span>

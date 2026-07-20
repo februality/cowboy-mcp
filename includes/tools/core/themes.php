@@ -141,6 +141,9 @@ return [
                 return new WP_Error( 'forbidden', 'Current user lacks the update_themes capability.' );
             }
             if ( ! empty( $a['all'] ) ) {
+                if ( isset( $a['version'] ) ) {
+                    return new WP_Error( 'invalid_params', 'version cannot be combined with all: true — pin versions one target at a time.' );
+                }
                 return Cowboy_MCP_Installer::update_all( 'theme' );
             }
             $stylesheet = sanitize_text_field( $a['stylesheet'] ?? '' );

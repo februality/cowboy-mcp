@@ -416,11 +416,16 @@ class Cowboy_MCP_Installer {
 		}
 
 		if ( $activate ) {
-			if ( $type === 'plugin' && $result['plugin_file'] ) {
-				$act = Cowboy_MCP_Compat::activate_plugin( $result['plugin_file'] );
-				$result['activated'] = ! is_wp_error( $act );
-				if ( is_wp_error( $act ) ) {
-					$result['activation_error'] = $act->get_error_message();
+			if ( $type === 'plugin' ) {
+				if ( $result['plugin_file'] ) {
+					$act = Cowboy_MCP_Compat::activate_plugin( $result['plugin_file'] );
+					$result['activated'] = ! is_wp_error( $act );
+					if ( is_wp_error( $act ) ) {
+						$result['activation_error'] = $act->get_error_message();
+					}
+				} else {
+					$result['activated']        = false;
+					$result['activation_error'] = 'Could not identify the plugin main file after install.';
 				}
 			} elseif ( $type === 'theme' ) {
 				switch_theme( $folder );
@@ -441,9 +446,14 @@ class Cowboy_MCP_Installer {
 		}
 		if ( $type === 'plugin' ) {
 			if ( ! str_contains( $target, '/' ) ) {
-				return self::find_plugin_file( $target ) !== null && str_contains( (string) self::find_plugin_file( $target ), '/' )
-					? self::resolve_target( 'plugin', (string) self::find_plugin_file( $target ) )
-					: new WP_Error( 'not_supported', 'Single-file plugins cannot be updated by this tool.' );
+				$file = self::find_plugin_file( $target );
+				if ( $file === null ) {
+					return new WP_Error( 'not_found', "Plugin '{$target}' is not installed." );
+				}
+				if ( ! str_contains( $file, '/' ) ) {
+					return new WP_Error( 'not_supported', 'Single-file plugins cannot be updated by this tool.' );
+				}
+				return self::resolve_target( 'plugin', $file );
 			}
 			$plugins = Cowboy_MCP_Compat::get_plugins();
 			if ( ! isset( $plugins[ $target ] ) ) {
@@ -528,6 +538,9 @@ class Cowboy_MCP_Installer {
 		$bk     = self::zip_directory( $live, $backup, $t['folder'] );
 		if ( is_wp_error( $bk ) ) {
 			self::delete_dir( $tmp );
+			if ( is_file( $backup ) ) {
+				wp_delete_file( $backup );
+			}
 			return $bk;
 		}
 
@@ -585,6 +598,15 @@ class Cowboy_MCP_Installer {
 		}
 		self::delete_dir( $aside );
 
+		// The just-applied update is no longer pending — drop it from the update
+		// transient so list tools don't report a stale update_available.
+		$tkey = $type === 'plugin' ? 'update_plugins' : 'update_themes';
+		$upd  = get_site_transient( $tkey );
+		if ( is_object( $upd ) && isset( $upd->response[ $t['file'] ] ) ) {
+			unset( $upd->response[ $t['file'] ] );
+			set_site_transient( $tkey, $upd );
+		}
+
 		$result = [
 			'updated'      => true,
 			'target'       => $t['file'],
@@ -625,28 +647,31 @@ class Cowboy_MCP_Installer {
 		if ( $prev === null ) {
 			Cowboy_MCP_Rollback::$batch_id = wp_generate_uuid4();
 		}
+		$batch = Cowboy_MCP_Rollback::$batch_id;
 		$cp = empty( $targets ) ? null : Cowboy_MCP_Checkpoint::maybe_update_checkpoint( "Before {$type} updates (" . count( $targets ) . ')' );
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- guarded by function_exists(); batch updates can exceed the default PHP time limit on large sites
 		}
-		foreach ( $targets as $target ) {
-			$target = (string) $target;
-			if ( self::is_self( $target ) ) {
-				$results[] = [ 'target' => $target, 'updated' => false, 'skipped' => 'self_target' ];
-				continue;
+		try {
+			foreach ( $targets as $target ) {
+				$target = (string) $target;
+				if ( self::is_self( $target ) ) {
+					$results[] = [ 'target' => $target, 'updated' => false, 'skipped' => 'self_target' ];
+					continue;
+				}
+				$t = self::resolve_target( $type, $target );
+				if ( is_wp_error( $t ) ) {
+					$results[] = [ 'target' => $target, 'updated' => false, 'error' => $t->get_error_code(), 'message' => $t->get_error_message() ];
+					continue;
+				}
+				$r = self::update_single( $type, $t, null, "wp_update_{$type}" );
+				$results[] = is_wp_error( $r )
+					? [ 'target' => $target, 'updated' => false, 'error' => $r->get_error_code(), 'message' => $r->get_error_message() ]
+					: $r;
 			}
-			$t = self::resolve_target( $type, $target );
-			if ( is_wp_error( $t ) ) {
-				$results[] = [ 'target' => $target, 'updated' => false, 'error' => $t->get_error_code(), 'message' => $t->get_error_message() ];
-				continue;
-			}
-			$r = self::update_single( $type, $t, null, "wp_update_{$type}" );
-			$results[] = is_wp_error( $r )
-				? [ 'target' => $target, 'updated' => false, 'error' => $r->get_error_code(), 'message' => $r->get_error_message() ]
-				: $r;
+		} finally {
+			Cowboy_MCP_Rollback::$batch_id = $prev;
 		}
-		$batch                         = Cowboy_MCP_Rollback::$batch_id;
-		Cowboy_MCP_Rollback::$batch_id = $prev;
 
 		return [
 			'results'       => $results,
@@ -697,6 +722,9 @@ class Cowboy_MCP_Installer {
 		$backup = $bdir . '/' . sprintf( 'pkgbak-%s-%s-%s-%d.zip', $type, str_replace( '/', '_', $id ), $version !== '' ? $version : 'unknown', time() );
 		$bk     = self::zip_directory( $path, $backup, $id );
 		if ( is_wp_error( $bk ) ) {
+			if ( is_file( $backup ) ) {
+				wp_delete_file( $backup );
+			}
 			return $bk;
 		}
 		if ( is_dir( $path ) ) {

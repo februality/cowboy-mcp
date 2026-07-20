@@ -186,6 +186,9 @@ return [
                 return new WP_Error( 'forbidden', 'Current user lacks the update_plugins capability.' );
             }
             if ( ! empty( $a['all'] ) ) {
+                if ( isset( $a['version'] ) ) {
+                    return new WP_Error( 'invalid_params', 'version cannot be combined with all: true — pin versions one target at a time.' );
+                }
                 return Cowboy_MCP_Installer::update_all( 'plugin' );
             }
             $plugin_file = sanitize_text_field( $a['plugin_file'] ?? '' );

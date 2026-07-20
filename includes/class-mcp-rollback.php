@@ -712,17 +712,39 @@ class Cowboy_MCP_Rollback {
 					return new WP_Error( 'undo_unsupported', 'No file backup in this journal entry; re-run the install/update tool to re-apply it.' );
 				}
 				$backups = Cowboy_MCP_Installer::backups_dir();
-				if ( is_wp_error( $backups ) || ! str_starts_with( (string) $state['backup_zip'], $backups . '/' ) || ! is_file( $state['backup_zip'] ) ) {
+				$breal   = is_string( $backups ) ? realpath( $backups ) : false;
+				$zreal   = realpath( (string) $state['backup_zip'] );
+				if ( is_wp_error( $backups ) || $breal === false || $zreal === false || ! str_starts_with( $zreal, $breal . '/' ) ) {
 					return new WP_Error( 'backup_missing', 'The backup archive for this change no longer exists (pruned or removed).' );
+				}
+
+				// Stage-then-swap: extract the backup into a temp dir first and verify
+				// it, so a mid-extraction failure never leaves the live folder half-restored.
+				$staging = $backups . '/tmp-restore-' . wp_generate_password( 8, false );
+				wp_mkdir_p( $staging );
+				$ex = Cowboy_MCP_Installer::extract_backup( $zreal, $staging );
+				if ( is_wp_error( $ex ) ) {
+					Cowboy_MCP_Installer::delete_dir( $staging );
+					return $ex;
+				}
+				$staged = $staging . '/' . $id;
+				if ( ! file_exists( $staged ) ) {
+					Cowboy_MCP_Installer::delete_dir( $staging );
+					return new WP_Error( 'backup_missing', 'The backup archive does not contain the expected package.' );
 				}
 				if ( is_dir( $current ) ) {
 					Cowboy_MCP_Installer::delete_dir( $current );
 				} elseif ( is_file( $current ) ) {
 					wp_delete_file( $current );
 				}
-				$r = Cowboy_MCP_Installer::extract_backup( $state['backup_zip'], $root );
+				if ( ! @rename( $staged, $root . '/' . $id ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- atomic move; WP_Filesystem requires wp-admin includes (hard invariant)
+					Cowboy_MCP_Installer::delete_dir( $staging );
+					$flush();
+					return new WP_Error( 'fs_not_writable', 'Could not move the restored package into place.' );
+				}
+				Cowboy_MCP_Installer::delete_dir( $staging );
 				$flush();
-				return is_wp_error( $r ) ? $r : true;
+				return true;
 			}
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
@@ -1325,12 +1347,14 @@ class Cowboy_MCP_Rollback {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$blobs = $wpdb->get_col( $wpdb->prepare( "SELECT before_state FROM %i WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY) AND object_type IN ('plugin_files','theme_files') AND before_state IS NOT NULL", self::table(), $days ) );
 		$backups = class_exists( 'Cowboy_MCP_Installer' ) ? Cowboy_MCP_Installer::backups_dir() : null;
+		$breal   = is_string( $backups ) ? realpath( $backups ) : false;
 		foreach ( $blobs as $blob ) {
 			$state = json_decode( (string) @gzuncompress( (string) $blob ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 			$zip   = is_array( $state ) ? (string) ( $state['backup_zip'] ?? '' ) : '';
 			// Containment check: only ever delete inside our own backups dir.
-			if ( $zip !== '' && is_string( $backups ) && str_starts_with( $zip, $backups . '/' ) && is_file( $zip ) ) {
-				wp_delete_file( $zip );
+			$zreal = $zip !== '' ? realpath( $zip ) : false;
+			if ( $zreal !== false && $breal !== false && str_starts_with( $zreal, $breal . '/' ) && is_file( $zreal ) ) {
+				wp_delete_file( $zreal );
 			}
 		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching

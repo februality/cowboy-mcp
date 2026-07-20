@@ -171,6 +171,7 @@
 .mcp-badge-not_undoable { background:#fff3e0; color:#9a6700; }
 .mcp-badge-manual { background:#e7f0fe; color:#0550ae; }
 .mcp-badge-auto_wp_cli { background:#f4ebff; color:#6639ba; }
+.mcp-badge-auto_update { background:#d6f0f5; color:#0b6477; }
 .mcp-badge-pre_restore { background:#ffebe9; color:#a40e26; }
 .mcp-cp-create { margin:8px 0 12px; }
 .mcp-pagination { margin-top:10px; }
