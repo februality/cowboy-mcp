@@ -14,6 +14,12 @@ MCP server for Claude, ChatGPT & Gemini. Vibe code your site, run WooCommerce, f
 
 **Stop clicking around wp-admin. Just tell your AI what you want.**
 
+* 💬 **Run your whole site by chat** - content, media, WooCommerce, files, the database, WP-CLI, and diagnostics, not just blog posts.
+* ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
+* 🆓 **Free and open source** - every tool included, with deep WooCommerce, ACF, Elementor, and Wordfence support. No Pro tier, no subscription.
+* 🔒 **Your data stays yours** - self-hosted, no accounts, no phone-home. Your agent connects to your site; nothing leaves your server.
+* 🔌 **Works with your AI agent** - Claude, ChatGPT, Cursor, Codex, Gemini, and any MCP client. Set up in about two minutes.
+
 Cowboy MCP is a full MCP server inside WordPress - Claude Code, Codex, and other AI agents connect straight to your site. Ask in plain language - "publish these three drafts," "why is the checkout page 500-ing," "bump every Summer Sale price 20%," "clear the cache and re-check site health" - and your agent gets it done.
 
 Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets your agent actually *run the site*: content, yes, but also the terminal-level work you'd normally stop and do by hand - WP-CLI, files, the database, error logs, and diagnostics. When something breaks, your agent can find it and fix it instead of just apologizing.
@@ -26,13 +32,6 @@ Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets you
 * **Do the developer stuff** - run WP-CLI commands, edit files in `wp-content`, and take site snapshots before big changes.
 * **Vibe code your site** - describe the theme tweak or feature you want; your agent writes the code, checks the error log, and fixes what it broke. With per-change undo and database checkpoints, vibe coding a live site stops being reckless.
 * **Get more done, faster** - your agent stays sharp and accurate even with a big toolset, so it picks the right action the first time.
-
-= Why site owners choose it =
-
-* **You stay in control - and you can undo.** Safe mode asks before anything destructive, every change can be previewed first, and every action your agent takes is logged. If something's not right, undo most individual changes with one click, or roll the whole database back to a checkpoint - all from the Activity tab.
-* **Your data stays yours.** Self-hosted, no external services, no accounts, no phone-home. Your agent connects *to* your site - nothing leaves your server.
-* **Set up in two minutes.** Generate a key (or one-click sign-in for the Claude desktop and web apps), paste one command, and you're connected.
-* **Every tool, free and open source.** WordPress core plus deep WooCommerce, ACF, Elementor, and Wordfence coverage - no Pro tier, no subscription. Bring the AI agent you already use.
 
 = Works with =
 
