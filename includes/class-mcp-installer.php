@@ -135,7 +135,7 @@ class Cowboy_MCP_Installer {
 	}
 
 	/** True when ZipArchive is usable; shared error otherwise. */
-	private static function zip_available(): true|WP_Error {
+	private static function zip_available(): bool|WP_Error {
 		if ( ! class_exists( 'ZipArchive' ) ) {
 			return new WP_Error( 'zip_missing', 'The PHP zip extension is not available on this host; native install/update is not possible.' );
 		}
@@ -186,7 +186,7 @@ class Cowboy_MCP_Installer {
 	 * Create a backup zip of a directory (entries prefixed "$prefix/…") or a
 	 * single file (stored as "$prefix").
 	 */
-	public static function zip_directory( string $src, string $zip_path, string $prefix ): true|WP_Error {
+	public static function zip_directory( string $src, string $zip_path, string $prefix ): bool|WP_Error {
 		$ok = self::zip_available();
 		if ( is_wp_error( $ok ) ) {
 			return $ok;
@@ -218,7 +218,7 @@ class Cowboy_MCP_Installer {
 	}
 
 	/** Extract a backup zip into the plugins/themes root (entries carry their folder prefix). */
-	public static function extract_backup( string $zip_path, string $dest_root ): true|WP_Error {
+	public static function extract_backup( string $zip_path, string $dest_root ): bool|WP_Error {
 		$ok = self::zip_available();
 		if ( is_wp_error( $ok ) ) {
 			return $ok;

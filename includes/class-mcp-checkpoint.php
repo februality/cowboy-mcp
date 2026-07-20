@@ -323,7 +323,7 @@ class Cowboy_MCP_Checkpoint {
 	}
 
 	/** Stream the dump, rewriting table names to the temp prefix, executing line by line. */
-	private static function import_as_temp( string $path, array $tables ): true|WP_Error {
+	private static function import_as_temp( string $path, array $tables ): bool|WP_Error {
 		global $wpdb;
 		$gz = gzopen( $path, 'rb' );
 		if ( ! $gz ) {
@@ -419,7 +419,7 @@ class Cowboy_MCP_Checkpoint {
 		return $row ?: null;
 	}
 
-	public static function delete( int $id ): true|WP_Error {
+	public static function delete( int $id ): bool|WP_Error {
 		global $wpdb;
 		$row = self::get( $id );
 		if ( ! $row ) {

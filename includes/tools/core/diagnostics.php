@@ -33,9 +33,9 @@ function cowboy_mcp_tail_file( string $filepath, int $lines ): array {
  * SSRF protection: resolve hostname and reject private/reserved IPs.
  *
  * @param string $url URL to validate.
- * @return true|WP_Error True if safe, WP_Error if blocked.
+ * @return bool|WP_Error True if safe, WP_Error if blocked.
  */
-function cowboy_mcp_validate_url_ssrf( string $url ): true|WP_Error {
+function cowboy_mcp_validate_url_ssrf( string $url ): bool|WP_Error {
 	// Delegate to the shared validator (resolves all A/AAAA records, normalizes
 	// IPv4-mapped IPv6, and denies loopback/link-local/ULA/reserved ranges).
 	return Cowboy_MCP_Security::validate_url_ssrf( $url );

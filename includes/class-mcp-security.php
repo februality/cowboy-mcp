@@ -217,9 +217,9 @@ class Cowboy_MCP_Security {
      * (all A + AAAA records) must be public. Rejects private, reserved, loopback,
      * link-local (cloud metadata 169.254.0.0/16) and unique-local addresses.
      *
-     * @return true|WP_Error
+     * @return bool|WP_Error
      */
-    public static function validate_url_ssrf( string $url ): true|WP_Error {
+    public static function validate_url_ssrf( string $url ): bool|WP_Error {
         $scheme = wp_parse_url( $url, PHP_URL_SCHEME );
         if ( ! in_array( $scheme, [ 'http', 'https' ], true ) ) {
             return new WP_Error( 'invalid_scheme', 'Only http and https URLs are allowed.' );

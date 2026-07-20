@@ -564,7 +564,7 @@ class Cowboy_MCP_Rollback {
 	/**
 	 * Write a captured state back wholesale. $state null = delete the object.
 	 */
-	public static function restore( string $type, string $id, ?array $state ): true|WP_Error {
+	public static function restore( string $type, string $id, ?array $state ): bool|WP_Error {
 		if ( class_exists( 'Cowboy_MCP_Tools' ) ) {
 			Cowboy_MCP_Tools::boot_domains(); // domain helper functions (file paths etc.)
 		}
@@ -661,7 +661,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Restore (or recreate with original ID) a post + meta + terms. Null state = delete. */
-	private static function restore_post( int $post_id, ?array $state ): true|WP_Error {
+	private static function restore_post( int $post_id, ?array $state ): bool|WP_Error {
 		if ( $state === null ) {
 			$deleted = wp_delete_post( $post_id, true );
 			return $deleted ? true : new WP_Error( 'undo_failed', "Could not delete post #{$post_id}." );
@@ -699,7 +699,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Re-apply captured old values row by row (wp_search_replace inverse). */
-	private static function restore_db_rows( ?array $state ): true|WP_Error {
+	private static function restore_db_rows( ?array $state ): bool|WP_Error {
 		global $wpdb;
 		$rows = $state['rows'] ?? [];
 		if ( empty( $rows ) ) {
@@ -720,7 +720,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Rewrite a file's captured bytes atomically, or delete it (null state). */
-	private static function restore_file( string $relpath, ?array $state ): true|WP_Error {
+	private static function restore_file( string $relpath, ?array $state ): bool|WP_Error {
 		if ( ! function_exists( 'cowboy_mcp_resolve_wp_content_path' ) ) {
 			return new WP_Error( 'undo_failed', 'File helpers unavailable.' );
 		}
@@ -760,7 +760,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Restore (or recreate with the original ID) a term + term_taxonomy row + meta + object relationships. */
-	private static function restore_term( string $composite, ?array $state ): true|WP_Error {
+	private static function restore_term( string $composite, ?array $state ): bool|WP_Error {
 		global $wpdb;
 		[ $tax, $tid ] = array_pad( explode( ':', $composite, 2 ), 2, '' );
 		$tid = (int) $tid;
@@ -802,7 +802,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Restore (or recreate with the original ID) a comment row + meta. Null state = delete. */
-	private static function restore_comment( int $cid, ?array $state ): true|WP_Error {
+	private static function restore_comment( int $cid, ?array $state ): bool|WP_Error {
 		global $wpdb;
 		if ( $state === null ) {
 			return wp_delete_comment( $cid, true ) ? true : new WP_Error( 'undo_failed', "Could not delete comment #{$cid}." );
@@ -829,7 +829,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Recreate a deleted user with the original ID + all usermeta. */
-	private static function restore_user( int $uid, ?array $state ): true|WP_Error {
+	private static function restore_user( int $uid, ?array $state ): bool|WP_Error {
 		global $wpdb;
 		if ( $state === null ) {
 			return new WP_Error( 'undo_unsupported', 'Undoing a user creation is not supported (no user-create tool exists).' );
@@ -852,7 +852,7 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Restore (or recreate with a NEW id) a WooCommerce object. Null state = delete. */
-	private static function restore_wc_object( string $composite, ?array $state ): true|WP_Error {
+	private static function restore_wc_object( string $composite, ?array $state ): bool|WP_Error {
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return new WP_Error( 'undo_unsupported', 'WooCommerce is not active.' );
 		}
