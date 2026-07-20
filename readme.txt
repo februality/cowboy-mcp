@@ -16,6 +16,7 @@ MCP server for Claude, ChatGPT & Gemini. Vibe code your site, run WooCommerce, f
 
 * 💬 **Run your whole site by chat** - content, media, WooCommerce, files, the database, WP-CLI, and diagnostics, not just blog posts.
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
+* 🛡️ **Safe by default** - safe mode confirms before anything destructive, you can preview any change before it runs, and every action is written to an audit log.
 * 🆓 **Free and open source** - every tool included, with deep WooCommerce, ACF, Elementor, and Wordfence support. No Pro tier, no subscription.
 * 🔒 **Your data stays yours** - self-hosted, no accounts, no phone-home. Your agent connects to your site; nothing leaves your server.
 * 🔌 **Works with your AI agent** - Claude, ChatGPT, Cursor, Codex, Gemini, and any MCP client. Set up in about two minutes.
