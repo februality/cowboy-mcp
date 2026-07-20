@@ -732,15 +732,30 @@ class Cowboy_MCP_Rollback {
 					Cowboy_MCP_Installer::delete_dir( $staging );
 					return new WP_Error( 'backup_missing', 'The backup archive does not contain the expected package.' );
 				}
-				if ( is_dir( $current ) ) {
-					Cowboy_MCP_Installer::delete_dir( $current );
-				} elseif ( is_file( $current ) ) {
-					wp_delete_file( $current );
+				// Aside-rename swap (same shape as Cowboy_MCP_Installer::update_single()):
+				// the live package is only ever discarded AFTER the verified staged
+				// copy is confirmed in place, so a failed swap always leaves a working
+				// package behind — never a half-deleted live folder.
+				$aside       = $root . '/' . $id . '-cowboy-aside-' . time();
+				$had_current = is_dir( $current ) || is_file( $current );
+				if ( $had_current && ! @rename( $current, $aside ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- atomic swap; WP_Filesystem requires wp-admin includes (hard invariant)
+					Cowboy_MCP_Installer::delete_dir( $staging );
+					return new WP_Error( 'fs_not_writable', 'Could not move the current package aside for restore.' );
 				}
-				if ( ! @rename( $staged, $root . '/' . $id ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- atomic move; WP_Filesystem requires wp-admin includes (hard invariant)
+				if ( ! @rename( $staged, $current ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- atomic swap; WP_Filesystem requires wp-admin includes (hard invariant)
+					if ( $had_current ) {
+						@rename( $aside, $current ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- rollback of failed swap
+					}
 					Cowboy_MCP_Installer::delete_dir( $staging );
 					$flush();
-					return new WP_Error( 'fs_not_writable', 'Could not move the restored package into place.' );
+					return new WP_Error( 'fs_not_writable', 'Could not move the restored package into place; the previous state was preserved.' );
+				}
+				if ( $had_current ) {
+					if ( is_dir( $aside ) ) {
+						Cowboy_MCP_Installer::delete_dir( $aside );
+					} elseif ( is_file( $aside ) ) {
+						wp_delete_file( $aside );
+					}
 				}
 				Cowboy_MCP_Installer::delete_dir( $staging );
 				$flush();
