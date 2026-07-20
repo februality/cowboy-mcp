@@ -102,7 +102,7 @@ class Cowboy_MCP_Auth {
     /**
      * Validate a Bearer token from the request.
      *
-     * @return true|WP_Error
+     * @return bool|WP_Error
      */
     public static function validate_request( WP_REST_Request $request ) {
         $settings = Cowboy_MCP_Tools::get_settings();

@@ -35,7 +35,7 @@ function cowboy_mcp_elementor_get_content( int $post_id ): array|WP_Error {
 /**
  * Save Elementor content to post meta and clear CSS cache.
  */
-function cowboy_mcp_elementor_save_content( int $post_id, array $data ): true|WP_Error {
+function cowboy_mcp_elementor_save_content( int $post_id, array $data ): bool|WP_Error {
     $json = wp_json_encode( $data, JSON_UNESCAPED_SLASHES );
     if ( $json === false ) {
         return new WP_Error( 'encode_error', 'Failed to encode Elementor data to JSON.' );

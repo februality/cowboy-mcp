@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, chatgpt, ai-agent
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.5.3
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,7 @@ You type what you want in plain English, and your AI does the real work inside W
 
 * 💬 **Do everything by chat** - create and edit posts and pages, run your WooCommerce shop, upload media, change settings, and fix errors when they crop up.
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
+* 🔄 **Updates plugins & themes safely** - backup first, health check after, one-command undo if anything breaks.
 * 🛡️ **Safe by default** - safe mode confirms before anything destructive, you can preview any change before it runs, and every action is written to an audit log.
 * 🆓 **Free and open source** - every tool included, with deep WooCommerce, ACF, Elementor, and Wordfence support. No Pro tier, no subscription.
 * 🔒 **Your data stays yours** - self-hosted, no accounts, no phone-home. Your agent connects to your site; nothing leaves your server.
@@ -82,7 +83,7 @@ Yes - that's what it's built for. Your agent can write and edit theme and plugin
 
 = Does it send my data anywhere? =
 
-No. Cowboy MCP makes no outbound connections and never phones home. Your agent talks to your site; your data stays on your server.
+No telemetry and no phone-home - your data stays on your server. The only outbound connections are to WordPress.org, when your agent installs or updates plugins and themes, plus any HTTP requests you explicitly ask your agent to make.
 
 = Do I need to be a developer? =
 
@@ -99,8 +100,14 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.5.3 =
-* New: Connection Doctor - a one-click self-test on the Connection tab that checks HTTPS, public reachability, REST availability, and OAuth discovery, names the likely blocker (Cloudflare, ModSecurity, Basic Auth, cache plugins), and gives you a copy-pasteable report. Also available as the wp_connection_doctor MCP tool and the `wp cowboy-mcp doctor` WP-CLI command.
+= 1.6.0 =
+* New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) - pure PHP, no WP-CLI or shell access needed
+* New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once - with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks
+* New: delete plugins and themes (wp_delete_plugin / wp_delete_theme) with a backup kept for undo
+* New: wp_list_plugins and wp_list_themes now report available updates (update_available / new_version, optional refresh_updates)
+* New: every install, update, and delete is journaled - wp_undo_change rolls a plugin or theme back to the exact previous version
+* New: "Auto-checkpoint before plugin & theme updates" setting (on by default)
+* Fixed: PHP 8.0/8.1 compatibility - corrected return-type syntax (true|WP_Error) that caused a fatal error on PHP older than 8.2
 
 = Earlier versions =
 

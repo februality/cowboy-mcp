@@ -202,6 +202,7 @@ class Cowboy_MCP_Admin {
                 'undo_retention_days'    => max( 1, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_undo_retention_days'] ?? '7' ) ) ),
                 'checkpoint_max'         => max( 1, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_checkpoint_max'] ?? '5' ) ) ),
                 'auto_checkpoint_wp_cli' => ! empty( $_POST['cowboy_mcp_auto_checkpoint_wp_cli'] ),
+                'auto_checkpoint_updates' => ! empty( $_POST['cowboy_mcp_auto_checkpoint_updates'] ),
             ];
             update_option( 'cowboy_mcp_settings', $settings );
             add_settings_error( 'cowboy_mcp', 'settings_saved', __( 'Settings saved.', 'cowboy-mcp' ), 'success' );
@@ -971,6 +972,16 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                                     <?php esc_html_e( 'Auto-checkpoint before mutating WP-CLI commands', 'cowboy-mcp' ); ?>
                                 </label>
                                 <p class="description"><?php esc_html_e( 'Takes a full-database checkpoint before running a WP-CLI command that is not read-only, so it can be rolled back even if the command itself cannot be undone.', 'cowboy-mcp' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"></th>
+                            <td>
+                                <label class="mcp-switch-label">
+                                    <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_auto_checkpoint_updates" value="1" <?php checked( ! isset( $settings['auto_checkpoint_updates'] ) || $settings['auto_checkpoint_updates'] ); ?>><span class="mcp-switch-track"></span></span>
+                                    <?php esc_html_e( 'Auto-checkpoint before plugin & theme updates', 'cowboy-mcp' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( 'Takes a full-database checkpoint before plugin or theme updates, so database migrations run by an update can be rolled back. The old files are separately backed up per update for undo.', 'cowboy-mcp' ); ?></p>
                             </td>
                         </tr>
                     </table>

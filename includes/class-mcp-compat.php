@@ -125,6 +125,11 @@ class Cowboy_MCP_Compat {
 		return $wp_plugins;
 	}
 
+	/** Reset the per-request plugin scan cache (installer mutates the plugins dir). */
+	public static function flush_plugins_cache(): void {
+		self::$plugins_cache = null;
+	}
+
 	/**
 	 * Require-free reimplementation of core get_plugin_data() header parsing.
 	 *

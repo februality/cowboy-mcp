@@ -323,7 +323,7 @@ class Cowboy_MCP_Checkpoint {
 	}
 
 	/** Stream the dump, rewriting table names to the temp prefix, executing line by line. */
-	private static function import_as_temp( string $path, array $tables ): true|WP_Error {
+	private static function import_as_temp( string $path, array $tables ): bool|WP_Error {
 		global $wpdb;
 		$gz = gzopen( $path, 'rb' );
 		if ( ! $gz ) {
@@ -419,7 +419,7 @@ class Cowboy_MCP_Checkpoint {
 		return $row ?: null;
 	}
 
-	public static function delete( int $id ): true|WP_Error {
+	public static function delete( int $id ): bool|WP_Error {
 		global $wpdb;
 		$row = self::get( $id );
 		if ( ! $row ) {
@@ -493,5 +493,19 @@ class Cowboy_MCP_Checkpoint {
 			return in_array( $tokens[ $i ], $read, true );
 		}
 		return false; // single-token command → assume mutating
+	}
+
+	/** Auto-checkpoint before a plugin/theme update (setting: auto_checkpoint_updates). Fail-open. */
+	public static function maybe_update_checkpoint( string $label ): ?int {
+		$s = Cowboy_MCP_Tools::get_settings();
+		if ( isset( $s['auto_checkpoint_updates'] ) && empty( $s['auto_checkpoint_updates'] ) ) {
+			return null;
+		}
+		$result = self::create( substr( $label, 0, 190 ), 'auto_update' );
+		if ( is_wp_error( $result ) ) {
+			Cowboy_MCP_Auth::log( 'checkpoint_failed', [ 'tool' => 'installer', 'error' => $result->get_error_message() ] );
+			return null;
+		}
+		return (int) $result['checkpoint_id'];
 	}
 }
