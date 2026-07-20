@@ -8,7 +8,7 @@ Stable tag: 1.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-MCP server for Claude, ChatGPT & Gemini. Vibe code your site with an undo button. 131 tools incl. WooCommerce, ACF & Elementor. Free.
+MCP server for Claude, ChatGPT & Gemini. Vibe code your site, run WooCommerce, fix bugs by chat. Undo any change. Free.
 
 == Description ==
 
@@ -32,7 +32,7 @@ Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets you
 * **You stay in control - and you can undo.** Safe mode asks before anything destructive, every change can be previewed first, and every action your agent takes is logged. If something's not right, undo most individual changes with one click, or roll the whole database back to a checkpoint - all from the Activity tab.
 * **Your data stays yours.** Self-hosted, no external services, no accounts, no phone-home. Your agent connects *to* your site - nothing leaves your server.
 * **Set up in two minutes.** Generate a key (or one-click sign-in for the Claude desktop and web apps), paste one command, and you're connected.
-* **All 131 tools, free and open source.** WordPress core plus deep WooCommerce, ACF, Elementor, and Wordfence coverage - no Pro tier, no subscription. Bring the AI agent you already use.
+* **Every tool, free and open source.** WordPress core plus deep WooCommerce, ACF, Elementor, and Wordfence coverage - no Pro tier, no subscription. Bring the AI agent you already use.
 
 = Works with =
 
