@@ -475,15 +475,22 @@ class Cowboy_MCP_Tools {
         }
         $description .= ' with the provided parameters.';
 
+        $preview = [
+            'dry_run'     => true,
+            'tool'        => $name,
+            'action'      => $action,
+            'resource'    => $resource,
+            'description' => $description,
+            'parameters'  => $filtered_args,
+        ];
+        // Installer tools: resolve the real WP.org plan (versions, download URL,
+        // backup/checkpoint intentions) — far more useful than the generic echo.
+        if ( class_exists( 'Cowboy_MCP_Installer' ) && in_array( $name, Cowboy_MCP_Installer::TOOLS, true ) ) {
+            $preview['plan'] = Cowboy_MCP_Installer::dry_run_plan( $name, $filtered_args );
+        }
+
         return [
-            'content' => [[ 'type' => 'text', 'text' => wp_json_encode( [
-                'dry_run'     => true,
-                'tool'        => $name,
-                'action'      => $action,
-                'resource'    => $resource,
-                'description' => $description,
-                'parameters'  => $filtered_args,
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ]],
+            'content' => [[ 'type' => 'text', 'text' => wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ]],
         ];
     }
 

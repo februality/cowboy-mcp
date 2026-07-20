@@ -130,6 +130,7 @@ register_activation_hook( __FILE__, function () {
             'undo_retention_days'    => 7,
             'checkpoint_max'         => 5,
             'auto_checkpoint_wp_cli' => true,
+            'auto_checkpoint_updates' => true,
         ]);
     }
 
