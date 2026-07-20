@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Cowboy MCP - manage your site with Claude, ChatGPT and other AI agents
+ * Plugin Name: Cowboy MCP - MCP Server with Undo for Claude, ChatGPT, Gemini & Cursor
  * Plugin URI:  https://cowboymcp.com
  * Description: Exposes your WordPress site as a Model Context Protocol (MCP) server so AI coding agents like Claude Code can read, edit, and manage everything on the site.
  * Version:     1.5.3
@@ -97,11 +97,18 @@ add_action( 'init', function () {
 });
 
 /* ── Translations ─────────────────────────────────────────── */
-// Load bundled translations from /languages. Community language packs from
-// translate.wordpress.org (in wp-content/languages/plugins/) load via
-// just-in-time and take precedence — this is safe belt-and-suspenders.
+// REQUIRED — do not remove. Plugin Check warns that load_plugin_textdomain()
+// is "discouraged since 4.6", but that advice assumes translations arrive as
+// language packs from translate.wordpress.org. This plugin ships its OWN 12
+// catalogs in /languages, and WP_Textdomain_Registry::get_paths_for_domain()
+// only ever searches WP_LANG_DIR/plugins, WP_LANG_DIR/themes, and custom_paths
+// — and custom_paths is populated *solely* by this call. Drop it and the
+// registry returns false for the bundled path, so all 12 locales silently fall
+// back to English (verified against WP 7.0; no packs exist for this slug yet).
+// Community packs, once they exist, still take precedence over the bundle.
 // Hooked on `init` (not earlier) to avoid the WP 6.7 pre-init _doing_it_wrong.
 add_action( 'init', static function () {
+    // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Load-bearing: bundled /languages catalogs are unreachable without it (see above).
     load_plugin_textdomain( 'cowboy-mcp', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 });
 

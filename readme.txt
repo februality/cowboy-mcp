@@ -1,4 +1,4 @@
-=== Cowboy MCP - MCP Server for WordPress with Undo. Claude, ChatGPT, Gemini & Cursor ===
+=== Cowboy MCP - MCP Server with Undo for Claude, ChatGPT, Gemini & Cursor ===
 Contributors: februality
 Tags: mcp, mcp-server, claude, chatgpt, ai-agent
 Requires at least: 6.2
