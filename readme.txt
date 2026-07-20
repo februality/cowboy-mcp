@@ -83,7 +83,7 @@ Yes - that's what it's built for. Your agent can write and edit theme and plugin
 
 = Does it send my data anywhere? =
 
-No. Cowboy MCP makes no outbound connections and never phones home. Your agent talks to your site; your data stays on your server.
+No telemetry and no phone-home - your data stays on your server. The only outbound connections are to WordPress.org, when your agent installs or updates plugins and themes, plus any HTTP requests you explicitly ask your agent to make.
 
 = Do I need to be a developer? =
 
@@ -101,13 +101,13 @@ No. Publishing content and running your store work through plain conversation. T
 == Changelog ==
 
 = 1.6.0 =
-* New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) — pure PHP, no WP-CLI or shell access needed
-* New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once — with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks
+* New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) - pure PHP, no WP-CLI or shell access needed
+* New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once - with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks
 * New: delete plugins and themes (wp_delete_plugin / wp_delete_theme) with a backup kept for undo
 * New: wp_list_plugins and wp_list_themes now report available updates (update_available / new_version, optional refresh_updates)
-* New: every install, update, and delete is journaled — wp_undo_change rolls a plugin or theme back to the exact previous version
+* New: every install, update, and delete is journaled - wp_undo_change rolls a plugin or theme back to the exact previous version
 * New: "Auto-checkpoint before plugin & theme updates" setting (on by default)
-* Fix: PHP 8.0/8.1 compatibility — corrected return-type syntax (true|WP_Error) that caused a fatal error on PHP older than 8.2
+* Fixed: PHP 8.0/8.1 compatibility - corrected return-type syntax (true|WP_Error) that caused a fatal error on PHP older than 8.2
 
 = Earlier versions =
 

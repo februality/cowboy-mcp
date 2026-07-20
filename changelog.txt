@@ -4,13 +4,13 @@ Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
 = 1.6.0 =
-* New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) — pure PHP, no WP-CLI or shell access needed
-* New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once — with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks
+* New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) - pure PHP, no WP-CLI or shell access needed
+* New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once - with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks
 * New: delete plugins and themes (wp_delete_plugin / wp_delete_theme) with a backup kept for undo
 * New: wp_list_plugins and wp_list_themes now report available updates (update_available / new_version, optional refresh_updates)
-* New: every install, update, and delete is journaled — wp_undo_change rolls a plugin or theme back to the exact previous version
+* New: every install, update, and delete is journaled - wp_undo_change rolls a plugin or theme back to the exact previous version
 * New: "Auto-checkpoint before plugin & theme updates" setting (on by default)
-* Fix: PHP 8.0/8.1 compatibility — corrected return-type syntax (true|WP_Error) that caused a fatal error on PHP older than 8.2
+* Fixed: PHP 8.0/8.1 compatibility - corrected return-type syntax (true|WP_Error) that caused a fatal error on PHP older than 8.2
 
 = 1.5.3 =
 * New: Connection Doctor - a one-click self-test on the Connection tab that checks HTTPS, public reachability, REST availability, and OAuth discovery, names the likely blocker (Cloudflare, ModSecurity, Basic Auth, cache plugins), and gives you a copy-pasteable report. Also available as the wp_connection_doctor MCP tool and the `wp cowboy-mcp doctor` WP-CLI command.

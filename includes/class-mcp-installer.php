@@ -627,7 +627,7 @@ class Cowboy_MCP_Installer {
 		}
 		$cp = empty( $targets ) ? null : Cowboy_MCP_Checkpoint::maybe_update_checkpoint( "Before {$type} updates (" . count( $targets ) . ')' );
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- guarded by function_exists(); batch updates can exceed the default PHP time limit on large sites.
+			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- guarded by function_exists(); batch updates can exceed the default PHP time limit on large sites
 		}
 		foreach ( $targets as $target ) {
 			$target = (string) $target;

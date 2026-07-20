@@ -689,6 +689,17 @@ class Cowboy_MCP_Rollback {
 					}
 				};
 				if ( $state === null ) { // undo-install / redo-delete → remove the package
+					// Never remove an ACTIVE package: undoing an install that was later
+					// activated must not break the live site (mirrors the delete tools'
+					// active_delete guard). Also covers redo-of-delete.
+					if ( $type === 'plugin_files' ) {
+						$pf = Cowboy_MCP_Installer::find_plugin_file( $id );
+						if ( $pf !== null && ( Cowboy_MCP_Compat::is_plugin_active( $pf ) || Cowboy_MCP_Compat::is_plugin_active_for_network( $pf ) ) ) {
+							return new WP_Error( 'active_undo_target', "Plugin '{$pf}' is active. Deactivate it first with wp_deactivate_plugin, then retry the undo." );
+						}
+					} elseif ( $id === get_stylesheet() || $id === get_template() ) {
+						return new WP_Error( 'active_undo_target', "Theme '{$id}' is the active theme (or its parent). Switch themes first with wp_switch_theme, then retry the undo." );
+					}
 					if ( is_dir( $current ) ) {
 						Cowboy_MCP_Installer::delete_dir( $current );
 					} elseif ( is_file( $current ) ) {
