@@ -51,6 +51,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-rollback.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-checkpoint.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-installer.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-doctor.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-transport.php';
@@ -183,17 +184,21 @@ function cowboy_mcp_uninstall(): void {
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
     $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $checkpoints ) );
 
-    // Remove checkpoint files.
-    $cp_dir = ( wp_upload_dir()['basedir'] ?? '' ) . '/cowboy-mcp/checkpoints';
-    if ( is_dir( $cp_dir ) ) {
-        foreach ( array_merge( glob( $cp_dir . '/*' ) ?: [], [ $cp_dir . '/.htaccess', $cp_dir . '/index.php' ] ) as $f ) {
+    // Remove checkpoint + package-backup files.
+    $upload_base = wp_upload_dir()['basedir'] ?? '';
+    foreach ( [ '/cowboy-mcp/checkpoints', '/cowboy-mcp/backups' ] as $sub ) {
+        $dir = $upload_base . $sub;
+        if ( ! is_dir( $dir ) ) {
+            continue;
+        }
+        foreach ( array_merge( glob( $dir . '/*' ) ?: [], [ $dir . '/.htaccess', $dir . '/index.php' ] ) as $f ) {
             if ( is_file( $f ) ) {
                 wp_delete_file( $f );
             }
         }
-        @rmdir( $cp_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
-        @rmdir( dirname( $cp_dir ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+        @rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
     }
+    @rmdir( $upload_base . '/cowboy-mcp' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
 
     cowboy_mcp_cleanup_transients( true );
 }
