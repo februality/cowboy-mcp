@@ -28,6 +28,8 @@ Cowboy MCP is a full MCP server inside WordPress - Claude Code, Codex, and other
 
 Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets your agent actually *run the site*: content, yes, but also the terminal-level work you'd normally stop and do by hand - WP-CLI, files, the database, error logs, and diagnostics. When something breaks, your agent can find it and fix it instead of just apologizing.
 
+Setup guides, the full capability list, and the security model live at [cowboymcp.com](https://cowboymcp.com).
+
 = What you can do with it =
 
 * **Manage content by chat** - draft, edit, schedule, and publish posts and pages; upload media; sort categories and tags.
@@ -53,7 +55,7 @@ Claude Code, Codex, Opencode, the Claude desktop and web apps (one-click sign-in
 
 **Claude desktop / web (no terminal):** enable the OAuth connector under **Settings > Cowboy MCP > Settings > Desktop Connector**, add your site as a custom connector in Claude, and approve with one click. (Requires a public HTTPS site.)
 
-Codex and other clients: see the setup guides in the plugin settings.
+Codex and other clients: see the setup guides in the plugin settings, or the connection guides at [cowboymcp.com](https://cowboymcp.com).
 
 == Frequently Asked Questions ==
 
