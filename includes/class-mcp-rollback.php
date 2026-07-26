@@ -67,6 +67,8 @@ class Cowboy_MCP_Rollback {
 		'wp_deactivate_plugin' => [ 'type' => 'plugin', 'action' => 'toggle', 'id_arg' => 'plugin_file' ],
 		'wp_switch_theme'      => [ 'type' => 'theme', 'action' => 'toggle', 'static_id' => 'active' ],
 		'wp_upload_media'      => [ 'type' => 'media', 'action' => 'create', 'result_id' => 'attachment_id' ],
+		'wp_create_user'       => [ 'type' => 'user', 'action' => 'create', 'result_id' => 'user_id' ],
+		'wp_update_user'       => [ 'type' => 'user', 'action' => 'update', 'id_arg' => 'user_id' ],
 		'wp_delete_user'       => [ 'type' => 'user', 'action' => 'delete', 'id_arg' => 'user_id' ],
 
 		'wp_woo_create_product'   => [ 'type' => 'wc_object', 'action' => 'create', 'kind' => 'product', 'result_id' => 'product_id' ],
@@ -936,18 +938,64 @@ class Cowboy_MCP_Rollback {
 	/** Recreate a deleted user with the original ID + all usermeta. */
 	private static function restore_user( int $uid, ?array $state ): bool|WP_Error {
 		global $wpdb;
+
+		// ── Undo of a creation → remove the user again. ──
 		if ( $state === null ) {
-			return new WP_Error( 'undo_unsupported', 'Undoing a user creation is not supported (no user-create tool exists).' );
+			if ( ! get_user_by( 'id', $uid ) ) {
+				return true; // already gone; undo is idempotent
+			}
+			if ( $uid === get_current_user_id() ) {
+				return new WP_Error( 'undo_conflict', "User #{$uid} is the currently authenticated user and cannot be removed." );
+			}
+			$user = get_userdata( $uid );
+			if ( $user && in_array( 'administrator', (array) $user->roles, true ) ) {
+				$admins = get_users( [ 'role' => 'administrator', 'fields' => 'ID', 'number' => 2 ] );
+				if ( count( $admins ) <= 1 ) {
+					return new WP_Error( 'undo_conflict', 'Undoing this creation would delete the last administrator.' );
+				}
+			}
+			return Cowboy_MCP_Compat::delete_user( $uid, null )
+				? true
+				: new WP_Error( 'undo_failed', "Could not remove user #{$uid}." );
 		}
-		if ( get_user_by( 'id', $uid ) ) {
-			return new WP_Error( 'undo_conflict', "User #{$uid} already exists." );
+
+		// ── Undo of a deletion → reinsert the row verbatim. ──
+		if ( ! get_user_by( 'id', $uid ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			if ( ! $wpdb->insert( $wpdb->users, $state['user'] ) ) {
+				return new WP_Error( 'undo_failed', "Could not reinsert user #{$uid}." );
+			}
+			foreach ( $state['meta'] as $k => $values ) {
+				foreach ( (array) $values as $v ) {
+					add_user_meta( $uid, $k, wp_slash( maybe_unserialize( $v ) ) );
+				}
+			}
+			clean_user_cache( $uid );
+			return true;
 		}
+
+		// ── Undo of an update → restore columns, then reconcile captured meta. ──
+		$columns = $state['user'];
+		unset( $columns['ID'] );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$ok = $wpdb->insert( $wpdb->users, $state['user'] );
-		if ( ! $ok ) {
-			return new WP_Error( 'undo_failed', "Could not reinsert user #{$uid}." );
+		$wpdb->update( $wpdb->users, $columns, [ 'ID' => $uid ] );
+
+		// session_tokens is deliberately excluded from snapshot(): restoring stale
+		// sessions is wrong, and DELETING the live blob would log every user on the
+		// site out the moment someone undoes a profile edit. Everything else is
+		// reconciled — captured keys are rewritten, and keys that appeared after the
+		// capture are removed so the undo is a true inverse.
+		$skip     = [ 'session_tokens' ];
+		$captured = array_keys( (array) $state['meta'] );
+		$current  = array_keys( (array) get_user_meta( $uid ) );
+		foreach ( array_diff( $current, $captured, $skip ) as $stale_key ) {
+			delete_user_meta( $uid, $stale_key );
 		}
 		foreach ( $state['meta'] as $k => $values ) {
+			if ( in_array( $k, $skip, true ) ) {
+				continue;
+			}
+			delete_user_meta( $uid, $k );
 			foreach ( (array) $values as $v ) {
 				add_user_meta( $uid, $k, wp_slash( maybe_unserialize( $v ) ) );
 			}
