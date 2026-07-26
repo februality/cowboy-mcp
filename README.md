@@ -9,7 +9,7 @@ Cowboy MCP is a WordPress plugin that turns any WordPress site into a [Model Con
 
 **Website:** [cowboymcp.com](https://cowboymcp.com) · **Download:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/)
 
-Connect any MCP client that speaks Streamable HTTP over a single authenticated endpoint and manage posts, pages, plugins, themes, users, media, WooCommerce, and much more.
+Connect any MCP client that speaks Streamable HTTP over a single authenticated endpoint and manage posts, pages, plugins, themes, users, media, navigation menus, WooCommerce, and much more.
 
 *New in 1.4.0: a one-click OAuth connector for the Claude desktop & web apps — connect with no terminal and no API key. Now available in the WordPress.org plugin directory.*
 
@@ -19,8 +19,8 @@ Connect any MCP client that speaks Streamable HTTP over a single authenticated e
 
 - **Built for coding agents — and now the Claude apps** — terminal workflows with Claude Code, Codex, Cursor, and any Streamable HTTP MCP client, plus a one-click OAuth connector for the Claude desktop & web apps (no terminal, no API key to paste).
 - **No Node.js proxy** — the MCP endpoint is served natively from WordPress. Unlike adapter-based approaches that run a separate Node bridge to expose remote HTTP, there's nothing extra to install or keep running.
-- **121 tools across core + popular plugins** — full content CRUD plus deep integrations for WooCommerce, ACF, Elementor, Wordfence, and cache plugins.
-- **Context-efficient tool gateway** — instead of dumping 121 tool schemas into your agent's context window, the server fronts them with two meta-tools (`cowboy_discover` / `cowboy_run`); the agent searches for what it needs and runs it on demand.
+- **150 tools across core + popular plugins** — full content CRUD plus deep integrations for WooCommerce, ACF, Elementor, Wordfence, and cache plugins.
+- **Context-efficient tool gateway** — instead of dumping 150 tool schemas into your agent's context window, the server fronts them with two meta-tools (`cowboy_discover` / `cowboy_run`); the agent searches for what it needs and runs it on demand.
 - **Secure by default** — bcrypt-hashed API keys (shown once), per-key rate limiting, safe mode for destructive operations, and an always-on audit log.
 - **Zero dependencies** — native WordPress APIs, no Composer, no npm, no build step. Works even on hosts without WP-CLI or `shell_exec()`.
 
@@ -28,7 +28,7 @@ Connect any MCP client that speaks Streamable HTTP over a single authenticated e
 
 - **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint` (MCP `2025-06-18` spec)
 - **Two ways to connect** — a Bearer-token HTTP endpoint for terminal agents, or a one-click **OAuth custom connector** for the Claude desktop & web apps (RFC 8414 / 9728 discovery, Dynamic Client Registration, admin consent; off by default)
-- **121 tools behind a gateway** — full CRUD for posts, pages, CPTs, taxonomies, comments, options, users, media, plus database queries, WP-CLI, diagnostics, and conditional tools for popular plugins — surfaced through `cowboy_discover` / `cowboy_run` so they don't flood the agent's context
+- **150 tools behind a gateway** — full CRUD for posts, pages, CPTs, taxonomies, comments, options, users, media, and navigation menus, plus WP-CLI, database health checks, diagnostics, and conditional tools for popular plugins — surfaced through `cowboy_discover` / `cowboy_run` so they don't flood the agent's context
 - **17 read-only resources**, **4 resource templates**, and **8 workflow prompts** with argument auto-completion
 - **Secure by default** — bcrypt-hashed API keys, per-key rate limiting, safe mode for destructive operations, and an always-on audit log
 - **Zero dependencies** — no Composer, no npm, no build step, no CDN. Native WordPress APIs, so it works even on hosts without WP-CLI or `shell_exec()`.
@@ -96,7 +96,7 @@ Core tools are always available; plugin-integration tools register only when the
 
 | Domain | Tools | Examples |
 |---|---:|---|
-| **Core** | 42 | posts/pages/CPT CRUD, taxonomies, comments, plugins, themes, options, users, media, DB query/write, WP-CLI, search-replace, site info, site health, 9 diagnostics, batch execution, audit log |
+| **Core** | 71 | posts/pages/CPT CRUD, taxonomies, comments, nav menus, plugins, themes, options, users & roles, media library, DB health checks, WP-CLI, search-replace, site info, site health, 10 diagnostics, undo journal & checkpoints, batch execution, audit log |
 | **WooCommerce** | 40 | products & variations, orders & refunds, customers, coupons, tax/shipping/gateway settings, sales reports |
 | **Wordfence** | 17 | scans, IP/country blocks, firewall, live traffic, activity log, settings |
 | **ACF** | 9 | field groups, field CRUD, repeater operations |
@@ -104,7 +104,7 @@ Core tools are always available; plugin-integration tools register only when the
 | **Cache** | 4 | provider detect, flush, preload, settings (WP Rocket / LiteSpeed / W3TC) |
 | **SEO** | 1 | provider detection (Yoast / Rank Math) |
 | **Forms** | 1 | provider detection (WPForms / Gravity Forms / CF7) |
-| **Total** | **121** | with every integration active |
+| **Total** | **150** | with every integration active |
 
 ### Resources
 

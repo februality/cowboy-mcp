@@ -3,6 +3,14 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= X.Y.Z =
+* New: user management - list, read, create, update, and delete users, including role changes.
+* New: navigation menus - create, rename, assign theme locations, and set menu items as a nested tree.
+* New: media library - list attachments with a filter for images missing alt text, edit titles, captions, and alt text, and delete attachments.
+* New: deleted media is recoverable - an attachment's files are moved aside instead of destroyed, so the deletion can be undone from the Activity tab, and featured-image and site-logo links are restored with it.
+* Security: granting an administrator-level role, setting a password, or changing a privileged user's email now requires Power mode.
+* Security: you can never change your own role, password, or email through the API, and the last administrator can be neither deleted nor demoted.
+
 = 1.6.0 =
 * New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) - pure PHP, no WP-CLI or shell access needed
 * New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once - with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks

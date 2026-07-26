@@ -16,7 +16,7 @@ MCP server for Claude, ChatGPT & Gemini. Vibe code your site, run WooCommerce, f
 
 You type what you want in plain English, and your AI does the real work inside WordPress for you - no menus to hunt through, no code to write.
 
-* 💬 **Do everything by chat** - create and edit posts and pages, run your WooCommerce shop, upload media, change settings, and fix errors when they crop up.
+* 💬 **Do everything by chat** - create and edit posts and pages, run your WooCommerce shop, manage users and menus, tidy the media library, change settings, and fix errors when they crop up.
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
 * 🔄 **Updates plugins & themes safely** - backup first, health check after, one-command undo if anything breaks.
 * 🛡️ **Safe by default** - safe mode confirms before anything destructive, you can preview any change before it runs, and every action is written to an audit log.
@@ -32,7 +32,8 @@ Setup guides, the full capability list, and the security model live at [cowboymc
 
 = What you can do with it =
 
-* **Manage content by chat** - draft, edit, schedule, and publish posts and pages; upload media; sort categories and tags.
+* **Manage content by chat** - draft, edit, schedule, and publish posts and pages; upload media; sort categories and tags; build navigation menus.
+* **Run the back office** - add and edit users, change roles, and tidy the media library: find every image missing alt text and fix it in one go. Deleted media is recoverable, and the site can never be left without an administrator.
 * **Run your store** - update WooCommerce products, prices, orders, and inventory in bulk.
 * **Fix things that break** - read error logs, test emails and HTTP requests, inspect hooks and REST routes, and repair database tables. No SSH required.
 * **Do the developer stuff** - run WP-CLI commands, edit files in `wp-content`, and take site snapshots before big changes.
