@@ -22,6 +22,80 @@ function cowboy_mcp_format_attachment( WP_Post $p ): array {
     ];
 }
 
+/**
+ * Every file belonging to an attachment, as paths relative to the uploads basedir.
+ * Covers the (possibly -scaled) primary file, every generated size, and the
+ * pre-scaling original — miss the last one and undo restores thumbnails with no
+ * source, which nobody notices until they try to re-crop.
+ */
+function cowboy_mcp_media_file_set( int $attachment_id ): array {
+    $base = wp_upload_dir()['basedir'] ?? '';
+    if ( $base === '' ) {
+        return [];
+    }
+    $relative = [];
+
+    $file = get_attached_file( $attachment_id );
+    if ( is_string( $file ) && $file !== '' && str_starts_with( $file, $base . '/' ) ) {
+        $relative[] = substr( $file, strlen( $base ) + 1 );
+    }
+
+    $meta = wp_get_attachment_metadata( $attachment_id );
+    if ( is_array( $meta ) ) {
+        $subdir = ! empty( $meta['file'] ) ? ltrim( dirname( $meta['file'] ), './' ) : '';
+        $prefix = ( $subdir !== '' && $subdir !== '.' ) ? $subdir . '/' : '';
+        foreach ( (array) ( $meta['sizes'] ?? [] ) as $size ) {
+            if ( ! empty( $size['file'] ) ) {
+                $relative[] = $prefix . $size['file'];
+            }
+        }
+        if ( ! empty( $meta['original_image'] ) ) {
+            $relative[] = $prefix . $meta['original_image'];
+        }
+    }
+
+    return array_values( array_unique( array_filter( $relative ) ) );
+}
+
+/**
+ * Everywhere an attachment is referenced.
+ *
+ * Captured before deletion and re-applied on undo: wp_delete_attachment() drops
+ * every _thumbnail_id row pointing at the attachment, so without this an undone
+ * deletion returns the image but leaves the posts that used it with no featured
+ * image — a silent half-undo.
+ */
+function cowboy_mcp_media_references( int $attachment_id ): array {
+    global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+    $thumbnail_post_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_thumbnail_id' AND meta_value = %d",
+        $attachment_id
+    ) );
+    return [
+        'thumbnail_post_ids' => array_map( 'intval', (array) $thumbnail_post_ids ),
+        'site_icon'          => (int) get_option( 'site_icon' ) === $attachment_id,
+        'custom_logo'        => (int) get_theme_mod( 'custom_logo' ) === $attachment_id,
+    ];
+}
+
+/** Human-readable summary of cowboy_mcp_media_references(), for warnings. */
+function cowboy_mcp_media_usage( int $attachment_id ): array {
+    $refs    = cowboy_mcp_media_references( $attachment_id );
+    $used_as = [];
+    $count   = count( $refs['thumbnail_post_ids'] );
+    if ( $count > 0 ) {
+        $used_as[] = "featured image of {$count} post(s)";
+    }
+    if ( $refs['site_icon'] ) {
+        $used_as[] = 'the site icon';
+    }
+    if ( $refs['custom_logo'] ) {
+        $used_as[] = 'the site logo';
+    }
+    return $used_as;
+}
+
 return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_upload_media', '[Media] Upload a media file from base64 data or a remote URL.', [
@@ -72,6 +146,16 @@ return [
             'title'           => 'Update Media',
             'readOnlyHint'    => false,
             'destructiveHint' => false,
+            'idempotentHint'  => true,
+            'openWorldHint'   => false,
+        ] ),
+
+        Cowboy_MCP_Tools::tool( 'wp_delete_media', '[Media] Delete an attachment. Its files are moved to a recoverable trash area so the deletion can be undone until the undo journal is pruned.', [
+            'attachment_id' => [ 'type' => 'integer', 'description' => 'Attachment ID', 'required' => true ],
+        ], [
+            'title'           => 'Delete Media',
+            'readOnlyHint'    => false,
+            'destructiveHint' => true,
             'idempotentHint'  => true,
             'openWorldHint'   => false,
         ] ),
@@ -283,6 +367,94 @@ return [
             }
 
             return [ 'updated' => true ] + cowboy_mcp_format_attachment( get_post( $attachment_id ) );
+        },
+
+        'wp_delete_media' => function ( array $a ): array|WP_Error {
+            if ( ! current_user_can( 'delete_posts' ) ) {
+                return new WP_Error( 'forbidden', 'The authenticated user cannot delete media.' );
+            }
+            $attachment_id = (int) $a['attachment_id'];
+            $post          = get_post( $attachment_id );
+            if ( ! $post || $post->post_type !== 'attachment' ) {
+                return new WP_Error( 'not_found', "Attachment {$attachment_id} not found." );
+            }
+
+            // No dry_run branch here: Cowboy_MCP_Tools::call_tool() intercepts
+            // dry_run before the handler runs. The preview is built in
+            // generate_dry_run_preview(), same as the installer tools.
+            $files   = cowboy_mcp_media_file_set( $attachment_id );
+            $used_as = cowboy_mcp_media_usage( $attachment_id );
+
+            $base  = wp_upload_dir()['basedir'] ?? '';
+            $trash = Cowboy_MCP_Rollback::trash_dir();
+            if ( is_wp_error( $trash ) ) {
+                return $trash;
+            }
+            $target = $trash . '/' . uniqid( 'att' . $attachment_id . '-', false );
+            if ( ! wp_mkdir_p( $target ) ) {
+                return new WP_Error( 'fs_not_writable', 'Could not create the trash directory for this attachment.' );
+            }
+
+            // Capture BEFORE the files move; the journal row is written only after
+            // the delete succeeds, so a half-finished move never leaves a bogus row.
+            $before = [
+                // Columns only: get_post( ARRAY_A ) also returns derived fields that
+                // are not wp_posts columns and would break the restore INSERT.
+                'post'            => Cowboy_MCP_Rollback::post_columns_only( (array) get_post( $attachment_id, ARRAY_A ) ),
+                'meta'            => get_post_meta( $attachment_id ),
+                'attachment_meta' => wp_get_attachment_metadata( $attachment_id ),
+                'references'      => cowboy_mcp_media_references( $attachment_id ),
+                'trash_dir'       => $target,
+                'files'           => [],
+            ];
+
+            $moved = [];
+            foreach ( $files as $rel ) {
+                $from = $base . '/' . $rel;
+                $to   = $target . '/' . $rel;
+                if ( ! is_file( $from ) ) {
+                    continue;
+                }
+                wp_mkdir_p( dirname( $to ) );
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+                if ( ! rename( $from, $to ) ) {
+                    // All-or-nothing: put back whatever moved, touch no database rows.
+                    foreach ( $moved as $done ) {
+                        rename( $target . '/' . $done, $base . '/' . $done ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+                    }
+                    return new WP_Error( 'fs_not_writable', "Could not move {$rel} into the trash directory; nothing was deleted." );
+                }
+                $moved[] = $rel;
+            }
+            $before['files'] = $moved;
+
+            // Files are already aside; wp_delete_attachment tolerates missing files.
+            $deleted = wp_delete_attachment( $attachment_id, true );
+            if ( ! $deleted ) {
+                foreach ( $moved as $done ) {
+                    rename( $target . '/' . $done, $base . '/' . $done ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+                }
+                return new WP_Error( 'delete_failed', "Failed to delete attachment {$attachment_id}." );
+            }
+
+            $change_id = Cowboy_MCP_Rollback::insert_row( [
+                'tool'         => 'wp_delete_media',
+                'action'       => 'delete',
+                'object_type'  => 'media_file',
+                'object_id'    => (string) $attachment_id,
+                'object_label' => $post->post_title !== '' ? $post->post_title : "attachment #{$attachment_id}",
+                'before_state' => $before,
+                'after_hash'   => null,
+            ] );
+
+            return [
+                'deleted'       => true,
+                'attachment_id' => $attachment_id,
+                'title'         => $post->post_title,
+                'files_trashed' => count( $moved ),
+                'used_as'       => $used_as,
+                'change_id'     => $change_id,
+            ];
         },
 
     ],

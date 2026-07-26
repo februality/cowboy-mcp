@@ -148,6 +148,12 @@ class Cowboy_MCP_Rollback {
 			if ( class_exists( 'Cowboy_MCP_Installer' ) && in_array( $tool, Cowboy_MCP_Installer::TOOLS, true ) ) {
 				return null;
 			}
+			// wp_delete_media journals from inside the handler too: the before-state
+			// records the trash directory the handler creates, which does not exist
+			// at dispatch time.
+			if ( $tool === 'wp_delete_media' ) {
+				return null;
+			}
 
 			if ( isset( self::NOT_UNDOABLE[ $tool ] ) ) {
 				$handle = [
@@ -403,6 +409,7 @@ class Cowboy_MCP_Rollback {
 			'theme'  => 'active theme',
 			'user'   => $state['user']['user_login'] ?? ( $id !== null ? "user #{$id}" : null ),
 			'menu'    => $state['menu']['name'] ?? ( $id !== null ? "menu #{$id}" : null ),
+			'media_file' => $state['post']['post_title'] ?? ( $id !== null ? "attachment #{$id}" : null ),
 			'wc_object' => ucfirst( str_replace( ':', ' #', (string) $id ) ),
 			'wf_config' => 'Wordfence settings (' . substr( (string) $id, strlen( 'wfconfig:' ) ) . ')',
 			'wf_block'  => $id !== null ? "Wordfence block #{$id}" : null,
@@ -533,6 +540,11 @@ class Cowboy_MCP_Rollback {
 					'items'     => $items,
 				];
 			}
+
+			case 'media_file':
+				// Journaled by the handler, which owns the trash directory; there is
+				// no meaningful live snapshot of an already-deleted attachment.
+				return null;
 
 			case 'plugin':
 				return [ 'active' => Cowboy_MCP_Compat::is_plugin_active( $id ) ];
@@ -702,6 +714,9 @@ class Cowboy_MCP_Rollback {
 						: new WP_Error( 'undo_failed', "Could not delete attachment #{$id}." );
 				}
 				return self::restore_post( (int) $id, $state );
+
+			case 'media_file':
+				return self::restore_media_file( (int) $id, $state );
 
 			case 'user':
 				return self::restore_user( (int) $id, $state );
@@ -987,6 +1002,102 @@ class Cowboy_MCP_Rollback {
 
 	/** Recreate a deleted user with the original ID + all usermeta. */
 	/**
+	 * Real columns of {$wpdb->posts}. get_post( …, ARRAY_A ) also returns derived
+	 * fields (filter, ancestors, page_template, post_category, tags_input) that are
+	 * NOT columns, so a raw $wpdb->insert() of that array fails with
+	 * "Unknown column 'filter'". Capture and restore both filter through this.
+	 */
+	public const POST_COLUMNS = [
+		'ID', 'post_author', 'post_date', 'post_date_gmt', 'post_content', 'post_title',
+		'post_excerpt', 'post_status', 'comment_status', 'ping_status', 'post_password',
+		'post_name', 'to_ping', 'pinged', 'post_modified', 'post_modified_gmt',
+		'post_content_filtered', 'post_parent', 'guid', 'menu_order', 'post_type',
+		'post_mime_type', 'comment_count',
+	];
+
+	/** Reduce a get_post( ARRAY_A ) array to insertable wp_posts columns. */
+	public static function post_columns_only( array $post ): array {
+		return array_intersect_key( $post, array_flip( self::POST_COLUMNS ) );
+	}
+
+	/** Move a deleted attachment's files back and reinsert its post row. */
+	private static function restore_media_file( int $attachment_id, ?array $state ): bool|WP_Error {
+		global $wpdb;
+		if ( $state === null ) {
+			return new WP_Error( 'undo_unsupported', 'No captured attachment state.' );
+		}
+		if ( get_post( $attachment_id ) ) {
+			return new WP_Error( 'undo_conflict', "Post #{$attachment_id} already exists; cannot restore the attachment over it." );
+		}
+
+		$base  = wp_upload_dir()['basedir'] ?? '';
+		$trash = (string) ( $state['trash_dir'] ?? '' );
+		$treal = $trash !== '' ? realpath( $trash ) : false;
+		if ( $base === '' || $treal === false ) {
+			return new WP_Error( 'undo_failed', 'The trashed files for this attachment are no longer on disk (pruned or removed).' );
+		}
+
+		$moved = [];
+		foreach ( (array) ( $state['files'] ?? [] ) as $rel ) {
+			$from = $treal . '/' . $rel;
+			$to   = $base . '/' . $rel;
+			if ( ! is_file( $from ) ) {
+				continue;
+			}
+			if ( file_exists( $to ) ) {
+				// Roll back the moves already done so undo is all-or-nothing.
+				foreach ( $moved as list( $undo_from, $undo_to ) ) {
+					rename( $undo_to, $undo_from ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+				}
+				return new WP_Error( 'undo_conflict', "A file already exists at {$rel}; refusing to overwrite it." );
+			}
+			wp_mkdir_p( dirname( $to ) );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+			if ( ! rename( $from, $to ) ) {
+				foreach ( $moved as list( $undo_from, $undo_to ) ) {
+					rename( $undo_to, $undo_from ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+				}
+				return new WP_Error( 'undo_failed', "Could not move {$rel} back into the uploads directory." );
+			}
+			$moved[] = [ $from, $to ];
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		if ( ! $wpdb->insert( $wpdb->posts, self::post_columns_only( (array) $state['post'] ) ) ) {
+			// Put the files back in the trash so the undo is all-or-nothing rather
+			// than leaving orphaned files in uploads with no attachment row.
+			foreach ( array_reverse( $moved ) as list( $trash_path, $live_path ) ) {
+				rename( $live_path, $trash_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+			}
+			return new WP_Error( 'undo_failed', "Could not reinsert attachment #{$attachment_id}." );
+		}
+		foreach ( (array) ( $state['meta'] ?? [] ) as $key => $values ) {
+			foreach ( (array) $values as $value ) {
+				add_post_meta( $attachment_id, $key, wp_slash( maybe_unserialize( $value ) ) );
+			}
+		}
+
+		// Re-link the references wp_delete_attachment() tore down. Without this the
+		// image comes back but every post that used it as a featured image stays
+		// blank, which reads as a successful undo while the site is still wrong.
+		$refs = (array) ( $state['references'] ?? [] );
+		foreach ( (array) ( $refs['thumbnail_post_ids'] ?? [] ) as $post_id ) {
+			if ( get_post( (int) $post_id ) ) {
+				update_post_meta( (int) $post_id, '_thumbnail_id', $attachment_id );
+			}
+		}
+		if ( ! empty( $refs['site_icon'] ) ) {
+			update_option( 'site_icon', $attachment_id );
+		}
+		if ( ! empty( $refs['custom_logo'] ) ) {
+			set_theme_mod( 'custom_logo', $attachment_id );
+		}
+
+		clean_post_cache( $attachment_id );
+		return true;
+	}
+
+	/**
 	 * Restore a classic nav menu. Null state deletes it (undo of a create).
 	 * A missing menu is re-created, which yields a NEW term_id — the same
 	 * constraint restore_wc_object() carries, surfaced in undo()'s note.
@@ -1245,6 +1356,11 @@ class Cowboy_MCP_Rollback {
 			: self::snapshot( $type, $id );
 		$redo_supported = ! ( $type === 'media' && $redo_action === 'delete' );
 		$redo_reason    = 'Re-creating a deleted attachment is not supported.';
+		if ( $type === 'media_file' ) {
+			// Redo would have to re-trash every file; call wp_delete_media again instead.
+			$redo_supported = false;
+			$redo_reason    = 'Re-deleting a restored attachment is not journaled; call wp_delete_media again.';
+		}
 		if ( in_array( $type, [ 'plugin_files', 'theme_files' ], true ) && $pre_undo !== null ) {
 			// Redo would need the removed version's bytes, which are not re-zipped
 			// on undo; only "remove the package again" redos are journaled.
@@ -1328,6 +1444,50 @@ class Cowboy_MCP_Rollback {
 			return new WP_Error( 'not_found', "No active journal entries for batch '{$batch_id}'." );
 		}
 		return self::undo_many( array_map( 'intval', $ids ), $force, $actor );
+	}
+
+	/**
+	 * Guarded media-trash dir (mirrors Cowboy_MCP_Installer::backups_dir()).
+	 * Deleted attachments' files are moved here so wp_delete_media stays undoable
+	 * without base64-ing megabytes of image data into the journal blob.
+	 */
+	public static function trash_dir(): string|WP_Error {
+		$base = wp_upload_dir()['basedir'] ?? '';
+		if ( $base === '' ) {
+			return new WP_Error( 'fs_not_writable', 'Uploads directory unavailable.' );
+		}
+		$dir = $base . '/cowboy-mcp/trash';
+		if ( ! is_dir( $dir ) && ! wp_mkdir_p( $dir ) ) {
+			return new WP_Error( 'fs_not_writable', 'Could not create the media trash directory.' );
+		}
+		if ( ! file_exists( $dir . '/.htaccess' ) ) {
+			file_put_contents( $dir . '/.htaccess', "Require all denied\nDeny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		}
+		if ( ! file_exists( $dir . '/index.php' ) ) {
+			file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		}
+		return $dir;
+	}
+
+	/**
+	 * Recursively delete $dir, but ONLY if it resolves inside $must_be_inside.
+	 * The containment check mirrors prune()'s backup-zip guard: realpath first, so
+	 * a symlinked or crafted stored path can never escape our own directory.
+	 */
+	public static function delete_tree( string $dir, string $must_be_inside ): void {
+		$real   = realpath( $dir );
+		$parent = realpath( $must_be_inside );
+		if ( $real === false || $parent === false || ! str_starts_with( $real, $parent . '/' ) ) {
+			return;
+		}
+		foreach ( glob( $real . '/*' ) ?: [] as $item ) {
+			if ( is_dir( $item ) ) {
+				self::delete_tree( $item, $parent );
+			} elseif ( is_file( $item ) ) {
+				wp_delete_file( $item );
+			}
+		}
+		@rmdir( $real ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
 	}
 
 	private static function table(): string {

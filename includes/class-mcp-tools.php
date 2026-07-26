@@ -491,6 +491,27 @@ class Cowboy_MCP_Tools {
         if ( class_exists( 'Cowboy_MCP_Installer' ) && in_array( $name, Cowboy_MCP_Installer::TOOLS, true ) ) {
             $preview['plan'] = Cowboy_MCP_Installer::dry_run_plan( $name, $filtered_args );
         }
+        // wp_delete_media: name the exact files that would be moved aside, and
+        // anywhere the attachment is still referenced — the generic parameter echo
+        // cannot tell you that deleting this image blanks a featured image.
+        if ( $name === 'wp_delete_media' ) {
+            self::boot_domains();
+            $attachment_id = (int) ( $filtered_args['attachment_id'] ?? 0 );
+            if ( $attachment_id > 0 && function_exists( 'cowboy_mcp_media_file_set' ) ) {
+                $post    = get_post( $attachment_id );
+                $exists  = $post && $post->post_type === 'attachment';
+                $used_as = $exists ? cowboy_mcp_media_usage( $attachment_id ) : [];
+                $preview['plan'] = [
+                    'attachment_id' => $attachment_id,
+                    'exists'        => $exists,
+                    'title'         => $exists ? $post->post_title : null,
+                    'files'         => $exists ? cowboy_mcp_media_file_set( $attachment_id ) : [],
+                    'used_as'       => $used_as,
+                    'warning'       => $used_as ? 'This attachment is still referenced: ' . implode( '; ', $used_as ) : null,
+                    'recoverable'   => 'Files are moved to uploads/cowboy-mcp/trash and can be restored with wp_undo_change until the undo journal is pruned.',
+                ];
+            }
+        }
 
         return [
             'content' => [[ 'type' => 'text', 'text' => wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ]],
