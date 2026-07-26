@@ -84,7 +84,7 @@ class Cowboy_MCP_Tools {
         'files'          => 'read, write, list, delete files in wp-content',
         'database'       => 'raw SQL queries and writes (with safety blocklists)',
         'system'         => 'site info, WP-CLI, search-replace, site health',
-        'users'          => 'delete users (with self-delete protection)',
+        'users'          => 'list, read, create, update, and delete users, including role changes (with self-protection and privileged-role gating)',
         'media'          => 'upload media (with SSRF protection)',
         'batch'          => 'multi-tool sequencing, audit log retrieval',
         'rollback'       => 'undo changes from the journal, create/list/restore/delete database checkpoints',
