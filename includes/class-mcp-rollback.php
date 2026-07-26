@@ -72,6 +72,7 @@ class Cowboy_MCP_Rollback {
 		'wp_deactivate_plugin' => [ 'type' => 'plugin', 'action' => 'toggle', 'id_arg' => 'plugin_file' ],
 		'wp_switch_theme'      => [ 'type' => 'theme', 'action' => 'toggle', 'static_id' => 'active' ],
 		'wp_upload_media'      => [ 'type' => 'media', 'action' => 'create', 'result_id' => 'attachment_id' ],
+		'wp_update_media'      => [ 'type' => 'media', 'action' => 'update', 'id_arg' => 'attachment_id' ],
 		'wp_create_user'       => [ 'type' => 'user', 'action' => 'create', 'result_id' => 'user_id' ],
 		'wp_update_user'       => [ 'type' => 'user', 'action' => 'update', 'id_arg' => 'user_id' ],
 		'wp_delete_user'       => [ 'type' => 'user', 'action' => 'delete', 'id_arg' => 'user_id' ],
@@ -692,12 +693,15 @@ class Cowboy_MCP_Rollback {
 				return true;
 
 			case 'media':
+				// Null state = undo of an upload → remove the attachment. Non-null =
+				// undo of a metadata edit; the attachment post row and meta (including
+				// _wp_attachment_image_alt) round-trip through restore_post().
 				if ( $state === null ) {
 					return wp_delete_attachment( (int) $id, true )
 						? true
 						: new WP_Error( 'undo_failed', "Could not delete attachment #{$id}." );
 				}
-				return new WP_Error( 'undo_unsupported', 'Re-creating a deleted attachment is not supported.' );
+				return self::restore_post( (int) $id, $state );
 
 			case 'user':
 				return self::restore_user( (int) $id, $state );
