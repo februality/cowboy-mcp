@@ -185,21 +185,35 @@ function cowboy_mcp_uninstall(): void {
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange
     $wpdb->query( $wpdb->prepare( "DROP TABLE IF EXISTS %i", $checkpoints ) );
 
-    // Remove checkpoint + package-backup files.
+    // Remove checkpoint, package-backup, and trashed-media files.
     $upload_base = wp_upload_dir()['basedir'] ?? '';
-    foreach ( [ '/cowboy-mcp/checkpoints', '/cowboy-mcp/backups' ] as $sub ) {
-        $dir = $upload_base . $sub;
+    $cowboy_root = $upload_base . '/cowboy-mcp';
+
+    // Depth-first: the media trash nests uploads-relative paths under
+    // trash/<uniqid>/YYYY/MM/, so a single-level file sweep would orphan them.
+    $cowboy_mcp_rmtree = static function ( $dir ) use ( &$cowboy_mcp_rmtree ) {
         if ( ! is_dir( $dir ) ) {
-            continue;
+            return;
         }
-        foreach ( array_merge( glob( $dir . '/*' ) ?: [], [ $dir . '/.htaccess', $dir . '/index.php' ] ) as $f ) {
-            if ( is_file( $f ) ) {
-                wp_delete_file( $f );
+        foreach ( glob( $dir . '/*' ) ?: [] as $item ) {
+            if ( is_dir( $item ) ) {
+                $cowboy_mcp_rmtree( $item );
+            } elseif ( is_file( $item ) ) {
+                wp_delete_file( $item );
+            }
+        }
+        foreach ( [ $dir . '/.htaccess', $dir . '/index.php' ] as $hidden ) {
+            if ( is_file( $hidden ) ) {
+                wp_delete_file( $hidden );
             }
         }
         @rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+    };
+
+    foreach ( [ '/checkpoints', '/backups', '/trash' ] as $sub ) {
+        $cowboy_mcp_rmtree( $cowboy_root . $sub );
     }
-    @rmdir( $upload_base . '/cowboy-mcp' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+    $cowboy_mcp_rmtree( $cowboy_root );
 
     cowboy_mcp_cleanup_transients( true );
 }

@@ -1717,6 +1717,20 @@ class Cowboy_MCP_Rollback {
 				wp_delete_file( $zreal );
 			}
 		}
+		// media_file rows own a trash directory on disk; delete it with the row.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$media_blobs = $wpdb->get_col( $wpdb->prepare( "SELECT before_state FROM %i WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY) AND object_type = 'media_file' AND before_state IS NOT NULL", self::table(), $days ) );
+		$trash_root  = self::trash_dir();
+		if ( ! is_wp_error( $trash_root ) ) {
+			foreach ( $media_blobs as $blob ) {
+				$state = json_decode( (string) @gzuncompress( (string) $blob ), true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				$dir   = is_array( $state ) ? (string) ( $state['trash_dir'] ?? '' ) : '';
+				if ( $dir !== '' ) {
+					self::delete_tree( $dir, $trash_root );
+				}
+			}
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( $wpdb->prepare(
 			'DELETE FROM %i WHERE timestamp < DATE_SUB(NOW(), INTERVAL %d DAY)',
