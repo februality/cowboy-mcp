@@ -226,12 +226,44 @@ return [
                 'version'  => [ 'type' => 'string' ],
             ],
         ] ),
+        Cowboy_MCP_Tools::tool( 'wp_seo_get_meta', '[SEO] Read a post\'s SEO meta: title, description, focus keyword, robots, canonical URL, OpenGraph/Twitter overrides, cornerstone flag, plus provider scores. Unified across Yoast SEO and Rank Math (Yoast wins if both are active). Text fields are null when no per-post override is set.', [
+            'post_id' => [ 'type' => 'integer', 'description' => 'Post ID', 'required' => true ],
+        ], [
+            'title'           => 'Get SEO Meta',
+            'readOnlyHint'    => true,
+            'destructiveHint' => false,
+            'idempotentHint'  => true,
+            'openWorldHint'   => false,
+        ], [
+            'type' => 'object',
+            'properties' => [
+                'provider' => [ 'type' => 'string' ],
+                'post_id'  => [ 'type' => 'integer' ],
+                'fields'   => [ 'type' => 'object' ],
+                'scores'   => [ 'type' => 'object' ],
+            ],
+        ] ),
     ],
 
     'handlers' => [
         'wp_seo_get_provider' => function ( array $a ): array {
             $provider = cowboy_mcp_seo_get_provider();
             return $provider ?? [ 'provider' => 'none', 'version' => null ];
+        },
+        'wp_seo_get_meta' => function ( array $a ) {
+            if ( ! current_user_can( 'edit_posts' ) ) {
+                return new WP_Error( 'forbidden', 'The authenticated user cannot read post SEO meta.' );
+            }
+            $post_id = (int) $a['post_id'];
+            if ( ! get_post( $post_id ) ) {
+                return new WP_Error( 'not_found', "Post {$post_id} not found." );
+            }
+            return [
+                'provider' => cowboy_mcp_seo_get_provider()['provider'],
+                'post_id'  => $post_id,
+                'fields'   => cowboy_mcp_seo_read_fields( $post_id ),
+                'scores'   => cowboy_mcp_seo_read_scores( $post_id ),
+            ];
         },
     ],
 ];
