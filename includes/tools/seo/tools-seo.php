@@ -243,6 +243,38 @@ return [
                 'scores'   => [ 'type' => 'object' ],
             ],
         ] ),
+        Cowboy_MCP_Tools::tool( 'wp_seo_update_meta', '[SEO] Update a post\'s SEO meta. Only provided fields change. Empty string (text/URL fields) or false (booleans) clears the per-post override so the provider template resumes. Works with Yoast SEO and Rank Math; Rank Math focus_keyword accepts comma-separated multiple keywords. Undoable via wp_undo_change.', [
+            'post_id'             => [ 'type' => 'integer', 'description' => 'Post ID', 'required' => true ],
+            'title'               => [ 'type' => 'string',  'description' => 'SEO title override; provider template variables allowed ("" clears)' ],
+            'description'         => [ 'type' => 'string',  'description' => 'Meta description ("" clears)' ],
+            'focus_keyword'       => [ 'type' => 'string',  'description' => 'Focus keyword; comma-separated multiples on Rank Math ("" clears)' ],
+            'noindex'             => [ 'type' => 'boolean', 'description' => 'Exclude from search engines (false restores the site default)' ],
+            'nofollow'            => [ 'type' => 'boolean', 'description' => 'Mark outgoing links nofollow (false restores the site default)' ],
+            'canonical_url'       => [ 'type' => 'string',  'description' => 'Canonical URL override ("" clears)' ],
+            'og_title'            => [ 'type' => 'string',  'description' => 'OpenGraph/Facebook title override ("" clears)' ],
+            'og_description'      => [ 'type' => 'string',  'description' => 'OpenGraph/Facebook description override ("" clears)' ],
+            'og_image'            => [ 'type' => 'string',  'description' => 'OpenGraph/Facebook image URL ("" clears)' ],
+            'twitter_title'       => [ 'type' => 'string',  'description' => 'X/Twitter title override ("" clears)' ],
+            'twitter_description' => [ 'type' => 'string',  'description' => 'X/Twitter description override ("" clears)' ],
+            'twitter_image'       => [ 'type' => 'string',  'description' => 'X/Twitter image URL ("" clears)' ],
+            'cornerstone'         => [ 'type' => 'boolean', 'description' => 'Mark as cornerstone (Yoast) / pillar (Rank Math) content' ],
+        ], [
+            'title'           => 'Update SEO Meta',
+            'readOnlyHint'    => false,
+            'destructiveHint' => false,
+            'idempotentHint'  => true,
+            'openWorldHint'   => false,
+        ], [
+            'type' => 'object',
+            'properties' => [
+                'updated'                  => [ 'type' => 'boolean' ],
+                'provider_cache_refreshed' => [ 'type' => 'boolean' ],
+                'provider'                 => [ 'type' => 'string' ],
+                'post_id'                  => [ 'type' => 'integer' ],
+                'fields'                   => [ 'type' => 'object' ],
+                'scores'                   => [ 'type' => 'object' ],
+            ],
+        ] ),
     ],
 
     'handlers' => [
@@ -263,6 +295,56 @@ return [
                 'post_id'  => $post_id,
                 'fields'   => cowboy_mcp_seo_read_fields( $post_id ),
                 'scores'   => cowboy_mcp_seo_read_scores( $post_id ),
+            ];
+        },
+        'wp_seo_update_meta' => function ( array $a ) {
+            $post_id = (int) $a['post_id'];
+            if ( ! current_user_can( 'edit_post', $post_id ) ) {
+                return new WP_Error( 'forbidden', 'The authenticated user cannot edit this post.' );
+            }
+            if ( ! get_post( $post_id ) ) {
+                return new WP_Error( 'not_found', "Post {$post_id} not found." );
+            }
+
+            $map      = cowboy_mcp_seo_field_map();
+            $provided = array_intersect_key( $a, $map );
+            if ( ! $provided ) {
+                return new WP_Error( 'invalid_params', 'Provide at least one SEO field to update.' );
+            }
+
+            // Validate everything before writing anything: an error after a
+            // partial write would discard the undo journal entry while leaving
+            // real changes behind.
+            $writes = [];
+            foreach ( $provided as $field => $value ) {
+                $type = $map[ $field ]['type'] ?? 'text';
+                if ( $type === 'flag' || $type === 'rm_robots' ) {
+                    $writes[ $field ] = (bool) $value;
+                } elseif ( $type === 'url' ) {
+                    $value = trim( (string) $value );
+                    if ( $value !== '' ) {
+                        $value = esc_url_raw( $value );
+                        if ( $value === '' ) {
+                            return new WP_Error( 'invalid_params', "{$field} is not a valid URL." );
+                        }
+                    }
+                    $writes[ $field ] = $value;
+                } else {
+                    $writes[ $field ] = sanitize_text_field( (string) $value );
+                }
+            }
+
+            foreach ( $writes as $field => $value ) {
+                cowboy_mcp_seo_write_field( $post_id, $field, $value );
+            }
+
+            return [
+                'updated'                  => true,
+                'provider_cache_refreshed' => cowboy_mcp_seo_refresh_provider_cache( $post_id ),
+                'provider'                 => cowboy_mcp_seo_get_provider()['provider'],
+                'post_id'                  => $post_id,
+                'fields'                   => cowboy_mcp_seo_read_fields( $post_id ),
+                'scores'                   => cowboy_mcp_seo_read_scores( $post_id ),
             ];
         },
     ],

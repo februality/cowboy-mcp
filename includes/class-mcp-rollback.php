@@ -46,6 +46,7 @@ class Cowboy_MCP_Rollback {
 		'wp_delete_post'        => [ 'type' => 'post', 'action' => 'delete', 'id_arg' => 'post_id' ],
 		'wp_elementor_update_template'      => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'template_id' ],
 		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
+		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
 		'wp_acf_update_field'   => [ 'type' => 'acf_value', 'action' => 'update' ],
 		'wp_acf_delete_field'   => [ 'type' => 'acf_value', 'action' => 'delete' ],
 		'wp_acf_add_row'        => [ 'type' => 'acf_value', 'action' => 'update' ],
