@@ -160,6 +160,58 @@ class Cowboy_MCP_Security {
         return $meta;
     }
 
+    /* ── Role / user privilege ─────────────────────────────── */
+
+    /**
+     * Capabilities that make a role "privileged": settings control, code
+     * execution, or the ability to hand either one to somebody else. Granting any
+     * of these creates access that SURVIVES API-key revocation, so writes that
+     * grant them are gated behind Power mode.
+     *
+     * The user-management caps are included because a role that can promote users
+     * can escalate an account to administrator later — persistence at one remove.
+     * Verified on WP 7.0.2 + WooCommerce 10.9.4 that this costs nothing in
+     * practice: administrator is the only stock role holding them, and it is
+     * already privileged via manage_options. (WooCommerce's shop_manager carries
+     * none of them; older WC releases did, which is why this list once excluded
+     * them.)
+     */
+    private const PRIVILEGED_CAPS = [
+        'manage_options',
+        'install_plugins', 'edit_plugins', 'activate_plugins', 'update_plugins',
+        'install_themes', 'edit_themes', 'update_themes',
+        'edit_files',
+        'edit_users', 'promote_users', 'delete_users',
+    ];
+
+    /** Whether granting this role hands over settings or code-execution control. */
+    public static function role_is_privileged( string $role ): bool {
+        $role_obj = get_role( $role );
+        if ( ! $role_obj ) {
+            return false;
+        }
+        foreach ( self::PRIVILEGED_CAPS as $cap ) {
+            if ( ! empty( $role_obj->capabilities[ $cap ] ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether an existing user currently holds settings or code-execution control. */
+    public static function user_is_privileged( int|WP_User $user ): bool {
+        $user_obj = $user instanceof WP_User ? $user : get_userdata( (int) $user );
+        if ( ! $user_obj || ! $user_obj->exists() ) {
+            return false;
+        }
+        foreach ( self::PRIVILEGED_CAPS as $cap ) {
+            if ( user_can( $user_obj, $cap ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /* ── SQL safety ────────────────────────────────────────── */
 
     /**
