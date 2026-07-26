@@ -1047,15 +1047,14 @@ class Cowboy_MCP_Rollback {
 			if ( file_exists( $to ) ) {
 				// Roll back the moves already done so undo is all-or-nothing.
 				foreach ( $moved as list( $undo_from, $undo_to ) ) {
-					rename( $undo_to, $undo_from ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+					@rename( $undo_to, $undo_from ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- rollback of a partial restore; WP_Filesystem requires wp-admin includes (hard invariant)
 				}
 				return new WP_Error( 'undo_conflict', "A file already exists at {$rel}; refusing to overwrite it." );
 			}
 			wp_mkdir_p( dirname( $to ) );
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
-			if ( ! rename( $from, $to ) ) {
+			if ( ! @rename( $from, $to ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- atomic move out of the trash dir; WP_Filesystem requires wp-admin includes (hard invariant)
 				foreach ( $moved as list( $undo_from, $undo_to ) ) {
-					rename( $undo_to, $undo_from ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+					@rename( $undo_to, $undo_from ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- rollback of a partial restore
 				}
 				return new WP_Error( 'undo_failed', "Could not move {$rel} back into the uploads directory." );
 			}
@@ -1067,7 +1066,7 @@ class Cowboy_MCP_Rollback {
 			// Put the files back in the trash so the undo is all-or-nothing rather
 			// than leaving orphaned files in uploads with no attachment row.
 			foreach ( array_reverse( $moved ) as list( $trash_path, $live_path ) ) {
-				rename( $live_path, $trash_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+				@rename( $live_path, $trash_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- re-trash after a failed row insert so undo is all-or-nothing
 			}
 			return new WP_Error( 'undo_failed', "Could not reinsert attachment #{$attachment_id}." );
 		}

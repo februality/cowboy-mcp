@@ -416,11 +416,10 @@ return [
                     continue;
                 }
                 wp_mkdir_p( dirname( $to ) );
-                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
-                if ( ! rename( $from, $to ) ) {
+                if ( ! @rename( $from, $to ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- atomic move aside; WP_Filesystem requires wp-admin includes (hard invariant)
                     // All-or-nothing: put back whatever moved, touch no database rows.
                     foreach ( $moved as $done ) {
-                        rename( $target . '/' . $done, $base . '/' . $done ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+                        @rename( $target . '/' . $done, $base . '/' . $done ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- rollback of a partial move
                     }
                     return new WP_Error( 'fs_not_writable', "Could not move {$rel} into the trash directory; nothing was deleted." );
                 }
@@ -432,7 +431,7 @@ return [
             $deleted = wp_delete_attachment( $attachment_id, true );
             if ( ! $deleted ) {
                 foreach ( $moved as $done ) {
-                    rename( $target . '/' . $done, $base . '/' . $done ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rename
+                    @rename( $target . '/' . $done, $base . '/' . $done ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.rename_rename -- restore files after a failed delete
                 }
                 return new WP_Error( 'delete_failed', "Failed to delete attachment {$attachment_id}." );
             }
