@@ -63,6 +63,11 @@ class Cowboy_MCP_Rollback {
 		'wp_delete_comment'   => [ 'type' => 'comment', 'action' => 'delete', 'id_arg' => 'comment_id' ],
 		'wp_woo_add_order_note' => [ 'type' => 'comment', 'action' => 'create', 'result_id' => 'note_id' ],
 
+		'wp_create_menu'      => [ 'type' => 'menu', 'action' => 'create', 'result_id' => 'menu_id' ],
+		'wp_update_menu'      => [ 'type' => 'menu', 'action' => 'update', 'id_arg' => 'menu_id' ],
+		'wp_delete_menu'      => [ 'type' => 'menu', 'action' => 'delete', 'id_arg' => 'menu_id' ],
+		'wp_set_menu_items'   => [ 'type' => 'menu', 'action' => 'update', 'id_arg' => 'menu_id' ],
+
 		'wp_activate_plugin'   => [ 'type' => 'plugin', 'action' => 'toggle', 'id_arg' => 'plugin_file' ],
 		'wp_deactivate_plugin' => [ 'type' => 'plugin', 'action' => 'toggle', 'id_arg' => 'plugin_file' ],
 		'wp_switch_theme'      => [ 'type' => 'theme', 'action' => 'toggle', 'static_id' => 'active' ],
@@ -396,6 +401,7 @@ class Cowboy_MCP_Rollback {
 			'plugin' => $id,
 			'theme'  => 'active theme',
 			'user'   => $state['user']['user_login'] ?? ( $id !== null ? "user #{$id}" : null ),
+			'menu'    => $state['menu']['name'] ?? ( $id !== null ? "menu #{$id}" : null ),
 			'wc_object' => ucfirst( str_replace( ':', ' #', (string) $id ) ),
 			'wf_config' => 'Wordfence settings (' . substr( (string) $id, strlen( 'wfconfig:' ) ) . ')',
 			'wf_block'  => $id !== null ? "Wordfence block #{$id}" : null,
@@ -488,6 +494,43 @@ class Cowboy_MCP_Rollback {
 					return null;
 				}
 				return [ 'comment' => $c, 'meta' => get_comment_meta( (int) $id ) ];
+			}
+
+			case 'menu': {
+				$menu = wp_get_nav_menu_object( (int) $id );
+				if ( ! $menu ) {
+					return null;
+				}
+				$items = [];
+				foreach ( wp_get_nav_menu_items( $menu->term_id ) ?: [] as $item ) {
+					$items[] = [
+						'db_id'       => (int) $item->db_id,
+						'parent'      => (int) $item->menu_item_parent,
+						'order'       => (int) $item->menu_order,
+						'title'       => $item->title,
+						'url'         => $item->url,
+						'type'        => $item->type,
+						'object'      => $item->object,
+						'object_id'   => (int) $item->object_id,
+						'target'      => $item->target,
+						'classes'     => array_values( array_filter( (array) $item->classes ) ),
+						'description' => $item->description,
+						'attr_title'  => $item->attr_title,
+						'xfn'         => $item->xfn,
+					];
+				}
+				$locations = [];
+				foreach ( get_nav_menu_locations() as $location => $held_by ) {
+					if ( (int) $held_by === (int) $menu->term_id ) {
+						$locations[] = $location;
+					}
+				}
+				sort( $locations );
+				return [
+					'menu'      => [ 'name' => $menu->name, 'slug' => $menu->slug, 'description' => $menu->description ],
+					'locations' => $locations,
+					'items'     => $items,
+				];
 			}
 
 			case 'plugin':
@@ -626,6 +669,9 @@ class Cowboy_MCP_Rollback {
 
 			case 'comment':
 				return self::restore_comment( (int) $id, $state );
+
+			case 'menu':
+				return self::restore_menu( (int) $id, $state );
 
 			case 'plugin':
 				if ( $state === null ) {
@@ -936,6 +982,90 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Recreate a deleted user with the original ID + all usermeta. */
+	/**
+	 * Restore a classic nav menu. Null state deletes it (undo of a create).
+	 * A missing menu is re-created, which yields a NEW term_id — the same
+	 * constraint restore_wc_object() carries, surfaced in undo()'s note.
+	 */
+	private static function restore_menu( int $menu_id, ?array $state ): bool|WP_Error {
+		if ( $state === null ) {
+			if ( ! wp_get_nav_menu_object( $menu_id ) ) {
+				return true; // already gone; undo is idempotent
+			}
+			$deleted = wp_delete_nav_menu( $menu_id );
+			if ( is_wp_error( $deleted ) ) {
+				return $deleted;
+			}
+			return $deleted !== false ? true : new WP_Error( 'undo_failed', "Could not delete menu #{$menu_id}." );
+		}
+
+		if ( ! function_exists( 'cowboy_mcp_menu_item_args' ) ) {
+			return new WP_Error( 'undo_unsupported', 'Menu tools are unavailable; cannot restore menu items.' );
+		}
+
+		$target_id = $menu_id;
+		if ( ! wp_get_nav_menu_object( $menu_id ) ) {
+			$created = wp_create_nav_menu( $state['menu']['name'] );
+			if ( is_wp_error( $created ) ) {
+				return $created;
+			}
+			$target_id = (int) $created;
+		} else {
+			$updated = wp_update_nav_menu_object( $menu_id, [ 'menu-name' => $state['menu']['name'] ] );
+			if ( is_wp_error( $updated ) ) {
+				return $updated;
+			}
+		}
+
+		foreach ( wp_get_nav_menu_items( $target_id ) ?: [] as $existing ) {
+			wp_delete_post( (int) $existing->db_id, true );
+		}
+
+		// Parents must exist before their children, and menu_order does not
+		// guarantee that ordering. Create what we can each pass until no further
+		// progress is possible; anything left over was orphaned.
+		$pending = $state['items'];
+		usort( $pending, static fn( $x, $y ) => $x['order'] <=> $y['order'] );
+		$id_map   = [];
+		$position = 0;
+		$guard    = 0;
+		while ( $pending && $guard++ < 50 ) {
+			$deferred = [];
+			foreach ( $pending as $row ) {
+				$old_parent = (int) $row['parent'];
+				if ( $old_parent !== 0 && ! isset( $id_map[ $old_parent ] ) ) {
+					$deferred[] = $row;
+					continue;
+				}
+				$new_id = wp_update_nav_menu_item(
+					$target_id,
+					0,
+					cowboy_mcp_menu_item_args( $row, $old_parent === 0 ? 0 : (int) $id_map[ $old_parent ], ++$position )
+				);
+				if ( ! is_wp_error( $new_id ) ) {
+					$id_map[ (int) $row['db_id'] ] = (int) $new_id;
+				}
+			}
+			if ( count( $deferred ) === count( $pending ) ) {
+				break; // orphaned items reference a parent that never existed
+			}
+			$pending = $deferred;
+		}
+
+		$locations = get_nav_menu_locations();
+		foreach ( $locations as $location => $held_by ) {
+			if ( (int) $held_by === $target_id ) {
+				$locations[ $location ] = 0;
+			}
+		}
+		foreach ( (array) $state['locations'] as $location ) {
+			$locations[ $location ] = $target_id;
+		}
+		set_theme_mod( 'nav_menu_locations', $locations );
+
+		return true;
+	}
+
 	private static function restore_user( int $uid, ?array $state ): bool|WP_Error {
 		global $wpdb;
 
@@ -1146,6 +1276,9 @@ class Cowboy_MCP_Rollback {
 		}
 		if ( $type === 'wc_object' && $row['action'] === 'delete' ) {
 			$note = 'WooCommerce object recreated with a NEW id (original id could not be preserved). Check references.';
+		}
+		if ( $type === 'menu' && $row['action'] === 'delete' ) {
+			$note = 'Menu re-created with a NEW id (the original term_id could not be preserved). Items and theme location assignments were restored; check any hard-coded menu ids.';
 		}
 		if ( in_array( $type, [ 'plugin_files', 'theme_files' ], true ) && $row['action'] === 'update' ) {
 			$note = 'Files restored to the previous version. Database changes made by the update (migrations) are NOT reverted — restore the pre-update checkpoint if the update ran migrations.';
