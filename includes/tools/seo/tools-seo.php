@@ -207,6 +207,41 @@ function cowboy_mcp_seo_refresh_provider_cache( int $post_id ): bool {
     }
 }
 
+/**
+ * Fixed audit rules. A missing custom title is deliberately not an issue —
+ * title templates always render one; description templates rarely produce
+ * good output, so a missing description is. Title length is only judged when
+ * a custom title is set and contains no template variables ('%').
+ */
+function cowboy_mcp_seo_audit_issues( WP_Post $post, array $fields ): array {
+    $issues = [];
+
+    $desc = $fields['description'];
+    if ( $desc === null || $desc === '' ) {
+        $issues[] = [ 'code' => 'missing_description', 'severity' => 'warning', 'message' => 'No meta description set.' ];
+    } else {
+        $len = mb_strlen( $desc );
+        if ( $len > 160 || $len < 50 ) {
+            $issues[] = [ 'code' => 'description_length', 'severity' => 'warning', 'message' => "Meta description is {$len} characters (recommended 50-160)." ];
+        }
+    }
+
+    if ( $fields['focus_keyword'] === null || $fields['focus_keyword'] === '' ) {
+        $issues[] = [ 'code' => 'missing_focus_keyword', 'severity' => 'warning', 'message' => 'No focus keyword set.' ];
+    }
+
+    $title = $fields['title'];
+    if ( $title !== null && strpos( $title, '%' ) === false && mb_strlen( $title ) > 60 ) {
+        $issues[] = [ 'code' => 'title_length', 'severity' => 'warning', 'message' => 'Custom SEO title is ' . mb_strlen( $title ) . ' characters (recommended at most 60).' ];
+    }
+
+    if ( $fields['noindex'] && $post->post_status === 'publish' ) {
+        $issues[] = [ 'code' => 'noindex_on_published', 'severity' => 'notice', 'message' => 'Post is published but set to noindex.' ];
+    }
+
+    return $issues;
+}
+
 /* ================================================================
  *  Tool definitions & handlers
  * ================================================================ */
@@ -273,6 +308,29 @@ return [
                 'post_id'                  => [ 'type' => 'integer' ],
                 'fields'                   => [ 'type' => 'object' ],
                 'scores'                   => [ 'type' => 'object' ],
+            ],
+        ] ),
+        Cowboy_MCP_Tools::tool( 'wp_seo_audit', '[SEO] Audit posts for SEO issues: missing or badly sized meta descriptions, missing focus keywords, over-length custom titles, noindex on published posts. Paginated scan; the summary covers the scanned page only — iterate pages for a full-site audit.', [
+            'post_type'   => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'description' => 'Post types to scan (default: post, page)' ],
+            'post_status' => [ 'type' => 'string',  'description' => 'Post status to scan (default publish)', 'default' => 'publish' ],
+            'only_issues' => [ 'type' => 'boolean', 'description' => 'Return only posts with at least one issue (default true)', 'default' => true ],
+            'per_page'    => [ 'type' => 'integer', 'description' => 'Posts scanned per page, max 100 (default 50)', 'default' => 50, 'minimum' => 1, 'maximum' => 100 ],
+            'page'        => [ 'type' => 'integer', 'description' => 'Page number (default 1)', 'default' => 1, 'minimum' => 1 ],
+        ], [
+            'title'           => 'SEO Audit',
+            'readOnlyHint'    => true,
+            'destructiveHint' => false,
+            'idempotentHint'  => true,
+            'openWorldHint'   => false,
+        ], [
+            'type' => 'object',
+            'properties' => [
+                'posts'    => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
+                'summary'  => [ 'type' => 'object' ],
+                'total'    => [ 'type' => 'integer' ],
+                'pages'    => [ 'type' => 'integer' ],
+                'page'     => [ 'type' => 'integer' ],
+                'per_page' => [ 'type' => 'integer' ],
             ],
         ] ),
     ],
@@ -345,6 +403,55 @@ return [
                 'post_id'                  => $post_id,
                 'fields'                   => cowboy_mcp_seo_read_fields( $post_id ),
                 'scores'                   => cowboy_mcp_seo_read_scores( $post_id ),
+            ];
+        },
+        'wp_seo_audit' => function ( array $a ) {
+            if ( ! current_user_can( 'edit_posts' ) ) {
+                return new WP_Error( 'forbidden', 'The authenticated user cannot audit posts.' );
+            }
+            $per_page = min( max( (int) ( $a['per_page'] ?? 50 ), 1 ), 100 );
+            $page     = max( (int) ( $a['page'] ?? 1 ), 1 );
+            $types    = array_values( array_filter( array_map( 'sanitize_key', (array) ( $a['post_type'] ?? [ 'post', 'page' ] ) ) ) );
+            $status   = sanitize_key( $a['post_status'] ?? 'publish' );
+            $only     = ! isset( $a['only_issues'] ) || ! empty( $a['only_issues'] );
+
+            $query = new WP_Query( [
+                'post_type'      => $types ?: [ 'post', 'page' ],
+                'post_status'    => $status,
+                'posts_per_page' => $per_page,
+                'paged'          => $page,
+                'orderby'        => 'ID',
+                'order'          => 'ASC',
+            ] );
+
+            $posts   = [];
+            $by_code = [];
+            $with    = 0;
+            foreach ( $query->posts as $post ) {
+                $issues = cowboy_mcp_seo_audit_issues( $post, cowboy_mcp_seo_read_fields( $post->ID ) );
+                if ( $issues ) {
+                    $with++;
+                    foreach ( $issues as $issue ) {
+                        $by_code[ $issue['code'] ] = ( $by_code[ $issue['code'] ] ?? 0 ) + 1;
+                    }
+                }
+                if ( $issues || ! $only ) {
+                    $posts[] = [
+                        'post_id' => (int) $post->ID,
+                        'title'   => $post->post_title,
+                        'url'     => get_permalink( $post ),
+                        'issues'  => $issues,
+                    ];
+                }
+            }
+
+            return [
+                'posts'    => $posts,
+                'summary'  => [ 'scanned' => count( $query->posts ), 'with_issues' => $with, 'by_code' => $by_code ],
+                'total'    => (int) $query->found_posts,
+                'pages'    => (int) $query->max_num_pages,
+                'page'     => $page,
+                'per_page' => $per_page,
             ];
         },
     ],
