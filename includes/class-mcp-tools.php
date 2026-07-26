@@ -99,7 +99,7 @@ class Cowboy_MCP_Tools {
         'menus'          => 'list, create, update, and delete classic navigation menus and their items',
         'acf'            => 'ACF field groups, field CRUD, repeater operations',
         'woocommerce'    => 'products, orders, customers, coupons, settings, reports',
-        'seo'            => 'SEO provider detection',
+        'seo'            => 'SEO meta read/write + audit',
         'forms'          => 'form provider detection',
         'cache'          => 'provider detect, flush, preload, settings',
         'elementor'      => 'templates, page content, global styles, widgets',
