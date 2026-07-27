@@ -357,11 +357,11 @@ return [
         },
         'wp_seo_update_meta' => function ( array $a ) {
             $post_id = (int) $a['post_id'];
-            if ( ! current_user_can( 'edit_post', $post_id ) ) {
-                return new WP_Error( 'forbidden', 'The authenticated user cannot edit this post.' );
-            }
             if ( ! get_post( $post_id ) ) {
                 return new WP_Error( 'not_found', "Post {$post_id} not found." );
+            }
+            if ( ! current_user_can( 'edit_post', $post_id ) ) {
+                return new WP_Error( 'forbidden', 'The authenticated user cannot edit this post.' );
             }
 
             $map      = cowboy_mcp_seo_field_map();
@@ -388,7 +388,12 @@ return [
                     }
                     $writes[ $field ] = $value;
                 } else {
-                    $writes[ $field ] = sanitize_text_field( (string) $value );
+                    // sanitize_text_field() would strip the %xx octets inside
+                    // Yoast/Rank Math template variables (%%category%%, %date%);
+                    // keep its other guarantees, skip the octet stripping.
+                    $clean = wp_check_invalid_utf8( (string) $value );
+                    $clean = wp_strip_all_tags( $clean );
+                    $writes[ $field ] = trim( preg_replace( '/[\r\n\t ]+/', ' ', $clean ) );
                 }
             }
 
