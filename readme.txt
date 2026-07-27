@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, chatgpt, ai-agent
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,14 +103,16 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.6.0 =
-* New: install plugins and themes straight from WordPress.org (wp_install_plugin / wp_install_theme) - pure PHP, no WP-CLI or shell access needed
-* New: update plugins and themes (wp_update_plugin / wp_update_theme), one at a time or all at once - with automatic file backup, database checkpoint, and a post-update health check that restores the old version automatically if the site breaks
-* New: delete plugins and themes (wp_delete_plugin / wp_delete_theme) with a backup kept for undo
-* New: wp_list_plugins and wp_list_themes now report available updates (update_available / new_version, optional refresh_updates)
-* New: every install, update, and delete is journaled - wp_undo_change rolls a plugin or theme back to the exact previous version
-* New: "Auto-checkpoint before plugin & theme updates" setting (on by default)
-* Fixed: PHP 8.0/8.1 compatibility - corrected return-type syntax (true|WP_Error) that caused a fatal error on PHP older than 8.2
+= 1.6.1 =
+* New: user management - list, read, create, update, and delete users, including role changes.
+* New: navigation menus - create, rename, assign theme locations, and set menu items as a nested tree.
+* New: media library - list attachments with a filter for images missing alt text, edit titles, captions, and alt text, and delete attachments.
+* New: deleted media is recoverable - an attachment's files are moved aside instead of destroyed, so the deletion can be undone from the Activity tab, and featured-image and site-logo links are restored with it.
+* New: SEO meta management for Yoast SEO and Rank Math - read and update a post's SEO title, meta description, focus keyword, noindex/nofollow, canonical URL, and Facebook/X social overrides through one unified toolset, with template variables like %%category%% preserved.
+* New: SEO audit - scan posts and pages for missing or badly sized meta descriptions, missing focus keywords, over-long titles, and published posts still set to noindex.
+* New: SEO meta changes are undoable like everything else, and Yoast's indexable cache refreshes automatically so edits show up on the site immediately.
+* Security: granting an administrator-level role, setting a password, or changing a privileged user's email now requires Power mode.
+* Security: you can never change your own role, password, or email through the API, and the last administrator can be neither deleted nor demoted.
 
 = Earlier versions =
 
