@@ -642,6 +642,39 @@ function cowboy_mcp_gutenberg_rebuild( array $blocks, string $prefix, array $ind
 }
 
 /* ================================================================
+ *  Helpers — patterns
+ * ================================================================ */
+
+/** Fetch + validate a user pattern (wp_block post). */
+function cowboy_mcp_gutenberg_get_user_pattern( int $id ): WP_Post|WP_Error {
+    $post = get_post( $id );
+    if ( ! $post || $post->post_type !== 'wp_block' ) {
+        return new WP_Error( 'not_found', "User pattern #{$id} not found (wp_block post)." );
+    }
+    return $post;
+}
+
+/**
+ * Run agent-supplied pattern/template content through the XSS gate + kses
+ * policy. The gate inspects the raw string; kses is applied per-node via
+ * cowboy_mcp_gutenberg_kses_tree() so block delimiter comments survive.
+ */
+function cowboy_mcp_gutenberg_filter_full_content( string $content, bool $allow_unfiltered, string $context ): string|WP_Error {
+    $parsed = cowboy_mcp_gutenberg_parse( $content );
+    if ( ! $allow_unfiltered ) {
+        if ( cowboy_mcp_gutenberg_contains_html_block( $parsed ) ) {
+            return new WP_Error( 'unfiltered_html_blocked', "{$context} contains a core/html block. Pass allow_unfiltered_html: true to permit it." );
+        }
+        $reason = cowboy_mcp_gutenberg_unfiltered_reason( $content );
+        if ( $reason !== null ) {
+            return new WP_Error( 'unfiltered_html_blocked', "{$context} contains {$reason}. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)." );
+        }
+        $parsed = cowboy_mcp_gutenberg_kses_tree( $parsed );
+    }
+    return serialize_blocks( $parsed );
+}
+
+/* ================================================================
  *  Tool definitions & handlers (built up as arrays so Tier 2 can be
  *  appended conditionally at the bottom of the file).
  * ================================================================ */
@@ -688,6 +721,71 @@ $cowboy_gutenberg_tools = [
         'readOnlyHint'    => false,
         'destructiveHint' => false,
         'idempotentHint'  => false,
+        'openWorldHint'   => false,
+    ] ),
+
+    Cowboy_MCP_Tools::tool( 'wp_list_patterns', '[Gutenberg] List block patterns: PHP-registered patterns (read-only, keyed by name) and user patterns (wp_block posts, keyed by numeric id, synced or unsynced).', [
+        'source'   => [ 'type' => 'string', 'description' => 'Filter by source', 'enum' => [ 'all', 'registered', 'user' ], 'default' => 'all' ],
+        'category' => [ 'type' => 'string', 'description' => 'Pattern category slug filter' ],
+        'search'   => [ 'type' => 'string', 'description' => 'Keyword filter on name/title' ],
+        'per_page' => [ 'type' => 'integer', 'description' => 'User patterns per page, max 100 (default 50)', 'default' => 50, 'minimum' => 1, 'maximum' => 100 ],
+        'page'     => [ 'type' => 'integer', 'description' => 'User patterns page number', 'default' => 1, 'minimum' => 1 ],
+    ], [
+        'title'           => 'List Patterns',
+        'readOnlyHint'    => true,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] ),
+
+    Cowboy_MCP_Tools::tool( 'wp_get_pattern', '[Gutenberg] Get one pattern with content and block tree. Pass name for a registered pattern (e.g. "core/quote") or id for a user pattern.', [
+        'name' => [ 'type' => 'string', 'description' => 'Registered pattern name (provide exactly one of name / id)' ],
+        'id'   => [ 'type' => 'integer', 'description' => 'User pattern (wp_block) post ID' ],
+    ], [
+        'title'           => 'Get Pattern',
+        'readOnlyHint'    => true,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] ),
+
+    Cowboy_MCP_Tools::tool( 'wp_create_pattern', '[Gutenberg] Create a user pattern (wp_block post). Synced patterns update everywhere they are used; unsynced patterns are copied on insert.', [
+        'title'                 => [ 'type' => 'string', 'description' => 'Pattern title', 'required' => true ],
+        'content'               => [ 'type' => 'string', 'description' => 'Block markup', 'required' => true ],
+        'synced'                => [ 'type' => 'boolean', 'description' => 'Synced (default true) vs unsynced', 'default' => true ],
+        'categories'            => [ 'type' => 'array', 'description' => 'Pattern category names/slugs (created if missing; needs WP 6.5+)', 'items' => [ 'type' => 'string' ] ],
+        'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit core/html blocks and script-capable content; skips kses. Default false.', 'default' => false ],
+    ], [
+        'title'           => 'Create Pattern',
+        'readOnlyHint'    => false,
+        'destructiveHint' => false,
+        'idempotentHint'  => false,
+        'openWorldHint'   => false,
+    ] ),
+
+    Cowboy_MCP_Tools::tool( 'wp_update_pattern', '[Gutenberg] Update a user pattern. Registered (PHP) patterns are read-only. Only provided fields change; categories replace the existing set.', [
+        'id'                    => [ 'type' => 'integer', 'description' => 'User pattern (wp_block) post ID', 'required' => true ],
+        'title'                 => [ 'type' => 'string', 'description' => 'New title' ],
+        'content'               => [ 'type' => 'string', 'description' => 'New block markup' ],
+        'synced'                => [ 'type' => 'boolean', 'description' => 'Change sync status' ],
+        'categories'            => [ 'type' => 'array', 'description' => 'Pattern category names/slugs (replaces existing)', 'items' => [ 'type' => 'string' ] ],
+        'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit core/html blocks and script-capable content; skips kses. Default false.', 'default' => false ],
+    ], [
+        'title'           => 'Update Pattern',
+        'readOnlyHint'    => false,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] ),
+
+    Cowboy_MCP_Tools::tool( 'wp_delete_pattern', '[Gutenberg] Delete a user pattern. The response reports posts still referencing a synced pattern (their wp:block refs would break).', [
+        'id'    => [ 'type' => 'integer', 'description' => 'User pattern (wp_block) post ID', 'required' => true ],
+        'force' => [ 'type' => 'boolean', 'description' => 'Permanently delete instead of trashing (default false)', 'default' => false ],
+    ], [
+        'title'           => 'Delete Pattern',
+        'readOnlyHint'    => false,
+        'destructiveHint' => true,
+        'idempotentHint'  => true,
         'openWorldHint'   => false,
     ] ),
 ];
@@ -800,6 +898,224 @@ $cowboy_gutenberg_handlers = [
             'warnings'         => $index['warnings'],
             'content_hash'     => md5( $new_content ),
             'blocks'           => cowboy_mcp_gutenberg_summarize( cowboy_mcp_gutenberg_parse( $new_content ) ),
+        ];
+    },
+
+    'wp_list_patterns' => function ( array $a ): array {
+        $source   = in_array( $a['source'] ?? 'all', [ 'all', 'registered', 'user' ], true ) ? ( $a['source'] ?? 'all' ) : 'all';
+        $category = isset( $a['category'] ) ? sanitize_title( $a['category'] ) : '';
+        $search   = isset( $a['search'] ) ? sanitize_text_field( $a['search'] ) : '';
+        $patterns = [];
+
+        if ( $source !== 'user' ) {
+            foreach ( WP_Block_Patterns_Registry::get_instance()->get_all_registered() as $p ) {
+                if ( $category !== '' && ! in_array( $category, $p['categories'] ?? [], true ) ) {
+                    continue;
+                }
+                if ( $search !== '' && stripos( $p['name'], $search ) === false && stripos( $p['title'] ?? '', $search ) === false ) {
+                    continue;
+                }
+                $patterns[] = [
+                    'name'           => $p['name'],
+                    'title'          => $p['title'] ?? $p['name'],
+                    'source'         => 'registered',
+                    'categories'     => array_values( $p['categories'] ?? [] ),
+                    'description'    => $p['description'] ?? '',
+                    'viewport_width' => $p['viewportWidth'] ?? null,
+                ];
+            }
+        }
+
+        $total_user = 0;
+        if ( $source !== 'registered' ) {
+            $per_page = min( max( (int) ( $a['per_page'] ?? 50 ), 1 ), 100 );
+            $page     = max( (int) ( $a['page'] ?? 1 ), 1 );
+            $q_args   = [
+                'post_type'      => 'wp_block',
+                'post_status'    => 'publish',
+                'posts_per_page' => $per_page,
+                'paged'          => $page,
+                'orderby'        => 'title',
+                'order'          => 'ASC',
+            ];
+            if ( $search !== '' ) {
+                $q_args['s'] = $search;
+            }
+            if ( $category !== '' && taxonomy_exists( 'wp_pattern_category' ) ) {
+                $q_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+                    [ 'taxonomy' => 'wp_pattern_category', 'field' => 'slug', 'terms' => $category ],
+                ];
+            }
+            $q          = new WP_Query( $q_args );
+            $total_user = (int) $q->found_posts;
+            foreach ( $q->posts as $post ) {
+                $cats = [];
+                if ( taxonomy_exists( 'wp_pattern_category' ) ) {
+                    $terms = wp_get_post_terms( $post->ID, 'wp_pattern_category', [ 'fields' => 'slugs' ] );
+                    $cats  = is_wp_error( $terms ) ? [] : $terms;
+                }
+                $patterns[] = [
+                    'id'         => $post->ID,
+                    'title'      => $post->post_title,
+                    'source'     => 'user',
+                    'synced'     => get_post_meta( $post->ID, 'wp_pattern_sync_status', true ) !== 'unsynced',
+                    'categories' => $cats,
+                ];
+            }
+        }
+
+        return [ 'count' => count( $patterns ), 'total_user_patterns' => $total_user, 'patterns' => $patterns ];
+    },
+
+    'wp_get_pattern' => function ( array $a ): array|WP_Error {
+        $has_name = ! empty( $a['name'] );
+        $has_id   = isset( $a['id'] );
+        if ( $has_name === $has_id ) {
+            return new WP_Error( 'invalid_params', 'Provide exactly one of: name (registered), id (user pattern).' );
+        }
+
+        if ( $has_name ) {
+            $p = WP_Block_Patterns_Registry::get_instance()->get_registered( sanitize_text_field( $a['name'] ) );
+            if ( ! $p ) {
+                return new WP_Error( 'not_found', "Registered pattern '{$a['name']}' not found." );
+            }
+            return [
+                'name'       => $p['name'],
+                'title'      => $p['title'] ?? $p['name'],
+                'source'     => 'registered',
+                'categories' => array_values( $p['categories'] ?? [] ),
+                'content'    => $p['content'],
+                'blocks'     => cowboy_mcp_gutenberg_summarize( cowboy_mcp_gutenberg_parse( $p['content'] ) ),
+            ];
+        }
+
+        $post = cowboy_mcp_gutenberg_get_user_pattern( (int) $a['id'] );
+        if ( is_wp_error( $post ) ) {
+            return $post;
+        }
+        $cats = [];
+        if ( taxonomy_exists( 'wp_pattern_category' ) ) {
+            $terms = wp_get_post_terms( $post->ID, 'wp_pattern_category', [ 'fields' => 'slugs' ] );
+            $cats  = is_wp_error( $terms ) ? [] : $terms;
+        }
+        return [
+            'id'           => $post->ID,
+            'title'        => $post->post_title,
+            'source'       => 'user',
+            'synced'       => get_post_meta( $post->ID, 'wp_pattern_sync_status', true ) !== 'unsynced',
+            'categories'   => $cats,
+            'content'      => $post->post_content,
+            'content_hash' => md5( $post->post_content ),
+            'blocks'       => cowboy_mcp_gutenberg_summarize( cowboy_mcp_gutenberg_parse( $post->post_content ) ),
+        ];
+    },
+
+    'wp_create_pattern' => function ( array $a ): array|WP_Error {
+        $allow   = ! empty( $a['allow_unfiltered_html'] );
+        $content = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content' );
+        if ( is_wp_error( $content ) ) {
+            return $content;
+        }
+        $post_id = wp_insert_post( wp_slash( [
+            'post_type'    => 'wp_block',
+            'post_status'  => 'publish',
+            'post_title'   => sanitize_text_field( $a['title'] ),
+            'post_content' => $content,
+        ] ), true );
+        if ( is_wp_error( $post_id ) ) {
+            return $post_id;
+        }
+        $synced = ! isset( $a['synced'] ) || ! empty( $a['synced'] );
+        if ( ! $synced ) {
+            update_post_meta( $post_id, 'wp_pattern_sync_status', 'unsynced' );
+        }
+        if ( ! empty( $a['categories'] ) && is_array( $a['categories'] ) && taxonomy_exists( 'wp_pattern_category' ) ) {
+            wp_set_object_terms( $post_id, array_map( 'sanitize_text_field', $a['categories'] ), 'wp_pattern_category' );
+        }
+        return [ 'created' => true, 'id' => $post_id, 'title' => get_the_title( $post_id ), 'synced' => $synced ];
+    },
+
+    'wp_update_pattern' => function ( array $a ): array|WP_Error {
+        $post = cowboy_mcp_gutenberg_get_user_pattern( (int) $a['id'] );
+        if ( is_wp_error( $post ) ) {
+            // A registered name passed as id is the common mistake; be explicit.
+            if ( ! empty( $a['id'] ) && ! is_numeric( $a['id'] ) ) {
+                return new WP_Error( 'registered_pattern_readonly', 'Registered (PHP) patterns are read-only; only user patterns (numeric id) can be updated.' );
+            }
+            return $post;
+        }
+        $allow   = ! empty( $a['allow_unfiltered_html'] );
+        $changed = [];
+
+        $data = [ 'ID' => $post->ID ];
+        if ( isset( $a['title'] ) ) {
+            $data['post_title'] = sanitize_text_field( $a['title'] );
+            $changed[]          = 'title';
+        }
+        if ( isset( $a['content'] ) ) {
+            $content = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content' );
+            if ( is_wp_error( $content ) ) {
+                return $content;
+            }
+            $data['post_content'] = $content;
+            $changed[]            = 'content';
+        }
+        if ( count( $data ) > 1 ) {
+            $result = wp_update_post( wp_slash( $data ), true );
+            if ( is_wp_error( $result ) ) {
+                return $result;
+            }
+        }
+        if ( isset( $a['synced'] ) ) {
+            if ( empty( $a['synced'] ) ) {
+                update_post_meta( $post->ID, 'wp_pattern_sync_status', 'unsynced' );
+            } else {
+                delete_post_meta( $post->ID, 'wp_pattern_sync_status' );
+            }
+            $changed[] = 'synced';
+        }
+        if ( isset( $a['categories'] ) && is_array( $a['categories'] ) && taxonomy_exists( 'wp_pattern_category' ) ) {
+            wp_set_object_terms( $post->ID, array_map( 'sanitize_text_field', $a['categories'] ), 'wp_pattern_category' );
+            $changed[] = 'categories';
+        }
+        if ( $changed === [] ) {
+            return new WP_Error( 'invalid_params', 'Provide at least one of: title, content, synced, categories.' );
+        }
+        return [ 'updated' => true, 'id' => $post->ID, 'changed' => $changed ];
+    },
+
+    'wp_delete_pattern' => function ( array $a ): array|WP_Error {
+        $post = cowboy_mcp_gutenberg_get_user_pattern( (int) $a['id'] );
+        if ( is_wp_error( $post ) ) {
+            return $post;
+        }
+        global $wpdb;
+        // wp:block refs serialize as {"ref":N} (only attr) or {"ref":N, when more follow.
+        $like_a = '%' . $wpdb->esc_like( 'wp:block {"ref":' . $post->ID . '}' ) . '%';
+        $like_b = '%' . $wpdb->esc_like( 'wp:block {"ref":' . $post->ID . ',' ) . '%';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $ref_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_status NOT IN ('trash','auto-draft') AND ( post_content LIKE %s OR post_content LIKE %s ) LIMIT 10",
+            $like_a,
+            $like_b
+        ) );
+
+        $force = ! empty( $a['force'] );
+        $title = $post->post_title;
+        $ok    = $force ? wp_delete_post( $post->ID, true ) : wp_trash_post( $post->ID );
+        if ( ! $ok ) {
+            return new WP_Error( 'delete_failed', "Failed to delete pattern #{$post->ID}." );
+        }
+        return [
+            'deleted'       => true,
+            'id'            => $post->ID,
+            'title'         => $title,
+            'trashed'       => ! $force,
+            'referenced_by' => [
+                'count'    => count( $ref_ids ),
+                'post_ids' => array_map( 'intval', $ref_ids ),
+                'note'     => $ref_ids ? 'These posts contain wp:block refs to this pattern; the refs render empty until the pattern is restored (wp_undo_change).' : null,
+            ],
         ];
     },
 ];
