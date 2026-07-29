@@ -813,6 +813,51 @@ function cowboy_mcp_gutenberg_rollback_target( string $tool, array $args ): ?int
     return null;
 }
 
+/**
+ * Dry-run plan for wp_edit_blocks: resolve the real op list against the
+ * live tree (the generic preview cannot see inside the operations array).
+ */
+function cowboy_mcp_gutenberg_dry_run_plan( array $a ): array {
+    $target = cowboy_mcp_gutenberg_resolve_target( $a, false );
+    if ( is_wp_error( $target ) ) {
+        return [ 'error' => $target->get_error_message() ];
+    }
+    $ops = is_array( $a['operations'] ?? null ) ? $a['operations'] : [];
+    $index = cowboy_mcp_gutenberg_index_ops(
+        cowboy_mcp_gutenberg_parse( $target['content'] ),
+        $ops,
+        ! empty( $a['allow_unfiltered_html'] )
+    );
+    if ( is_wp_error( $index ) ) {
+        return [ 'error' => $index->get_error_message() ];
+    }
+    return [
+        'target'                     => [ 'post_id' => $target['post_id'], 'template' => $target['template'], 'kind' => $target['kind'] ],
+        'operations'                 => $index['descriptions'],
+        'warnings'                   => $index['warnings'],
+        'would_materialize_override' => $target['template'] !== null && $target['post_id'] === null,
+    ];
+}
+
+/** Dry-run plan for wp_save_template: state which branch would run. */
+function cowboy_mcp_gutenberg_save_template_plan( array $a ): array {
+    $type = in_array( $a['type'] ?? 'wp_template', [ 'wp_template', 'wp_template_part' ], true )
+        ? ( $a['type'] ?? 'wp_template' ) : 'wp_template';
+    $tpl = cowboy_mcp_gutenberg_get_template_object( (string) ( $a['id'] ?? '' ), $type );
+    if ( is_wp_error( $tpl ) ) {
+        if ( $tpl->get_error_code() === 'not_found' ) {
+            return isset( $a['content'] )
+                ? [ 'branch' => 'create_custom', 'detail' => "Would create a new custom template '{$a['id']}'." ]
+                : [ 'error' => $tpl->get_error_message() . ' (no content given, so nothing would be created)' ];
+        }
+        return [ 'error' => $tpl->get_error_message() ];
+    }
+    if ( $tpl->wp_id ) {
+        return [ 'branch' => 'update', 'detail' => "Would update the existing database post #{$tpl->wp_id} for '{$tpl->id}'.", 'post_id' => (int) $tpl->wp_id ];
+    }
+    return [ 'branch' => 'materialize_then_update', 'detail' => "Would create a database override for theme-file template '{$tpl->id}', then apply the changes. Undo deletes the override (reverts to the theme file)." ];
+}
+
 /* ================================================================
  *  Tool definitions & handlers (built up as arrays so Tier 2 can be
  *  appended conditionally at the bottom of the file).

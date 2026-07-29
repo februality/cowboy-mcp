@@ -515,6 +515,21 @@ class Cowboy_MCP_Tools {
                 ];
             }
         }
+		// wp_edit_blocks: resolve the real op plan against the live tree — the
+		// generic parameter echo cannot see inside the operations array.
+		if ( $name === 'wp_edit_blocks' ) {
+			self::boot_domains();
+			if ( function_exists( 'cowboy_mcp_gutenberg_dry_run_plan' ) ) {
+				$preview['plan'] = cowboy_mcp_gutenberg_dry_run_plan( $filtered_args );
+			}
+		}
+		// wp_save_template: say which branch would run (update / materialize / create).
+		if ( $name === 'wp_save_template' ) {
+			self::boot_domains();
+			if ( function_exists( 'cowboy_mcp_gutenberg_save_template_plan' ) ) {
+				$preview['plan'] = cowboy_mcp_gutenberg_save_template_plan( $filtered_args );
+			}
+		}
 
         return [
             'content' => [[ 'type' => 'text', 'text' => wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ]],
