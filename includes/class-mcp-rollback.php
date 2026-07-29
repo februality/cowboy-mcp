@@ -47,6 +47,10 @@ class Cowboy_MCP_Rollback {
 		'wp_elementor_update_template'      => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'template_id' ],
 		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
 		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
+		'wp_edit_blocks'          => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
+		'wp_save_template'        => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
+		'wp_reset_template'       => [ 'type' => 'post', 'action' => 'delete', 'dynamic' => true ],
+		'wp_update_global_styles' => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_create_pattern'     => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'id' ],
 		'wp_update_pattern'     => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'id' ],
 		'wp_delete_pattern'     => [ 'type' => 'post', 'action' => 'delete', 'id_arg' => 'id' ],
@@ -184,6 +188,27 @@ class Cowboy_MCP_Rollback {
 				];
 				self::$pending = $handle;
 				return $handle;
+			}
+
+			// Gutenberg targets may not exist yet (template override /
+			// global-styles materialization): resolve the backing post now;
+			// absent → journal as CREATE so undo deletes the materialized
+			// post, which reverts a theme-file template to the theme file.
+			if ( ! empty( $strategy['dynamic'] ) ) {
+				if ( class_exists( 'Cowboy_MCP_Tools' ) ) {
+					Cowboy_MCP_Tools::boot_domains();
+				}
+				$resolved = function_exists( 'cowboy_mcp_gutenberg_rollback_target' )
+					? cowboy_mcp_gutenberg_rollback_target( $tool, $args )
+					: null;
+				if ( $resolved !== null ) {
+					$strategy['static_id'] = (string) $resolved;
+				} elseif ( $strategy['action'] !== 'delete' ) {
+					$strategy = [ 'type' => 'post', 'action' => 'create', 'result_id' => 'post_id' ];
+				}
+				// delete with no resolvable target: fall through — extract_id
+				// returns null and begin() records "Could not identify the
+				// target"; the handler errors out and the capture is discarded.
 			}
 
 			if ( $strategy['type'] === 'db_rows' ) {

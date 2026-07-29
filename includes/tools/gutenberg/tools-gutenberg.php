@@ -779,6 +779,39 @@ function cowboy_mcp_gutenberg_deep_merge( array $base, array $over ): array {
 }
 
 /* ================================================================
+ *  Rollback support
+ * ================================================================ */
+
+/**
+ * Resolve the post a gutenberg write will touch WITHOUT creating anything.
+ * Null = the write will create the backing post (template override /
+ * global-styles materialization) — the rollback journals it as a create so
+ * undo deletes the post (= revert to the theme file).
+ */
+function cowboy_mcp_gutenberg_rollback_target( string $tool, array $args ): ?int {
+    switch ( $tool ) {
+        case 'wp_edit_blocks':
+            if ( isset( $args['post_id'] ) ) {
+                return (int) $args['post_id'];
+            }
+            $tpl = cowboy_mcp_gutenberg_get_template_object( (string) ( $args['template'] ?? '' ), (string) ( $args['template_type'] ?? '' ) );
+            return ( ! is_wp_error( $tpl ) && $tpl->wp_id ) ? (int) $tpl->wp_id : null;
+
+        case 'wp_save_template':
+        case 'wp_reset_template':
+            // Same default as the handlers — a divergent default would let the
+            // capture resolve a template part while the handler creates a template.
+            $tpl = cowboy_mcp_gutenberg_get_template_object( (string) ( $args['id'] ?? '' ), (string) ( $args['type'] ?? 'wp_template' ) );
+            return ( ! is_wp_error( $tpl ) && $tpl->wp_id ) ? (int) $tpl->wp_id : null;
+
+        case 'wp_update_global_styles':
+            $post = WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme() );
+            return ! empty( $post['ID'] ) ? (int) $post['ID'] : null;
+    }
+    return null;
+}
+
+/* ================================================================
  *  Tool definitions & handlers (built up as arrays so Tier 2 can be
  *  appended conditionally at the bottom of the file).
  * ================================================================ */
