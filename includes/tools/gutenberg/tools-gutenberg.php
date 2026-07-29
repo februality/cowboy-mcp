@@ -1095,10 +1095,13 @@ $cowboy_gutenberg_handlers = [
         $like_b = '%' . $wpdb->esc_like( 'wp:block {"ref":' . $post->ID . ',' ) . '%';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         $ref_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT ID FROM {$wpdb->posts} WHERE post_status NOT IN ('trash','auto-draft') AND ( post_content LIKE %s OR post_content LIKE %s ) LIMIT 10",
+            "SELECT ID FROM {$wpdb->posts} WHERE post_status NOT IN ('trash','auto-draft') AND post_type NOT IN ('revision','attachment') AND ( post_content LIKE %s OR post_content LIKE %s ) LIMIT 11",
             $like_a,
             $like_b
         ) );
+
+        $has_more = count( $ref_ids ) > 10;
+        $ref_ids  = array_slice( $ref_ids, 0, 10 );
 
         $force = ! empty( $a['force'] );
         $title = $post->post_title;
@@ -1114,6 +1117,7 @@ $cowboy_gutenberg_handlers = [
             'referenced_by' => [
                 'count'    => count( $ref_ids ),
                 'post_ids' => array_map( 'intval', $ref_ids ),
+                'has_more' => $has_more,
                 'note'     => $ref_ids ? 'These posts contain wp:block refs to this pattern; the refs render empty until the pattern is restored (wp_undo_change).' : null,
             ],
         ];
