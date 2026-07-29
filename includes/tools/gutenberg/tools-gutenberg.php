@@ -756,6 +756,29 @@ function cowboy_mcp_gutenberg_materialize_template( WP_Block_Template $tpl ): in
 }
 
 /* ================================================================
+ *  Helpers — global styles
+ * ================================================================ */
+
+/**
+ * Recursive merge for theme.json fragments: associative arrays merge
+ * per-key, lists and scalars overwrite.
+ */
+function cowboy_mcp_gutenberg_deep_merge( array $base, array $over ): array {
+    foreach ( $over as $k => $v ) {
+        $base_assoc = isset( $base[ $k ] ) && is_array( $base[ $k ] )
+            && ( $base[ $k ] === [] || array_keys( $base[ $k ] ) !== range( 0, count( $base[ $k ] ) - 1 ) );
+        $over_assoc = is_array( $v )
+            && ( $v === [] || array_keys( $v ) !== range( 0, count( $v ) - 1 ) );
+        if ( $base_assoc && $over_assoc ) {
+            $base[ $k ] = cowboy_mcp_gutenberg_deep_merge( $base[ $k ], $v );
+        } else {
+            $base[ $k ] = $v;
+        }
+    }
+    return $base;
+}
+
+/* ================================================================
  *  Tool definitions & handlers (built up as arrays so Tier 2 can be
  *  appended conditionally at the bottom of the file).
  * ================================================================ */
@@ -1433,6 +1456,160 @@ if ( wp_is_block_theme() ) {
             'reverted_to_theme_file'  => (bool) $tpl->has_theme_file,
             'deleted_custom_template' => ! $tpl->has_theme_file,
         ];
+    };
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_get_global_styles', '[Gutenberg] Read global styles (theme.json data). scope=user returns only the user\'s site-editor customizations; scope=merged returns what the site actually renders (theme defaults + user data).', [
+        'scope' => [ 'type' => 'string', 'description' => 'Which layer to read', 'enum' => [ 'user', 'merged' ], 'default' => 'user' ],
+    ], [
+        'title'           => 'Get Global Styles',
+        'readOnlyHint'    => true,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_update_global_styles', '[Gutenberg] Write user global styles. mode=merge (default) deep-merges the given settings/styles into existing user data; mode=replace swaps each provided section wholesale. Invalid theme.json keys are ignored by core at render, not fatal.', [
+        'settings' => [ 'type' => 'object', 'description' => 'theme.json settings fragment (e.g. color palettes, typography scales)' ],
+        'styles'   => [ 'type' => 'object', 'description' => 'theme.json styles fragment (e.g. colors, typography, spacing, per-block styles)' ],
+        'mode'     => [ 'type' => 'string', 'description' => 'Merge strategy', 'enum' => [ 'merge', 'replace' ], 'default' => 'merge' ],
+    ], [
+        'title'           => 'Update Global Styles',
+        'readOnlyHint'    => false,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_list_navigations', '[Gutenberg] List block-theme navigation menus (wp_navigation posts) with their link structure. Edit one with wp_edit_blocks(post_id), create with wp_create_post(post_type: "wp_navigation"), delete with wp_delete_post.', [], [
+        'title'           => 'List Navigations',
+        'readOnlyHint'    => true,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_handlers['wp_get_global_styles'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $scope = ( $a['scope'] ?? 'user' ) === 'merged' ? 'merged' : 'user';
+
+        if ( $scope === 'merged' ) {
+            $data = WP_Theme_JSON_Resolver::get_merged_data()->get_raw_data();
+            return [
+                'scope'    => 'merged',
+                'settings' => $data['settings'] ?? [],
+                'styles'   => $data['styles'] ?? [],
+            ];
+        }
+
+        $post = WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme() );
+        if ( empty( $post['ID'] ) ) {
+            return [ 'scope' => 'user', 'post_id' => null, 'settings' => [], 'styles' => [] ];
+        }
+        $config = json_decode( (string) $post['post_content'], true );
+        return [
+            'scope'    => 'user',
+            'post_id'  => (int) $post['ID'],
+            'settings' => is_array( $config['settings'] ?? null ) ? $config['settings'] : [],
+            'styles'   => is_array( $config['styles'] ?? null ) ? $config['styles'] : [],
+        ];
+    };
+
+    $cowboy_gutenberg_handlers['wp_update_global_styles'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $has_settings = isset( $a['settings'] ) && is_array( $a['settings'] );
+        $has_styles   = isset( $a['styles'] ) && is_array( $a['styles'] );
+        if ( ! $has_settings && ! $has_styles ) {
+            return new WP_Error( 'invalid_params', 'Provide at least one of: settings, styles (objects).' );
+        }
+        $mode = ( $a['mode'] ?? 'merge' ) === 'replace' ? 'replace' : 'merge';
+
+        $existing = WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme() );
+        $created  = empty( $existing['ID'] );
+        $post     = $created
+            ? WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme(), true )
+            : $existing;
+        if ( empty( $post['ID'] ) ) {
+            return new WP_Error( 'save_failed', 'Could not resolve or create the user global styles post.' );
+        }
+
+        $config = json_decode( (string) ( $post['post_content'] ?? '' ), true );
+        if ( ! is_array( $config ) ) {
+            $config = [];
+        }
+        $changed = [];
+        foreach ( [ 'settings' => $has_settings, 'styles' => $has_styles ] as $section => $given ) {
+            if ( ! $given ) {
+                continue;
+            }
+            $current = is_array( $config[ $section ] ?? null ) ? $config[ $section ] : [];
+            $config[ $section ] = $mode === 'merge'
+                ? cowboy_mcp_gutenberg_deep_merge( $current, $a[ $section ] )
+                : $a[ $section ];
+            $changed[] = $section;
+        }
+        $config['version']                     = WP_Theme_JSON::LATEST_SCHEMA;
+        $config['isGlobalStylesUserThemeJSON'] = true;
+
+        $result = wp_update_post( wp_slash( [
+            'ID'           => (int) $post['ID'],
+            'post_content' => wp_json_encode( $config ),
+        ] ), true );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        if ( function_exists( 'wp_clean_theme_json_cache' ) ) {
+            wp_clean_theme_json_cache();
+        }
+        return [ 'updated' => true, 'post_id' => (int) $post['ID'], 'created' => $created, 'changed' => $changed, 'mode' => $mode ];
+    };
+
+    $cowboy_gutenberg_handlers['wp_list_navigations'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $walk = function ( array $blocks ) use ( &$walk ): array {
+            $links = [];
+            foreach ( $blocks as $b ) {
+                $name = $b['blockName'] ?? '';
+                if ( $name === 'core/navigation-link' || $name === 'core/navigation-submenu' ) {
+                    $entry = [
+                        'label' => (string) ( $b['attrs']['label'] ?? '' ),
+                        'url'   => (string) ( $b['attrs']['url'] ?? '' ),
+                    ];
+                    if ( $name === 'core/navigation-submenu' && ! empty( $b['innerBlocks'] ) ) {
+                        $entry['children'] = $walk( $b['innerBlocks'] );
+                    }
+                    $links[] = $entry;
+                } elseif ( $name !== '' ) {
+                    $links[] = [ 'block' => $name ];
+                }
+            }
+            return $links;
+        };
+
+        $q    = new WP_Query( [
+            'post_type'      => 'wp_navigation',
+            'post_status'    => [ 'publish', 'draft' ],
+            'posts_per_page' => 50,
+            'orderby'        => 'title',
+            'order'          => 'ASC',
+        ] );
+        $navs = [];
+        foreach ( $q->posts as $post ) {
+            $navs[] = [
+                'id'           => $post->ID,
+                'title'        => $post->post_title,
+                'slug'         => $post->post_name,
+                'status'       => $post->post_status,
+                'content_hash' => md5( $post->post_content ),
+                'links'        => $walk( cowboy_mcp_gutenberg_parse( $post->post_content ) ),
+            ];
+        }
+        return [ 'count' => count( $navs ), 'navigations' => $navs ];
     };
 }
 
