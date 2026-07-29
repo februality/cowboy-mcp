@@ -1536,6 +1536,12 @@ if ( wp_is_block_theme() ) {
             return new WP_Error( 'save_failed', 'Could not resolve or create the user global styles post.' );
         }
 
+        // Core's create path assigns the wp_theme term via cap-gated tax_input;
+        // ensure it exists so the post resolves regardless of request context.
+        if ( ! is_object_in_term( (int) $post['ID'], 'wp_theme', get_stylesheet() ) ) {
+            wp_set_object_terms( (int) $post['ID'], get_stylesheet(), 'wp_theme' );
+        }
+
         $config = json_decode( (string) ( $post['post_content'] ?? '' ), true );
         if ( ! is_array( $config ) ) {
             $config = [];
