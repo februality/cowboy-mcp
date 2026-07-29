@@ -863,7 +863,7 @@ function cowboy_mcp_gutenberg_save_template_plan( array $a ): array {
  *  appended conditionally at the bottom of the file).
  * ================================================================ */
 
-$cowboy_gutenberg_tools = [
+$cowboy_mcp_gutenberg_tools = [
     Cowboy_MCP_Tools::tool( 'wp_list_blocks', '[Gutenberg] Parse a post\'s content into a block tree with dot-path addresses (e.g. "1.0.2") for use with wp_edit_blocks. Returns a content_hash for optimistic concurrency. Works on any post type, including patterns (wp_block) and navigation (wp_navigation).', [
         'post_id'       => [ 'type' => 'integer', 'description' => 'Post ID (provide exactly one of post_id / template)' ],
         'template'      => [ 'type' => 'string', 'description' => 'Template id "theme//slug" (block themes; provide exactly one of post_id / template)' ],
@@ -978,7 +978,7 @@ $cowboy_gutenberg_tools = [
     ] ),
 ];
 
-$cowboy_gutenberg_handlers = [
+$cowboy_mcp_gutenberg_handlers = [
 
     'wp_list_blocks' => function ( array $a ): array|WP_Error {
         $target = cowboy_mcp_gutenberg_resolve_target( $a );
@@ -1328,7 +1328,7 @@ $cowboy_gutenberg_handlers = [
 
 if ( wp_is_block_theme() ) {
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_list_templates', '[Gutenberg] List site editor templates and template parts: theme files, DB customizations, and custom templates, with source and override status. Ids are "theme//slug".', [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_list_templates', '[Gutenberg] List site editor templates and template parts: theme files, DB customizations, and custom templates, with source and override status. Ids are "theme//slug".', [
         'type' => [ 'type' => 'string', 'description' => 'Which kind to list', 'enum' => [ 'wp_template', 'wp_template_part', 'both' ], 'default' => 'both' ],
         'area' => [ 'type' => 'string', 'description' => 'Template-part area filter (header, footer, uncategorized, …)' ],
     ], [
@@ -1339,7 +1339,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_get_template', '[Gutenberg] Get one template or template part: metadata, content, and block tree. content_hash present only when a DB post backs it.', [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_get_template', '[Gutenberg] Get one template or template part: metadata, content, and block tree. content_hash present only when a DB post backs it.', [
         'id'   => [ 'type' => 'string', 'description' => 'Template id "theme//slug"', 'required' => true ],
         'type' => [ 'type' => 'string', 'description' => 'Disambiguate the id namespace', 'enum' => [ 'wp_template', 'wp_template_part' ] ],
     ], [
@@ -1350,7 +1350,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_save_template', '[Gutenberg] Save a template or template part: updates the DB customization, materializes an override for a theme-file template, or creates a new custom one (unknown id + content). Undo of a first edit reverts to the theme file.', [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_save_template', '[Gutenberg] Save a template or template part: updates the DB customization, materializes an override for a theme-file template, or creates a new custom one (unknown id + content). Undo of a first edit reverts to the theme file.', [
         'id'                    => [ 'type' => 'string', 'description' => 'Template id "theme//slug" (theme must be the active theme for new ones)', 'required' => true ],
         'type'                  => [ 'type' => 'string', 'description' => 'Template kind', 'enum' => [ 'wp_template', 'wp_template_part' ], 'default' => 'wp_template' ],
         'title'                 => [ 'type' => 'string', 'description' => 'Template title' ],
@@ -1366,7 +1366,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_reset_template', '[Gutenberg] Delete a template\'s DB customization. Theme-file templates revert to the theme\'s version; custom-only templates are deleted outright. Undoable.', [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_reset_template', '[Gutenberg] Delete a template\'s DB customization. Theme-file templates revert to the theme\'s version; custom-only templates are deleted outright. Undoable.', [
         'id'   => [ 'type' => 'string', 'description' => 'Template id "theme//slug"', 'required' => true ],
         'type' => [ 'type' => 'string', 'description' => 'Template kind', 'enum' => [ 'wp_template', 'wp_template_part' ], 'default' => 'wp_template' ],
     ], [
@@ -1377,7 +1377,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_handlers['wp_list_templates'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_list_templates'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1407,7 +1407,7 @@ if ( wp_is_block_theme() ) {
         return [ 'count' => count( $templates ), 'templates' => $templates ];
     };
 
-    $cowboy_gutenberg_handlers['wp_get_template'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_get_template'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1431,7 +1431,7 @@ if ( wp_is_block_theme() ) {
         ];
     };
 
-    $cowboy_gutenberg_handlers['wp_save_template'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_save_template'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1513,7 +1513,7 @@ if ( wp_is_block_theme() ) {
         return [ 'saved' => true, 'id' => $tpl->id, 'post_id' => $post_id, 'override_created' => $materialized, 'created' => false ];
     };
 
-    $cowboy_gutenberg_handlers['wp_reset_template'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_reset_template'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1538,7 +1538,7 @@ if ( wp_is_block_theme() ) {
         ];
     };
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_get_global_styles', '[Gutenberg] Read global styles (theme.json data). scope=user returns only the user\'s site-editor customizations; scope=merged returns what the site actually renders (theme defaults + user data).', [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_get_global_styles', '[Gutenberg] Read global styles (theme.json data). scope=user returns only the user\'s site-editor customizations; scope=merged returns what the site actually renders (theme defaults + user data).', [
         'scope' => [ 'type' => 'string', 'description' => 'Which layer to read', 'enum' => [ 'user', 'merged' ], 'default' => 'user' ],
     ], [
         'title'           => 'Get Global Styles',
@@ -1548,7 +1548,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_update_global_styles', '[Gutenberg] Write user global styles. mode=merge (default) deep-merges the given settings/styles into existing user data; mode=replace swaps each provided section wholesale. Invalid theme.json keys are ignored by core at render, not fatal.', [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_update_global_styles', '[Gutenberg] Write user global styles. mode=merge (default) deep-merges the given settings/styles into existing user data; mode=replace swaps each provided section wholesale. Invalid theme.json keys are ignored by core at render, not fatal.', [
         'settings' => [ 'type' => 'object', 'description' => 'theme.json settings fragment (e.g. color palettes, typography scales)' ],
         'styles'   => [ 'type' => 'object', 'description' => 'theme.json styles fragment (e.g. colors, typography, spacing, per-block styles)' ],
         'mode'     => [ 'type' => 'string', 'description' => 'Merge strategy', 'enum' => [ 'merge', 'replace' ], 'default' => 'merge' ],
@@ -1560,7 +1560,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_list_navigations', '[Gutenberg] List block-theme navigation menus (wp_navigation posts) with their link structure. Edit one with wp_edit_blocks(post_id), create with wp_create_post(post_type: "wp_navigation"), delete with wp_delete_post.', [], [
+    $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_list_navigations', '[Gutenberg] List block-theme navigation menus (wp_navigation posts) with their link structure. Edit one with wp_edit_blocks(post_id), create with wp_create_post(post_type: "wp_navigation"), delete with wp_delete_post.', [], [
         'title'           => 'List Navigations',
         'readOnlyHint'    => true,
         'destructiveHint' => false,
@@ -1568,7 +1568,7 @@ if ( wp_is_block_theme() ) {
         'openWorldHint'   => false,
     ] );
 
-    $cowboy_gutenberg_handlers['wp_get_global_styles'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_get_global_styles'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1596,7 +1596,7 @@ if ( wp_is_block_theme() ) {
         ];
     };
 
-    $cowboy_gutenberg_handlers['wp_update_global_styles'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_update_global_styles'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1653,7 +1653,7 @@ if ( wp_is_block_theme() ) {
         return [ 'updated' => true, 'post_id' => (int) $post['ID'], 'created' => $created, 'changed' => $changed, 'mode' => $mode ];
     };
 
-    $cowboy_gutenberg_handlers['wp_list_navigations'] = function ( array $a ): array|WP_Error {
+    $cowboy_mcp_gutenberg_handlers['wp_list_navigations'] = function ( array $a ): array|WP_Error {
         if ( ! wp_is_block_theme() ) {
             return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
         }
@@ -1699,4 +1699,4 @@ if ( wp_is_block_theme() ) {
     };
 }
 
-return [ 'tools' => $cowboy_gutenberg_tools, 'handlers' => $cowboy_gutenberg_handlers ];
+return [ 'tools' => $cowboy_mcp_gutenberg_tools, 'handlers' => $cowboy_mcp_gutenberg_handlers ];
