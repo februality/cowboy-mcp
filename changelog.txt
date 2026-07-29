@@ -3,6 +3,14 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= X.Y.Z =
+* New: Gutenberg block editing - read any post as a block tree and apply surgical batch edits (update, insert, delete, move, replace) without resending full content.
+* New: block pattern tools - list registered and user patterns, create, update, and delete user patterns (synced or unsynced).
+* New: site editor tools - list, read, save, and reset block theme templates and template parts; editing a theme template creates an override you can undo back to the theme's version.
+* New: global styles tools - read and update theme.json user customizations (colors, typography, spacing).
+* New: navigation listing for block themes.
+* All Gutenberg writes are undoable from the Activity tab, with the same raw-HTML safety gate as the Elementor tools.
+
 = 1.6.1 =
 * New: user management - list, read, create, update, and delete users, including role changes.
 * New: navigation menus - create, rename, assign theme locations, and set menu items as a nested tree.
