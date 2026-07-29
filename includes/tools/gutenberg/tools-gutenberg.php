@@ -187,6 +187,38 @@ function cowboy_mcp_gutenberg_filter_content( string $content, bool $allow_unfil
     return wp_kses_post( $content );
 }
 
+/**
+ * Gate agent-supplied theme.json fragments: markup inside css-key values is
+ * always rejected (mirrors core's global-styles REST rule — no consent flag
+ * makes "</style>" in CSS safe); other string leaves go through the
+ * script/iframe/on*-attr gate unless allow_unfiltered_html is set.
+ */
+function cowboy_mcp_gutenberg_gate_theme_json( array $fragment, bool $allow_unfiltered, string $path = '' ): ?WP_Error {
+    foreach ( $fragment as $key => $value ) {
+        $key_path = $path === '' ? (string) $key : "{$path}.{$key}";
+        if ( is_array( $value ) ) {
+            $err = cowboy_mcp_gutenberg_gate_theme_json( $value, $allow_unfiltered, $key_path );
+            if ( $err !== null ) {
+                return $err;
+            }
+            continue;
+        }
+        if ( ! is_string( $value ) ) {
+            continue;
+        }
+        if ( $key === 'css' && preg_match( '#</?\w+#', $value ) ) {
+            return new WP_Error( 'unfiltered_html_blocked', "Markup is not allowed in CSS (key path: {$key_path})." );
+        }
+        if ( ! $allow_unfiltered && $key !== 'css' ) {
+            $reason = cowboy_mcp_gutenberg_unfiltered_reason( $value );
+            if ( $reason !== null ) {
+                return new WP_Error( 'unfiltered_html_blocked', "Value at {$key_path} contains {$reason}. Pass allow_unfiltered_html: true to permit it." );
+            }
+        }
+    }
+    return null;
+}
+
 /** Recursive core/html scan for parsed markup specs. */
 function cowboy_mcp_gutenberg_contains_html_block( array $blocks ): bool {
     foreach ( $blocks as $b ) {
@@ -1552,6 +1584,7 @@ if ( wp_is_block_theme() ) {
         'settings' => [ 'type' => 'object', 'description' => 'theme.json settings fragment (e.g. color palettes, typography scales)' ],
         'styles'   => [ 'type' => 'object', 'description' => 'theme.json styles fragment (e.g. colors, typography, spacing, per-block styles)' ],
         'mode'     => [ 'type' => 'string', 'description' => 'Merge strategy', 'enum' => [ 'merge', 'replace' ], 'default' => 'merge' ],
+        'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit script-capable string values in settings/styles; skips the content gate. CSS values may never contain markup regardless. Default false.', 'default' => false ],
     ], [
         'title'           => 'Update Global Styles',
         'readOnlyHint'    => false,
@@ -1605,7 +1638,21 @@ if ( wp_is_block_theme() ) {
         if ( ! $has_settings && ! $has_styles ) {
             return new WP_Error( 'invalid_params', 'Provide at least one of: settings, styles (objects).' );
         }
-        $mode = ( $a['mode'] ?? 'merge' ) === 'replace' ? 'replace' : 'merge';
+        $mode                  = ( $a['mode'] ?? 'merge' ) === 'replace' ? 'replace' : 'merge';
+        $allow_unfiltered_html = ! empty( $a['allow_unfiltered_html'] );
+
+        if ( $has_settings ) {
+            $err = cowboy_mcp_gutenberg_gate_theme_json( $a['settings'], $allow_unfiltered_html, 'settings' );
+            if ( $err !== null ) {
+                return $err;
+            }
+        }
+        if ( $has_styles ) {
+            $err = cowboy_mcp_gutenberg_gate_theme_json( $a['styles'], $allow_unfiltered_html, 'styles' );
+            if ( $err !== null ) {
+                return $err;
+            }
+        }
 
         $existing = WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme() );
         $created  = empty( $existing['ID'] );
