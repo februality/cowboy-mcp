@@ -449,6 +449,20 @@ function cowboy_mcp_gutenberg_index_ops( array $tree, array $ops, bool $allow_un
      * descendant, against any OTHER removal — this catches nested moves
      * (moving both a subtree and one of its descendants) and moves that
      * would "rescue" a block out of a subtree deleted/replaced elsewhere.
+     * A delete/replace path is likewise checked as a 'removal target' ref,
+     * but only on strict-descendant matches — a delete/replace can only
+     * ever exactly match ITS OWN entry in $removed (a different op at the
+     * same exact path is already rejected by the write-time double-removal
+     * guard above), so exact matches are not meaningful here. No exemptions
+     * apply: a delete/replace nested inside ANY other removed subtree
+     * (move, delete, or replace) would otherwise validate cleanly and
+     * silently no-op — Phase 2 captures a moved subtree raw (bypassing
+     * $index['deletes']/['replaces'] entirely) and rebuild() never re-walks
+     * a captured, dropped, or replaced node to apply a nested removal.
+     * One accepted side effect: previously-redundant batches like
+     * delete "0" + delete "0.1" now also conflict — the inner op's target
+     * is removed by the outer op, so it no longer resolves under snapshot
+     * addressing; this is intended strictness, not a regression.
      * Descendant rules otherwise: anything strictly inside any removed
      * subtree conflicts unless specifically exempted above.
      * All path/root comparisons are cast to string — $removed and the
@@ -463,11 +477,19 @@ function cowboy_mcp_gutenberg_index_ops( array $tree, array $ops, bool $allow_un
     foreach ( array_keys( $index['append'] ) as $p )     $refs[] = [ $p, 'insert parent' ];
     foreach ( $index['moves'] as $m )                    $refs[] = [ $m['to'], 'move anchor' ];
     foreach ( $index['moves'] as $m )                    $refs[] = [ $m['from'], 'move source' ];
+    foreach ( array_keys( $index['deletes'] ) as $p )    $refs[] = [ $p, 'removal target' ];
+    foreach ( array_keys( $index['replaces'] ) as $p )   $refs[] = [ $p, 'removal target' ];
 
     foreach ( $refs as [ $p, $what ] ) {
         foreach ( $removed as $root => $rkind ) {
             $is_exact      = (string) $p === (string) $root;
             $is_descendant = str_starts_with( (string) $p, $root . '.' );
+            if ( $what === 'removal target' ) {
+                if ( $is_descendant ) {
+                    return new WP_Error( 'op_conflict', "Operation conflict: {$what} at {$p} targets a subtree removed by a {$rkind} at {$root}." );
+                }
+                continue;
+            }
             if ( ! $is_exact && ! $is_descendant ) {
                 continue;
             }
