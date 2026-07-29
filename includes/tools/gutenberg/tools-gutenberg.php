@@ -67,9 +67,10 @@ function cowboy_mcp_gutenberg_summarize( array $blocks, bool $full = false, stri
 }
 
 /**
- * Resolve the block-content target from tool args.
- * Accepts post_id (any post). Task 4 extends this to template ids
- * ("theme//slug") with optional override materialization.
+ * Resolve the block-content target from tool args: post_id (any post) or
+ * template ("theme//slug", block themes only). $materialize creates the DB
+ * override for a theme-file template so it can be written to; reads leave
+ * theme files untouched (post_id null).
  *
  * @return array|WP_Error {post_id, template, title, kind, content, materialized}
  */
@@ -79,20 +80,52 @@ function cowboy_mcp_gutenberg_resolve_target( array $a, bool $materialize = fals
     if ( $has_post === $has_tpl ) {
         return new WP_Error( 'invalid_params', 'Provide exactly one of: post_id, template.' );
     }
-    if ( $has_tpl ) {
-        return new WP_Error( 'invalid_params', 'Template targets are not available yet.' );
+
+    if ( $has_post ) {
+        $post = get_post( (int) $a['post_id'] );
+        if ( ! $post ) {
+            return new WP_Error( 'not_found', "Post #{$a['post_id']} not found." );
+        }
+        return [
+            'post_id'      => $post->ID,
+            'template'     => null,
+            'title'        => $post->post_title,
+            'kind'         => $post->post_type,
+            'content'      => (string) $post->post_content,
+            'materialized' => false,
+        ];
     }
-    $post = get_post( (int) $a['post_id'] );
-    if ( ! $post ) {
-        return new WP_Error( 'not_found', "Post #{$a['post_id']} not found." );
+
+    if ( ! wp_is_block_theme() ) {
+        return new WP_Error( 'not_block_theme', 'Template targets require a block theme; the active theme is not one.' );
     }
+    $tpl = cowboy_mcp_gutenberg_get_template_object( (string) $a['template'], (string) ( $a['template_type'] ?? '' ) );
+    if ( is_wp_error( $tpl ) ) {
+        return $tpl;
+    }
+
+    $post_id      = $tpl->wp_id ? (int) $tpl->wp_id : null;
+    $materialized = false;
+    if ( $post_id === null && $materialize ) {
+        $created = cowboy_mcp_gutenberg_materialize_template( $tpl );
+        if ( is_wp_error( $created ) ) {
+            return $created;
+        }
+        $post_id      = $created;
+        $materialized = true;
+    }
+
+    $content = $post_id !== null && ! $materialized
+        ? (string) get_post( $post_id )->post_content
+        : (string) $tpl->content;
+
     return [
-        'post_id'      => $post->ID,
-        'template'     => null,
-        'title'        => $post->post_title,
-        'kind'         => $post->post_type,
-        'content'      => (string) $post->post_content,
-        'materialized' => false,
+        'post_id'      => $post_id,
+        'template'     => $tpl->id,
+        'title'        => (string) $tpl->title,
+        'kind'         => $tpl->type,
+        'content'      => $content,
+        'materialized' => $materialized,
     ];
 }
 
@@ -675,14 +708,64 @@ function cowboy_mcp_gutenberg_filter_full_content( string $content, bool $allow_
 }
 
 /* ================================================================
+ *  Helpers — FSE templates
+ * ================================================================ */
+
+/**
+ * Resolve a template id ("theme//slug") to a WP_Block_Template.
+ * $type '' tries wp_template then wp_template_part (shared id namespace).
+ */
+function cowboy_mcp_gutenberg_get_template_object( string $id, string $type = '' ): WP_Block_Template|WP_Error {
+    if ( ! preg_match( '/^[^\/]+\/\/[^\/]+$/', $id ) ) {
+        return new WP_Error( 'invalid_params', "Template id must be \"theme//slug\" (e.g. \"" . get_stylesheet() . "//single\"), got \"{$id}\"." );
+    }
+    $types = $type !== '' ? [ $type ] : [ 'wp_template', 'wp_template_part' ];
+    foreach ( $types as $t ) {
+        if ( ! in_array( $t, [ 'wp_template', 'wp_template_part' ], true ) ) {
+            return new WP_Error( 'invalid_params', 'type must be wp_template or wp_template_part.' );
+        }
+        $tpl = get_block_template( $id, $t );
+        if ( $tpl ) {
+            return $tpl;
+        }
+    }
+    return new WP_Error( 'not_found', "Template '{$id}' not found. List available ids with wp_list_templates." );
+}
+
+/**
+ * Create the DB override post for a theme-file template, seeded verbatim
+ * from the theme content (the theme's own markup is never kses-filtered).
+ */
+function cowboy_mcp_gutenberg_materialize_template( WP_Block_Template $tpl ): int|WP_Error {
+    $post_id = wp_insert_post( wp_slash( [
+        'post_type'    => $tpl->type,
+        'post_name'    => $tpl->slug,
+        'post_title'   => (string) ( $tpl->title ?: $tpl->slug ),
+        'post_excerpt' => (string) ( $tpl->description ?? '' ),
+        'post_content' => (string) $tpl->content,
+        'post_status'  => 'publish',
+    ] ), true );
+    if ( is_wp_error( $post_id ) ) {
+        return $post_id;
+    }
+    wp_set_object_terms( $post_id, get_stylesheet(), 'wp_theme' );
+    if ( $tpl->type === 'wp_template_part' ) {
+        wp_set_object_terms( $post_id, $tpl->area ?: 'uncategorized', 'wp_template_part_area' );
+    }
+    return $post_id;
+}
+
+/* ================================================================
  *  Tool definitions & handlers (built up as arrays so Tier 2 can be
  *  appended conditionally at the bottom of the file).
  * ================================================================ */
 
 $cowboy_gutenberg_tools = [
     Cowboy_MCP_Tools::tool( 'wp_list_blocks', '[Gutenberg] Parse a post\'s content into a block tree with dot-path addresses (e.g. "1.0.2") for use with wp_edit_blocks. Returns a content_hash for optimistic concurrency. Works on any post type, including patterns (wp_block) and navigation (wp_navigation).', [
-        'post_id' => [ 'type' => 'integer', 'description' => 'Post ID (provide exactly one of post_id / template)' ],
-        'full'    => [ 'type' => 'boolean', 'description' => 'Return complete attrs and uncut content instead of previews', 'default' => false ],
+        'post_id'       => [ 'type' => 'integer', 'description' => 'Post ID (provide exactly one of post_id / template)' ],
+        'template'      => [ 'type' => 'string', 'description' => 'Template id "theme//slug" (block themes; provide exactly one of post_id / template)' ],
+        'template_type' => [ 'type' => 'string', 'description' => 'Disambiguate the template id namespace', 'enum' => [ 'wp_template', 'wp_template_part' ] ],
+        'full'          => [ 'type' => 'boolean', 'description' => 'Return complete attrs and uncut content instead of previews', 'default' => false ],
     ], [
         'title'           => 'List Blocks',
         'readOnlyHint'    => true,
@@ -713,6 +796,8 @@ $cowboy_gutenberg_tools = [
 
     Cowboy_MCP_Tools::tool( 'wp_edit_blocks', '[Gutenberg] Apply a batch of surgical block operations to a post. All paths refer to the tree as returned by wp_list_blocks BEFORE this call (snapshot addressing); the batch is all-or-nothing. Ops: {op:"update", path, attrs?, content?} (attrs shallow-merge, null deletes a key; content replaces inner HTML, leaf blocks only — note attrs are NOT re-rendered into HTML, so for HTML-sourced attributes like heading level update content too), {op:"insert", path, position: before|after|first_child|last_child, block}, {op:"replace", path, block}, {op:"delete", path}, {op:"move", from_path, to_path, position}. A block is {name, attrs?, content?, inner_blocks?} or {markup: "<!-- wp:… -->…"} — prefer markup for blocks with wrapper HTML (group, columns). Pass expected_hash from wp_list_blocks to fail fast if content changed since you read it.', [
         'post_id'               => [ 'type' => 'integer', 'description' => 'Post ID (provide exactly one of post_id / template)' ],
+        'template'              => [ 'type' => 'string', 'description' => 'Template id "theme//slug" (block themes; provide exactly one of post_id / template)' ],
+        'template_type'         => [ 'type' => 'string', 'description' => 'Disambiguate the template id namespace', 'enum' => [ 'wp_template', 'wp_template_part' ] ],
         'operations'            => [ 'type' => 'array', 'description' => 'Operation objects, applied atomically', 'items' => [ 'type' => 'object' ], 'required' => true ],
         'expected_hash'         => [ 'type' => 'string', 'description' => 'content_hash from wp_list_blocks; errors with content_conflict on mismatch' ],
         'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit core/html blocks and script-capable content, and skip kses filtering. Default false; such markup runs on the front end (stored XSS risk).', 'default' => false ],
@@ -853,7 +938,7 @@ $cowboy_gutenberg_handlers = [
     },
 
     'wp_edit_blocks' => function ( array $a ): array|WP_Error {
-        $target = cowboy_mcp_gutenberg_resolve_target( $a, true );
+        $target = cowboy_mcp_gutenberg_resolve_target( $a, false );
         if ( is_wp_error( $target ) ) {
             return $target;
         }
@@ -876,6 +961,15 @@ $cowboy_gutenberg_handlers = [
         $new_tree = cowboy_mcp_gutenberg_apply_ops( $tree, $index );
         if ( is_wp_error( $new_tree ) ) {
             return $new_tree;
+        }
+
+        if ( $target['post_id'] === null ) {
+            // Template target with no override yet: materialize only now that
+            // the whole batch validated — a failed batch must not create posts.
+            $target = cowboy_mcp_gutenberg_resolve_target( $a, true );
+            if ( is_wp_error( $target ) ) {
+                return $target;
+            }
         }
 
         $new_content = serialize_blocks( $new_tree );
@@ -1125,7 +1219,221 @@ $cowboy_gutenberg_handlers = [
 ];
 
 /* ================================================================
- *  Tier 2 — appended only on block themes (Tasks 4-5).
+ *  Tier 2 — block themes only. Handlers re-check wp_is_block_theme()
+ *  because the theme can switch mid-session.
  * ================================================================ */
+
+if ( wp_is_block_theme() ) {
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_list_templates', '[Gutenberg] List site editor templates and template parts: theme files, DB customizations, and custom templates, with source and override status. Ids are "theme//slug".', [
+        'type' => [ 'type' => 'string', 'description' => 'Which kind to list', 'enum' => [ 'wp_template', 'wp_template_part', 'both' ], 'default' => 'both' ],
+        'area' => [ 'type' => 'string', 'description' => 'Template-part area filter (header, footer, uncategorized, …)' ],
+    ], [
+        'title'           => 'List Templates',
+        'readOnlyHint'    => true,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_get_template', '[Gutenberg] Get one template or template part: metadata, content, and block tree. content_hash present only when a DB post backs it.', [
+        'id'   => [ 'type' => 'string', 'description' => 'Template id "theme//slug"', 'required' => true ],
+        'type' => [ 'type' => 'string', 'description' => 'Disambiguate the id namespace', 'enum' => [ 'wp_template', 'wp_template_part' ] ],
+    ], [
+        'title'           => 'Get Template',
+        'readOnlyHint'    => true,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_save_template', '[Gutenberg] Save a template or template part: updates the DB customization, materializes an override for a theme-file template, or creates a new custom one (unknown id + content). Undo of a first edit reverts to the theme file.', [
+        'id'                    => [ 'type' => 'string', 'description' => 'Template id "theme//slug" (theme must be the active theme for new ones)', 'required' => true ],
+        'type'                  => [ 'type' => 'string', 'description' => 'Template kind', 'enum' => [ 'wp_template', 'wp_template_part' ], 'default' => 'wp_template' ],
+        'title'                 => [ 'type' => 'string', 'description' => 'Template title' ],
+        'description'           => [ 'type' => 'string', 'description' => 'Template description' ],
+        'content'               => [ 'type' => 'string', 'description' => 'Full block markup (required when creating a new custom template/part)' ],
+        'area'                  => [ 'type' => 'string', 'description' => 'Template-part area (header, footer, uncategorized); parts only' ],
+        'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit core/html blocks and script-capable content; skips kses. Default false.', 'default' => false ],
+    ], [
+        'title'           => 'Save Template',
+        'readOnlyHint'    => false,
+        'destructiveHint' => false,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_reset_template', '[Gutenberg] Delete a template\'s DB customization. Theme-file templates revert to the theme\'s version; custom-only templates are deleted outright. Undoable.', [
+        'id'   => [ 'type' => 'string', 'description' => 'Template id "theme//slug"', 'required' => true ],
+        'type' => [ 'type' => 'string', 'description' => 'Template kind', 'enum' => [ 'wp_template', 'wp_template_part' ], 'default' => 'wp_template' ],
+    ], [
+        'title'           => 'Reset Template',
+        'readOnlyHint'    => false,
+        'destructiveHint' => true,
+        'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] );
+
+    $cowboy_gutenberg_handlers['wp_list_templates'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $type  = in_array( $a['type'] ?? 'both', [ 'wp_template', 'wp_template_part', 'both' ], true ) ? ( $a['type'] ?? 'both' ) : 'both';
+        $types = $type === 'both' ? [ 'wp_template', 'wp_template_part' ] : [ $type ];
+        $area  = isset( $a['area'] ) ? sanitize_key( $a['area'] ) : '';
+
+        $templates = [];
+        foreach ( $types as $t ) {
+            foreach ( get_block_templates( [], $t ) as $tpl ) {
+                if ( $t === 'wp_template_part' && $area !== '' && ( $tpl->area ?? '' ) !== $area ) {
+                    continue;
+                }
+                $templates[] = [
+                    'id'           => $tpl->id,
+                    'type'         => $tpl->type,
+                    'title'        => (string) $tpl->title,
+                    'description'  => (string) ( $tpl->description ?? '' ),
+                    'source'       => $tpl->has_theme_file ? 'theme' : $tpl->source,
+                    'has_override' => (bool) ( $tpl->wp_id && $tpl->has_theme_file ),
+                    'post_id'      => $tpl->wp_id ? (int) $tpl->wp_id : null,
+                    'area'         => $tpl->type === 'wp_template_part' ? ( $tpl->area ?: 'uncategorized' ) : null,
+                    'modified'     => $tpl->wp_id ? get_post( $tpl->wp_id )->post_modified : null,
+                ];
+            }
+        }
+        return [ 'count' => count( $templates ), 'templates' => $templates ];
+    };
+
+    $cowboy_gutenberg_handlers['wp_get_template'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $tpl = cowboy_mcp_gutenberg_get_template_object( (string) $a['id'], (string) ( $a['type'] ?? '' ) );
+        if ( is_wp_error( $tpl ) ) {
+            return $tpl;
+        }
+        $content = $tpl->wp_id ? (string) get_post( $tpl->wp_id )->post_content : (string) $tpl->content;
+        return [
+            'id'           => $tpl->id,
+            'type'         => $tpl->type,
+            'title'        => (string) $tpl->title,
+            'description'  => (string) ( $tpl->description ?? '' ),
+            'source'       => $tpl->has_theme_file ? 'theme' : $tpl->source,
+            'has_override' => (bool) ( $tpl->wp_id && $tpl->has_theme_file ),
+            'post_id'      => $tpl->wp_id ? (int) $tpl->wp_id : null,
+            'area'         => $tpl->type === 'wp_template_part' ? ( $tpl->area ?: 'uncategorized' ) : null,
+            'content'      => $content,
+            'content_hash' => $tpl->wp_id ? md5( $content ) : null,
+            'blocks'       => cowboy_mcp_gutenberg_summarize( cowboy_mcp_gutenberg_parse( $content ) ),
+        ];
+    };
+
+    $cowboy_gutenberg_handlers['wp_save_template'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $id    = (string) $a['id'];
+        $type  = in_array( $a['type'] ?? 'wp_template', [ 'wp_template', 'wp_template_part' ], true ) ? ( $a['type'] ?? 'wp_template' ) : 'wp_template';
+        $allow = ! empty( $a['allow_unfiltered_html'] );
+
+        $has_field = isset( $a['title'] ) || isset( $a['description'] ) || isset( $a['content'] ) || isset( $a['area'] );
+        if ( ! $has_field ) {
+            return new WP_Error( 'invalid_params', 'Provide at least one of: title, description, content, area.' );
+        }
+
+        $content = null;
+        if ( isset( $a['content'] ) ) {
+            $content = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content' );
+            if ( is_wp_error( $content ) ) {
+                return $content;
+            }
+        }
+
+        $tpl = cowboy_mcp_gutenberg_get_template_object( $id, $type );
+
+        /* Branch 1: unknown id → create a new custom template/part. */
+        if ( is_wp_error( $tpl ) ) {
+            if ( $tpl->get_error_code() !== 'not_found' ) {
+                return $tpl;
+            }
+            if ( $content === null ) {
+                return new WP_Error( 'not_found', "Template '{$id}' not found and no content was given to create it." );
+            }
+            [ $theme, $slug ] = explode( '//', $id, 2 );
+            if ( $theme !== get_stylesheet() ) {
+                return new WP_Error( 'invalid_params', "New templates must belong to the active theme (\"" . get_stylesheet() . "//{$slug}\")." );
+            }
+            $post_id = wp_insert_post( wp_slash( [
+                'post_type'    => $type,
+                'post_name'    => sanitize_title( $slug ),
+                'post_title'   => isset( $a['title'] ) ? sanitize_text_field( $a['title'] ) : $slug,
+                'post_excerpt' => isset( $a['description'] ) ? sanitize_text_field( $a['description'] ) : '',
+                'post_content' => $content,
+                'post_status'  => 'publish',
+            ] ), true );
+            if ( is_wp_error( $post_id ) ) {
+                return $post_id;
+            }
+            wp_set_object_terms( $post_id, get_stylesheet(), 'wp_theme' );
+            if ( $type === 'wp_template_part' ) {
+                wp_set_object_terms( $post_id, sanitize_key( $a['area'] ?? 'uncategorized' ), 'wp_template_part_area' );
+            }
+            return [ 'saved' => true, 'id' => $id, 'post_id' => $post_id, 'override_created' => false, 'created' => true ];
+        }
+
+        /* Branch 2: theme-file template with no override → materialize, then update. */
+        $materialized = false;
+        $post_id      = $tpl->wp_id ? (int) $tpl->wp_id : null;
+        if ( $post_id === null ) {
+            $created = cowboy_mcp_gutenberg_materialize_template( $tpl );
+            if ( is_wp_error( $created ) ) {
+                return $created;
+            }
+            $post_id      = $created;
+            $materialized = true;
+        }
+
+        /* Branch 3 (and tail of 2): update the backing post. */
+        $data = [ 'ID' => $post_id ];
+        if ( isset( $a['title'] ) )       $data['post_title']   = sanitize_text_field( $a['title'] );
+        if ( isset( $a['description'] ) ) $data['post_excerpt'] = sanitize_text_field( $a['description'] );
+        if ( $content !== null )          $data['post_content'] = $content;
+        if ( count( $data ) > 1 ) {
+            $result = wp_update_post( wp_slash( $data ), true );
+            if ( is_wp_error( $result ) ) {
+                return $result;
+            }
+        }
+        if ( isset( $a['area'] ) && $tpl->type === 'wp_template_part' ) {
+            wp_set_object_terms( $post_id, sanitize_key( $a['area'] ), 'wp_template_part_area' );
+        }
+        return [ 'saved' => true, 'id' => $tpl->id, 'post_id' => $post_id, 'override_created' => $materialized, 'created' => false ];
+    };
+
+    $cowboy_gutenberg_handlers['wp_reset_template'] = function ( array $a ): array|WP_Error {
+        if ( ! wp_is_block_theme() ) {
+            return new WP_Error( 'not_block_theme', 'The active theme is not a block theme.' );
+        }
+        $type = in_array( $a['type'] ?? 'wp_template', [ 'wp_template', 'wp_template_part' ], true ) ? ( $a['type'] ?? 'wp_template' ) : 'wp_template';
+        $tpl  = cowboy_mcp_gutenberg_get_template_object( (string) $a['id'], $type );
+        if ( is_wp_error( $tpl ) ) {
+            return $tpl;
+        }
+        if ( ! $tpl->wp_id ) {
+            return new WP_Error( 'no_override', "Template '{$tpl->id}' has no database customizations to reset (pristine theme file)." );
+        }
+        $post_id = (int) $tpl->wp_id;
+        if ( ! wp_delete_post( $post_id, true ) ) {
+            return new WP_Error( 'delete_failed', "Failed to delete template post #{$post_id}." );
+        }
+        return [
+            'reset'                   => true,
+            'id'                      => $tpl->id,
+            'post_id'                 => $post_id,
+            'reverted_to_theme_file'  => (bool) $tpl->has_theme_file,
+            'deleted_custom_template' => ! $tpl->has_theme_file,
+        ];
+    };
+}
 
 return [ 'tools' => $cowboy_gutenberg_tools, 'handlers' => $cowboy_gutenberg_handlers ];
