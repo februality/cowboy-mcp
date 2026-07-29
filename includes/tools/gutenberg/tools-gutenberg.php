@@ -799,9 +799,11 @@ function cowboy_mcp_gutenberg_rollback_target( string $tool, array $args ): ?int
 
         case 'wp_save_template':
         case 'wp_reset_template':
-            // Same default as the handlers — a divergent default would let the
-            // capture resolve a template part while the handler creates a template.
-            $tpl = cowboy_mcp_gutenberg_get_template_object( (string) ( $args['id'] ?? '' ), (string) ( $args['type'] ?? 'wp_template' ) );
+            // Byte-identical normalization to the two handlers — any divergence
+            // makes the capture disagree with what the handler actually touches.
+            $type = in_array( $args['type'] ?? 'wp_template', [ 'wp_template', 'wp_template_part' ], true )
+                ? ( $args['type'] ?? 'wp_template' ) : 'wp_template';
+            $tpl = cowboy_mcp_gutenberg_get_template_object( (string) ( $args['id'] ?? '' ), $type );
             return ( ! is_wp_error( $tpl ) && $tpl->wp_id ) ? (int) $tpl->wp_id : null;
 
         case 'wp_update_global_styles':
