@@ -97,6 +97,474 @@ function cowboy_mcp_gutenberg_resolve_target( array $a, bool $materialize = fals
 }
 
 /* ================================================================
+ *  Helpers — tree edit side
+ * ================================================================ */
+
+/** Walk a dot-path; null when it does not exist. */
+function cowboy_mcp_gutenberg_get_node( array $tree, string $path ): ?array {
+    $node = null;
+    $blocks = $tree;
+    foreach ( explode( '.', $path ) as $i ) {
+        $i = (int) $i;
+        if ( ! isset( $blocks[ $i ] ) ) {
+            return null;
+        }
+        $node   = $blocks[ $i ];
+        $blocks = $node['innerBlocks'] ?? [];
+    }
+    return $node;
+}
+
+/** Replace the node at $path, returning the new tree. $path must exist. */
+function cowboy_mcp_gutenberg_set_node( array $tree, string $path, array $node ): array {
+    $indexes = explode( '.', $path );
+    $i       = (int) array_shift( $indexes );
+    if ( $indexes === [] ) {
+        $tree[ $i ] = $node;
+        return $tree;
+    }
+    $tree[ $i ]['innerBlocks'] = cowboy_mcp_gutenberg_set_node( $tree[ $i ]['innerBlocks'], implode( '.', $indexes ), $node );
+    return $tree;
+}
+
+/**
+ * Stored-XSS gate (Elementor precedent): raw script-capable content requires
+ * an explicit allow_unfiltered_html opt-in. Returns the offending reason or null.
+ */
+function cowboy_mcp_gutenberg_unfiltered_reason( string $content ): ?string {
+    if ( preg_match( '/<script/i', $content ) )   return 'a <script> tag';
+    if ( preg_match( '/<iframe/i', $content ) )   return 'an <iframe> tag';
+    if ( preg_match( '/\son[a-z]+\s*=/i', $content ) ) return 'an inline event handler attribute';
+    return null;
+}
+
+/**
+ * Sanitize one agent-supplied content string per the kses policy:
+ * gate script-capable content behind allow_unfiltered_html, else kses it.
+ * $context names the op/path for the error message.
+ */
+function cowboy_mcp_gutenberg_filter_content( string $content, bool $allow_unfiltered, string $context ): string|WP_Error {
+    if ( $allow_unfiltered ) {
+        return $content;
+    }
+    $reason = cowboy_mcp_gutenberg_unfiltered_reason( $content );
+    if ( $reason !== null ) {
+        return new WP_Error( 'unfiltered_html_blocked', "Content at {$context} contains {$reason}. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)." );
+    }
+    return wp_kses_post( $content );
+}
+
+/** Recursive core/html scan for parsed markup specs. */
+function cowboy_mcp_gutenberg_contains_html_block( array $blocks ): bool {
+    foreach ( $blocks as $b ) {
+        if ( ( $b['blockName'] ?? '' ) === 'core/html' ) {
+            return true;
+        }
+        if ( ! empty( $b['innerBlocks'] ) && cowboy_mcp_gutenberg_contains_html_block( $b['innerBlocks'] ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Build a parse-tree node from a block spec.
+ * Structured form {name, attrs?, content?, inner_blocks?} emits no wrapper
+ * markup — for blocks whose save output wraps children in HTML (core/group,
+ * core/columns), prefer the {markup} form with full serialized block markup.
+ */
+function cowboy_mcp_gutenberg_build_block( array $spec, bool $allow_unfiltered, string $context = 'block' ): array|WP_Error {
+    if ( ! empty( $spec['markup'] ) && is_string( $spec['markup'] ) ) {
+        $markup = cowboy_mcp_gutenberg_filter_content( $spec['markup'], $allow_unfiltered, $context );
+        if ( is_wp_error( $markup ) ) {
+            return $markup;
+        }
+        $parsed = cowboy_mcp_gutenberg_parse( $markup );
+        if ( count( $parsed ) !== 1 ) {
+            return new WP_Error( 'invalid_block', "markup at {$context} must contain exactly one root block, got " . count( $parsed ) . '.' );
+        }
+        if ( ! $allow_unfiltered && cowboy_mcp_gutenberg_contains_html_block( $parsed ) ) {
+            return new WP_Error( 'unfiltered_html_blocked', "markup at {$context} contains a core/html block. Pass allow_unfiltered_html: true to permit it." );
+        }
+        return $parsed[0];
+    }
+
+    $name = $spec['name'] ?? '';
+    if ( ! is_string( $name ) || ! preg_match( '/^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/', $name ) ) {
+        return new WP_Error( 'invalid_block', "Block spec at {$context} needs a valid name (namespace/block) or a markup string." );
+    }
+    if ( $name === 'core/html' && ! $allow_unfiltered ) {
+        return new WP_Error( 'unfiltered_html_blocked', "Block spec at {$context} is a core/html block. Pass allow_unfiltered_html: true to permit it." );
+    }
+    $attrs   = is_array( $spec['attrs'] ?? null ) ? $spec['attrs'] : [];
+    $content = (string) ( $spec['content'] ?? '' );
+    $has_kids = ! empty( $spec['inner_blocks'] ) && is_array( $spec['inner_blocks'] );
+
+    if ( $has_kids && $content !== '' ) {
+        return new WP_Error( 'invalid_block', "Block spec at {$context}: provide either content or inner_blocks, not both (use markup for wrapper HTML around children)." );
+    }
+
+    if ( $has_kids ) {
+        $children = [];
+        $ic       = [];
+        foreach ( array_values( $spec['inner_blocks'] ) as $j => $child_spec ) {
+            $child = cowboy_mcp_gutenberg_build_block( (array) $child_spec, $allow_unfiltered, "{$context}.inner_blocks[{$j}]" );
+            if ( is_wp_error( $child ) ) {
+                return $child;
+            }
+            if ( $ic !== [] ) {
+                $ic[] = "\n\n";
+            }
+            $ic[]       = null;
+            $children[] = $child;
+        }
+        return [ 'blockName' => $name, 'attrs' => $attrs, 'innerBlocks' => $children, 'innerHTML' => '', 'innerContent' => $ic ];
+    }
+
+    if ( $content !== '' ) {
+        $content = cowboy_mcp_gutenberg_filter_content( $content, $allow_unfiltered, $context );
+        if ( is_wp_error( $content ) ) {
+            return $content;
+        }
+    }
+    return [
+        'blockName'    => $name,
+        'attrs'        => $attrs,
+        'innerBlocks'  => [],
+        'innerHTML'    => $content,
+        'innerContent' => $content !== '' ? [ $content ] : [],
+    ];
+}
+
+/**
+ * Validate + index an operations array against the pre-call tree.
+ * All paths refer to that tree (snapshot addressing). Returns the op index
+ * consumed by cowboy_mcp_gutenberg_apply_ops(), plus human-readable
+ * per-op descriptions (dry-run preview) and unregistered-name warnings.
+ */
+function cowboy_mcp_gutenberg_index_ops( array $tree, array $ops, bool $allow_unfiltered ): array|WP_Error {
+    $index = [
+        'updates'      => [], // path => [ {attrs?, content?} … ] in op order
+        'deletes'      => [], // path => true
+        'replaces'     => [], // path => node
+        'ins_before'   => [], // anchor path => [ nodes ]
+        'ins_after'    => [], // anchor path => [ nodes ]
+        'prepend'      => [], // parent path => [ nodes ]
+        'append'       => [], // parent path => [ nodes ]
+        'moves'        => [], // [ {from, to, position} ]
+        'descriptions' => [],
+        'warnings'     => [],
+    ];
+    $removed = []; // delete/replace/move-from roots for conflict checks
+
+    $valid_path = fn( $p ) => is_string( $p ) && preg_match( '/^\d+(\.\d+)*$/', $p ) === 1;
+    $positions  = [ 'before', 'after', 'first_child', 'last_child' ];
+    $registry   = WP_Block_Type_Registry::get_instance();
+
+    if ( $ops === [] ) {
+        return new WP_Error( 'invalid_params', 'operations must be a non-empty array.' );
+    }
+
+    foreach ( array_values( $ops ) as $n => $op ) {
+        if ( ! is_array( $op ) || empty( $op['op'] ) ) {
+            return new WP_Error( 'invalid_params', "operations[{$n}] needs an op key (update|insert|replace|delete|move)." );
+        }
+        $kind = $op['op'];
+        $ctx  = "operations[{$n}]";
+
+        $need_node = function ( string $path ) use ( $tree, $ctx, $valid_path ): array|WP_Error {
+            if ( ! $valid_path( $path ) ) {
+                return new WP_Error( 'invalid_path', "{$ctx}: '{$path}' is not a valid dot-path." );
+            }
+            $node = cowboy_mcp_gutenberg_get_node( $tree, $path );
+            if ( $node === null ) {
+                return new WP_Error( 'invalid_path', "{$ctx}: no block at path {$path}." );
+            }
+            return $node;
+        };
+
+        switch ( $kind ) {
+            case 'update':
+                $path = (string) ( $op['path'] ?? '' );
+                $node = $need_node( $path );
+                if ( is_wp_error( $node ) ) return $node;
+                $has_attrs   = isset( $op['attrs'] ) && is_array( $op['attrs'] );
+                $has_content = isset( $op['content'] ) && is_string( $op['content'] );
+                if ( ! $has_attrs && ! $has_content ) {
+                    return new WP_Error( 'invalid_params', "{$ctx}: update needs attrs and/or content." );
+                }
+                if ( $has_content ) {
+                    if ( ! empty( $node['innerBlocks'] ) ) {
+                        return new WP_Error( 'has_children', "{$ctx}: block at {$path} has child blocks; edit children at their own paths (content is leaf-only)." );
+                    }
+                    if ( ( $node['blockName'] ?? '' ) === 'core/html' && ! $allow_unfiltered ) {
+                        return new WP_Error( 'unfiltered_html_blocked', "{$ctx}: block at {$path} is core/html. Pass allow_unfiltered_html: true to edit its content." );
+                    }
+                    $filtered = cowboy_mcp_gutenberg_filter_content( $op['content'], $allow_unfiltered, "{$ctx} (path {$path})" );
+                    if ( is_wp_error( $filtered ) ) return $filtered;
+                    $op['content'] = $filtered;
+                }
+                $index['updates'][ $path ][] = [
+                    'attrs'   => $has_attrs ? $op['attrs'] : null,
+                    'content' => $has_content ? $op['content'] : null,
+                ];
+                $index['descriptions'][] = 'update ' . ( $node['blockName'] ?? 'core/freeform' ) . " at {$path}";
+                break;
+
+            case 'delete':
+                $path = (string) ( $op['path'] ?? '' );
+                $node = $need_node( $path );
+                if ( is_wp_error( $node ) ) return $node;
+                if ( isset( $removed[ $path ] ) ) {
+                    return new WP_Error( 'op_conflict', "{$ctx}: path {$path} is removed by two operations." );
+                }
+                $index['deletes'][ $path ] = true;
+                $removed[ $path ]          = $kind;
+                $index['descriptions'][]   = 'delete ' . ( $node['blockName'] ?? 'core/freeform' ) . " at {$path}";
+                break;
+
+            case 'replace':
+                $path = (string) ( $op['path'] ?? '' );
+                $node = $need_node( $path );
+                if ( is_wp_error( $node ) ) return $node;
+                $new = cowboy_mcp_gutenberg_build_block( (array) ( $op['block'] ?? [] ), $allow_unfiltered, "{$ctx}.block" );
+                if ( is_wp_error( $new ) ) return $new;
+                if ( isset( $index['replaces'][ $path ] ) ) {
+                    return new WP_Error( 'op_conflict', "{$ctx}: path {$path} is replaced twice." );
+                }
+                if ( isset( $removed[ $path ] ) ) {
+                    return new WP_Error( 'op_conflict', "{$ctx}: path {$path} is removed by two operations." );
+                }
+                $index['replaces'][ $path ] = $new;
+                $removed[ $path ]           = $kind;
+                if ( ! $registry->is_registered( $new['blockName'] ) ) {
+                    $index['warnings'][] = "Block type '{$new['blockName']}' is not registered on the server (client-only blocks are fine).";
+                }
+                $index['descriptions'][] = 'replace ' . ( $node['blockName'] ?? 'core/freeform' ) . " at {$path} with {$new['blockName']}";
+                break;
+
+            case 'insert':
+                $path = (string) ( $op['path'] ?? '' );
+                $pos  = (string) ( $op['position'] ?? '' );
+                if ( ! in_array( $pos, $positions, true ) ) {
+                    return new WP_Error( 'invalid_params', "{$ctx}: position must be one of before, after, first_child, last_child." );
+                }
+                $node = $need_node( $path );
+                if ( is_wp_error( $node ) ) return $node;
+                $new = cowboy_mcp_gutenberg_build_block( (array) ( $op['block'] ?? [] ), $allow_unfiltered, "{$ctx}.block" );
+                if ( is_wp_error( $new ) ) return $new;
+                $slot = match ( $pos ) {
+                    'before'      => 'ins_before',
+                    'after'       => 'ins_after',
+                    'first_child' => 'prepend',
+                    'last_child'  => 'append',
+                };
+                $index[ $slot ][ $path ][] = $new;
+                if ( ! $registry->is_registered( $new['blockName'] ) ) {
+                    $index['warnings'][] = "Block type '{$new['blockName']}' is not registered on the server (client-only blocks are fine).";
+                }
+                $index['descriptions'][] = "insert {$new['blockName']} {$pos} {$path}";
+                break;
+
+            case 'move':
+                $from = (string) ( $op['from_path'] ?? '' );
+                $to   = (string) ( $op['to_path'] ?? '' );
+                $pos  = (string) ( $op['position'] ?? '' );
+                if ( ! in_array( $pos, $positions, true ) ) {
+                    return new WP_Error( 'invalid_params', "{$ctx}: position must be one of before, after, first_child, last_child." );
+                }
+                $node = $need_node( $from );
+                if ( is_wp_error( $node ) ) return $node;
+                $anchor = $need_node( $to );
+                if ( is_wp_error( $anchor ) ) return $anchor;
+                if ( $to === $from || str_starts_with( $to, $from . '.' ) ) {
+                    return new WP_Error( 'op_conflict', "{$ctx}: cannot move a block into its own subtree ({$from} → {$to})." );
+                }
+                if ( isset( $removed[ $from ] ) ) {
+                    return new WP_Error( 'op_conflict', "{$ctx}: path {$from} is removed by two operations." );
+                }
+                $index['moves'][]  = [ 'from' => $from, 'to' => $to, 'position' => $pos ];
+                $removed[ $from ]  = $kind;
+                $index['descriptions'][] = 'move ' . ( $node['blockName'] ?? 'core/freeform' ) . " from {$from} to {$pos} {$to}";
+                break;
+
+            default:
+                return new WP_Error( 'invalid_params', "{$ctx}: unknown op '{$kind}'." );
+        }
+    }
+
+    /* Conflict pass — every referenced path vs removed subtree roots.
+     * Exact-path rules: update/insert-anchor/move-anchor on a DELETED or
+     * MOVED-AWAY path conflicts; anchors on a REPLACED path are fine (the
+     * replacement keeps the position). Descendant rules: anything strictly
+     * inside any removed subtree conflicts. */
+    $refs = []; // [ [path, kind, exact_ok_on_replace] ]
+    foreach ( array_keys( $index['updates'] ) as $p )    $refs[] = [ $p, 'update', false ];
+    foreach ( array_keys( $index['ins_before'] ) as $p ) $refs[] = [ $p, 'insert anchor', true ];
+    foreach ( array_keys( $index['ins_after'] ) as $p )  $refs[] = [ $p, 'insert anchor', true ];
+    foreach ( array_keys( $index['prepend'] ) as $p )    $refs[] = [ $p, 'insert parent', true ];
+    foreach ( array_keys( $index['append'] ) as $p )     $refs[] = [ $p, 'insert parent', true ];
+    foreach ( $index['moves'] as $m )                    $refs[] = [ $m['to'], 'move anchor', true ];
+
+    foreach ( $refs as [ $p, $what, $replace_ok ] ) {
+        foreach ( $removed as $root => $rkind ) {
+            $is_exact = $p === $root;
+            if ( ! $is_exact && ! str_starts_with( $p, $root . '.' ) ) {
+                continue;
+            }
+            // A moved-away exact path is exempt for updates: Phase 1 applies
+            // updates to the tree before Phase 2 captures the move's source
+            // node, so the update rides along with the relocated block.
+            // Delete/replace at the exact path genuinely discard it.
+            if ( $is_exact && $what === 'update' && $rkind === 'move' ) {
+                continue;
+            }
+            if ( ! $is_exact || ! ( $replace_ok && $rkind === 'replace' ) ) {
+                return new WP_Error( 'op_conflict', "Operation conflict: {$what} at {$p} targets a subtree removed by a {$rkind} at {$root}." );
+            }
+        }
+    }
+
+    return $index;
+}
+
+/**
+ * Rebuild a container's innerContent after its child COUNT changed:
+ * keep head/tail wrapper HTML, emit one null per child separated by
+ * blank lines. Inter-child HTML (whitespace in valid markup) is dropped.
+ * A childless block with non-wrapper content cannot take children.
+ */
+function cowboy_mcp_gutenberg_reindex_inner_content( array $b, array $new_children ): array|WP_Error {
+    $old  = is_array( $b['innerContent'] ?? null ) ? $b['innerContent'] : [];
+    $head = ( isset( $old[0] ) && is_string( $old[0] ) ) ? $old[0] : null;
+    $last = $old !== [] ? $old[ array_key_last( $old ) ] : null;
+    $tail = ( count( $old ) > 1 && is_string( $last ) ) ? $last : null;
+
+    if ( empty( $b['innerBlocks'] ) && count( $old ) === 1 && is_string( $old[0] ) ) {
+        // Childless: only a pure wrapper (open tag + close tag) can be split.
+        $html = trim( $old[0] );
+        if ( $html === '' ) {
+            $head = null;
+            $tail = null;
+        } elseif ( preg_match( '/^(<[a-zA-Z][^>]*>)\s*(<\/[a-zA-Z][^>]*>)$/s', $html, $m ) ) {
+            $head = $m[1];
+            $tail = $m[2];
+        } else {
+            return new WP_Error( 'invalid_path', "Block '" . ( $b['blockName'] ?? 'core/freeform' ) . "' has content but no child blocks; cannot insert children into it. Replace it with full markup instead." );
+        }
+    }
+
+    $ic = [];
+    if ( $head !== null ) {
+        $ic[] = $head;
+    }
+    foreach ( array_values( $new_children ) as $j => $unused ) {
+        if ( $j > 0 ) {
+            $ic[] = "\n\n";
+        }
+        $ic[] = null;
+    }
+    if ( $tail !== null ) {
+        $ic[] = $tail;
+    }
+    $b['innerBlocks']  = array_values( $new_children );
+    $b['innerContent'] = $ic;
+    $b['innerHTML']    = ( $head ?? '' ) . ( $tail ?? '' );
+    return $b;
+}
+
+/**
+ * Apply a validated op index to the tree. Phases: updates in place →
+ * capture moved nodes (with updates applied) and convert moves into
+ * delete+insert entries → one functional rebuild.
+ */
+function cowboy_mcp_gutenberg_apply_ops( array $tree, array $index ): array|WP_Error {
+    // Phase 1: updates (paths still valid — nothing structural has run).
+    foreach ( $index['updates'] as $path => $changes ) {
+        $node = cowboy_mcp_gutenberg_get_node( $tree, $path );
+        foreach ( $changes as $c ) {
+            if ( $c['attrs'] !== null ) {
+                $attrs = is_array( $node['attrs'] ?? null ) ? $node['attrs'] : [];
+                foreach ( $c['attrs'] as $k => $v ) {
+                    if ( $v === null ) {
+                        unset( $attrs[ $k ] );
+                    } else {
+                        $attrs[ $k ] = $v;
+                    }
+                }
+                $node['attrs'] = $attrs;
+            }
+            if ( $c['content'] !== null ) {
+                $node['innerHTML']    = $c['content'];
+                $node['innerContent'] = $c['content'] !== '' ? [ $c['content'] ] : [];
+            }
+        }
+        $tree = cowboy_mcp_gutenberg_set_node( $tree, $path, $node );
+    }
+
+    // Phase 2: moves become delete@from + insert@to of the captured node.
+    foreach ( $index['moves'] as $m ) {
+        $node = cowboy_mcp_gutenberg_get_node( $tree, $m['from'] );
+        $index['deletes'][ $m['from'] ] = true;
+        $slot = match ( $m['position'] ) {
+            'before'      => 'ins_before',
+            'after'       => 'ins_after',
+            'first_child' => 'prepend',
+            'last_child'  => 'append',
+        };
+        $index[ $slot ][ $m['to'] ][] = $node;
+    }
+
+    // Phase 3: single functional rebuild against original paths.
+    return cowboy_mcp_gutenberg_rebuild( $tree, '', $index );
+}
+
+/** Recursive rebuild consulting the op index by each node's ORIGINAL path. */
+function cowboy_mcp_gutenberg_rebuild( array $blocks, string $prefix, array $index ): array|WP_Error {
+    $result = [];
+    foreach ( array_values( $blocks ) as $i => $b ) {
+        $path = $prefix === '' ? (string) $i : "{$prefix}.{$i}";
+
+        foreach ( $index['ins_before'][ $path ] ?? [] as $n ) {
+            $result[] = $n;
+        }
+
+        if ( isset( $index['deletes'][ $path ] ) ) {
+            // dropped (conflict pass guarantees no anchors under it)
+        } elseif ( isset( $index['replaces'][ $path ] ) ) {
+            $result[] = $index['replaces'][ $path ];
+        } else {
+            $kids_changed = isset( $index['prepend'][ $path ] ) || isset( $index['append'][ $path ] );
+            if ( ! empty( $b['innerBlocks'] ) || $kids_changed ) {
+                $new_children = cowboy_mcp_gutenberg_rebuild( $b['innerBlocks'] ?? [], $path, $index );
+                if ( is_wp_error( $new_children ) ) {
+                    return $new_children;
+                }
+                $new_children = array_merge(
+                    $index['prepend'][ $path ] ?? [],
+                    $new_children,
+                    $index['append'][ $path ] ?? []
+                );
+                if ( count( $new_children ) !== count( $b['innerBlocks'] ?? [] ) ) {
+                    $b = cowboy_mcp_gutenberg_reindex_inner_content( $b, $new_children );
+                    if ( is_wp_error( $b ) ) {
+                        return $b;
+                    }
+                } else {
+                    $b['innerBlocks'] = $new_children;
+                }
+            }
+            $result[] = $b;
+        }
+
+        foreach ( $index['ins_after'][ $path ] ?? [] as $n ) {
+            $result[] = $n;
+        }
+    }
+    return $result;
+}
+
+/* ================================================================
  *  Tool definitions & handlers (built up as arrays so Tier 2 can be
  *  appended conditionally at the bottom of the file).
  * ================================================================ */
@@ -130,6 +598,19 @@ $cowboy_gutenberg_tools = [
         'readOnlyHint'    => true,
         'destructiveHint' => false,
         'idempotentHint'  => true,
+        'openWorldHint'   => false,
+    ] ),
+
+    Cowboy_MCP_Tools::tool( 'wp_edit_blocks', '[Gutenberg] Apply a batch of surgical block operations to a post. All paths refer to the tree as returned by wp_list_blocks BEFORE this call (snapshot addressing); the batch is all-or-nothing. Ops: {op:"update", path, attrs?, content?} (attrs shallow-merge, null deletes a key; content replaces inner HTML, leaf blocks only — note attrs are NOT re-rendered into HTML, so for HTML-sourced attributes like heading level update content too), {op:"insert", path, position: before|after|first_child|last_child, block}, {op:"replace", path, block}, {op:"delete", path}, {op:"move", from_path, to_path, position}. A block is {name, attrs?, content?, inner_blocks?} or {markup: "<!-- wp:… -->…"} — prefer markup for blocks with wrapper HTML (group, columns). Pass expected_hash from wp_list_blocks to fail fast if content changed since you read it.', [
+        'post_id'               => [ 'type' => 'integer', 'description' => 'Post ID (provide exactly one of post_id / template)' ],
+        'operations'            => [ 'type' => 'array', 'description' => 'Operation objects, applied atomically', 'items' => [ 'type' => 'object' ], 'required' => true ],
+        'expected_hash'         => [ 'type' => 'string', 'description' => 'content_hash from wp_list_blocks; errors with content_conflict on mismatch' ],
+        'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit core/html blocks and script-capable content, and skip kses filtering. Default false; such markup runs on the front end (stored XSS risk).', 'default' => false ],
+    ], [
+        'title'           => 'Edit Blocks',
+        'readOnlyHint'    => false,
+        'destructiveHint' => false,
+        'idempotentHint'  => false,
         'openWorldHint'   => false,
     ] ),
 ];
@@ -194,6 +675,55 @@ $cowboy_gutenberg_handlers = [
             ];
         }
         return [ 'count' => count( $types ), 'block_types' => $types ];
+    },
+
+    'wp_edit_blocks' => function ( array $a ): array|WP_Error {
+        $target = cowboy_mcp_gutenberg_resolve_target( $a, true );
+        if ( is_wp_error( $target ) ) {
+            return $target;
+        }
+
+        if ( ! empty( $a['expected_hash'] ) && md5( $target['content'] ) !== $a['expected_hash'] ) {
+            return new WP_Error( 'content_conflict', 'Content changed since you read it (content_hash mismatch). Re-read with wp_list_blocks and recompute paths.' );
+        }
+
+        $ops = $a['operations'] ?? [];
+        if ( ! is_array( $ops ) ) {
+            return new WP_Error( 'invalid_params', 'operations must be an array of operation objects.' );
+        }
+        $allow = ! empty( $a['allow_unfiltered_html'] );
+        $tree  = cowboy_mcp_gutenberg_parse( $target['content'] );
+
+        $index = cowboy_mcp_gutenberg_index_ops( $tree, $ops, $allow );
+        if ( is_wp_error( $index ) ) {
+            return $index;
+        }
+        $new_tree = cowboy_mcp_gutenberg_apply_ops( $tree, $index );
+        if ( is_wp_error( $new_tree ) ) {
+            return $new_tree;
+        }
+
+        $new_content = serialize_blocks( $new_tree );
+        $result      = wp_update_post( wp_slash( [ 'ID' => $target['post_id'], 'post_content' => $new_content ] ), true );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return [
+            'updated'          => true,
+            'post_id'          => $target['post_id'],
+            'target'           => [
+                'post_id'  => $target['post_id'],
+                'template' => $target['template'],
+                'title'    => $target['title'],
+                'kind'     => $target['kind'],
+            ],
+            'override_created' => $target['materialized'],
+            'operations'       => $index['descriptions'],
+            'warnings'         => $index['warnings'],
+            'content_hash'     => md5( $new_content ),
+            'blocks'           => cowboy_mcp_gutenberg_summarize( cowboy_mcp_gutenberg_parse( $new_content ) ),
+        ];
     },
 ];
 
