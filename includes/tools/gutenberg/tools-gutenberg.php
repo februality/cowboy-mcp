@@ -168,6 +168,36 @@ function cowboy_mcp_gutenberg_contains_html_block( array $blocks ): bool {
 }
 
 /**
+ * Apply wp_kses_post() to a parsed block tree's HTML content only — each
+ * node's innerHTML and the string entries of its innerContent — recursing
+ * into innerBlocks. Attrs and block-delimiter comments are never touched:
+ * running kses over a whole serialized-markup string runs its comment
+ * handling over the "<!-- wp:name {json} -->" delimiters too, which
+ * corrupts CSS custom-property names (e.g. var(--wp--preset--…)) and JSON
+ * punctuation inside them. Reusable for other full-content write paths.
+ */
+function cowboy_mcp_gutenberg_kses_tree( array $blocks ): array {
+    foreach ( $blocks as &$b ) {
+        if ( is_string( $b['innerHTML'] ?? null ) && $b['innerHTML'] !== '' ) {
+            $b['innerHTML'] = wp_kses_post( $b['innerHTML'] );
+        }
+        if ( is_array( $b['innerContent'] ?? null ) ) {
+            foreach ( $b['innerContent'] as &$part ) {
+                if ( is_string( $part ) && $part !== '' ) {
+                    $part = wp_kses_post( $part );
+                }
+            }
+            unset( $part );
+        }
+        if ( ! empty( $b['innerBlocks'] ) ) {
+            $b['innerBlocks'] = cowboy_mcp_gutenberg_kses_tree( $b['innerBlocks'] );
+        }
+    }
+    unset( $b );
+    return $blocks;
+}
+
+/**
  * Build a parse-tree node from a block spec.
  * Structured form {name, attrs?, content?, inner_blocks?} emits no wrapper
  * markup — for blocks whose save output wraps children in HTML (core/group,
@@ -175,9 +205,12 @@ function cowboy_mcp_gutenberg_contains_html_block( array $blocks ): bool {
  */
 function cowboy_mcp_gutenberg_build_block( array $spec, bool $allow_unfiltered, string $context = 'block' ): array|WP_Error {
     if ( ! empty( $spec['markup'] ) && is_string( $spec['markup'] ) ) {
-        $markup = cowboy_mcp_gutenberg_filter_content( $spec['markup'], $allow_unfiltered, $context );
-        if ( is_wp_error( $markup ) ) {
-            return $markup;
+        $markup = $spec['markup'];
+        if ( ! $allow_unfiltered ) {
+            $reason = cowboy_mcp_gutenberg_unfiltered_reason( $markup );
+            if ( $reason !== null ) {
+                return new WP_Error( 'unfiltered_html_blocked', "Content at {$context} contains {$reason}. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)." );
+            }
         }
         $parsed = cowboy_mcp_gutenberg_parse( $markup );
         if ( count( $parsed ) !== 1 ) {
@@ -185,6 +218,11 @@ function cowboy_mcp_gutenberg_build_block( array $spec, bool $allow_unfiltered, 
         }
         if ( ! $allow_unfiltered && cowboy_mcp_gutenberg_contains_html_block( $parsed ) ) {
             return new WP_Error( 'unfiltered_html_blocked', "markup at {$context} contains a core/html block. Pass allow_unfiltered_html: true to permit it." );
+        }
+        // kses the parsed tree's content strings, never the raw markup —
+        // see cowboy_mcp_gutenberg_kses_tree() docblock for why.
+        if ( ! $allow_unfiltered ) {
+            $parsed = cowboy_mcp_gutenberg_kses_tree( $parsed );
         }
         return $parsed[0];
     }
@@ -394,32 +432,49 @@ function cowboy_mcp_gutenberg_index_ops( array $tree, array $ops, bool $allow_un
     }
 
     /* Conflict pass — every referenced path vs removed subtree roots.
-     * Exact-path rules: update/insert-anchor/move-anchor on a DELETED or
-     * MOVED-AWAY path conflicts; anchors on a REPLACED path are fine (the
-     * replacement keeps the position). Descendant rules: anything strictly
-     * inside any removed subtree conflicts. */
-    $refs = []; // [ [path, kind, exact_ok_on_replace] ]
-    foreach ( array_keys( $index['updates'] ) as $p )    $refs[] = [ $p, 'update', false ];
-    foreach ( array_keys( $index['ins_before'] ) as $p ) $refs[] = [ $p, 'insert anchor', true ];
-    foreach ( array_keys( $index['ins_after'] ) as $p )  $refs[] = [ $p, 'insert anchor', true ];
-    foreach ( array_keys( $index['prepend'] ) as $p )    $refs[] = [ $p, 'insert parent', true ];
-    foreach ( array_keys( $index['append'] ) as $p )     $refs[] = [ $p, 'insert parent', true ];
-    foreach ( $index['moves'] as $m )                    $refs[] = [ $m['to'], 'move anchor', true ];
+     * Exact-path rules: update/insert-anchor/insert-parent/move-anchor on a
+     * DELETED or REPLACED path conflicts. Replace spares only siblings
+     * (insert-anchor, move-anchor) — the replacement keeps their position —
+     * NOT children (insert-parent/prepend/append): rebuild emits the
+     * replacement node wholesale and never consults prepend/append for that
+     * path, so a child insert there would be silently dropped.
+     * A move removal is different in kind: update is exempt against it at
+     * both the exact path and any strict descendant, because Phase 1 writes
+     * land in the tree before Phase 2 captures the move's source subtree —
+     * the update rides along with the relocated block. Every other ref kind
+     * still conflicts inside (or at) a moved subtree; rebuild never walks
+     * into the captured node, so an anchor there would be lost.
+     * A move's own source path is exempt against its own removal entry
+     * (it's not "removed by someone else") but still conflicts, exact or
+     * descendant, against any OTHER removal — this catches nested moves
+     * (moving both a subtree and one of its descendants) and moves that
+     * would "rescue" a block out of a subtree deleted/replaced elsewhere.
+     * Descendant rules otherwise: anything strictly inside any removed
+     * subtree conflicts unless specifically exempted above.
+     * All path/root comparisons are cast to string — $removed and the
+     * index arrays are keyed by path, and PHP auto-casts purely-numeric
+     * string keys ("0") to int, so a bare === would silently miss exact
+     * matches at numeric top-level paths. */
+    $refs = []; // [ [path, kind] ]
+    foreach ( array_keys( $index['updates'] ) as $p )    $refs[] = [ $p, 'update' ];
+    foreach ( array_keys( $index['ins_before'] ) as $p ) $refs[] = [ $p, 'insert anchor' ];
+    foreach ( array_keys( $index['ins_after'] ) as $p )  $refs[] = [ $p, 'insert anchor' ];
+    foreach ( array_keys( $index['prepend'] ) as $p )    $refs[] = [ $p, 'insert parent' ];
+    foreach ( array_keys( $index['append'] ) as $p )     $refs[] = [ $p, 'insert parent' ];
+    foreach ( $index['moves'] as $m )                    $refs[] = [ $m['to'], 'move anchor' ];
+    foreach ( $index['moves'] as $m )                    $refs[] = [ $m['from'], 'move source' ];
 
-    foreach ( $refs as [ $p, $what, $replace_ok ] ) {
+    foreach ( $refs as [ $p, $what ] ) {
         foreach ( $removed as $root => $rkind ) {
-            $is_exact = $p === $root;
-            if ( ! $is_exact && ! str_starts_with( $p, $root . '.' ) ) {
+            $is_exact      = (string) $p === (string) $root;
+            $is_descendant = str_starts_with( (string) $p, $root . '.' );
+            if ( ! $is_exact && ! $is_descendant ) {
                 continue;
             }
-            // A moved-away exact path is exempt for updates: Phase 1 applies
-            // updates to the tree before Phase 2 captures the move's source
-            // node, so the update rides along with the relocated block.
-            // Delete/replace at the exact path genuinely discard it.
-            if ( $is_exact && $what === 'update' && $rkind === 'move' ) {
-                continue;
-            }
-            if ( ! $is_exact || ! ( $replace_ok && $rkind === 'replace' ) ) {
+            $exempt = ( $what === 'update' && $rkind === 'move' )
+                || ( $what === 'move source' && $is_exact )
+                || ( $is_exact && $rkind === 'replace' && in_array( $what, [ 'insert anchor', 'move anchor' ], true ) );
+            if ( ! $exempt ) {
                 return new WP_Error( 'op_conflict', "Operation conflict: {$what} at {$p} targets a subtree removed by a {$rkind} at {$root}." );
             }
         }
