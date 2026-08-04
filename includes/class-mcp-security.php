@@ -538,13 +538,18 @@ class Cowboy_MCP_Security {
      * matching is bypassable) and matches every check against the resulting
      * positional token sequence instead of the raw string.
      *
-     * Check order mirrors the pre-fix handler, with one addition at the front:
-     * a leading @alias rejection, then dangerous global flags, the
-     * cowboy_mcp_ option-write guard (never lifted by Power mode — the
-     * wp_cli-escape-hatch equivalent of the wp_update_option write-denylist),
-     * the always-blocked subcommand list, the db query|search SQL blocklist +
-     * secret-table check, and finally — only when $safe_mode is on and
-     * $confirm is false — the known-safe-prefix allowlist.
+     * Check order mirrors the pre-fix handler, with two additions at the front
+     * that reject leading tokens WP-CLI itself would never resolve as a
+     * command (a leading @alias, or a leading `-`/`--`/anything starting with
+     * `-`) — both would otherwise just shift every positional-anchored check
+     * below by one slot — then dangerous global flags, the cowboy_mcp_
+     * option-write guard (never lifted by Power mode — the wp_cli-escape-hatch
+     * equivalent of the wp_update_option write-denylist), the always-blocked
+     * subcommand list, the db query|search SQL blocklist + secret-table check
+     * (which fails closed on malformed/ambiguous argument shapes — see
+     * inline comments — rather than risk under-scanning the payload), and
+     * finally — only when $safe_mode is on and $confirm is false — the
+     * known-safe-prefix allowlist.
      *
      * @return array{blocked:bool,code:?string,message:?string}
      */
@@ -571,6 +576,28 @@ class Cowboy_MCP_Security {
                 'blocked' => true,
                 'code'    => 'blocked',
                 'message' => 'WP-CLI aliases (@alias) are not allowed; this tool always targets the local install.',
+            ];
+        }
+
+        // 0b. Same category of problem, different token: WP-CLI cannot resolve a
+        //     leading `-`, `--`, or anything else starting with `-` as a command name
+        //     at all (verified live: `wp -- option get siteurl` => "'--' is not a
+        //     registered wp command"). Both this and the @alias check above exist
+        //     because a leading token WP-CLI would never resolve as a command only
+        //     ever shifts our positional anchors — it can't run anything legitimate,
+        //     so rejecting it loses nothing. This one matters because the
+        //     quoting-provenance fix (see cli_tokens()) correctly stopped
+        //     flag-classifying a QUOTED leading `'--'`/`'-'` — which is right for SQL
+        //     payloads like `db query "-1 or ..."`, but means a quoted `'--'` used AS
+        //     positionals[0] now lands as an ordinary positional instead of being
+        //     dropped, silently shifting the option guard / blocked-paths anchors by
+        //     one slot (e.g. `'--' option update cowboy_mcp_settings x`). Unconditional
+        //     — never lifted by Power mode — for the same reason as the @alias check.
+        if ( isset( $positionals[0] ) && str_starts_with( $positionals[0], '-' ) ) {
+            return [
+                'blocked' => true,
+                'code'    => 'blocked',
+                'message' => "'{$positionals[0]}' is not a valid WP-CLI command and is blocked.",
             ];
         }
 
@@ -637,9 +664,43 @@ class Cowboy_MCP_Security {
         if ( isset( $positionals[0], $positionals[1] )
             && strtolower( $positionals[0] ) === 'db'
             && in_array( strtolower( $positionals[1] ), [ 'query', 'search' ], true ) ) {
-            $raw_sql = implode( ' ', array_slice( $positionals, 2 ) );
+            // WP-CLI's `db query`/`db search` synopsis takes exactly ONE positional
+            // argument after the verb (the query/pattern). Blindly implode()-ing
+            // array_slice($positionals, 2) assumed that was always true; it isn't once
+            // a quoted, no-longer-flag-classified `'--'` can sit between the verb and
+            // the real SQL — that got folded INTO the joined string, and
+            // normalize_sql()'s comment-stripper then ate everything after it,
+            // reintroducing the exact "guard scans an empty string" failure this whole
+            // branch exists to prevent. Fail closed on anything that isn't the single
+            // expected argument rather than guess which part is the real payload.
+            // Unconditional — never lifted by Power mode — same footing as the
+            // never-lifted secret-table check below: this protects that check's own
+            // soundness, not a convenience restriction Power mode is meant to relax.
+            $sql_positionals = array_slice( $positionals, 2 );
+            if ( count( $sql_positionals ) > 1 ) {
+                return [
+                    'blocked' => true,
+                    'code'    => 'blocked',
+                    'message' => 'Malformed db query/search command: unexpected extra arguments.',
+                ];
+            }
+            $raw_sql = $sql_positionals[0] ?? '';
             $sql     = self::normalize_sql( $raw_sql );
-            $why     = self::sql_blocked_reason( $sql );
+            // Defense in depth: never let "nothing left to scan" silently mean
+            // "allowed" when a real payload was actually passed (e.g. a lone `--`
+            // comment marker that normalize_sql() strips to nothing) — fail closed
+            // instead of letting the checks below trivially pass on an empty string.
+            // A genuinely argument-less `db query` (no payload at all, e.g. relying on
+            // stdin, which this tool never provides) is unaffected: $raw_sql is itself
+            // empty, so there was nothing to hide in the first place.
+            if ( '' === trim( $sql ) && '' !== trim( $raw_sql ) ) {
+                return [
+                    'blocked' => true,
+                    'code'    => 'blocked',
+                    'message' => 'Malformed db query/search command: could not safely evaluate the SQL payload.',
+                ];
+            }
+            $why = self::sql_blocked_reason( $sql );
             if ( $why && ! $power_mode ) {
                 return [ 'blocked' => true, 'code' => 'blocked', 'message' => "SQL operation blocked: {$why}." ];
             }
