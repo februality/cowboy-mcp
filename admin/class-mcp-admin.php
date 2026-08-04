@@ -189,6 +189,16 @@ class Cowboy_MCP_Admin {
             }
         }
 
+        // Update OAuth connection scope.
+        if ( isset( $_POST['cowboy_mcp_update_oauth_scope'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_update_oauth_scope' ) ) {
+            $cid = sanitize_text_field( wp_unslash( $_POST['oauth_client_id'] ?? '' ) );
+            if ( class_exists( 'Cowboy_MCP_OAuth' ) && $cid !== '' && Cowboy_MCP_OAuth::update_connection_scope( $cid, self::scope_from_post() ) ) {
+                add_settings_error( 'cowboy_mcp', 'oauth_scope_updated', __( 'Connection scope updated. It takes effect on the connection\'s next request.', 'cowboy-mcp' ), 'success' );
+            } else {
+                add_settings_error( 'cowboy_mcp', 'oauth_scope_update_failed', __( 'Could not update connection scope.', 'cowboy-mcp' ), 'error' );
+            }
+        }
+
         // Explicitly enable the Desktop Connector (fallback button on the desktop path).
         if ( isset( $_POST['cowboy_mcp_enable_oauth'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_enable_oauth' ) ) {
             self::enable_oauth_connector( __( 'Desktop Connector enabled.', 'cowboy-mcp' ) );
@@ -877,6 +887,7 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                     <th scope="col"><?php esc_html_e( 'Authorized by', 'cowboy-mcp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Connected', 'cowboy-mcp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Scope', 'cowboy-mcp' ); ?></th>
                     <th scope="col"></th>
                 </tr>
             </thead>
@@ -895,6 +906,10 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                         }
                     ?></td>
                     <td>
+                        <?php echo esc_html( self::scope_badge( $c['tool_scope'] ?? null ) ); ?>
+                        <button type="button" class="button-link mcp-edit-scope" aria-expanded="false"><?php esc_html_e( 'Edit', 'cowboy-mcp' ); ?></button>
+                    </td>
+                    <td>
                         <form method="post" class="mcp-revoke-form">
                             <?php wp_nonce_field( 'cowboy_mcp_revoke_oauth' ); ?>
                             <input type="hidden" name="oauth_client_id" value="<?php echo esc_attr( $c['client_id'] ); ?>">
@@ -903,11 +918,28 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                         </form>
                     </td>
                 </tr>
+                <tr class="mcp-scope-editor-row" hidden>
+                    <td colspan="6">
+                        <form method="post" class="mcp-scope-editor-form">
+                            <?php wp_nonce_field( 'cowboy_mcp_update_oauth_scope' ); ?>
+                            <input type="hidden" name="oauth_client_id" value="<?php echo esc_attr( $c['client_id'] ); ?>">
+                            <?php
+                            $conn_scope = $c['tool_scope'] ?? null;
+                            self::render_scope_radios(
+                                $conn_scope['mode'] ?? 'full',
+                                (string) wp_json_encode( $conn_scope['allowed_tools'] ?? [] )
+                            );
+                            ?>
+                            <button type="submit" name="cowboy_mcp_update_oauth_scope" class="button button-primary"><?php esc_html_e( 'Save scope', 'cowboy-mcp' ); ?></button>
+                        </form>
+                    </td>
+                </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
         </div>
         <?php
+        self::render_scope_checklist_template();
     }
 
     /* ── Scope UI partials ────────────────────────────────── */
