@@ -327,6 +327,11 @@ class Cowboy_MCP_Transport {
             . "\n"
             . "Always confirm destructive actions with the user before executing them.";
 
+        $scope_line = Cowboy_MCP_Security::scope_description();
+        if ( $scope_line ) {
+            $text .= "\n\n" . $scope_line;
+        }
+
         // Append tool catalog so the model knows what's available.
         $catalog = Cowboy_MCP_Tools::get_gateway_catalog();
         if ( ! empty( $catalog ) ) {

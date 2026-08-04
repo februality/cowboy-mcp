@@ -221,7 +221,7 @@ class Cowboy_MCP_Tools {
         if ( ! $handler ) {
             // Self-correcting: point the agent at the nearest real tool names so it can
             // retry cowboy_run without a separate cowboy_discover round-trip.
-            $suggestions = self::closest_tool_names( $name, self::get_tool_definitions(), 5 );
+            $suggestions = self::closest_tool_names( $name, Cowboy_MCP_Security::filter_tools_to_scope( self::get_tool_definitions() ), 5 );
             $names       = implode( ', ', array_column( $suggestions, 'name' ) );
             $hint        = $names !== '' ? " Did you mean: {$names}?" : '';
             return new WP_Error(
@@ -642,7 +642,7 @@ class Cowboy_MCP_Tools {
             return new WP_Error( 'invalid_params', 'Provide a query, a category, or both.', [ 'code' => -32602 ] );
         }
 
-        $all_tools = self::get_tool_definitions();
+        $all_tools = Cowboy_MCP_Security::filter_tools_to_scope( self::get_tool_definitions() );
 
         // Filter by category if specified.
         if ( $category !== '' ) {
@@ -714,7 +714,10 @@ class Cowboy_MCP_Tools {
         // suggest the closest tool names and list the categories available to browse,
         // so the agent can recover without a blind re-query.
         if ( empty( $scored ) ) {
-            $present_categories = array_values( array_unique( array_values( self::$tool_categories ) ) );
+            $present_categories = array_values( array_unique( array_filter( array_map(
+                fn( $t ) => self::$tool_categories[ $t['name'] ] ?? '',
+                $all_tools
+            ) ) ) );
             sort( $present_categories );
             return [
                 'total'       => 0,
@@ -857,11 +860,13 @@ class Cowboy_MCP_Tools {
         // self-contained index: an agent can find the exact tool name and what it
         // does in a single read, then call cowboy_run directly (or cowboy_discover
         // for the full inputSchema) without a trial-and-error keyword search.
+        $defs    = Cowboy_MCP_Security::filter_tools_to_scope( self::get_tool_definitions() );
         $grouped = [];
-        foreach ( self::$tool_categories as $tool_name => $cat ) {
+        foreach ( $defs as $def ) {
+            $cat               = self::$tool_categories[ $def['name'] ] ?? 'system';
             $grouped[ $cat ][] = [
-                'name'        => $tool_name,
-                'description' => self::short_description( self::$tool_map[ $tool_name ]['description'] ?? '' ),
+                'name'        => $def['name'],
+                'description' => self::short_description( $def['description'] ?? '' ),
             ];
         }
 
@@ -874,7 +879,7 @@ class Cowboy_MCP_Tools {
             ];
         }
 
-        $total = count( self::$tools );
+        $total = count( $defs );
 
         $workflow = 'This catalog lists every tool with a one-line description. To act: find the tool here, '
             . 'then call cowboy_run(tool, arguments). Call cowboy_discover(query|category) only when you need a '
@@ -895,7 +900,8 @@ class Cowboy_MCP_Tools {
     public static function get_gateway_catalog(): array {
         self::load_domains();
         $counts = [];
-        foreach ( self::$tool_categories as $cat ) {
+        foreach ( Cowboy_MCP_Security::filter_tools_to_scope( self::get_tool_definitions() ) as $def ) {
+            $cat            = self::$tool_categories[ $def['name'] ] ?? 'system';
             $counts[ $cat ] = ( $counts[ $cat ] ?? 0 ) + 1;
         }
         $catalog = [];
