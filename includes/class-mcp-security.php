@@ -89,6 +89,76 @@ class Cowboy_MCP_Security {
         );
     }
 
+    /* ── Per-credential tool scoping ───────────────────────── */
+
+    /**
+     * The active credential's scope, or null when unscoped (full access).
+     *
+     * Reads the key context populated by Cowboy_MCP_Auth at validation time.
+     * Contexts without a scope — wp-admin pages, WP-CLI, cron, the Activity-tab
+     * undo path, and legacy key records — are unscoped, matching pre-scoping
+     * behavior. A present scope with mode 'full' is also unscoped.
+     *
+     * @return array{mode:string,allowed_tools?:array}|null
+     */
+    public static function current_scope(): ?array {
+        if ( ! class_exists( 'Cowboy_MCP_Auth' ) ) {
+            return null;
+        }
+        $scope = Cowboy_MCP_Auth::$current_key_context['scope'] ?? null;
+        if ( ! is_array( $scope ) || empty( $scope['mode'] ) || 'full' === $scope['mode'] ) {
+            return null;
+        }
+        return $scope;
+    }
+
+    /**
+     * Whether the active credential may call a tool. Unknown modes fail closed.
+     * read_only relies on the tool's readOnlyHint annotation — with this gate
+     * that annotation is a security boundary, not advisory metadata.
+     */
+    public static function tool_in_scope( string $name, array $annotations = [] ): bool {
+        $scope = self::current_scope();
+        if ( null === $scope ) {
+            return true;
+        }
+        return match ( $scope['mode'] ) {
+            'read_only' => ! empty( $annotations['readOnlyHint'] ),
+            'custom'    => in_array( $name, (array) ( $scope['allowed_tools'] ?? [] ), true ),
+            default     => false,
+        };
+    }
+
+    /**
+     * Filter tool definition arrays down to the active credential's scope.
+     * Unscoped contexts get the input back untouched (no array copying).
+     */
+    public static function filter_tools_to_scope( array $tools ): array {
+        if ( null === self::current_scope() ) {
+            return $tools;
+        }
+        return array_values( array_filter(
+            $tools,
+            fn( $t ) => self::tool_in_scope( $t['name'] ?? '', $t['annotations'] ?? [] )
+        ) );
+    }
+
+    /**
+     * One-line scope statement for the MCP initialize instructions, or null
+     * when unscoped. Intentionally NOT translated (MCP clients expect English).
+     */
+    public static function scope_description(): ?string {
+        $scope = self::current_scope();
+        if ( null === $scope ) {
+            return null;
+        }
+        if ( 'read_only' === $scope['mode'] ) {
+            return 'This credential is READ-ONLY: only read-only tools are available. Write tools are not listed and will be refused.';
+        }
+        $count = count( (array) ( $scope['allowed_tools'] ?? [] ) );
+        return "This credential is scoped to {$count} of the site's tools; the tool catalog reflects only what it may call.";
+    }
+
     /* ── Private storage path protection ──────────────────── */
 
     /**
