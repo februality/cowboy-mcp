@@ -383,20 +383,26 @@ class Cowboy_MCP_Security {
      * @return array{tokens:string[],positionals:string[],flags:string[]}
      */
     public static function cli_tokens( string $command ): array {
-        $tokens   = [];
-        $current  = '';
-        $in_token = false;
-        $len      = strlen( $command );
-        $i        = 0;
+        $tokens       = [];
+        $bare_leading = []; // parallel to $tokens: was token[$i]'s first char typed bare (unquoted/unescaped)?
+        $current      = '';
+        $in_token     = false;
+        // Nullable: unset until the current token's first character is appended,
+        // then locked true (bare) or false (from a quote/escape) for that token.
+        $leading_literal = null;
+        $len             = strlen( $command );
+        $i               = 0;
 
         while ( $i < $len ) {
             $c = $command[ $i ];
 
             if ( $c === ' ' || $c === "\t" || $c === "\n" || $c === "\r" ) {
                 if ( $in_token ) {
-                    $tokens[] = $current;
-                    $current  = '';
-                    $in_token = false;
+                    $tokens[]        = $current;
+                    $bare_leading[]  = $leading_literal === true;
+                    $current         = '';
+                    $in_token        = false;
+                    $leading_literal = null;
                 }
                 $i++;
                 continue;
@@ -407,6 +413,9 @@ class Cowboy_MCP_Security {
                 $in_token = true;
                 $i++;
                 while ( $i < $len && $command[ $i ] !== "'" ) {
+                    if ( $current === '' && null === $leading_literal ) {
+                        $leading_literal = false; // first char came from inside quotes
+                    }
                     $current .= $command[ $i ];
                     $i++;
                 }
@@ -419,6 +428,9 @@ class Cowboy_MCP_Security {
                 $in_token = true;
                 $i++;
                 while ( $i < $len && $command[ $i ] !== '"' ) {
+                    if ( $current === '' && null === $leading_literal ) {
+                        $leading_literal = false; // first char came from inside quotes
+                    }
                     if ( $command[ $i ] === '\\' && $i + 1 < $len
                         && in_array( $command[ $i + 1 ], [ '"', '\\', '$', '`' ], true ) ) {
                         $current .= $command[ $i + 1 ];
@@ -433,8 +445,13 @@ class Cowboy_MCP_Security {
             }
 
             if ( $c === '\\' ) {
-                // Outside quotes: backslash escapes the very next character.
+                // Outside quotes: backslash escapes the very next character. Treated the
+                // same as a quote for provenance purposes — explicit escaping is the same
+                // "make this literal data" signal as wrapping it in quotes.
                 $in_token = true;
+                if ( $current === '' && null === $leading_literal ) {
+                    $leading_literal = false;
+                }
                 if ( $i + 1 < $len ) {
                     $current .= $command[ $i + 1 ];
                     $i       += 2;
@@ -444,18 +461,37 @@ class Cowboy_MCP_Security {
                 continue;
             }
 
+            if ( $current === '' && null === $leading_literal ) {
+                $leading_literal = true; // first char was typed bare, outside any quote/escape
+            }
             $in_token = true;
             $current .= $c;
             $i++;
         }
         if ( $in_token ) {
-            $tokens[] = $current;
+            $tokens[]       = $current;
+            $bare_leading[] = $leading_literal === true;
         }
 
+        // A token is only flag-eligible when its FIRST character was typed bare —
+        // i.e. genuinely outside any quoting/escaping, exactly as a real `-`/`--`
+        // CLI flag is typed. This is deliberately narrower than "the whole token
+        // is unquoted": `--'require'=x` still counts (the leading -- is bare, only
+        // the flag NAME is quoted) so quoted-flag obfuscation still gets caught.
+        // But a whole-token-quoted SQL payload like `"-1 or ...=cowboy_mcp_api_keys"`
+        // does NOT count — its leading '-' came from inside the quotes, so treating
+        // it as a flag (and dropping it from $positionals) would make the wp_cli
+        // guards see LESS of the command than WP-CLI itself executes: WP-CLI does
+        // not flag-classify a quoted positional argument just because the string it
+        // resolves to happens to start with '-'. Without this distinction,
+        // `db query "-1 or option_name='cowboy_mcp_api_keys'"` would have its entire
+        // SQL payload silently dropped from $positionals before the SQL guard ever
+        // saw it — a real regression a blanket `str_starts_with($token,'-')` rule
+        // introduced.
         $positionals = [];
         $flags       = [];
-        foreach ( $tokens as $token ) {
-            if ( str_starts_with( $token, '-' ) ) {
+        foreach ( $tokens as $idx => $token ) {
+            if ( str_starts_with( $token, '-' ) && ( $bare_leading[ $idx ] ?? false ) ) {
                 $flags[] = $token;
             } else {
                 $positionals[] = $token;
