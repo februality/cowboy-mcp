@@ -502,7 +502,8 @@ class Cowboy_MCP_Security {
      * matching is bypassable) and matches every check against the resulting
      * positional token sequence instead of the raw string.
      *
-     * Check order mirrors the pre-fix handler: dangerous global flags, the
+     * Check order mirrors the pre-fix handler, with one addition at the front:
+     * a leading @alias rejection, then dangerous global flags, the
      * cowboy_mcp_ option-write guard (never lifted by Power mode — the
      * wp_cli-escape-hatch equivalent of the wp_update_option write-denylist),
      * the always-blocked subcommand list, the db query|search SQL blocklist +
@@ -516,6 +517,26 @@ class Cowboy_MCP_Security {
 
         $t           = self::cli_tokens( $command );
         $positionals = $t['positionals'];
+
+        // 0. WP-CLI's alias resolver CONSUMES a leading @alias token before command
+        //    resolution (`wp @prod option get x` runs `option get x` against whatever
+        //    @prod points to) — so a leading @alias in positionals[0] would silently
+        //    shift every other positional-anchored check below by one slot, e.g.
+        //    `@prod option update cowboy_mcp_settings x` would read as positionals
+        //    [@prod, option, update, ...] and never match the option-guard's
+        //    positionals[0]==='option' anchor. This tool always targets the local
+        //    install, so an alias is never legitimate here — reject outright,
+        //    always-blocked (never lifted by Power mode: it guards every other
+        //    check's anchor, including the bootstrap-invariant option guard).
+        //    Only the FIRST positional is checked — an @ inside a later argument
+        //    (an email address, etc.) is unaffected.
+        if ( isset( $positionals[0] ) && str_starts_with( $positionals[0], '@' ) ) {
+            return [
+                'blocked' => true,
+                'code'    => 'blocked',
+                'message' => 'WP-CLI aliases (@alias) are not allowed; this tool always targets the local install.',
+            ];
+        }
 
         // 1. Global flags that load/execute code or change execution context.
         //    `--require=<file>` alone is arbitrary PHP execution that would bypass
@@ -565,27 +586,24 @@ class Cowboy_MCP_Security {
         // 4. `db query`/`db search` run arbitrary SQL via shell_exec with no guardrails
         //    of their own. Apply the same blocklist/secret-table checks used elsewhere
         //    so the wp_cli escape hatch can't run blocked or credential-touching SQL.
-        //    Detection uses the tokenized positionals (robust against quoting tricks on
-        //    "db"/"query"/"search" themselves, e.g. db 'query' ...). Extraction of the
-        //    SQL text for the blocklist/secret scan stays regex-based against the
-        //    normalized raw string — tokenizing the SQL payload itself would be lossy
-        //    (it may contain arbitrary spaces/quotes/parens) — but the regex now also
-        //    matches a quoted query|search verb so it can't be dodged the same way.
-        $lower_cmd = preg_replace( '/\s+/', ' ', strtolower( trim( $command ) ) );
+        //    Both detection (db/query/search) AND extraction of the SQL payload use the
+        //    tokenized positionals: detection is immune to quoting tricks on the verb
+        //    itself (db 'query' ...), and extraction — array_slice($positionals, 2) —
+        //    is immune to a flag landing between the verb and the SQL
+        //    (`db query --format=csv "SELECT * FROM cowboy_mcp_api_keys"`), which used
+        //    to leak a leading "--" into the payload; normalize_sql() treats "--" as a
+        //    SQL line-comment marker and strips everything after it, so the guard saw
+        //    an EMPTY string and let the query through. Flags never enter $positionals
+        //    in the first place, so this can't happen regardless of where the flag
+        //    lands. Quotes are already stripped (and internal spaces/quotes/parens
+        //    preserved verbatim) by cli_tokens() for each positional, so no further
+        //    trimming is needed here.
         if ( isset( $positionals[0], $positionals[1] )
             && strtolower( $positionals[0] ) === 'db'
             && in_array( strtolower( $positionals[1] ), [ 'query', 'search' ], true ) ) {
-            if ( preg_match( '/^db\s+(?:query|search|\'query\'|\'search\'|"query"|"search")\s*(.*)$/i', $lower_cmd, $m ) ) {
-                $raw_sql = $m[1];
-            } else {
-                // The verb was split/escaped in a way this extraction can't anchor on
-                // directly (tokenization above already proved it IS a db query/search
-                // command) — fall back to scanning everything after "db " rather than
-                // silently skip the guard.
-                $raw_sql = (string) preg_replace( '/^db\s+/i', '', $lower_cmd, 1 );
-            }
-            $sql = self::normalize_sql( trim( $raw_sql, " \t\"'" ) );
-            $why = self::sql_blocked_reason( $sql );
+            $raw_sql = implode( ' ', array_slice( $positionals, 2 ) );
+            $sql     = self::normalize_sql( $raw_sql );
+            $why     = self::sql_blocked_reason( $sql );
             if ( $why && ! $power_mode ) {
                 return [ 'blocked' => true, 'code' => 'blocked', 'message' => "SQL operation blocked: {$why}." ];
             }
