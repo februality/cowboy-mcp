@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: https://cowboymcp.com\n"
 "POT-Creation-Date: 2026-08-04 12:38-0700\n"
 "PO-Revision-Date: 2026-07-08 15:32-0700\n"
 "Last-Translator: februality\n"
@@ -32,7 +32,9 @@ msgstr "Clé API révoquée."
 
 #: admin/class-mcp-admin.php:177
 msgid "Key scope updated. It takes effect on the key's next request."
-msgstr "La portée de la clé a été mise à jour. Elle prendra effet lors de la prochaine requête de la clé."
+msgstr ""
+"La portée de la clé a été mise à jour. Elle prendra effet lors de la "
+"prochaine requête de la clé."
 
 #: admin/class-mcp-admin.php:179
 msgid "Could not update key scope."
@@ -45,7 +47,9 @@ msgstr "Connexion révoquée."
 #: admin/class-mcp-admin.php:196
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
-msgstr "La portée de la connexion a été mise à jour. Elle prendra effet lors de la prochaine requête de la connexion."
+msgstr ""
+"La portée de la connexion a été mise à jour. Elle prendra effet lors de la "
+"prochaine requête de la connexion."
 
 #: admin/class-mcp-admin.php:198
 msgid "Could not update connection scope."

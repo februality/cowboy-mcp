@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: https://cowboymcp.com\n"
 "POT-Creation-Date: 2026-08-04 12:38-0700\n"
 "PO-Revision-Date: 2026-07-08 15:32-0700\n"
 "Last-Translator: februality\n"
@@ -32,7 +32,9 @@ msgstr "API-Schlüssel widerrufen."
 
 #: admin/class-mcp-admin.php:177
 msgid "Key scope updated. It takes effect on the key's next request."
-msgstr "Der Bereich des Schlüssels wurde aktualisiert. Die Änderung wird bei der nächsten Anfrage mit diesem Schlüssel wirksam."
+msgstr ""
+"Der Bereich des Schlüssels wurde aktualisiert. Die Änderung wird bei der "
+"nächsten Anfrage mit diesem Schlüssel wirksam."
 
 #: admin/class-mcp-admin.php:179
 msgid "Could not update key scope."
@@ -45,7 +47,9 @@ msgstr "Verbindung widerrufen."
 #: admin/class-mcp-admin.php:196
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
-msgstr "Der Bereich der Verbindung wurde aktualisiert. Die Änderung wird bei der nächsten Anfrage dieser Verbindung wirksam."
+msgstr ""
+"Der Bereich der Verbindung wurde aktualisiert. Die Änderung wird bei der "
+"nächsten Anfrage dieser Verbindung wirksam."
 
 #: admin/class-mcp-admin.php:198
 msgid "Could not update connection scope."

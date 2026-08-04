@@ -1,13 +1,9 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) 2026 februality
 # This file is distributed under the same license as the Cowboy MCP package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Cowboy MCP\n"
-"Report-Msgid-Bugs-To: \n"
+"Project-Id-Version: Cowboy MCP 1.5.2\n"
+"Report-Msgid-Bugs-To: https://cowboymcp.com\n"
 "POT-Creation-Date: 2026-08-04 12:38-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -16,6 +12,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Domain: cowboy-mcp\n"
 
 #: admin/class-mcp-admin.php:28 admin/class-mcp-admin.php:29
 #: admin/class-mcp-admin.php:372
