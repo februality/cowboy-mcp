@@ -7,7 +7,10 @@ return [
             'status'          => [ 'type' => 'string', 'description' => 'Filter by status: active, inactive, or all (default "all")', 'default' => 'all', 'enum' => [ 'active', 'inactive', 'all' ] ],
             'refresh_updates' => [ 'type' => 'boolean', 'description' => 'Check WordPress.org for fresh update info first (network call, slower). Default false: reads the cached update state.', 'default' => false ],
         ], [
-            'readOnlyHint'    => true,
+            // Not read-only: refresh_updates: true calls core's wp_update_plugins(),
+            // which unconditionally writes the update_plugins site transient (and
+            // POSTs to api.wordpress.org) before this handler ever runs its own logic.
+            'readOnlyHint'    => false,
             'destructiveHint' => false,
             'idempotentHint'  => true,
             'openWorldHint'   => false,

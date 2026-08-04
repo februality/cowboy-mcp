@@ -6,7 +6,10 @@ return [
         Cowboy_MCP_Tools::tool( 'wp_list_themes', '[Themes] List all installed themes with activation status, version, metadata, and available updates.', [
             'refresh_updates' => [ 'type' => 'boolean', 'description' => 'Check WordPress.org for fresh update info first (network call, slower). Default false: reads the cached update state.', 'default' => false ],
         ], [
-            'readOnlyHint'    => true,
+            // Not read-only: refresh_updates: true calls core's wp_update_themes(),
+            // which unconditionally writes the update_themes site transient (and
+            // POSTs to api.wordpress.org) before this handler ever runs its own logic.
+            'readOnlyHint'    => false,
             'destructiveHint' => false,
             'idempotentHint'  => true,
             'openWorldHint'   => false,
