@@ -324,6 +324,298 @@ class Cowboy_MCP_Security {
             || stripos( $normalized, 'cowboy_mcp_oauth_refresh' ) !== false;
     }
 
+    /* ── WP-CLI command gating ─────────────────────────────── */
+
+    /**
+     * Global WP-CLI flags that load/execute code or change execution context.
+     * Matched per-token (post-tokenization) against `--flag` or `--flag=value`.
+     */
+    private const CLI_DANGEROUS_FLAGS = '/^--(require|exec|ssh|http|user|path|config|debug)(=|$)/i';
+
+    /**
+     * Subcommand paths always blocked for the wp_cli tool, regardless of safe
+     * mode. Matched against the tokenized *positional* sequence (see
+     * cli_tokens()), not the raw string. Power mode can lift this list — the
+     * cowboy_mcp_ option-write guard below is the one that never lifts.
+     */
+    private const CLI_BLOCKED_PATHS = [
+        'db drop', 'db reset', 'db import', 'db export',
+        'site empty', 'core download',
+        'eval', 'eval-file',
+        'config set', 'config create',
+        'shell', 'package install',
+    ];
+
+    /**
+     * wp_cli safe-mode allowlist: subcommand paths that may run without
+     * confirm:true when safe mode is on. Matched the same way as CLI_BLOCKED_PATHS.
+     */
+    private const CLI_SAFE_PATHS = [
+        'cache', 'cron', 'db size', 'export',
+        'help', 'media', 'menu', 'option get', 'option list',
+        'plugin list', 'plugin status', 'post list', 'post get',
+        'rewrite', 'role list', 'sidebar', 'taxonomy', 'term',
+        'theme list', 'theme status', 'transient', 'user list', 'user get',
+        'widget',
+    ];
+
+    /**
+     * Tokenize a WP-CLI command the way a POSIX shell would before it reaches
+     * shell_exec() (i.e. /bin/sh -c). This is required because every wp_cli
+     * gate below used to match with str_starts_with()/preg_match() against the
+     * raw command string — but the shell strips quotes and joins
+     * adjacent-quoted/escaped fragments into single argv words BEFORE WP-CLI
+     * ever sees them. `option update cowboy_mcp_settings x` and
+     * `option update 'cowboy_mcp_settings' x` are the exact same command to
+     * the shell (and to WP-CLI), but only the first matches a raw-string
+     * prefix check — the quoted form silently bypassed every guard. Tokenizing
+     * first and matching on the resulting words closes that gap for good,
+     * including flag-insertion tricks (`option update --format=json
+     * cowboy_mcp_settings x`), since flags are filtered out of the positional
+     * sequence entirely.
+     *
+     * Handles single quotes (literal, no escapes inside), double quotes
+     * (backslash escapes \, ", $, ` inside), backslash escapes outside quotes,
+     * and adjacent-token concatenation (`ev'al'`, `"ev"al` both tokenize to
+     * "eval"). It does not perform variable/command substitution — this is a
+     * detection aid, never used to build the string that gets executed.
+     *
+     * @return array{tokens:string[],positionals:string[],flags:string[]}
+     */
+    public static function cli_tokens( string $command ): array {
+        $tokens   = [];
+        $current  = '';
+        $in_token = false;
+        $len      = strlen( $command );
+        $i        = 0;
+
+        while ( $i < $len ) {
+            $c = $command[ $i ];
+
+            if ( $c === ' ' || $c === "\t" || $c === "\n" || $c === "\r" ) {
+                if ( $in_token ) {
+                    $tokens[] = $current;
+                    $current  = '';
+                    $in_token = false;
+                }
+                $i++;
+                continue;
+            }
+
+            if ( $c === "'" ) {
+                // Single quotes: everything up to the next ' is literal.
+                $in_token = true;
+                $i++;
+                while ( $i < $len && $command[ $i ] !== "'" ) {
+                    $current .= $command[ $i ];
+                    $i++;
+                }
+                $i++; // consume the closing quote (or run off the end if unterminated)
+                continue;
+            }
+
+            if ( $c === '"' ) {
+                // Double quotes: backslash escapes \, ", $, ` — everything else literal.
+                $in_token = true;
+                $i++;
+                while ( $i < $len && $command[ $i ] !== '"' ) {
+                    if ( $command[ $i ] === '\\' && $i + 1 < $len
+                        && in_array( $command[ $i + 1 ], [ '"', '\\', '$', '`' ], true ) ) {
+                        $current .= $command[ $i + 1 ];
+                        $i       += 2;
+                    } else {
+                        $current .= $command[ $i ];
+                        $i++;
+                    }
+                }
+                $i++; // consume the closing quote
+                continue;
+            }
+
+            if ( $c === '\\' ) {
+                // Outside quotes: backslash escapes the very next character.
+                $in_token = true;
+                if ( $i + 1 < $len ) {
+                    $current .= $command[ $i + 1 ];
+                    $i       += 2;
+                } else {
+                    $i++;
+                }
+                continue;
+            }
+
+            $in_token = true;
+            $current .= $c;
+            $i++;
+        }
+        if ( $in_token ) {
+            $tokens[] = $current;
+        }
+
+        $positionals = [];
+        $flags       = [];
+        foreach ( $tokens as $token ) {
+            if ( str_starts_with( $token, '-' ) ) {
+                $flags[] = $token;
+            } else {
+                $positionals[] = $token;
+            }
+        }
+
+        return [ 'tokens' => $tokens, 'positionals' => $positionals, 'flags' => $flags ];
+    }
+
+    /**
+     * Whether a leading run of positional tokens matches a space-separated
+     * subcommand path, case-insensitively — e.g. path 'db drop' matches
+     * positionals ['db','drop','wp_options',...]. Word-boundary match against
+     * whole tokens, not a substring/prefix match, so 'db' alone never matches
+     * path 'db drop' and 'eval' never matches a positional 'eval-file'.
+     */
+    public static function cli_positionals_start_with( array $positionals, string $path ): bool {
+        $parts = preg_split( '/\s+/', trim( $path ) );
+        if ( count( $positionals ) < count( $parts ) ) {
+            return false;
+        }
+        foreach ( $parts as $idx => $part ) {
+            if ( strtolower( (string) $positionals[ $idx ] ) !== strtolower( $part ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Whether any raw token contains $needle, case-insensitively (used for the "option patch ... cowboy_mcp_*" any-argument form). */
+    private static function cli_tokens_contain( array $tokens, string $needle ): bool {
+        foreach ( $tokens as $token ) {
+            if ( str_contains( strtolower( $token ), strtolower( $needle ) ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Evaluate every wp_cli safety gate against a command and report the
+     * first one that fires. Pure function (no WP calls) so it can be unit
+     * tested directly: tokenizes first (see cli_tokens() for why raw-string
+     * matching is bypassable) and matches every check against the resulting
+     * positional token sequence instead of the raw string.
+     *
+     * Check order mirrors the pre-fix handler: dangerous global flags, the
+     * cowboy_mcp_ option-write guard (never lifted by Power mode — the
+     * wp_cli-escape-hatch equivalent of the wp_update_option write-denylist),
+     * the always-blocked subcommand list, the db query|search SQL blocklist +
+     * secret-table check, and finally — only when $safe_mode is on and
+     * $confirm is false — the known-safe-prefix allowlist.
+     *
+     * @return array{blocked:bool,code:?string,message:?string}
+     */
+    public static function wp_cli_gate( string $command, bool $power_mode, bool $safe_mode, bool $confirm ): array {
+        $clear = [ 'blocked' => false, 'code' => null, 'message' => null ];
+
+        $t           = self::cli_tokens( $command );
+        $positionals = $t['positionals'];
+
+        // 1. Global flags that load/execute code or change execution context.
+        //    `--require=<file>` alone is arbitrary PHP execution that would bypass
+        //    the eval/shell blocklist; `--path` is supplied by the caller separately.
+        if ( ! $power_mode ) {
+            foreach ( $t['flags'] as $flag ) {
+                if ( preg_match( self::CLI_DANGEROUS_FLAGS, $flag ) ) {
+                    return [
+                        'blocked' => true,
+                        'code'    => 'blocked',
+                        'message' => 'Global WP-CLI flags (--require, --exec, --ssh, --http, --user, --path, --config) are not allowed.',
+                    ];
+                }
+            }
+        }
+
+        // 2. WP-CLI writes to the plugin's own cowboy_mcp_ options are never allowed,
+        //    Power mode included — preserves the cowboy_mcp_settings bootstrap
+        //    invariant (an agent can never widen its own scope via the wp_cli escape hatch).
+        if ( isset( $positionals[0] ) && strtolower( $positionals[0] ) === 'option' ) {
+            $verb           = isset( $positionals[1] ) ? strtolower( $positionals[1] ) : '';
+            $name           = isset( $positionals[2] ) ? strtolower( $positionals[2] ) : '';
+            $is_write_verb  = in_array( $verb, [ 'update', 'delete', 'add' ], true ) && str_starts_with( $name, 'cowboy_mcp_' );
+            $is_patch_touch = $verb === 'patch' && self::cli_tokens_contain( $t['tokens'], 'cowboy_mcp_' );
+            if ( $is_write_verb || $is_patch_touch ) {
+                return [
+                    'blocked' => true,
+                    'code'    => 'blocked',
+                    'message' => 'WP-CLI writes to the plugin\'s own cowboy_mcp_ options are blocked for safety and cannot be lifted by Power mode.',
+                ];
+            }
+        }
+
+        // 3. Always-blocked subcommand paths.
+        if ( ! $power_mode ) {
+            foreach ( self::CLI_BLOCKED_PATHS as $path ) {
+                if ( self::cli_positionals_start_with( $positionals, $path ) ) {
+                    return [
+                        'blocked' => true,
+                        'code'    => 'blocked',
+                        'message' => "Command '{$path}' is blocked for safety. An administrator can enable Power mode to allow this.",
+                    ];
+                }
+            }
+        }
+
+        // 4. `db query`/`db search` run arbitrary SQL via shell_exec with no guardrails
+        //    of their own. Apply the same blocklist/secret-table checks used elsewhere
+        //    so the wp_cli escape hatch can't run blocked or credential-touching SQL.
+        //    Detection uses the tokenized positionals (robust against quoting tricks on
+        //    "db"/"query"/"search" themselves, e.g. db 'query' ...). Extraction of the
+        //    SQL text for the blocklist/secret scan stays regex-based against the
+        //    normalized raw string — tokenizing the SQL payload itself would be lossy
+        //    (it may contain arbitrary spaces/quotes/parens) — but the regex now also
+        //    matches a quoted query|search verb so it can't be dodged the same way.
+        $lower_cmd = preg_replace( '/\s+/', ' ', strtolower( trim( $command ) ) );
+        if ( isset( $positionals[0], $positionals[1] )
+            && strtolower( $positionals[0] ) === 'db'
+            && in_array( strtolower( $positionals[1] ), [ 'query', 'search' ], true ) ) {
+            if ( preg_match( '/^db\s+(?:query|search|\'query\'|\'search\'|"query"|"search")\s*(.*)$/i', $lower_cmd, $m ) ) {
+                $raw_sql = $m[1];
+            } else {
+                // The verb was split/escaped in a way this extraction can't anchor on
+                // directly (tokenization above already proved it IS a db query/search
+                // command) — fall back to scanning everything after "db " rather than
+                // silently skip the guard.
+                $raw_sql = (string) preg_replace( '/^db\s+/i', '', $lower_cmd, 1 );
+            }
+            $sql = self::normalize_sql( trim( $raw_sql, " \t\"'" ) );
+            $why = self::sql_blocked_reason( $sql );
+            if ( $why && ! $power_mode ) {
+                return [ 'blocked' => true, 'code' => 'blocked', 'message' => "SQL operation blocked: {$why}." ];
+            }
+            // Credential/secret access is never lifted, even in Power mode.
+            if ( self::sql_touches_secret( $sql ) ) {
+                return [ 'blocked' => true, 'code' => 'blocked', 'message' => 'Query references credential/secret data and is blocked.' ];
+            }
+        }
+
+        // 5. Safe mode: only allow known-safe subcommand paths unless confirm: true.
+        if ( $safe_mode && ! $confirm ) {
+            $is_safe = false;
+            foreach ( self::CLI_SAFE_PATHS as $path ) {
+                if ( self::cli_positionals_start_with( $positionals, $path ) ) {
+                    $is_safe = true;
+                    break;
+                }
+            }
+            if ( ! $is_safe ) {
+                return [
+                    'blocked' => false,
+                    'code'    => 'confirmation_required',
+                    'message' => "Safe mode is ON. WP-CLI command '{$command}' is not in the safe allowlist. Resend with confirm: true to execute.",
+                ];
+            }
+        }
+
+        return $clear;
+    }
+
     /* ── Secret scrubbing ──────────────────────────────────── */
 
     /**
