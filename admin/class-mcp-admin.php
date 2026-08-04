@@ -158,7 +158,7 @@ class Cowboy_MCP_Admin {
             if ( $label === '' ) {
                 $label = 'API Key';
             }
-            $result = Cowboy_MCP_Auth::generate_key( $label );
+            $result = Cowboy_MCP_Auth::generate_key( $label, self::scope_from_post() );
             set_transient( 'cowboy_mcp_new_key_' . get_current_user_id(), $result['key'], 3600 );
             add_settings_error( 'cowboy_mcp', 'key_created', __( 'API key created. Copy it now — it will only be shown once.', 'cowboy-mcp' ), 'success' );
         }
@@ -168,6 +168,16 @@ class Cowboy_MCP_Admin {
             $id = sanitize_text_field( wp_unslash( $_POST['key_id'] ?? '' ) );
             Cowboy_MCP_Auth::revoke_key( $id );
             add_settings_error( 'cowboy_mcp', 'key_revoked', __( 'API key revoked.', 'cowboy-mcp' ), 'info' );
+        }
+
+        // Update key scope.
+        if ( isset( $_POST['cowboy_mcp_update_key_scope'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_update_key_scope' ) ) {
+            $id = sanitize_text_field( wp_unslash( $_POST['key_id'] ?? '' ) );
+            if ( Cowboy_MCP_Auth::update_key_scope( $id, self::scope_from_post() ) ) {
+                add_settings_error( 'cowboy_mcp', 'scope_updated', __( 'Key scope updated. It takes effect on the key\'s next request.', 'cowboy-mcp' ), 'success' );
+            } else {
+                add_settings_error( 'cowboy_mcp', 'scope_update_failed', __( 'Could not update key scope.', 'cowboy-mcp' ), 'error' );
+            }
         }
 
         // Revoke OAuth connection.
@@ -290,6 +300,21 @@ class Cowboy_MCP_Admin {
                 }
             }
         }
+    }
+
+    /** Map posted key_scope_mode/allowed_tools[] fields to a scope array (null = full). */
+    private static function scope_from_post(): ?array {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- callers verify their own nonce before invoking.
+        $mode = sanitize_text_field( wp_unslash( $_POST['key_scope_mode'] ?? 'full' ) );
+        if ( 'read_only' === $mode ) {
+            return [ 'mode' => 'read_only' ];
+        }
+        if ( 'custom' === $mode ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing
+            $tools = array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['allowed_tools'] ?? [] ) );
+            return [ 'mode' => 'custom', 'allowed_tools' => $tools ];
+        }
+        return null;
     }
 
     /** Flip oauth_enabled on (preserving the rest of the settings array). */
@@ -462,6 +487,7 @@ class Cowboy_MCP_Admin {
             <div id="cowboy-doctor-results" aria-live="polite"></div>
         </div>
         <?php
+        self::render_scope_checklist_template();
     }
 
     /* ── Sidebar: grouped client buttons ─────────────────── */
@@ -661,6 +687,7 @@ class Cowboy_MCP_Admin {
                             /* translators: %s: client name, e.g. "Claude Code" */
                             echo esc_attr( sprintf( __( 'e.g. %s on my laptop', 'cowboy-mcp' ), $label ) );
                         ?>" class="regular-text" style="max-width: 240px;">
+                        <?php self::render_scope_radios( 'full' ); ?>
                         <button type="submit" name="cowboy_mcp_generate_key" class="button button-primary"><?php echo $has_keys ? esc_html__( 'Generate another key', 'cowboy-mcp' ) : esc_html__( 'Generate API key', 'cowboy-mcp' ); ?></button>
                     </form>
                 <?php endif; ?>
@@ -780,6 +807,7 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                     <th scope="col"><?php esc_html_e( 'Prefix', 'cowboy-mcp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Created', 'cowboy-mcp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Last Used', 'cowboy-mcp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Scope', 'cowboy-mcp' ); ?></th>
                     <th scope="col"></th>
                 </tr>
             </thead>
@@ -798,11 +826,31 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                         }
                     ?></td>
                     <td>
+                        <?php echo esc_html( self::scope_badge( $k['scope'] ?? null ) ); ?>
+                        <button type="button" class="button-link mcp-edit-scope" aria-expanded="false"><?php esc_html_e( 'Edit', 'cowboy-mcp' ); ?></button>
+                    </td>
+                    <td>
                         <form method="post" class="mcp-revoke-form">
                             <?php wp_nonce_field( 'cowboy_mcp_revoke_key' ); ?>
                             <input type="hidden" name="key_id" value="<?php echo esc_attr( $k['id'] ); ?>">
                             <button type="submit" name="cowboy_mcp_revoke_key" class="button button-small button-link-delete"
                                     data-confirm="<?php echo esc_attr__( 'Revoke this key? Any client using it will lose access.', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Revoke', 'cowboy-mcp' ); ?></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr class="mcp-scope-editor-row" hidden>
+                    <td colspan="6">
+                        <form method="post" class="mcp-scope-editor-form">
+                            <?php wp_nonce_field( 'cowboy_mcp_update_key_scope' ); ?>
+                            <input type="hidden" name="key_id" value="<?php echo esc_attr( $k['id'] ); ?>">
+                            <?php
+                            $key_scope = $k['scope'] ?? null;
+                            self::render_scope_radios(
+                                $key_scope['mode'] ?? 'full',
+                                (string) wp_json_encode( $key_scope['allowed_tools'] ?? [] )
+                            );
+                            ?>
+                            <button type="submit" name="cowboy_mcp_update_key_scope" class="button button-primary"><?php esc_html_e( 'Save scope', 'cowboy-mcp' ); ?></button>
                         </form>
                     </td>
                 </tr>
@@ -860,6 +908,78 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
         </table>
         </div>
         <?php
+    }
+
+    /* ── Scope UI partials ────────────────────────────────── */
+
+    /**
+     * Category-grouped tool checklist, rendered ONCE per page as a <template>
+     * and cloned into whichever scope form selects "Custom" (see mcp-admin.js).
+     * Static guard keeps repeat call sites free (keys panels + connections table).
+     */
+    private static function render_scope_checklist_template(): void {
+        static $rendered = false;
+        if ( $rendered ) {
+            return;
+        }
+        $rendered = true;
+        $catalog  = Cowboy_MCP_Tools::get_tool_catalog();
+        ?>
+        <template id="mcp-scope-checklist-template">
+            <div class="mcp-scope-checklist">
+                <?php foreach ( $catalog['categories'] as $cat => $info ) : ?>
+                    <details class="mcp-scope-cat">
+                        <summary>
+                            <input type="checkbox" class="mcp-scope-cat-all" aria-label="<?php
+                                /* translators: %s: tool category name */
+                                echo esc_attr( sprintf( __( 'Select all %s tools', 'cowboy-mcp' ), $cat ) );
+                            ?>">
+                            <strong><?php echo esc_html( $cat ); ?></strong>
+                            <span class="mcp-scope-cat-count">(<?php echo (int) $info['count']; ?>)</span>
+                        </summary>
+                        <?php foreach ( $info['tools'] as $tool ) : ?>
+                            <label class="mcp-scope-tool">
+                                <input type="checkbox" name="allowed_tools[]" value="<?php echo esc_attr( $tool['name'] ); ?>">
+                                <code><?php echo esc_html( $tool['name'] ); ?></code>
+                                <span class="description"><?php echo esc_html( $tool['description'] ); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </details>
+                <?php endforeach; ?>
+            </div>
+        </template>
+        <?php
+    }
+
+    /**
+     * Scope radio group + empty custom slot. $tools_json pre-checks the clone
+     * (JSON array of tool names, stored on the form as data-scope-tools).
+     */
+    private static function render_scope_radios( string $mode, string $tools_json = '[]' ): void {
+        ?>
+        <div class="mcp-scope-select" data-scope-tools="<?php echo esc_attr( $tools_json ); ?>">
+            <label><input type="radio" name="key_scope_mode" value="full" <?php checked( $mode, 'full' ); ?>>
+                <?php esc_html_e( 'Full access', 'cowboy-mcp' ); ?></label>
+            <label><input type="radio" name="key_scope_mode" value="read_only" <?php checked( $mode, 'read_only' ); ?>>
+                <?php esc_html_e( 'Read-only', 'cowboy-mcp' ); ?></label>
+            <label><input type="radio" name="key_scope_mode" value="custom" <?php checked( $mode, 'custom' ); ?>>
+                <?php esc_html_e( 'Custom…', 'cowboy-mcp' ); ?></label>
+            <div class="mcp-scope-custom-slot" <?php echo 'custom' === $mode ? '' : 'hidden'; ?>></div>
+        </div>
+        <?php
+    }
+
+    /** Human badge for a stored scope array. */
+    private static function scope_badge( ?array $scope ): string {
+        $mode = $scope['mode'] ?? 'full';
+        if ( 'read_only' === $mode ) {
+            return __( 'Read-only', 'cowboy-mcp' );
+        }
+        if ( 'custom' === $mode ) {
+            /* translators: %d: number of tools this credential may call */
+            return sprintf( __( 'Custom (%d tools)', 'cowboy-mcp' ), count( $scope['allowed_tools'] ?? [] ) );
+        }
+        return __( 'Full access', 'cowboy-mcp' );
     }
 
     /* ── Settings tab ─────────────────────────────────────── */

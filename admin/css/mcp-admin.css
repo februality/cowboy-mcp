@@ -186,3 +186,31 @@
 .cowboy-doctor-check.is-skip { border-left-color: #c3c4c7; color: #646970; }
 .cowboy-doctor-check .fix { display: block; color: #646970; margin-top: 2px; }
 .cowboy-doctor-group { font-weight: 600; margin: 12px 0 4px; }
+
+/* ── Per-key scope editor ─────────────────────────────────── */
+.mcp-scope-select { margin: 8px 0; }
+.mcp-scope-select > label { margin-right: 16px; }
+.mcp-scope-checklist {
+	max-height: 320px;
+	overflow-y: auto;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin: 8px 0;
+	background: #fff;
+}
+.mcp-scope-cat summary {
+	cursor: pointer;
+	padding: 4px 0;
+	list-style-position: outside;
+}
+.mcp-scope-cat-count { color: #646970; }
+.mcp-scope-tool {
+	display: block;
+	margin: 2px 0 2px 24px;
+}
+.mcp-scope-tool .description {
+	color: #646970;
+	margin-left: 4px;
+}
+.mcp-scope-editor-row td { background: #f6f7f7; }

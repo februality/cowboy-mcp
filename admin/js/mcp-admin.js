@@ -311,3 +311,80 @@ document.addEventListener('submit', function (e) {
 	var second = form.getAttribute('data-mcp-confirm-2');
 	if (second && !window.confirm(second)) e.preventDefault();
 }, true);
+
+/* ── Per-key scope editor ─────────────────────────────────── */
+(function () {
+	'use strict';
+
+	function slotFor(radio) {
+		var wrap = radio.closest('.mcp-scope-select');
+		return wrap ? wrap.querySelector('.mcp-scope-custom-slot') : null;
+	}
+
+	function ensureChecklist(wrap, slot) {
+		if (slot.firstElementChild) {
+			return;
+		}
+		var tpl = document.getElementById('mcp-scope-checklist-template');
+		if (!tpl) {
+			return;
+		}
+		slot.appendChild(tpl.content.cloneNode(true));
+		var preset = [];
+		try {
+			preset = JSON.parse(wrap.dataset.scopeTools || '[]');
+		} catch (e) {
+			preset = [];
+		}
+		preset.forEach(function (name) {
+			var cb = slot.querySelector('input[name="allowed_tools[]"][value="' + name + '"]');
+			if (cb) {
+				cb.checked = true;
+			}
+		});
+	}
+
+	document.addEventListener('change', function (e) {
+		// Radio: reveal/hide the custom checklist.
+		if (e.target.matches('.mcp-scope-select input[type="radio"]')) {
+			var wrap = e.target.closest('.mcp-scope-select');
+			var slot = wrap.querySelector('.mcp-scope-custom-slot');
+			var isCustom = wrap.querySelector('input[value="custom"]').checked;
+			slot.hidden = !isCustom;
+			if (isCustom) {
+				ensureChecklist(wrap, slot);
+			}
+		}
+		// Category select-all.
+		if (e.target.matches('.mcp-scope-cat-all')) {
+			var det = e.target.closest('.mcp-scope-cat');
+			det.querySelectorAll('input[name="allowed_tools[]"]').forEach(function (cb) {
+				cb.checked = e.target.checked;
+			});
+		}
+	});
+
+	document.addEventListener('click', function (e) {
+		// Toggle the inline editor row under a key row.
+		if (e.target.matches('.mcp-edit-scope')) {
+			var editorRow = e.target.closest('tr').nextElementSibling;
+			if (editorRow && editorRow.classList.contains('mcp-scope-editor-row')) {
+				editorRow.hidden = !editorRow.hidden;
+				e.target.setAttribute('aria-expanded', String(!editorRow.hidden));
+				if (!editorRow.hidden) {
+					// Pre-open the checklist for custom-scoped keys.
+					var wrap = editorRow.querySelector('.mcp-scope-select');
+					var slot = wrap.querySelector('.mcp-scope-custom-slot');
+					if (wrap.querySelector('input[value="custom"]').checked) {
+						ensureChecklist(wrap, slot);
+						slot.hidden = false;
+					}
+				}
+			}
+		}
+		// Keep the summary checkbox clickable without toggling <details>.
+		if (e.target.matches('.mcp-scope-cat-all')) {
+			e.stopPropagation();
+		}
+	});
+})();
