@@ -311,3 +311,94 @@ document.addEventListener('submit', function (e) {
 	var second = form.getAttribute('data-mcp-confirm-2');
 	if (second && !window.confirm(second)) e.preventDefault();
 }, true);
+
+/* ── Per-key scope editor ─────────────────────────────────── */
+(function () {
+	'use strict';
+
+	function ensureChecklist(wrap, slot) {
+		if (slot.firstElementChild) {
+			return;
+		}
+		var tpl = document.getElementById('mcp-scope-checklist-template');
+		if (!tpl) {
+			return;
+		}
+		slot.appendChild(tpl.content.cloneNode(true));
+		var preset = [];
+		try {
+			preset = JSON.parse(wrap.dataset.scopeTools || '[]');
+		} catch (e) {
+			preset = [];
+		}
+		preset.forEach(function (name) {
+			var cb = slot.querySelector('input[name="allowed_tools[]"][value="' + name + '"]');
+			if (cb) {
+				cb.checked = true;
+			}
+		});
+	}
+
+	document.addEventListener('change', function (e) {
+		// Radio: reveal/hide the custom checklist.
+		if (e.target.matches('.mcp-scope-select input[type="radio"]')) {
+			var wrap = e.target.closest('.mcp-scope-select');
+			var slot = wrap.querySelector('.mcp-scope-custom-slot');
+			var isCustom = wrap.querySelector('input[value="custom"]').checked;
+			slot.hidden = !isCustom;
+			if (isCustom) {
+				ensureChecklist(wrap, slot);
+			}
+		}
+		// Category select-all is handled entirely in the click listener below
+		// (preventDefault() there stops the checkbox's default toggle, so it
+		// never fires a native 'change' event for us to catch here).
+	});
+
+	document.addEventListener('click', function (e) {
+		// Toggle the inline editor row under a key row.
+		if (e.target.matches('.mcp-edit-scope')) {
+			var editorRow = e.target.closest('tr').nextElementSibling;
+			if (editorRow && editorRow.classList.contains('mcp-scope-editor-row')) {
+				editorRow.hidden = !editorRow.hidden;
+				e.target.setAttribute('aria-expanded', String(!editorRow.hidden));
+				if (!editorRow.hidden) {
+					// Pre-open the checklist for custom-scoped keys.
+					var wrap = editorRow.querySelector('.mcp-scope-select');
+					var slot = wrap.querySelector('.mcp-scope-custom-slot');
+					if (wrap.querySelector('input[value="custom"]').checked) {
+						ensureChecklist(wrap, slot);
+						slot.hidden = false;
+					}
+				}
+			}
+		}
+		// Category select-all checkbox lives inside <summary>, so a native click
+		// also toggles the parent <details> — that's <summary>'s default action,
+		// not propagation, so stopPropagation() alone can't stop it. preventDefault()
+		// stops the <details> toggle, but the checkbox's own toggle already ran as
+		// part of the click's *pre-click* activation step (before this handler even
+		// sees the event), and preventDefault() also cancels that: the browser's
+		// "canceled activation steps" revert checkbox.checked back to its pre-click
+		// value immediately after dispatch finishes — after this handler returns,
+		// so any assignment made in here gets clobbered synchronously. Read the
+		// already-toggled value now (it's the state the click intended), apply it
+		// to the children immediately, then reapply it to the checkbox itself on
+		// the next tick, once the browser's revert has already happened.
+		if (e.target.matches('.mcp-scope-cat-all')) {
+			var summary = e.target.closest('summary');
+			if (summary) {
+				e.preventDefault();
+				var cb = e.target;
+				var desired = cb.checked;
+				var det = cb.closest('.mcp-scope-cat');
+				det.querySelectorAll('input[name="allowed_tools[]"]').forEach(function (c) {
+					c.checked = desired;
+				});
+				setTimeout(function () {
+					cb.checked = desired;
+				}, 0);
+			}
+		}
+	});
+})();

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-07-20 15:24-0700\n"
+"POT-Creation-Date: 2026-08-04 14:00-0700\n"
 "PO-Revision-Date: 2026-07-08 15:32-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Indonesian\n"
@@ -16,55 +16,80 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: admin/class-mcp-admin.php:28 admin/class-mcp-admin.php:29
-#: admin/class-mcp-admin.php:337
+#: admin/class-mcp-admin.php:395
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
-#: admin/class-mcp-admin.php:163
+#: admin/class-mcp-admin.php:163 admin/class-mcp-admin.php:183
+#: admin/class-mcp-admin.php:205
+msgid "Select an access level before saving."
+msgstr "Pilih tingkat akses sebelum menyimpan."
+
+#: admin/class-mcp-admin.php:167
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr ""
 "Kunci API dibuat. Salin sekarang — kunci hanya akan ditampilkan sekali."
 
-#: admin/class-mcp-admin.php:170
+#: admin/class-mcp-admin.php:175
 msgid "API key revoked."
 msgstr "Kunci API dicabut."
 
-#: admin/class-mcp-admin.php:178
+#: admin/class-mcp-admin.php:185
+msgid "Key scope updated. It takes effect on the key's next request."
+msgstr ""
+"Cakupan kunci diperbarui. Berlaku pada permintaan berikutnya dari kunci ini."
+
+#: admin/class-mcp-admin.php:187
+msgid "Could not update key scope."
+msgstr "Tidak dapat memperbarui cakupan kunci."
+
+#: admin/class-mcp-admin.php:196
 msgid "Connection revoked."
 msgstr "Koneksi dicabut."
 
-#: admin/class-mcp-admin.php:184
+#: admin/class-mcp-admin.php:207
+msgid ""
+"Connection scope updated. It takes effect on the connection's next request."
+msgstr ""
+"Cakupan koneksi diperbarui. Berlaku pada permintaan berikutnya dari koneksi "
+"ini."
+
+#: admin/class-mcp-admin.php:209
+msgid "Could not update connection scope."
+msgstr "Tidak dapat memperbarui cakupan koneksi."
+
+#: admin/class-mcp-admin.php:215
 msgid "Desktop Connector enabled."
 msgstr "Desktop Connector diaktifkan."
 
-#: admin/class-mcp-admin.php:208
+#: admin/class-mcp-admin.php:239
 msgid "Settings saved."
 msgstr "Pengaturan disimpan."
 
-#: admin/class-mcp-admin.php:215
+#: admin/class-mcp-admin.php:246
 msgid "Audit log cleared."
 msgstr "Log audit dibersihkan."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:233
+#: admin/class-mcp-admin.php:264
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Perubahan #%1$d dibatalkan.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:248
+#: admin/class-mcp-admin.php:279
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%1$d dari %2$d entri batch dibatalkan."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:264
+#: admin/class-mcp-admin.php:295
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Checkpoint #%1$d dibuat (%2$s)."
 
 #. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
-#: admin/class-mcp-admin.php:276
+#: admin/class-mcp-admin.php:307
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: "
@@ -73,11 +98,11 @@ msgstr ""
 "Database dipulihkan dari checkpoint #%1$d. Checkpoint pengaman pra-"
 "pemulihan: #%2$d."
 
-#: admin/class-mcp-admin.php:287
+#: admin/class-mcp-admin.php:318
 msgid "Checkpoint deleted."
 msgstr "Checkpoint dihapus."
 
-#: admin/class-mcp-admin.php:343
+#: admin/class-mcp-admin.php:401
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -87,28 +112,28 @@ msgstr ""
 "atau <strong>Codex</strong> ke situs WordPress ini melalui Model Context "
 "Protocol."
 
-#: admin/class-mcp-admin.php:349
+#: admin/class-mcp-admin.php:407
 msgid "Connection"
 msgstr "Koneksi"
 
-#: admin/class-mcp-admin.php:350
+#: admin/class-mcp-admin.php:408
 msgid "Settings"
 msgstr "Pengaturan"
 
-#: admin/class-mcp-admin.php:351
+#: admin/class-mcp-admin.php:409
 msgid "Activity"
 msgstr "Aktivitas"
 
-#: admin/class-mcp-admin.php:352
+#: admin/class-mcp-admin.php:410
 msgid "Logs"
 msgstr "Log"
 
-#: admin/class-mcp-admin.php:353
+#: admin/class-mcp-admin.php:411
 msgid "About"
 msgstr "Tentang"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:380
+#: admin/class-mcp-admin.php:438
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -122,33 +147,33 @@ msgstr ""
 "Opencode dapat membaca, mengedit, dan mengelola seluruh situs melalui satu "
 "endpoint terautentikasi."
 
-#: admin/class-mcp-admin.php:394
+#: admin/class-mcp-admin.php:452
 msgid "Website"
 msgstr "Situs Web"
 
-#: admin/class-mcp-admin.php:395
+#: admin/class-mcp-admin.php:453
 msgid "Project home, guides, and news."
 msgstr "Beranda proyek, panduan, dan berita."
 
-#: admin/class-mcp-admin.php:401
+#: admin/class-mcp-admin.php:459
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:402
+#: admin/class-mcp-admin.php:460
 msgid "Source, issues & releases."
 msgstr "Kode sumber, isu & rilis."
 
 #. translators: %s: plugin version number
-#: admin/class-mcp-admin.php:410
+#: admin/class-mcp-admin.php:468
 #, php-format
 msgid "v%s · GPL-2.0"
 msgstr "v%s · GPL-2.0"
 
-#: admin/class-mcp-admin.php:431
+#: admin/class-mcp-admin.php:489
 msgid "Which app do you want to connect?"
 msgstr "Aplikasi mana yang ingin Anda hubungkan?"
 
-#: admin/class-mcp-admin.php:432
+#: admin/class-mcp-admin.php:490
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -156,11 +181,11 @@ msgstr ""
 "Pilih aplikasi AI atau alat pengkodean Anda dari daftar untuk melihat "
 "petunjuk penyiapan langkah demi langkah."
 
-#: admin/class-mcp-admin.php:458
+#: admin/class-mcp-admin.php:516
 msgid "Connection Doctor"
 msgstr "Diagnostik Koneksi"
 
-#: admin/class-mcp-admin.php:459
+#: admin/class-mcp-admin.php:517
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -168,27 +193,27 @@ msgstr ""
 "Uji apakah klien AI dapat menjangkau situs ini dan dapatkan diagnosis yang "
 "bisa disalin-tempel untuk semua masalah yang ada."
 
-#: admin/class-mcp-admin.php:460
+#: admin/class-mcp-admin.php:518
 msgid "Run checks"
 msgstr "Jalankan pemeriksaan"
 
-#: admin/class-mcp-admin.php:461
+#: admin/class-mcp-admin.php:519
 msgid "Copy report"
 msgstr "Salin laporan"
 
-#: admin/class-mcp-admin.php:471
+#: admin/class-mcp-admin.php:530
 msgid "No terminal needed"
 msgstr "Tidak perlu terminal"
 
-#: admin/class-mcp-admin.php:472
+#: admin/class-mcp-admin.php:531
 msgid "Terminal & IDE tools"
 msgstr "Alat Terminal & IDE"
 
-#: admin/class-mcp-admin.php:476
+#: admin/class-mcp-admin.php:535
 msgid "AI clients"
 msgstr "Klien AI"
 
-#: admin/class-mcp-admin.php:521
+#: admin/class-mcp-admin.php:580
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. ChatGPT connects from OpenAI's cloud, so it cannot reach local, "
@@ -200,7 +225,7 @@ msgstr ""
 "situs lokal, privat, atau non-HTTPS. Alat terminal dapat digunakan di sini "
 "sebagai gantinya, atau hubungkan melalui URL tunnel/staging."
 
-#: admin/class-mcp-admin.php:522
+#: admin/class-mcp-admin.php:581
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. The Claude apps connect from Anthropic's cloud, so they cannot "
@@ -213,7 +238,7 @@ msgstr ""
 "digunakan di sini sebagai gantinya, atau hubungkan melalui URL tunnel/"
 "staging."
 
-#: admin/class-mcp-admin.php:524
+#: admin/class-mcp-admin.php:583
 msgid ""
 "This opens a secure sign-in so ChatGPT can connect without a terminal. No "
 "access is granted until you approve it in your browser."
@@ -222,7 +247,7 @@ msgstr ""
 "terminal. Tidak ada akses yang diberikan sampai Anda menyetujuinya di "
 "browser Anda."
 
-#: admin/class-mcp-admin.php:525
+#: admin/class-mcp-admin.php:584
 msgid ""
 "This opens a secure sign-in so the Claude apps can connect without a "
 "terminal. No access is granted until you approve it in your browser."
@@ -231,27 +256,27 @@ msgstr ""
 "tanpa terminal. Tidak ada akses yang diberikan sampai Anda menyetujuinya di "
 "browser Anda."
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:586
 msgid "You'll paste this into ChatGPT in the next step."
 msgstr "Anda akan menempelkan ini ke ChatGPT pada langkah berikutnya."
 
-#: admin/class-mcp-admin.php:528
+#: admin/class-mcp-admin.php:587
 msgid "You'll paste this into Claude in the next step."
 msgstr "Anda akan menempelkan ini ke Claude pada langkah berikutnya."
 
-#: admin/class-mcp-admin.php:530
+#: admin/class-mcp-admin.php:589
 msgid "Add it in ChatGPT"
 msgstr "Tambahkan di ChatGPT"
 
-#: admin/class-mcp-admin.php:531
+#: admin/class-mcp-admin.php:590
 msgid "Add it in the Claude app"
 msgstr "Tambahkan di aplikasi Claude"
 
-#: admin/class-mcp-admin.php:532
+#: admin/class-mcp-admin.php:591
 msgid "Add it on claude.ai"
 msgstr "Tambahkan di claude.ai"
 
-#: admin/class-mcp-admin.php:535
+#: admin/class-mcp-admin.php:594
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
 "is asking for and click <strong>Approve</strong>. That is it — you are "
@@ -261,7 +286,7 @@ msgstr ""
 "yang dimintanya dan klik <strong>Setujui</strong>. Selesai — Anda sudah "
 "terhubung."
 
-#: admin/class-mcp-admin.php:536
+#: admin/class-mcp-admin.php:595
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
 "asking for and click <strong>Approve</strong>. That is it — you are "
@@ -270,7 +295,7 @@ msgstr ""
 "Claude membuka halaman masuk di <strong>situs Anda</strong>. Tinjau apa yang "
 "dimintanya dan klik <strong>Setujui</strong>. Selesai — Anda sudah terhubung."
 
-#: admin/class-mcp-admin.php:538
+#: admin/class-mcp-admin.php:597
 msgid ""
 "Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
 "strong> (beta) enabled."
@@ -278,7 +303,7 @@ msgstr ""
 "Konektor khusus memerlukan paket ChatGPT berbayar dengan <strong>Developer "
 "mode</strong> (beta) yang diaktifkan."
 
-#: admin/class-mcp-admin.php:539
+#: admin/class-mcp-admin.php:598
 msgid ""
 "Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
 "strong> plan."
@@ -286,34 +311,34 @@ msgstr ""
 "Konektor khusus memerlukan paket Claude <strong>Pro, Max, Team, atau "
 "Enterprise</strong>."
 
-#: admin/class-mcp-admin.php:555
+#: admin/class-mcp-admin.php:614
 msgid "Turn on the Desktop Connector"
 msgstr "Nyalakan Desktop Connector"
 
-#: admin/class-mcp-admin.php:561
+#: admin/class-mcp-admin.php:620
 msgid "Enable Desktop Connector"
 msgstr "Aktifkan Desktop Connector"
 
-#: admin/class-mcp-admin.php:572
+#: admin/class-mcp-admin.php:631
 msgid "Copy your connection link"
 msgstr "Salin tautan koneksi Anda"
 
-#: admin/class-mcp-admin.php:579
-msgid "Copy connector URL"
-msgstr "Salin URL konektor"
-
-#: admin/class-mcp-admin.php:579 admin/class-mcp-admin.php:654
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:638 admin/class-mcp-admin.php:713
+#: admin/class-mcp-admin.php:795
 msgid "Copy"
 msgstr "Salin"
 
-#: admin/class-mcp-admin.php:591
+#: admin/class-mcp-admin.php:638
+msgid "Copy connector URL"
+msgstr "Salin URL konektor"
+
+#: admin/class-mcp-admin.php:650
 msgid ""
 "Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
 msgstr ""
 "Buka <code>chatgpt.com</code> (atau buka aplikasi desktop ChatGPT) dan masuk."
 
-#: admin/class-mcp-admin.php:592
+#: admin/class-mcp-admin.php:651
 msgid ""
 "Go to <code>Settings → Connectors → Advanced</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
@@ -321,11 +346,11 @@ msgstr ""
 "Buka <code>Settings → Connectors → Advanced</code> dan nyalakan "
 "<strong>Developer mode</strong> (sekali saja)."
 
-#: admin/class-mcp-admin.php:593
+#: admin/class-mcp-admin.php:652
 msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
 msgstr "Kembali di <code>Connectors</code>, klik <strong>Create</strong>."
 
-#: admin/class-mcp-admin.php:594
+#: admin/class-mcp-admin.php:653
 msgid ""
 "Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
 "Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
@@ -334,84 +359,84 @@ msgstr ""
 "atur Authentication ke <strong>OAuth</strong>, lalu klik <strong>Create</"
 "strong>."
 
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:656
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
 msgstr "Buka aplikasi desktop <strong>Claude</strong> dan masuk."
 
-#: admin/class-mcp-admin.php:599
+#: admin/class-mcp-admin.php:658
 msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "Buka <code>claude.ai</code> di browser Anda dan masuk."
 
-#: admin/class-mcp-admin.php:601
+#: admin/class-mcp-admin.php:660
 msgid "Go to <code>Customize → Connections</code>."
 msgstr "Buka <code>Customize → Connections</code>."
 
-#: admin/class-mcp-admin.php:602
+#: admin/class-mcp-admin.php:661
 msgid "Click <strong>Add custom connector</strong>."
 msgstr "Klik <strong>Add custom connector</strong>."
 
-#: admin/class-mcp-admin.php:603
+#: admin/class-mcp-admin.php:662
 msgid "Paste the link from step 1 and click <strong>Add</strong>."
 msgstr "Tempelkan tautan dari langkah 1 lalu klik <strong>Add</strong>."
 
-#: admin/class-mcp-admin.php:612
+#: admin/class-mcp-admin.php:671
 msgid "Approve access"
 msgstr "Setujui akses"
 
-#: admin/class-mcp-admin.php:646
+#: admin/class-mcp-admin.php:705
 msgid "Create an API key"
 msgstr "Buat kunci API"
 
-#: admin/class-mcp-admin.php:650
+#: admin/class-mcp-admin.php:709
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr ""
 "<strong>Salin kunci Anda sekarang</strong> — demi keamanan, kunci tidak akan "
 "ditampilkan lagi."
 
-#: admin/class-mcp-admin.php:654
+#: admin/class-mcp-admin.php:713
 msgid "Copy API key"
 msgstr "Salin kunci API"
 
-#: admin/class-mcp-admin.php:655
+#: admin/class-mcp-admin.php:714
 msgid "I've saved my key"
 msgstr "Saya sudah menyimpan kunci saya"
 
-#: admin/class-mcp-admin.php:657
+#: admin/class-mcp-admin.php:716
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "Beri nama agar Anda dapat mengenalinya nanti, lalu buat."
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin.php:662
+#: admin/class-mcp-admin.php:721
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "mis. %s di laptop saya"
 
-#: admin/class-mcp-admin.php:664
-msgid "Generate another key"
-msgstr "Buat kunci lain"
-
-#: admin/class-mcp-admin.php:664
+#: admin/class-mcp-admin.php:724
 msgid "Generate API key"
 msgstr "Buat kunci API"
 
-#: admin/class-mcp-admin.php:680
+#: admin/class-mcp-admin.php:724
+msgid "Generate another key"
+msgstr "Buat kunci lain"
+
+#: admin/class-mcp-admin.php:740
 msgid "Add the server to your tool"
 msgstr "Tambahkan server ke alat Anda"
 
-#: admin/class-mcp-admin.php:685 admin/class-mcp-admin.php:729
+#: admin/class-mcp-admin.php:745 admin/class-mcp-admin.php:789
 msgid "Run this in your terminal:"
 msgstr "Jalankan ini di terminal Anda:"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:751
 msgid "Run these in your terminal:"
 msgstr "Jalankan perintah berikut di terminal Anda:"
 
-#: admin/class-mcp-admin.php:698
+#: admin/class-mcp-admin.php:758
 msgid "Add this to your <code>opencode.json</code>:"
 msgstr "Tambahkan ini ke <code>opencode.json</code> Anda:"
 
-#: admin/class-mcp-admin.php:714
+#: admin/class-mcp-admin.php:774
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then reload Cursor:"
@@ -419,12 +444,12 @@ msgstr ""
 "Tambahkan ini ke <code>~/.cursor/mcp.json</code> (buat file tersebut jika "
 "belum ada), lalu muat ulang Cursor:"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:795
 msgid "Copy setup command"
 msgstr "Salin perintah penyiapan"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:806
 #, php-format
 msgid ""
 "Open a new Claude Code session and run <code>/mcp</code> — <code>%s</code> "
@@ -434,7 +459,7 @@ msgstr ""
 "akan tercantum sebagai terhubung."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:748
+#: admin/class-mcp-admin.php:808
 #, php-format
 msgid ""
 "Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
@@ -443,7 +468,7 @@ msgstr ""
 "daftar."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:750
+#: admin/class-mcp-admin.php:810
 #, php-format
 msgid ""
 "Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
@@ -453,7 +478,7 @@ msgstr ""
 "<code>%s</code> akan tersedia."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:752
+#: admin/class-mcp-admin.php:812
 #, php-format
 msgid ""
 "Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
@@ -463,7 +488,7 @@ msgstr ""
 "titik status hijau."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:754
+#: admin/class-mcp-admin.php:814
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
@@ -471,95 +496,142 @@ msgstr ""
 "Jalankan <code>gemini mcp list</code> — <code>%s</code> akan tampil sebagai "
 "terhubung."
 
-#: admin/class-mcp-admin.php:761
+#: admin/class-mcp-admin.php:821
 msgid "Check it worked"
 msgstr "Periksa apakah berhasil"
 
-#: admin/class-mcp-admin.php:774
+#: admin/class-mcp-admin.php:834
 msgid "Existing keys"
 msgstr "Kunci yang ada"
 
-#: admin/class-mcp-admin.php:779 admin/class-mcp-admin.php:1196
+#: admin/class-mcp-admin.php:839 admin/class-mcp-admin.php:1380
 msgid "Label"
 msgstr "Label"
 
-#: admin/class-mcp-admin.php:780
+#: admin/class-mcp-admin.php:840
 msgid "Prefix"
 msgstr "Prefiks"
 
-#: admin/class-mcp-admin.php:781 admin/class-mcp-admin.php:1195
+#: admin/class-mcp-admin.php:841 admin/class-mcp-admin.php:1379
 msgid "Created"
 msgstr "Dibuat"
 
-#: admin/class-mcp-admin.php:782 admin/class-mcp-admin.php:831
+#: admin/class-mcp-admin.php:842 admin/class-mcp-admin.php:912
 msgid "Last Used"
 msgstr "Terakhir Digunakan"
 
+#: admin/class-mcp-admin.php:843 admin/class-mcp-admin.php:913
+msgid "Scope"
+msgstr "Cakupan"
+
 #. translators: %s: human-readable time difference, e.g. "2 hours"
 #. translators: %s: human-readable time difference
-#: admin/class-mcp-admin.php:795 admin/class-mcp-admin.php:844
+#: admin/class-mcp-admin.php:856 admin/class-mcp-admin.php:926
 #, php-format
 msgid "%s ago"
 msgstr "%s lalu"
 
-#: admin/class-mcp-admin.php:797 admin/class-mcp-admin.php:846
+#: admin/class-mcp-admin.php:858 admin/class-mcp-admin.php:928
 msgid "never"
 msgstr "tidak pernah"
 
-#: admin/class-mcp-admin.php:805
+#: admin/class-mcp-admin.php:863 admin/class-mcp-admin.php:933
+msgid "Edit"
+msgstr "Edit"
+
+#: admin/class-mcp-admin.php:870 admin/class-mcp-admin.php:940
+msgid "Revoke"
+msgstr "Cabut"
+
+#: admin/class-mcp-admin.php:870
 msgid "Revoke this key? Any client using it will lose access."
 msgstr ""
 "Cabut kunci ini? Klien mana pun yang menggunakannya akan kehilangan akses."
 
-#: admin/class-mcp-admin.php:805 admin/class-mcp-admin.php:854
-msgid "Revoke"
-msgstr "Cabut"
+#: admin/class-mcp-admin.php:886 admin/class-mcp-admin.php:956
+msgid "Save scope"
+msgstr "Simpan Cakupan"
 
-#: admin/class-mcp-admin.php:823
+#: admin/class-mcp-admin.php:904
 msgid "Connected apps"
 msgstr "Aplikasi terhubung"
 
-#: admin/class-mcp-admin.php:828
+#: admin/class-mcp-admin.php:909
 msgid "App"
 msgstr "Aplikasi"
 
-#: admin/class-mcp-admin.php:829
+#: admin/class-mcp-admin.php:910
 msgid "Authorized by"
 msgstr "Diotorisasi oleh"
 
-#: admin/class-mcp-admin.php:830
+#: admin/class-mcp-admin.php:911
 msgid "Connected"
 msgstr "Terhubung"
 
-#: admin/class-mcp-admin.php:854
+#: admin/class-mcp-admin.php:940
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "Cabut koneksi ini? Aplikasi akan segera kehilangan akses."
 
-#: admin/class-mcp-admin.php:873
+#. translators: %s: tool category name
+#: admin/class-mcp-admin.php:990
+#, php-format
+msgid "Select all %s tools"
+msgstr "Pilih semua alat %s"
+
+#: admin/class-mcp-admin.php:1004
+msgid ""
+"Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
+"always available to every credential regardless of tool scope."
+msgstr "Catatan: Resource MCP hanya-baca (info situs, daftar pengguna, pos terbaru, dll.) selalu tersedia untuk setiap kunci dan koneksi, terlepas dari cakupan alat."
+
+#: admin/class-mcp-admin.php:1018 admin/class-mcp-admin.php:1031
+#: admin/class-mcp-admin.php:1042
+msgid "Full access"
+msgstr "Akses penuh"
+
+#: admin/class-mcp-admin.php:1020 admin/class-mcp-admin.php:1035
+msgid "Read-only"
+msgstr "Hanya baca"
+
+#: admin/class-mcp-admin.php:1022
+msgid "Custom…"
+msgstr "Kustom…"
+
+#. translators: %d: number of tools this credential may call
+#: admin/class-mcp-admin.php:1039
+#, php-format
+msgid "Custom (%d tools)"
+msgstr "Kustom (%d alat)"
+
+#: admin/class-mcp-admin.php:1046
+msgid "Unknown (blocked)"
+msgstr "Tidak dikenal (diblokir)"
+
+#: admin/class-mcp-admin.php:1057
 msgid "General"
 msgstr "Umum"
 
-#: admin/class-mcp-admin.php:877
+#: admin/class-mcp-admin.php:1061
 msgid "MCP Server"
 msgstr "Server MCP"
 
-#: admin/class-mcp-admin.php:881
+#: admin/class-mcp-admin.php:1065
 msgid "Enabled"
 msgstr "Diaktifkan"
 
-#: admin/class-mcp-admin.php:883
+#: admin/class-mcp-admin.php:1067
 msgid "When off, every MCP request is rejected."
 msgstr "Saat nonaktif, setiap permintaan MCP ditolak."
 
-#: admin/class-mcp-admin.php:887
+#: admin/class-mcp-admin.php:1071
 msgid "Safe Mode"
 msgstr "Mode Aman"
 
-#: admin/class-mcp-admin.php:891
+#: admin/class-mcp-admin.php:1075
 msgid "Require confirmation for destructive operations"
 msgstr "Memerlukan konfirmasi untuk operasi yang merusak"
 
-#: admin/class-mcp-admin.php:895
+#: admin/class-mcp-admin.php:1079
 msgid ""
 "Tools marked as destructive (delete, drop, WP-CLI write commands, etc.) "
 "require <code>confirm: true</code> in the request."
@@ -567,15 +639,15 @@ msgstr ""
 "Alat yang ditandai sebagai merusak (hapus, drop, perintah tulis WP-CLI, "
 "dll.) memerlukan <code>confirm: true</code> dalam permintaan."
 
-#: admin/class-mcp-admin.php:902
+#: admin/class-mcp-admin.php:1086
 msgid "Desktop Connector"
 msgstr "Desktop Connector"
 
-#: admin/class-mcp-admin.php:906
+#: admin/class-mcp-admin.php:1090
 msgid "Allow connecting via Claude Desktop / web (OAuth)"
 msgstr "Izinkan koneksi melalui Claude Desktop / web (OAuth)"
 
-#: admin/class-mcp-admin.php:910
+#: admin/class-mcp-admin.php:1094
 msgid ""
 "Turns on the one-click browser sign-in used by the &#8220;Claude "
 "Desktop&#8221; connection path. This exposes public OAuth discovery, "
@@ -589,7 +661,7 @@ msgstr ""
 "sampai seorang administrator menyetujui di browser. Biarkan nonaktif jika "
 "Anda hanya terhubung melalui terminal."
 
-#: admin/class-mcp-admin.php:915
+#: admin/class-mcp-admin.php:1099
 msgid ""
 "Tip: run the Connection Doctor on the Connection tab to verify the connector "
 "end to end."
@@ -597,37 +669,37 @@ msgstr ""
 "Tips: jalankan Diagnostik Koneksi di tab Koneksi untuk memverifikasi "
 "konektor dari ujung ke ujung."
 
-#: admin/class-mcp-admin.php:920
+#: admin/class-mcp-admin.php:1104
 msgid "Rate Limit"
 msgstr "Batas Laju"
 
-#: admin/class-mcp-admin.php:923
+#: admin/class-mcp-admin.php:1107
 msgid "requests per minute, per key"
 msgstr "permintaan per menit, per kunci"
 
-#: admin/class-mcp-admin.php:927
+#: admin/class-mcp-admin.php:1111
 msgid "Request Logging"
 msgstr "Pencatatan Permintaan"
 
-#: admin/class-mcp-admin.php:931
+#: admin/class-mcp-admin.php:1115
 msgid "Log all tool calls to <code>debug.log</code>"
 msgstr "Catat semua panggilan alat ke <code>debug.log</code>"
 
-#: admin/class-mcp-admin.php:940
+#: admin/class-mcp-admin.php:1124
 msgid "Undo & Checkpoints"
 msgstr "Pembatalan & Checkpoint"
 
-#: admin/class-mcp-admin.php:944
+#: admin/class-mcp-admin.php:1128
 msgid "Undo Journal"
 msgstr "Jurnal Pembatalan"
 
-#: admin/class-mcp-admin.php:948
+#: admin/class-mcp-admin.php:1132
 msgid "Undo journal — capture before-state of every mutating tool call"
 msgstr ""
 "Jurnal pembatalan — tangkap kondisi-sebelum dari setiap panggilan alat yang "
 "mengubah data"
 
-#: admin/class-mcp-admin.php:950
+#: admin/class-mcp-admin.php:1134
 msgid ""
 "Lets changes made through MCP be undone from the Activity tab. Disabling "
 "stops new entries from being captured; existing history is kept until it "
@@ -637,31 +709,31 @@ msgstr ""
 "Aktivitas. Menonaktifkan akan menghentikan penangkapan entri baru; riwayat "
 "yang ada disimpan hingga kedaluwarsa."
 
-#: admin/class-mcp-admin.php:954
+#: admin/class-mcp-admin.php:1138
 msgid "Undo Retention"
 msgstr "Retensi Pembatalan"
 
-#: admin/class-mcp-admin.php:957
+#: admin/class-mcp-admin.php:1141
 msgid "days to keep undo history"
 msgstr "hari untuk menyimpan riwayat pembatalan"
 
-#: admin/class-mcp-admin.php:961
+#: admin/class-mcp-admin.php:1145
 msgid "Checkpoint Limit"
 msgstr "Batas Checkpoint"
 
-#: admin/class-mcp-admin.php:964
+#: admin/class-mcp-admin.php:1148
 msgid "checkpoints to keep"
 msgstr "checkpoint yang disimpan"
 
-#: admin/class-mcp-admin.php:968
+#: admin/class-mcp-admin.php:1152 admin/class-mcp-admin.php:1162
 msgid "Auto-Checkpoint"
 msgstr "Checkpoint Otomatis"
 
-#: admin/class-mcp-admin.php:972
+#: admin/class-mcp-admin.php:1156
 msgid "Auto-checkpoint before mutating WP-CLI commands"
 msgstr "Checkpoint otomatis sebelum perintah WP-CLI yang mengubah data"
 
-#: admin/class-mcp-admin.php:974
+#: admin/class-mcp-admin.php:1158
 msgid ""
 "Takes a full-database checkpoint before running a WP-CLI command that is not "
 "read-only, so it can be rolled back even if the command itself cannot be "
@@ -671,30 +743,34 @@ msgstr ""
 "yang tidak hanya-baca, sehingga dapat dikembalikan meskipun perintah itu "
 "sendiri tidak dapat dibatalkan."
 
-#: admin/class-mcp-admin.php:982
+#: admin/class-mcp-admin.php:1166
 msgid "Auto-checkpoint before plugin & theme updates"
 msgstr "Checkpoint otomatis sebelum pembaruan plugin & tema"
 
-#: admin/class-mcp-admin.php:984
+#: admin/class-mcp-admin.php:1168
 msgid ""
 "Takes a full-database checkpoint before plugin or theme updates, so database "
 "migrations run by an update can be rolled back. The old files are separately "
 "backed up per update for undo."
-msgstr "Membuat checkpoint database lengkap sebelum pembaruan plugin atau tema, sehingga migrasi database yang dijalankan oleh pembaruan dapat dibatalkan. File lama juga dicadangkan secara terpisah pada setiap pembaruan untuk pengurungan."
+msgstr ""
+"Membuat checkpoint database lengkap sebelum pembaruan plugin atau tema, "
+"sehingga migrasi database yang dijalankan oleh pembaruan dapat dibatalkan. "
+"File lama juga dicadangkan secara terpisah pada setiap pembaruan untuk "
+"pengurungan."
 
-#: admin/class-mcp-admin.php:992 admin/class-mcp-admin.php:996
+#: admin/class-mcp-admin.php:1176 admin/class-mcp-admin.php:1180
 msgid "Power Mode"
 msgstr "Power Mode"
 
-#: admin/class-mcp-admin.php:992
+#: admin/class-mcp-admin.php:1176
 msgid "advanced · off by default"
 msgstr "lanjutan · nonaktif secara bawaan"
 
-#: admin/class-mcp-admin.php:1000
+#: admin/class-mcp-admin.php:1184
 msgid "Lift safety restrictions for advanced operations"
 msgstr "Cabut pembatasan keamanan untuk operasi lanjutan"
 
-#: admin/class-mcp-admin.php:1004
+#: admin/class-mcp-admin.php:1188
 msgid ""
 "<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, "
 "dangerous SQL, writing files anywhere, and requests to internal addresses. "
@@ -709,17 +785,17 @@ msgstr ""
 "tepercaya dan terkunci yang Anda kendalikan. Kunci API MCP Anda dan "
 "pengaturan plugin ini sendiri tetap terlindungi."
 
-#: admin/class-mcp-admin.php:1015
+#: admin/class-mcp-admin.php:1199
 msgid "Save Settings"
 msgstr "Simpan Pengaturan"
 
-#: admin/class-mcp-admin.php:1025
+#: admin/class-mcp-admin.php:1209
 msgid ""
 "Audit log is not available. Please deactivate and reactivate the plugin."
 msgstr ""
 "Log audit tidak tersedia. Silakan nonaktifkan lalu aktifkan kembali plugin."
 
-#: admin/class-mcp-admin.php:1049
+#: admin/class-mcp-admin.php:1233
 msgid ""
 "Structured log of all MCP tool calls, errors, and auth events. Auto-pruned "
 "after 30 days."
@@ -727,133 +803,133 @@ msgstr ""
 "Log terstruktur dari semua panggilan alat MCP, kesalahan, dan peristiwa "
 "autentikasi. Dibersihkan otomatis setelah 30 hari."
 
-#: admin/class-mcp-admin.php:1056 admin/class-mcp-admin.php:1111
+#: admin/class-mcp-admin.php:1240 admin/class-mcp-admin.php:1295
 msgid "Event"
 msgstr "Peristiwa"
 
-#: admin/class-mcp-admin.php:1058
+#: admin/class-mcp-admin.php:1242
 msgid "All events"
 msgstr "Semua peristiwa"
 
-#: admin/class-mcp-admin.php:1065 admin/class-mcp-admin.php:1112
-#: admin/class-mcp-admin.php:1234
+#: admin/class-mcp-admin.php:1249 admin/class-mcp-admin.php:1296
+#: admin/class-mcp-admin.php:1418
 msgid "Tool"
 msgstr "Alat"
 
-#: admin/class-mcp-admin.php:1066
+#: admin/class-mcp-admin.php:1250
 msgid "e.g. wp_list_posts"
 msgstr "mis. wp_list_posts"
 
-#: admin/class-mcp-admin.php:1069
+#: admin/class-mcp-admin.php:1253
 msgid "From"
 msgstr "Dari"
 
-#: admin/class-mcp-admin.php:1073
+#: admin/class-mcp-admin.php:1257
 msgid "To"
 msgstr "Sampai"
 
-#: admin/class-mcp-admin.php:1077
+#: admin/class-mcp-admin.php:1261
 msgid "Per page"
 msgstr "Per halaman"
 
-#: admin/class-mcp-admin.php:1084
+#: admin/class-mcp-admin.php:1268
 msgid "Filter"
 msgstr "Filter"
 
-#: admin/class-mcp-admin.php:1086
+#: admin/class-mcp-admin.php:1270
 msgid "Filtered"
 msgstr "Terfilter"
 
-#: admin/class-mcp-admin.php:1086
+#: admin/class-mcp-admin.php:1270
 msgid "Reset"
 msgstr "Setel Ulang"
 
-#: admin/class-mcp-admin.php:1094
-msgid "Clear all audit log entries? This cannot be undone."
-msgstr "Bersihkan semua entri log audit? Ini tidak dapat dibatalkan."
-
-#: admin/class-mcp-admin.php:1094
+#: admin/class-mcp-admin.php:1278
 msgid "Clear All Logs"
 msgstr "Bersihkan Semua Log"
 
+#: admin/class-mcp-admin.php:1278
+msgid "Clear all audit log entries? This cannot be undone."
+msgstr "Bersihkan semua entri log audit? Ini tidak dapat dibatalkan."
+
 #. translators: %s: total number of log entries
-#: admin/class-mcp-admin.php:1097
+#: admin/class-mcp-admin.php:1281
 #, php-format
 msgid "%s entries total"
 msgstr "total %s entri"
 
-#: admin/class-mcp-admin.php:1103
+#: admin/class-mcp-admin.php:1287
 msgid "No log entries found."
 msgstr "Tidak ada entri log yang ditemukan."
 
-#: admin/class-mcp-admin.php:1109
+#: admin/class-mcp-admin.php:1293
 msgid "Timestamp"
 msgstr "Stempel Waktu"
 
-#: admin/class-mcp-admin.php:1110 admin/class-mcp-admin.php:1235
+#: admin/class-mcp-admin.php:1294 admin/class-mcp-admin.php:1419
 msgid "Key"
 msgstr "Kunci"
 
-#: admin/class-mcp-admin.php:1113 admin/class-mcp-admin.php:1236
+#: admin/class-mcp-admin.php:1297 admin/class-mcp-admin.php:1420
 msgid "Status"
 msgstr "Status"
 
-#: admin/class-mcp-admin.php:1114
+#: admin/class-mcp-admin.php:1298
 msgid "IP"
 msgstr "IP"
 
-#: admin/class-mcp-admin.php:1143
+#: admin/class-mcp-admin.php:1327
 msgid "Previous"
 msgstr "Sebelumnya"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:1147
+#: admin/class-mcp-admin.php:1331
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Halaman %1$d dari %2$d"
 
-#: admin/class-mcp-admin.php:1150
+#: admin/class-mcp-admin.php:1334
 msgid "Next"
 msgstr "Berikutnya"
 
-#: admin/class-mcp-admin.php:1173
+#: admin/class-mcp-admin.php:1357
 msgid "Undo conflict:"
 msgstr "Konflik pembatalan:"
 
-#: admin/class-mcp-admin.php:1178
+#: admin/class-mcp-admin.php:1362
 msgid "Force undo anyway"
 msgstr "Tetap paksa batalkan"
 
-#: admin/class-mcp-admin.php:1187
+#: admin/class-mcp-admin.php:1371
 msgid "Database Checkpoints"
 msgstr "Checkpoint Database"
 
-#: admin/class-mcp-admin.php:1190
+#: admin/class-mcp-admin.php:1374
 msgid "Label (optional)"
 msgstr "Label (opsional)"
 
-#: admin/class-mcp-admin.php:1191
+#: admin/class-mcp-admin.php:1375
 msgid "Create checkpoint now"
 msgstr "Buat checkpoint sekarang"
 
-#: admin/class-mcp-admin.php:1195 admin/class-mcp-admin.php:1233
+#: admin/class-mcp-admin.php:1379 admin/class-mcp-admin.php:1417
 msgid "ID"
 msgstr "ID"
 
-#: admin/class-mcp-admin.php:1196
+#: admin/class-mcp-admin.php:1380
 msgid "Trigger"
 msgstr "Pemicu"
 
-#: admin/class-mcp-admin.php:1197
+#: admin/class-mcp-admin.php:1381
 msgid "Size"
 msgstr "Ukuran"
 
-#: admin/class-mcp-admin.php:1201
+#: admin/class-mcp-admin.php:1385
 msgid "No checkpoints yet."
 msgstr "Belum ada checkpoint."
 
 #. translators: 1: checkpoint ID number, 2: checkpoint creation date/time
-#: admin/class-mcp-admin.php:1213
+#: admin/class-mcp-admin.php:1397
 #, php-format
 msgid ""
 "Restore the database to checkpoint #%1$s (%2$s)? EVERYTHING changed since "
@@ -864,104 +940,104 @@ msgstr ""
 "itu — termasuk perubahan yang dibuat di luar MCP — akan hilang. Checkpoint "
 "pengaman pra-pemulihan diambil terlebih dahulu."
 
-#: admin/class-mcp-admin.php:1214
+#: admin/class-mcp-admin.php:1398
 msgid "Really sure? This rewrites every site table."
 msgstr "Benar-benar yakin? Ini menulis ulang setiap tabel situs."
 
-#: admin/class-mcp-admin.php:1217
+#: admin/class-mcp-admin.php:1401
 msgid "Restore"
 msgstr "Pulihkan"
 
-#: admin/class-mcp-admin.php:1219
+#: admin/class-mcp-admin.php:1403
 msgid "Delete this checkpoint?"
 msgstr "Hapus checkpoint ini?"
 
-#: admin/class-mcp-admin.php:1222
+#: admin/class-mcp-admin.php:1406
 msgid "Delete"
 msgstr "Hapus"
 
-#: admin/class-mcp-admin.php:1230
+#: admin/class-mcp-admin.php:1414
 msgid "Change Journal"
 msgstr "Jurnal Perubahan"
 
-#: admin/class-mcp-admin.php:1233
+#: admin/class-mcp-admin.php:1417
 msgid "Time"
 msgstr "Waktu"
 
-#: admin/class-mcp-admin.php:1234
+#: admin/class-mcp-admin.php:1418
 msgid "Object"
 msgstr "Objek"
 
-#: admin/class-mcp-admin.php:1235
+#: admin/class-mcp-admin.php:1419
 msgid "Action"
 msgstr "Tindakan"
 
-#: admin/class-mcp-admin.php:1240
+#: admin/class-mcp-admin.php:1424
 msgid "No journaled changes yet."
 msgstr "Belum ada perubahan yang dicatat."
 
 #. translators: %s: change ID number
-#: admin/class-mcp-admin.php:1260
+#: admin/class-mcp-admin.php:1444
 #, php-format
 msgid "Undo change #%s?"
 msgstr "Batalkan perubahan #%s?"
 
-#: admin/class-mcp-admin.php:1264
+#: admin/class-mcp-admin.php:1448
 msgid "Undo"
 msgstr "Batalkan"
 
-#: admin/class-mcp-admin.php:1267
+#: admin/class-mcp-admin.php:1451
 msgid "Undo ALL active changes in this batch (newest first)?"
 msgstr "Batalkan SEMUA perubahan aktif dalam batch ini (terbaru dulu)?"
 
-#: admin/class-mcp-admin.php:1270
+#: admin/class-mcp-admin.php:1454
 msgid "Undo batch"
 msgstr "Batalkan batch"
 
-#: includes/class-mcp-oauth.php:347
+#: includes/class-mcp-oauth.php:355
 msgid "Unknown client"
 msgstr "Klien tidak dikenal"
 
-#: includes/class-mcp-oauth.php:625
+#: includes/class-mcp-oauth.php:653
 msgid "The OAuth connector is not enabled on this site."
 msgstr "Konektor OAuth tidak diaktifkan di situs ini."
 
-#: includes/class-mcp-oauth.php:644
+#: includes/class-mcp-oauth.php:672
 msgid "Unknown OAuth client."
 msgstr "Klien OAuth tidak dikenal."
 
-#: includes/class-mcp-oauth.php:648
+#: includes/class-mcp-oauth.php:676
 msgid "Invalid redirect_uri for this client."
 msgstr "redirect_uri tidak valid untuk klien ini."
 
-#: includes/class-mcp-oauth.php:667
+#: includes/class-mcp-oauth.php:695
 msgid "You must be an administrator to authorize this connection."
 msgstr "Anda harus menjadi administrator untuk mengotorisasi koneksi ini."
 
-#: includes/class-mcp-oauth.php:673
+#: includes/class-mcp-oauth.php:701
 msgid "Security check failed. Please try again."
 msgstr "Pemeriksaan keamanan gagal. Silakan coba lagi."
 
-#: includes/class-mcp-oauth.php:717
+#: includes/class-mcp-oauth.php:758
 msgid "Connection error"
 msgstr "Kesalahan koneksi"
 
-#: includes/class-mcp-oauth.php:724
+#: includes/class-mcp-oauth.php:765
 msgid "An application"
 msgstr "Sebuah aplikasi"
 
-#: includes/class-mcp-oauth.php:748
+#: includes/class-mcp-oauth.php:796
 msgid "Authorize connection"
 msgstr "Otorisasi koneksi"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:755
+#: includes/class-mcp-oauth.php:803
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s ingin terhubung"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:759
+#: includes/class-mcp-oauth.php:807
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -971,21 +1047,39 @@ msgstr ""
 "bertindak dengan izin administrator Anda."
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:764
+#: includes/class-mcp-oauth.php:812
 #, php-format
 msgid "Authorizing as %s"
 msgstr "Mengotorisasi sebagai %s"
 
-#: includes/class-mcp-oauth.php:777
+#: includes/class-mcp-oauth.php:825
+msgid "Access level"
+msgstr "Tingkat Akses"
+
+#. translators: %d: number of tools allowed in the connection's current custom scope
+#: includes/class-mcp-oauth.php:831
+#, php-format
+msgid "Keep current custom scope (%d tools)"
+msgstr "Pertahankan cakupan kustom saat ini (%d alat)"
+
+#: includes/class-mcp-oauth.php:837
+msgid "Full access — read and manage the site"
+msgstr "Akses penuh — baca dan kelola situs"
+
+#: includes/class-mcp-oauth.php:841
+msgid "Read-only — inspect the site, make no changes"
+msgstr "Hanya baca — periksa situs, tanpa membuat perubahan"
+
+#: includes/class-mcp-oauth.php:845
 msgid "Deny"
 msgstr "Tolak"
 
-#: includes/class-mcp-oauth.php:778
+#: includes/class-mcp-oauth.php:846
 msgid "Approve"
 msgstr "Setujui"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:783
+#: includes/class-mcp-oauth.php:851
 #, php-format
 msgid "Redirects to: %s"
 msgstr "Mengalihkan ke: %s"

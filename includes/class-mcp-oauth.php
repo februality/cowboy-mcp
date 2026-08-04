@@ -241,10 +241,18 @@ class Cowboy_MCP_OAuth {
         }
 
         $clients = get_option( self::CLIENTS_OPTION, [] );
+        if ( empty( $clients[ $rec['client_id'] ] ) ) {
+            // The client registration behind this token is gone (revoked/pruned) —
+            // fail closed rather than authenticating with an unscoped/stale context.
+            self::revoke_token_record( $id );
+            return new WP_Error( 'revoked_token', 'Client registration no longer exists.' );
+        }
+        $tool_scope = $clients[ $rec['client_id'] ]['tool_scope'] ?? null;
         self::$last_token_context = [
             'key_id'     => 'oauth_' . $id,
             'key_label'  => $clients[ $rec['client_id'] ]['client_name'] ?? ( 'OAuth: ' . $rec['client_id'] ),
             'key_prefix' => 'cmcp_at',
+            'scope'      => is_array( $tool_scope ) ? $tool_scope : null,
         ];
 
         return (int) $rec['user_id'];
@@ -348,6 +356,7 @@ class Cowboy_MCP_OAuth {
                 'user'        => $user ? $user->user_login : '—',
                 'created'     => $info['created'],
                 'last_used'   => $info['last_used'],
+                'tool_scope'  => ( isset( $clients[ $cid ]['tool_scope'] ) && is_array( $clients[ $cid ]['tool_scope'] ) ) ? $clients[ $cid ]['tool_scope'] : null,
             ];
         }
         return $out;
@@ -382,6 +391,25 @@ class Cowboy_MCP_OAuth {
         update_option( self::REFRESH_OPTION, $refresh, false );
 
         return $found;
+    }
+
+    /**
+     * Update (or clear, with null) a connection's tool scope from wp-admin.
+     * Takes effect on the connection's next request — tokens are untouched.
+     */
+    public static function update_connection_scope( string $client_id, ?array $scope ): bool {
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        if ( ! isset( $clients[ $client_id ] ) ) {
+            return false;
+        }
+        $sanitized = Cowboy_MCP_Auth::sanitize_scope( $scope );
+        if ( null === $sanitized ) {
+            unset( $clients[ $client_id ]['tool_scope'] );
+        } else {
+            $clients[ $client_id ]['tool_scope'] = $sanitized;
+        }
+        update_option( self::CLIENTS_OPTION, $clients, false );
+        return true;
     }
 
     /* ── Response helpers ──────────────────────────────────── */
@@ -686,6 +714,19 @@ class Cowboy_MCP_OAuth {
                 'aud'                   => $resource,
             ] );
 
+            $scope_mode   = sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_oauth_scope_mode'] ?? 'full' ) );
+            $current_mode = $clients[ $client_id ]['tool_scope']['mode'] ?? 'full';
+            if ( 'read_only' === $scope_mode ) {
+                $clients[ $client_id ]['tool_scope'] = [ 'mode' => 'read_only', 'allowed_tools' => [] ];
+            } elseif ( 'keep_custom' === $scope_mode && 'custom' === $current_mode ) {
+                // Re-consent without touching the existing custom scope.
+            } else {
+                // Latest consent wins: an earlier read-only/custom grant is
+                // replaced by this full-access approval. A stale "keep_custom"
+                // posted against a scope that is no longer custom falls back to
+                // full, fail-safe, rather than silently discarding nothing.
+                unset( $clients[ $client_id ]['tool_scope'] );
+            }
             $clients[ $client_id ]['last_used'] = time();
             update_option( self::CLIENTS_OPTION, $clients, false );
 
@@ -724,6 +765,13 @@ class Cowboy_MCP_OAuth {
         $client_name = $client['client_name'] ?? __( 'An application', 'cowboy-mcp' );
         $user        = wp_get_current_user();
         $action      = esc_url( self::issuer() . '/cowboy-mcp-oauth/authorize' );
+
+        // Preselect the radio matching the client's currently stored scope so
+        // re-consent doesn't silently overwrite a custom grant (see handle_authorize()).
+        $tool_scope     = $client['tool_scope'] ?? null;
+        $stored_mode    = $tool_scope['mode'] ?? 'full';
+        $is_custom      = ( 'custom' === $stored_mode );
+        $custom_count   = $is_custom ? count( $tool_scope['allowed_tools'] ?? [] ) : 0;
 
         // This is a standalone document rendered outside the normal wp-admin/theme
         // page lifecycle (no wp_head()/wp_footer() runs here), so the enqueued style
@@ -773,6 +821,26 @@ class Cowboy_MCP_OAuth {
     <input type="hidden" name="code_challenge_method" value="<?php echo esc_attr( $challenge_m ); ?>">
     <input type="hidden" name="scope" value="<?php echo esc_attr( $scope ); ?>">
     <input type="hidden" name="resource" value="<?php echo esc_attr( $resource ); ?>">
+    <fieldset class="scope">
+        <legend><?php esc_html_e( 'Access level', 'cowboy-mcp' ); ?></legend>
+        <?php if ( $is_custom ) : ?>
+        <label>
+            <input type="radio" name="cowboy_mcp_oauth_scope_mode" value="keep_custom" checked>
+            <?php
+            /* translators: %d: number of tools allowed in the connection's current custom scope */
+            printf( esc_html__( 'Keep current custom scope (%d tools)', 'cowboy-mcp' ), (int) $custom_count );
+            ?>
+        </label>
+        <?php endif; ?>
+        <label>
+            <input type="radio" name="cowboy_mcp_oauth_scope_mode" value="full" <?php checked( ! $is_custom && 'full' === $stored_mode ); ?>>
+            <?php esc_html_e( 'Full access — read and manage the site', 'cowboy-mcp' ); ?>
+        </label>
+        <label>
+            <input type="radio" name="cowboy_mcp_oauth_scope_mode" value="read_only" <?php checked( ! $is_custom && 'read_only' === $stored_mode ); ?>>
+            <?php esc_html_e( 'Read-only — inspect the site, make no changes', 'cowboy-mcp' ); ?>
+        </label>
+    </fieldset>
     <div class="actions">
         <button class="deny" type="submit" name="cowboy_mcp_oauth_deny" value="1"><?php esc_html_e( 'Deny', 'cowboy-mcp' ); ?></button>
         <button class="approve" type="submit" name="cowboy_mcp_oauth_approve" value="1"><?php esc_html_e( 'Approve', 'cowboy-mcp' ); ?></button>

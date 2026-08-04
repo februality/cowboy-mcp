@@ -3,9 +3,7 @@ defined( 'ABSPATH' ) || exit;
 
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_list_themes', '[Themes] List all installed themes with activation status, version, metadata, and available updates.', [
-            'refresh_updates' => [ 'type' => 'boolean', 'description' => 'Check WordPress.org for fresh update info first (network call, slower). Default false: reads the cached update state.', 'default' => false ],
-        ], [
+        Cowboy_MCP_Tools::tool( 'wp_list_themes', '[Themes] List all installed themes with activation status, version, metadata, and available updates.', [], [
             'readOnlyHint'    => true,
             'destructiveHint' => false,
             'idempotentHint'  => true,
@@ -56,9 +54,6 @@ return [
     'handlers' => [
 
         'wp_list_themes' => function ( array $a ): array {
-            if ( ! empty( $a['refresh_updates'] ) ) {
-                wp_update_themes();
-            }
             $all_themes        = wp_get_themes();
             $active_stylesheet = get_stylesheet();
             $updates           = get_site_transient( 'update_themes' );

@@ -39,7 +39,7 @@ class Cowboy_MCP_Auth {
      * @param string $label  Human-readable label for the key.
      * @return array{id: string, key: string, label: string, created: int}
      */
-    public static function generate_key( string $label = 'Claude Code' ): array {
+    public static function generate_key( string $label = 'Claude Code', ?array $scope = null ): array {
         $keys = get_option( self::OPTION_KEY, [] );
 
         $raw_key = 'mcp_' . bin2hex( random_bytes( 32 ) );
@@ -53,6 +53,11 @@ class Cowboy_MCP_Auth {
             'last_used' => null,
             'prefix'   => substr( $raw_key, 0, 8 ),  // visible prefix for identification
         ];
+
+        $sanitized_scope = self::sanitize_scope( $scope );
+        if ( null !== $sanitized_scope ) {
+            $record['scope'] = $sanitized_scope;
+        }
 
         $keys[ $id ] = $record;
         update_option( self::OPTION_KEY, $keys );
@@ -80,6 +85,48 @@ class Cowboy_MCP_Auth {
     }
 
     /**
+     * Normalize a scope array from admin/consent input.
+     *
+     * Returns null (= full access, no scope field stored) for absent or
+     * unrecognized modes, so malformed input can never store a corrupt scope.
+     * Tool names are validated against the tool-name character set; anything
+     * else is dropped.
+     */
+    public static function sanitize_scope( ?array $scope ): ?array {
+        $mode = $scope['mode'] ?? '';
+        if ( 'read_only' === $mode ) {
+            return [ 'mode' => 'read_only', 'allowed_tools' => [] ];
+        }
+        if ( 'custom' === $mode ) {
+            $tools = array_values( array_unique( array_filter( array_map(
+                static fn( $t ) => preg_match( '/^[a-z0-9_]{1,64}$/', (string) $t ) ? (string) $t : '',
+                (array) ( $scope['allowed_tools'] ?? [] )
+            ) ) ) );
+            return [ 'mode' => 'custom', 'allowed_tools' => $tools ];
+        }
+        return null;
+    }
+
+    /**
+     * Update (or clear, with null) a key's scope. Takes effect on the key's
+     * next request — no re-issue needed.
+     */
+    public static function update_key_scope( string $id, ?array $scope ): bool {
+        $keys = get_option( self::OPTION_KEY, [] );
+        if ( ! isset( $keys[ $id ] ) ) {
+            return false;
+        }
+        $sanitized = self::sanitize_scope( $scope );
+        if ( null === $sanitized ) {
+            unset( $keys[ $id ]['scope'] );
+        } else {
+            $keys[ $id ]['scope'] = $sanitized;
+        }
+        update_option( self::OPTION_KEY, $keys );
+        return true;
+    }
+
+    /**
      * List all keys (without hashes).
      *
      * @return array<int, array{id: string, label: string, prefix: string, created: int, last_used: int|null}>
@@ -93,6 +140,7 @@ class Cowboy_MCP_Auth {
                 'prefix'    => $k['prefix'] ?? '---',
                 'created'   => $k['created'],
                 'last_used' => $k['last_used'] ?? null,
+                'scope'     => ( isset( $k['scope'] ) && is_array( $k['scope'] ) ) ? $k['scope'] : null,
             ];
         }, array_values( $keys ) );
     }
@@ -186,6 +234,7 @@ class Cowboy_MCP_Auth {
                     'key_id'     => $id,
                     'key_label'  => $record['label'] ?? '',
                     'key_prefix' => $record['prefix'] ?? '',
+                    'scope'      => ( isset( $record['scope'] ) && is_array( $record['scope'] ) ) ? $record['scope'] : null,
                 ];
 
                 // Rate limit check.

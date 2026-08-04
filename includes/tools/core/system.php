@@ -91,74 +91,30 @@ return [
                 return new WP_Error( 'wp_cli_missing', 'WP-CLI is not installed on this server.' );
             }
 
-            $command = $a['command'] ?? '';
-
-            // Reject WP-CLI global flags that load/execute code or change context.
-            // `--require=<file>` alone is arbitrary PHP execution that would bypass the
-            // eval/shell blocklist; `--path` is supplied by us below. Power mode lifts this.
-            if ( ! Cowboy_MCP_Security::power_mode_enabled()
-                && preg_match( '/(^|\s)--(require|exec|ssh|http|user|path|config|debug)(=|\s|$)/i', $command ) ) {
-                return new WP_Error( 'blocked', 'Global WP-CLI flags (--require, --exec, --ssh, --http, --user, --path, --config) are not allowed.' );
-            }
-
-            // Always-blocked commands (regardless of safe mode). Internal whitespace is
-            // normalized so e.g. `config  set` cannot dodge the prefix match.
-            $blocked = [
-                'db drop', 'db reset', 'db import', 'db export',
-                'site empty', 'core download',
-                'eval', 'eval-file',
-                'config set', 'config create',
-                'shell', 'package install',
-            ];
-            $lower_cmd = preg_replace( '/\s+/', ' ', strtolower( trim( $command ) ) );
-            if ( ! Cowboy_MCP_Security::power_mode_enabled() ) {
-                foreach ( $blocked as $b ) {
-                    if ( str_starts_with( $lower_cmd, $b ) ) {
-                        return new WP_Error( 'blocked', "Command '{$b}' is blocked for safety. An administrator can enable Power mode to allow this." );
-                    }
-                }
-            }
-
-            // `db query`/`db search` run arbitrary SQL via shell_exec with no guardrails of
-            // their own. Apply the same blocklist/secret-table checks used elsewhere so the
-            // wp_cli escape hatch can't run blocked or credential-touching SQL.
-            if ( preg_match( '/^db\s+(query|search)\b(.*)$/i', $lower_cmd, $m ) ) {
-                $sql = Cowboy_MCP_Security::normalize_sql( trim( $m[2], " \t\"'" ) );
-                $why = Cowboy_MCP_Security::sql_blocked_reason( $sql );
-                if ( $why && ! Cowboy_MCP_Security::power_mode_enabled() ) {
-                    return new WP_Error( 'blocked', "SQL operation blocked: {$why}." );
-                }
-                // Credential/secret access is never lifted, even in Power mode.
-                if ( Cowboy_MCP_Security::sql_touches_secret( $sql ) ) {
-                    return new WP_Error( 'blocked', 'Query references credential/secret data and is blocked.' );
-                }
-            }
-
-            // Safe mode: only allow known-safe command prefixes unless confirm: true.
+            $command  = $a['command'] ?? '';
             $settings = Cowboy_MCP_Tools::get_settings();
-            if ( ! empty( $settings['safe_mode'] ) && empty( $a['confirm'] ) ) {
-                $safe_prefixes = [
-                    'cache', 'cron', 'db size', 'export',
-                    'help', 'media', 'menu', 'option get', 'option list',
-                    'plugin list', 'plugin status', 'post list', 'post get',
-                    'rewrite', 'role list', 'sidebar', 'taxonomy', 'term',
-                    'theme list', 'theme status', 'transient', 'user list', 'user get',
-                    'widget',
-                ];
-                $is_safe = false;
-                foreach ( $safe_prefixes as $prefix ) {
-                    if ( str_starts_with( $lower_cmd, $prefix ) ) {
-                        $is_safe = true;
-                        break;
-                    }
-                }
-                if ( ! $is_safe ) {
-                    return new WP_Error(
-                        'confirmation_required',
-                        "Safe mode is ON. WP-CLI command '{$command}' is not in the safe allowlist. Resend with confirm: true to execute.",
-                        [ 'suggestion' => 'Safe commands include: cache, cron, db query, export, help, plugin list, post list, theme list, etc.' ]
-                    );
-                }
+
+            // All wp_cli safety gates (global flags, the always-blocked subcommand list,
+            // the cowboy_mcp_ option-write guard, the db query|search SQL blocklist, and
+            // the safe-mode allowlist) are evaluated in Cowboy_MCP_Security::wp_cli_gate().
+            // They match against a tokenized argv-style word sequence rather than the raw
+            // string — shell_exec() runs this through /bin/sh -c, which strips quotes
+            // before WP-CLI ever sees them, so raw-string prefix/regex matching against
+            // the quoted command is bypassable (e.g. `option update 'cowboy_mcp_settings'
+            // x` reads as identical to the unquoted form to the shell, but not to a
+            // str_starts_with() check). See cli_tokens()/wp_cli_gate() for the full
+            // rationale.
+            $gate = Cowboy_MCP_Security::wp_cli_gate(
+                $command,
+                Cowboy_MCP_Security::power_mode_enabled(),
+                ! empty( $settings['safe_mode'] ),
+                ! empty( $a['confirm'] )
+            );
+            if ( null !== $gate['code'] ) {
+                $error_data = 'confirmation_required' === $gate['code']
+                    ? [ 'suggestion' => 'Safe commands include: cache, cron, db query, export, help, plugin list, post list, theme list, etc.' ]
+                    : [];
+                return new WP_Error( $gate['code'], $gate['message'], $error_data );
             }
 
             // Auto-checkpoint before mutating-looking commands (fail-open).
