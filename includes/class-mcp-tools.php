@@ -231,6 +231,25 @@ class Cowboy_MCP_Tools {
             );
         }
 
+        // Per-credential scope gate — after handler lookup (unknown tools keep
+        // the self-correcting unknown_tool error) and before required-arg
+        // validation, the dry-run intercept, and safe mode, so an out-of-scope
+        // tool never leaks a preview. Scope can only be set by an admin in
+        // wp-admin: both scope stores are hard-protected options.
+        $scope_annotations = self::$tool_map[ $name ]['annotations'] ?? [];
+        if ( ! Cowboy_MCP_Security::tool_in_scope( $name, $scope_annotations ) ) {
+            $scope_mode = Cowboy_MCP_Security::current_scope()['mode'] ?? 'custom';
+            self::mcp_log( 'tool_scope_denied', [ 'tool' => $name, 'scope_mode' => $scope_mode ] );
+            $message = ( 'read_only' === $scope_mode )
+                ? "This credential is read-only; {$name} is not a read-only tool."
+                : "This credential's scope does not include {$name}.";
+            return new WP_Error(
+                'tool_scope_denied',
+                $message . ' Use cowboy_discover to see the tools this credential may call.',
+                [ 'code' => -32603 ]
+            );
+        }
+
         // Validate required arguments against the tool's inputSchema.
         $tool_def = self::$tool_map[ $name ] ?? null;
         if ( $tool_def ) {
@@ -552,6 +571,7 @@ class Cowboy_MCP_Tools {
             'blocked'        => 'This SQL operation is blocked for safety. Use WordPress functions instead.',
             'tool_blocked'   => 'This tool has been blocked by a filter. Check with the site administrator.',
             'tool_disabled'  => 'This tool is disabled in Cowboy MCP settings.',
+            'tool_scope_denied' => 'This credential\'s scope does not allow the tool. A site administrator can widen the key\'s scope on the Cowboy MCP settings page.',
             'confirmation_required' => 'Safe mode is ON. Add confirm: true to the arguments to execute this destructive tool.',
             default          => null,
         };
