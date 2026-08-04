@@ -318,7 +318,10 @@ class Cowboy_MCP_Security {
             return true;
         }
         return stripos( $normalized, 'cowboy_mcp_api_keys' ) !== false
-            || stripos( $normalized, 'cowboy_mcp_settings' ) !== false;
+            || stripos( $normalized, 'cowboy_mcp_settings' ) !== false
+            || stripos( $normalized, 'cowboy_mcp_oauth_clients' ) !== false
+            || stripos( $normalized, 'cowboy_mcp_oauth_tokens' ) !== false
+            || stripos( $normalized, 'cowboy_mcp_oauth_refresh' ) !== false;
     }
 
     /* ── Secret scrubbing ──────────────────────────────────── */

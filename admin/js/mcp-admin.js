@@ -316,11 +316,6 @@ document.addEventListener('submit', function (e) {
 (function () {
 	'use strict';
 
-	function slotFor(radio) {
-		var wrap = radio.closest('.mcp-scope-select');
-		return wrap ? wrap.querySelector('.mcp-scope-custom-slot') : null;
-	}
-
 	function ensureChecklist(wrap, slot) {
 		if (slot.firstElementChild) {
 			return;
@@ -355,13 +350,9 @@ document.addEventListener('submit', function (e) {
 				ensureChecklist(wrap, slot);
 			}
 		}
-		// Category select-all.
-		if (e.target.matches('.mcp-scope-cat-all')) {
-			var det = e.target.closest('.mcp-scope-cat');
-			det.querySelectorAll('input[name="allowed_tools[]"]').forEach(function (cb) {
-				cb.checked = e.target.checked;
-			});
-		}
+		// Category select-all is handled entirely in the click listener below
+		// (preventDefault() there stops the checkbox's default toggle, so it
+		// never fires a native 'change' event for us to catch here).
 	});
 
 	document.addEventListener('click', function (e) {
@@ -382,9 +373,32 @@ document.addEventListener('submit', function (e) {
 				}
 			}
 		}
-		// Keep the summary checkbox clickable without toggling <details>.
+		// Category select-all checkbox lives inside <summary>, so a native click
+		// also toggles the parent <details> — that's <summary>'s default action,
+		// not propagation, so stopPropagation() alone can't stop it. preventDefault()
+		// stops the <details> toggle, but the checkbox's own toggle already ran as
+		// part of the click's *pre-click* activation step (before this handler even
+		// sees the event), and preventDefault() also cancels that: the browser's
+		// "canceled activation steps" revert checkbox.checked back to its pre-click
+		// value immediately after dispatch finishes — after this handler returns,
+		// so any assignment made in here gets clobbered synchronously. Read the
+		// already-toggled value now (it's the state the click intended), apply it
+		// to the children immediately, then reapply it to the checkbox itself on
+		// the next tick, once the browser's revert has already happened.
 		if (e.target.matches('.mcp-scope-cat-all')) {
-			e.stopPropagation();
+			var summary = e.target.closest('summary');
+			if (summary) {
+				e.preventDefault();
+				var cb = e.target;
+				var desired = cb.checked;
+				var det = cb.closest('.mcp-scope-cat');
+				det.querySelectorAll('input[name="allowed_tools[]"]').forEach(function (c) {
+					c.checked = desired;
+				});
+				setTimeout(function () {
+					cb.checked = desired;
+				}, 0);
+			}
 		}
 	});
 })();

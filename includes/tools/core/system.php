@@ -111,6 +111,18 @@ return [
                 'shell', 'package install',
             ];
             $lower_cmd = preg_replace( '/\s+/', ' ', strtolower( trim( $command ) ) );
+
+            // WP-CLI writes to the plugin's own cowboy_mcp_ options are never allowed,
+            // Power mode included — this is the wp_cli escape-hatch equivalent of the
+            // wp_update_option write-denylist and preserves the cowboy_mcp_settings
+            // bootstrap invariant (an agent can never widen its own scope).
+            if ( str_starts_with( $lower_cmd, 'option update cowboy_mcp_' )
+                || str_starts_with( $lower_cmd, 'option delete cowboy_mcp_' )
+                || str_starts_with( $lower_cmd, 'option add cowboy_mcp_' )
+                || ( str_starts_with( $lower_cmd, 'option patch' ) && str_contains( $lower_cmd, 'cowboy_mcp_' ) ) ) {
+                return new WP_Error( 'blocked', 'WP-CLI writes to the plugin\'s own cowboy_mcp_ options are blocked for safety and cannot be lifted by Power mode.' );
+            }
+
             if ( ! Cowboy_MCP_Security::power_mode_enabled() ) {
                 foreach ( $blocked as $b ) {
                     if ( str_starts_with( $lower_cmd, $b ) ) {

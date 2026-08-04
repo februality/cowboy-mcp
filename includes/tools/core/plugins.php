@@ -5,12 +5,8 @@ return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_list_plugins', '[Plugins] List installed plugins with activation status, version, metadata, and available updates.', [
             'status'          => [ 'type' => 'string', 'description' => 'Filter by status: active, inactive, or all (default "all")', 'default' => 'all', 'enum' => [ 'active', 'inactive', 'all' ] ],
-            'refresh_updates' => [ 'type' => 'boolean', 'description' => 'Check WordPress.org for fresh update info first (network call, slower). Default false: reads the cached update state.', 'default' => false ],
         ], [
-            // Not read-only: refresh_updates: true calls core's wp_update_plugins(),
-            // which unconditionally writes the update_plugins site transient (and
-            // POSTs to api.wordpress.org) before this handler ever runs its own logic.
-            'readOnlyHint'    => false,
+            'readOnlyHint'    => true,
             'destructiveHint' => false,
             'idempotentHint'  => true,
             'openWorldHint'   => false,
@@ -69,9 +65,6 @@ return [
     'handlers' => [
 
         'wp_list_plugins' => function ( array $a ): array {
-            if ( ! empty( $a['refresh_updates'] ) ) {
-                wp_update_plugins();
-            }
             $all_plugins    = Cowboy_MCP_Compat::get_plugins();
             $active_plugins = get_option( 'active_plugins', [] );
             $status_filter  = $a['status'] ?? 'all';

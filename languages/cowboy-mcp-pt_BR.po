@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-04 12:38-0700\n"
+"POT-Creation-Date: 2026-08-04 14:00-0700\n"
 "PO-Revision-Date: 2026-07-08 15:32-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -16,75 +16,80 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: admin/class-mcp-admin.php:28 admin/class-mcp-admin.php:29
-#: admin/class-mcp-admin.php:372
+#: admin/class-mcp-admin.php:395
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
-#: admin/class-mcp-admin.php:163
+#: admin/class-mcp-admin.php:163 admin/class-mcp-admin.php:183
+#: admin/class-mcp-admin.php:205
+msgid "Select an access level before saving."
+msgstr "Selecione um nível de acesso antes de salvar."
+
+#: admin/class-mcp-admin.php:167
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "Chave de API criada. Copie-a agora — ela será exibida apenas uma vez."
 
-#: admin/class-mcp-admin.php:170
+#: admin/class-mcp-admin.php:175
 msgid "API key revoked."
 msgstr "Chave de API revogada."
 
-#: admin/class-mcp-admin.php:177
+#: admin/class-mcp-admin.php:185
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr ""
 "Escopo da chave atualizado. A alteração entra em vigor na próxima "
 "solicitação dessa chave."
 
-#: admin/class-mcp-admin.php:179
+#: admin/class-mcp-admin.php:187
 msgid "Could not update key scope."
 msgstr "Não foi possível atualizar o escopo da chave."
 
-#: admin/class-mcp-admin.php:188
+#: admin/class-mcp-admin.php:196
 msgid "Connection revoked."
 msgstr "Conexão revogada."
 
-#: admin/class-mcp-admin.php:196
+#: admin/class-mcp-admin.php:207
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr ""
 "Escopo da conexão atualizado. A alteração entra em vigor na próxima "
 "solicitação dessa conexão."
 
-#: admin/class-mcp-admin.php:198
+#: admin/class-mcp-admin.php:209
 msgid "Could not update connection scope."
 msgstr "Não foi possível atualizar o escopo da conexão."
 
-#: admin/class-mcp-admin.php:204
+#: admin/class-mcp-admin.php:215
 msgid "Desktop Connector enabled."
 msgstr "Desktop Connector ativado."
 
-#: admin/class-mcp-admin.php:228
+#: admin/class-mcp-admin.php:239
 msgid "Settings saved."
 msgstr "Configurações salvas."
 
-#: admin/class-mcp-admin.php:235
+#: admin/class-mcp-admin.php:246
 msgid "Audit log cleared."
 msgstr "Registro de auditoria limpo."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:253
+#: admin/class-mcp-admin.php:264
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Alteração nº %1$d desfeita.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:268
+#: admin/class-mcp-admin.php:279
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%1$d de %2$d entradas do lote desfeitas."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:284
+#: admin/class-mcp-admin.php:295
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Ponto de verificação nº %1$d criado (%2$s)."
 
 #. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
-#: admin/class-mcp-admin.php:296
+#: admin/class-mcp-admin.php:307
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: "
@@ -93,11 +98,11 @@ msgstr ""
 "Banco de dados restaurado a partir do ponto de verificação nº %1$d. Ponto de "
 "verificação de segurança pré-restauração: nº %2$d."
 
-#: admin/class-mcp-admin.php:307
+#: admin/class-mcp-admin.php:318
 msgid "Checkpoint deleted."
 msgstr "Ponto de verificação excluído."
 
-#: admin/class-mcp-admin.php:378
+#: admin/class-mcp-admin.php:401
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -107,28 +112,28 @@ msgstr ""
 "ou <strong>Codex</strong> a este site WordPress através do Model Context "
 "Protocol."
 
-#: admin/class-mcp-admin.php:384
+#: admin/class-mcp-admin.php:407
 msgid "Connection"
 msgstr "Conexão"
 
-#: admin/class-mcp-admin.php:385
+#: admin/class-mcp-admin.php:408
 msgid "Settings"
 msgstr "Configurações"
 
-#: admin/class-mcp-admin.php:386
+#: admin/class-mcp-admin.php:409
 msgid "Activity"
 msgstr "Atividade"
 
-#: admin/class-mcp-admin.php:387
+#: admin/class-mcp-admin.php:410
 msgid "Logs"
 msgstr "Registros"
 
-#: admin/class-mcp-admin.php:388
+#: admin/class-mcp-admin.php:411
 msgid "About"
 msgstr "Sobre"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:415
+#: admin/class-mcp-admin.php:438
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -142,33 +147,33 @@ msgstr ""
 "e Opencode possam ler, editar e gerenciar todo o site através de um único "
 "endpoint autenticado."
 
-#: admin/class-mcp-admin.php:429
+#: admin/class-mcp-admin.php:452
 msgid "Website"
 msgstr "Site"
 
-#: admin/class-mcp-admin.php:430
+#: admin/class-mcp-admin.php:453
 msgid "Project home, guides, and news."
 msgstr "Página do projeto, guias e novidades."
 
-#: admin/class-mcp-admin.php:436
+#: admin/class-mcp-admin.php:459
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:437
+#: admin/class-mcp-admin.php:460
 msgid "Source, issues & releases."
 msgstr "Código-fonte, issues e lançamentos."
 
 #. translators: %s: plugin version number
-#: admin/class-mcp-admin.php:445
+#: admin/class-mcp-admin.php:468
 #, php-format
 msgid "v%s · GPL-2.0"
 msgstr "v%s · GPL-2.0"
 
-#: admin/class-mcp-admin.php:466
+#: admin/class-mcp-admin.php:489
 msgid "Which app do you want to connect?"
 msgstr "Qual aplicativo você quer conectar?"
 
-#: admin/class-mcp-admin.php:467
+#: admin/class-mcp-admin.php:490
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -176,11 +181,11 @@ msgstr ""
 "Escolha seu aplicativo de IA ou ferramenta de programação na lista para ver "
 "instruções de configuração passo a passo."
 
-#: admin/class-mcp-admin.php:493
+#: admin/class-mcp-admin.php:516
 msgid "Connection Doctor"
 msgstr "Diagnóstico de conexão"
 
-#: admin/class-mcp-admin.php:494
+#: admin/class-mcp-admin.php:517
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -188,27 +193,27 @@ msgstr ""
 "Teste se os clientes de IA conseguem acessar este site e obtenha um "
 "diagnóstico copiável de qualquer problema."
 
-#: admin/class-mcp-admin.php:495
+#: admin/class-mcp-admin.php:518
 msgid "Run checks"
 msgstr "Executar verificações"
 
-#: admin/class-mcp-admin.php:496
+#: admin/class-mcp-admin.php:519
 msgid "Copy report"
 msgstr "Copiar relatório"
 
-#: admin/class-mcp-admin.php:507
+#: admin/class-mcp-admin.php:530
 msgid "No terminal needed"
 msgstr "Sem necessidade de terminal"
 
-#: admin/class-mcp-admin.php:508
+#: admin/class-mcp-admin.php:531
 msgid "Terminal & IDE tools"
 msgstr "Ferramentas de terminal e IDE"
 
-#: admin/class-mcp-admin.php:512
+#: admin/class-mcp-admin.php:535
 msgid "AI clients"
 msgstr "Clientes de IA"
 
-#: admin/class-mcp-admin.php:557
+#: admin/class-mcp-admin.php:580
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. ChatGPT connects from OpenAI's cloud, so it cannot reach local, "
@@ -221,7 +226,7 @@ msgstr ""
 "ferramenta de terminal funciona aqui, ou conecte-se através de um túnel ou "
 "URL de teste."
 
-#: admin/class-mcp-admin.php:558
+#: admin/class-mcp-admin.php:581
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. The Claude apps connect from Anthropic's cloud, so they cannot "
@@ -234,7 +239,7 @@ msgstr ""
 "disso, uma ferramenta de terminal funciona aqui, ou conecte-se através de um "
 "túnel ou URL de teste."
 
-#: admin/class-mcp-admin.php:560
+#: admin/class-mcp-admin.php:583
 msgid ""
 "This opens a secure sign-in so ChatGPT can connect without a terminal. No "
 "access is granted until you approve it in your browser."
@@ -242,7 +247,7 @@ msgstr ""
 "Isso abre um login seguro para que o ChatGPT possa se conectar sem um "
 "terminal. Nenhum acesso é concedido até que você o aprove no seu navegador."
 
-#: admin/class-mcp-admin.php:561
+#: admin/class-mcp-admin.php:584
 msgid ""
 "This opens a secure sign-in so the Claude apps can connect without a "
 "terminal. No access is granted until you approve it in your browser."
@@ -251,27 +256,27 @@ msgstr ""
 "sem um terminal. Nenhum acesso é concedido até que você o aprove no seu "
 "navegador."
 
-#: admin/class-mcp-admin.php:563
+#: admin/class-mcp-admin.php:586
 msgid "You'll paste this into ChatGPT in the next step."
 msgstr "Você vai colar isto no ChatGPT na próxima etapa."
 
-#: admin/class-mcp-admin.php:564
+#: admin/class-mcp-admin.php:587
 msgid "You'll paste this into Claude in the next step."
 msgstr "Você vai colar isto no Claude na próxima etapa."
 
-#: admin/class-mcp-admin.php:566
+#: admin/class-mcp-admin.php:589
 msgid "Add it in ChatGPT"
 msgstr "Adicione no ChatGPT"
 
-#: admin/class-mcp-admin.php:567
+#: admin/class-mcp-admin.php:590
 msgid "Add it in the Claude app"
 msgstr "Adicione no aplicativo Claude"
 
-#: admin/class-mcp-admin.php:568
+#: admin/class-mcp-admin.php:591
 msgid "Add it on claude.ai"
 msgstr "Adicione no claude.ai"
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:594
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
 "is asking for and click <strong>Approve</strong>. That is it — you are "
@@ -281,7 +286,7 @@ msgstr ""
 "que ele está solicitando e clique em <strong>Aprovar</strong>. É isso — você "
 "está conectado."
 
-#: admin/class-mcp-admin.php:572
+#: admin/class-mcp-admin.php:595
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
 "asking for and click <strong>Approve</strong>. That is it — you are "
@@ -291,7 +296,7 @@ msgstr ""
 "ele está solicitando e clique em <strong>Aprovar</strong>. É isso — você "
 "está conectado."
 
-#: admin/class-mcp-admin.php:574
+#: admin/class-mcp-admin.php:597
 msgid ""
 "Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
 "strong> (beta) enabled."
@@ -299,7 +304,7 @@ msgstr ""
 "Conectores personalizados exigem um plano pago do ChatGPT com o "
 "<strong>Developer mode</strong> (beta) ativado."
 
-#: admin/class-mcp-admin.php:575
+#: admin/class-mcp-admin.php:598
 msgid ""
 "Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
 "strong> plan."
@@ -307,35 +312,35 @@ msgstr ""
 "Conectores personalizados exigem um plano Claude <strong>Pro, Max, Team ou "
 "Enterprise</strong>."
 
-#: admin/class-mcp-admin.php:591
+#: admin/class-mcp-admin.php:614
 msgid "Turn on the Desktop Connector"
 msgstr "Ative o Desktop Connector"
 
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:620
 msgid "Enable Desktop Connector"
 msgstr "Ativar Desktop Connector"
 
-#: admin/class-mcp-admin.php:608
+#: admin/class-mcp-admin.php:631
 msgid "Copy your connection link"
 msgstr "Copie seu link de conexão"
 
-#: admin/class-mcp-admin.php:615
-msgid "Copy connector URL"
-msgstr "Copiar URL do conector"
-
-#: admin/class-mcp-admin.php:615 admin/class-mcp-admin.php:690
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:638 admin/class-mcp-admin.php:713
+#: admin/class-mcp-admin.php:795
 msgid "Copy"
 msgstr "Copiar"
 
-#: admin/class-mcp-admin.php:627
+#: admin/class-mcp-admin.php:638
+msgid "Copy connector URL"
+msgstr "Copiar URL do conector"
+
+#: admin/class-mcp-admin.php:650
 msgid ""
 "Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
 msgstr ""
 "Acesse <code>chatgpt.com</code> (ou abra o aplicativo desktop do ChatGPT) e "
 "faça login."
 
-#: admin/class-mcp-admin.php:628
+#: admin/class-mcp-admin.php:651
 msgid ""
 "Go to <code>Settings → Connectors → Advanced</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
@@ -343,12 +348,12 @@ msgstr ""
 "Acesse <code>Settings → Connectors → Advanced</code> e ative o "
 "<strong>Developer mode</strong> (uma única vez)."
 
-#: admin/class-mcp-admin.php:629
+#: admin/class-mcp-admin.php:652
 msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
 msgstr ""
 "De volta em <code>Connectors</code>, clique em <strong>Create</strong>."
 
-#: admin/class-mcp-admin.php:630
+#: admin/class-mcp-admin.php:653
 msgid ""
 "Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
 "Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
@@ -357,84 +362,84 @@ msgstr ""
 "Authentication como <strong>OAuth</strong> e clique em <strong>Create</"
 "strong>."
 
-#: admin/class-mcp-admin.php:633
+#: admin/class-mcp-admin.php:656
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
 msgstr "Abra o aplicativo desktop do <strong>Claude</strong> e faça login."
 
-#: admin/class-mcp-admin.php:635
+#: admin/class-mcp-admin.php:658
 msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "Acesse <code>claude.ai</code> no seu navegador e faça login."
 
-#: admin/class-mcp-admin.php:637
+#: admin/class-mcp-admin.php:660
 msgid "Go to <code>Customize → Connections</code>."
 msgstr "Acesse <code>Customize → Connections</code>."
 
-#: admin/class-mcp-admin.php:638
+#: admin/class-mcp-admin.php:661
 msgid "Click <strong>Add custom connector</strong>."
 msgstr "Clique em <strong>Add custom connector</strong>."
 
-#: admin/class-mcp-admin.php:639
+#: admin/class-mcp-admin.php:662
 msgid "Paste the link from step 1 and click <strong>Add</strong>."
 msgstr "Cole o link da etapa 1 e clique em <strong>Add</strong>."
 
-#: admin/class-mcp-admin.php:648
+#: admin/class-mcp-admin.php:671
 msgid "Approve access"
 msgstr "Aprove o acesso"
 
-#: admin/class-mcp-admin.php:682
+#: admin/class-mcp-admin.php:705
 msgid "Create an API key"
 msgstr "Crie uma chave de API"
 
-#: admin/class-mcp-admin.php:686
+#: admin/class-mcp-admin.php:709
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr ""
 "<strong>Copie sua chave agora</strong> — por segurança, ela não será exibida "
 "novamente."
 
-#: admin/class-mcp-admin.php:690
+#: admin/class-mcp-admin.php:713
 msgid "Copy API key"
 msgstr "Copiar chave de API"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:714
 msgid "I've saved my key"
 msgstr "Salvei minha chave"
 
-#: admin/class-mcp-admin.php:693
+#: admin/class-mcp-admin.php:716
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "Dê um nome para poder reconhecê-la mais tarde e então gere-a."
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin.php:698
+#: admin/class-mcp-admin.php:721
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "ex.: %s no meu notebook"
 
-#: admin/class-mcp-admin.php:701
-msgid "Generate another key"
-msgstr "Gerar outra chave"
-
-#: admin/class-mcp-admin.php:701
+#: admin/class-mcp-admin.php:724
 msgid "Generate API key"
 msgstr "Gerar chave de API"
 
-#: admin/class-mcp-admin.php:717
+#: admin/class-mcp-admin.php:724
+msgid "Generate another key"
+msgstr "Gerar outra chave"
+
+#: admin/class-mcp-admin.php:740
 msgid "Add the server to your tool"
 msgstr "Adicione o servidor à sua ferramenta"
 
-#: admin/class-mcp-admin.php:722 admin/class-mcp-admin.php:766
+#: admin/class-mcp-admin.php:745 admin/class-mcp-admin.php:789
 msgid "Run this in your terminal:"
 msgstr "Execute isto no seu terminal:"
 
-#: admin/class-mcp-admin.php:728
+#: admin/class-mcp-admin.php:751
 msgid "Run these in your terminal:"
 msgstr "Execute estes comandos no seu terminal:"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:758
 msgid "Add this to your <code>opencode.json</code>:"
 msgstr "Adicione isto ao seu <code>opencode.json</code>:"
 
-#: admin/class-mcp-admin.php:751
+#: admin/class-mcp-admin.php:774
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then reload Cursor:"
@@ -442,12 +447,12 @@ msgstr ""
 "Adicione isto ao <code>~/.cursor/mcp.json</code> (crie o arquivo se ele não "
 "existir) e então recarregue o Cursor:"
 
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:795
 msgid "Copy setup command"
 msgstr "Copiar comando de configuração"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:783
+#: admin/class-mcp-admin.php:806
 #, php-format
 msgid ""
 "Open a new Claude Code session and run <code>/mcp</code> — <code>%s</code> "
@@ -457,7 +462,7 @@ msgstr ""
 "code> deve aparecer como conectado."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:785
+#: admin/class-mcp-admin.php:808
 #, php-format
 msgid ""
 "Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
@@ -465,7 +470,7 @@ msgstr ""
 "Execute <code>codex mcp list</code> — <code>%s</code> deve aparecer na lista."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:787
+#: admin/class-mcp-admin.php:810
 #, php-format
 msgid ""
 "Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
@@ -475,7 +480,7 @@ msgstr ""
 "deve estar disponível."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:789
+#: admin/class-mcp-admin.php:812
 #, php-format
 msgid ""
 "Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
@@ -485,7 +490,7 @@ msgstr ""
 "um indicador de status verde."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:791
+#: admin/class-mcp-admin.php:814
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
@@ -493,130 +498,141 @@ msgstr ""
 "Execute <code>gemini mcp list</code> — <code>%s</code> deve aparecer como "
 "conectado."
 
-#: admin/class-mcp-admin.php:798
+#: admin/class-mcp-admin.php:821
 msgid "Check it worked"
 msgstr "Verifique se funcionou"
 
-#: admin/class-mcp-admin.php:811
+#: admin/class-mcp-admin.php:834
 msgid "Existing keys"
 msgstr "Chaves existentes"
 
-#: admin/class-mcp-admin.php:816 admin/class-mcp-admin.php:1348
+#: admin/class-mcp-admin.php:839 admin/class-mcp-admin.php:1380
 msgid "Label"
 msgstr "Rótulo"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:840
 msgid "Prefix"
 msgstr "Prefixo"
 
-#: admin/class-mcp-admin.php:818 admin/class-mcp-admin.php:1347
+#: admin/class-mcp-admin.php:841 admin/class-mcp-admin.php:1379
 msgid "Created"
 msgstr "Criada"
 
-#: admin/class-mcp-admin.php:819 admin/class-mcp-admin.php:889
+#: admin/class-mcp-admin.php:842 admin/class-mcp-admin.php:912
 msgid "Last Used"
 msgstr "Último uso"
 
-#: admin/class-mcp-admin.php:820 admin/class-mcp-admin.php:890
+#: admin/class-mcp-admin.php:843 admin/class-mcp-admin.php:913
 msgid "Scope"
 msgstr "Escopo"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
 #. translators: %s: human-readable time difference
-#: admin/class-mcp-admin.php:833 admin/class-mcp-admin.php:903
+#: admin/class-mcp-admin.php:856 admin/class-mcp-admin.php:926
 #, php-format
 msgid "%s ago"
 msgstr "há %s"
 
-#: admin/class-mcp-admin.php:835 admin/class-mcp-admin.php:905
+#: admin/class-mcp-admin.php:858 admin/class-mcp-admin.php:928
 msgid "never"
 msgstr "nunca"
 
-#: admin/class-mcp-admin.php:840 admin/class-mcp-admin.php:910
+#: admin/class-mcp-admin.php:863 admin/class-mcp-admin.php:933
 msgid "Edit"
 msgstr "Editar"
 
-#: admin/class-mcp-admin.php:847
-msgid "Revoke this key? Any client using it will lose access."
-msgstr "Revogar esta chave? Qualquer cliente que a utilize perderá o acesso."
-
-#: admin/class-mcp-admin.php:847 admin/class-mcp-admin.php:917
+#: admin/class-mcp-admin.php:870 admin/class-mcp-admin.php:940
 msgid "Revoke"
 msgstr "Revogar"
 
-#: admin/class-mcp-admin.php:863 admin/class-mcp-admin.php:933
+#: admin/class-mcp-admin.php:870
+msgid "Revoke this key? Any client using it will lose access."
+msgstr "Revogar esta chave? Qualquer cliente que a utilize perderá o acesso."
+
+#: admin/class-mcp-admin.php:886 admin/class-mcp-admin.php:956
 msgid "Save scope"
 msgstr "Salvar escopo"
 
-#: admin/class-mcp-admin.php:881
+#: admin/class-mcp-admin.php:904
 msgid "Connected apps"
 msgstr "Aplicativos conectados"
 
-#: admin/class-mcp-admin.php:886
+#: admin/class-mcp-admin.php:909
 msgid "App"
 msgstr "Aplicativo"
 
-#: admin/class-mcp-admin.php:887
+#: admin/class-mcp-admin.php:910
 msgid "Authorized by"
 msgstr "Autorizado por"
 
-#: admin/class-mcp-admin.php:888
+#: admin/class-mcp-admin.php:911
 msgid "Connected"
 msgstr "Conectado"
 
-#: admin/class-mcp-admin.php:917
+#: admin/class-mcp-admin.php:940
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "Revogar esta conexão? O aplicativo perderá o acesso imediatamente."
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin.php:967
+#: admin/class-mcp-admin.php:990
 #, php-format
 msgid "Select all %s tools"
 msgstr "Selecionar todas as ferramentas de %s"
 
-#: admin/class-mcp-admin.php:994 admin/class-mcp-admin.php:1014
+#: admin/class-mcp-admin.php:1004
+msgid ""
+"Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
+"always available to every credential regardless of tool scope."
+msgstr "Observação: os recursos somente leitura do MCP (informações do site, lista de usuários, posts recentes etc.) estão sempre disponíveis para cada chave ou conexão, independentemente do escopo de ferramentas."
+
+#: admin/class-mcp-admin.php:1018 admin/class-mcp-admin.php:1031
+#: admin/class-mcp-admin.php:1042
 msgid "Full access"
 msgstr "Acesso completo"
 
-#: admin/class-mcp-admin.php:996 admin/class-mcp-admin.php:1008
+#: admin/class-mcp-admin.php:1020 admin/class-mcp-admin.php:1035
 msgid "Read-only"
 msgstr "Somente leitura"
 
-#: admin/class-mcp-admin.php:998
+#: admin/class-mcp-admin.php:1022
 msgid "Custom…"
 msgstr "Personalizado…"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin.php:1012
+#: admin/class-mcp-admin.php:1039
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "Personalizado (%d ferramentas)"
 
-#: admin/class-mcp-admin.php:1025
+#: admin/class-mcp-admin.php:1046
+msgid "Unknown (blocked)"
+msgstr "Desconhecido (bloqueado)"
+
+#: admin/class-mcp-admin.php:1057
 msgid "General"
 msgstr "Geral"
 
-#: admin/class-mcp-admin.php:1029
+#: admin/class-mcp-admin.php:1061
 msgid "MCP Server"
 msgstr "Servidor MCP"
 
-#: admin/class-mcp-admin.php:1033
+#: admin/class-mcp-admin.php:1065
 msgid "Enabled"
 msgstr "Ativado"
 
-#: admin/class-mcp-admin.php:1035
+#: admin/class-mcp-admin.php:1067
 msgid "When off, every MCP request is rejected."
 msgstr "Quando desativado, toda requisição MCP é rejeitada."
 
-#: admin/class-mcp-admin.php:1039
+#: admin/class-mcp-admin.php:1071
 msgid "Safe Mode"
 msgstr "Modo seguro"
 
-#: admin/class-mcp-admin.php:1043
+#: admin/class-mcp-admin.php:1075
 msgid "Require confirmation for destructive operations"
 msgstr "Exigir confirmação para operações destrutivas"
 
-#: admin/class-mcp-admin.php:1047
+#: admin/class-mcp-admin.php:1079
 msgid ""
 "Tools marked as destructive (delete, drop, WP-CLI write commands, etc.) "
 "require <code>confirm: true</code> in the request."
@@ -624,15 +640,15 @@ msgstr ""
 "Ferramentas marcadas como destrutivas (delete, drop, comandos de escrita do "
 "WP-CLI etc.) exigem <code>confirm: true</code> na requisição."
 
-#: admin/class-mcp-admin.php:1054
+#: admin/class-mcp-admin.php:1086
 msgid "Desktop Connector"
 msgstr "Desktop Connector"
 
-#: admin/class-mcp-admin.php:1058
+#: admin/class-mcp-admin.php:1090
 msgid "Allow connecting via Claude Desktop / web (OAuth)"
 msgstr "Permitir conexão via Claude Desktop / web (OAuth)"
 
-#: admin/class-mcp-admin.php:1062
+#: admin/class-mcp-admin.php:1094
 msgid ""
 "Turns on the one-click browser sign-in used by the &#8220;Claude "
 "Desktop&#8221; connection path. This exposes public OAuth discovery, "
@@ -646,7 +662,7 @@ msgstr ""
 "administrador aprove no navegador. Deixe desativado se você se conecta "
 "apenas pelo terminal."
 
-#: admin/class-mcp-admin.php:1067
+#: admin/class-mcp-admin.php:1099
 msgid ""
 "Tip: run the Connection Doctor on the Connection tab to verify the connector "
 "end to end."
@@ -654,37 +670,37 @@ msgstr ""
 "Dica: execute o Diagnóstico de conexão na aba Conexão para verificar o "
 "conector de ponta a ponta."
 
-#: admin/class-mcp-admin.php:1072
+#: admin/class-mcp-admin.php:1104
 msgid "Rate Limit"
 msgstr "Limite de requisições"
 
-#: admin/class-mcp-admin.php:1075
+#: admin/class-mcp-admin.php:1107
 msgid "requests per minute, per key"
 msgstr "requisições por minuto, por chave"
 
-#: admin/class-mcp-admin.php:1079
+#: admin/class-mcp-admin.php:1111
 msgid "Request Logging"
 msgstr "Registro de requisições"
 
-#: admin/class-mcp-admin.php:1083
+#: admin/class-mcp-admin.php:1115
 msgid "Log all tool calls to <code>debug.log</code>"
 msgstr "Registrar todas as chamadas de ferramentas em <code>debug.log</code>"
 
-#: admin/class-mcp-admin.php:1092
+#: admin/class-mcp-admin.php:1124
 msgid "Undo & Checkpoints"
 msgstr "Desfazer e pontos de verificação"
 
-#: admin/class-mcp-admin.php:1096
+#: admin/class-mcp-admin.php:1128
 msgid "Undo Journal"
 msgstr "Diário de desfazer"
 
-#: admin/class-mcp-admin.php:1100
+#: admin/class-mcp-admin.php:1132
 msgid "Undo journal — capture before-state of every mutating tool call"
 msgstr ""
 "Diário de desfazer — captura o estado anterior de cada chamada de ferramenta "
 "que faz alterações"
 
-#: admin/class-mcp-admin.php:1102
+#: admin/class-mcp-admin.php:1134
 msgid ""
 "Lets changes made through MCP be undone from the Activity tab. Disabling "
 "stops new entries from being captured; existing history is kept until it "
@@ -694,32 +710,32 @@ msgstr ""
 "Desativar interrompe a captura de novas entradas; o histórico existente é "
 "mantido até expirar."
 
-#: admin/class-mcp-admin.php:1106
+#: admin/class-mcp-admin.php:1138
 msgid "Undo Retention"
 msgstr "Retenção do desfazer"
 
-#: admin/class-mcp-admin.php:1109
+#: admin/class-mcp-admin.php:1141
 msgid "days to keep undo history"
 msgstr "dias para manter o histórico de desfazer"
 
-#: admin/class-mcp-admin.php:1113
+#: admin/class-mcp-admin.php:1145
 msgid "Checkpoint Limit"
 msgstr "Limite de pontos de verificação"
 
-#: admin/class-mcp-admin.php:1116
+#: admin/class-mcp-admin.php:1148
 msgid "checkpoints to keep"
 msgstr "pontos de verificação a manter"
 
-#: admin/class-mcp-admin.php:1120 admin/class-mcp-admin.php:1130
+#: admin/class-mcp-admin.php:1152 admin/class-mcp-admin.php:1162
 msgid "Auto-Checkpoint"
 msgstr "Ponto de verificação automático"
 
-#: admin/class-mcp-admin.php:1124
+#: admin/class-mcp-admin.php:1156
 msgid "Auto-checkpoint before mutating WP-CLI commands"
 msgstr ""
 "Ponto de verificação automático antes de comandos WP-CLI que fazem alterações"
 
-#: admin/class-mcp-admin.php:1126
+#: admin/class-mcp-admin.php:1158
 msgid ""
 "Takes a full-database checkpoint before running a WP-CLI command that is not "
 "read-only, so it can be rolled back even if the command itself cannot be "
@@ -729,11 +745,11 @@ msgstr ""
 "comando WP-CLI que não seja somente leitura, para que ele possa ser "
 "revertido mesmo que o próprio comando não possa ser desfeito."
 
-#: admin/class-mcp-admin.php:1134
+#: admin/class-mcp-admin.php:1166
 msgid "Auto-checkpoint before plugin & theme updates"
 msgstr "Ponto de verificação automático antes de atualizar plugins e temas"
 
-#: admin/class-mcp-admin.php:1136
+#: admin/class-mcp-admin.php:1168
 msgid ""
 "Takes a full-database checkpoint before plugin or theme updates, so database "
 "migrations run by an update can be rolled back. The old files are separately "
@@ -744,19 +760,19 @@ msgstr ""
 "atualização possam ser revertidas. Os arquivos antigos são copiados "
 "separadamente a cada atualização para desfazer."
 
-#: admin/class-mcp-admin.php:1144 admin/class-mcp-admin.php:1148
+#: admin/class-mcp-admin.php:1176 admin/class-mcp-admin.php:1180
 msgid "Power Mode"
 msgstr "Power Mode"
 
-#: admin/class-mcp-admin.php:1144
+#: admin/class-mcp-admin.php:1176
 msgid "advanced · off by default"
 msgstr "avançado · desativado por padrão"
 
-#: admin/class-mcp-admin.php:1152
+#: admin/class-mcp-admin.php:1184
 msgid "Lift safety restrictions for advanced operations"
 msgstr "Remover restrições de segurança para operações avançadas"
 
-#: admin/class-mcp-admin.php:1156
+#: admin/class-mcp-admin.php:1188
 msgid ""
 "<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, "
 "dangerous SQL, writing files anywhere, and requests to internal addresses. "
@@ -771,17 +787,17 @@ msgstr ""
 "site confiável e protegido que você controle. Suas chaves de API do MCP e as "
 "próprias configurações do plugin permanecem protegidas."
 
-#: admin/class-mcp-admin.php:1167
+#: admin/class-mcp-admin.php:1199
 msgid "Save Settings"
 msgstr "Salvar configurações"
 
-#: admin/class-mcp-admin.php:1177
+#: admin/class-mcp-admin.php:1209
 msgid ""
 "Audit log is not available. Please deactivate and reactivate the plugin."
 msgstr ""
 "O registro de auditoria não está disponível. Desative e reative o plugin."
 
-#: admin/class-mcp-admin.php:1201
+#: admin/class-mcp-admin.php:1233
 msgid ""
 "Structured log of all MCP tool calls, errors, and auth events. Auto-pruned "
 "after 30 days."
@@ -789,135 +805,135 @@ msgstr ""
 "Registro estruturado de todas as chamadas de ferramentas MCP, erros e "
 "eventos de autenticação. Limpo automaticamente após 30 dias."
 
-#: admin/class-mcp-admin.php:1208 admin/class-mcp-admin.php:1263
+#: admin/class-mcp-admin.php:1240 admin/class-mcp-admin.php:1295
 msgid "Event"
 msgstr "Evento"
 
-#: admin/class-mcp-admin.php:1210
+#: admin/class-mcp-admin.php:1242
 msgid "All events"
 msgstr "Todos os eventos"
 
-#: admin/class-mcp-admin.php:1217 admin/class-mcp-admin.php:1264
-#: admin/class-mcp-admin.php:1386
+#: admin/class-mcp-admin.php:1249 admin/class-mcp-admin.php:1296
+#: admin/class-mcp-admin.php:1418
 msgid "Tool"
 msgstr "Ferramenta"
 
-#: admin/class-mcp-admin.php:1218
+#: admin/class-mcp-admin.php:1250
 msgid "e.g. wp_list_posts"
 msgstr "ex.: wp_list_posts"
 
-#: admin/class-mcp-admin.php:1221
+#: admin/class-mcp-admin.php:1253
 msgid "From"
 msgstr "De"
 
-#: admin/class-mcp-admin.php:1225
+#: admin/class-mcp-admin.php:1257
 msgid "To"
 msgstr "Até"
 
-#: admin/class-mcp-admin.php:1229
+#: admin/class-mcp-admin.php:1261
 msgid "Per page"
 msgstr "Por página"
 
-#: admin/class-mcp-admin.php:1236
+#: admin/class-mcp-admin.php:1268
 msgid "Filter"
 msgstr "Filtrar"
 
-#: admin/class-mcp-admin.php:1238
+#: admin/class-mcp-admin.php:1270
 msgid "Filtered"
 msgstr "Filtrado"
 
-#: admin/class-mcp-admin.php:1238
+#: admin/class-mcp-admin.php:1270
 msgid "Reset"
 msgstr "Redefinir"
 
-#: admin/class-mcp-admin.php:1246
+#: admin/class-mcp-admin.php:1278
+msgid "Clear All Logs"
+msgstr "Limpar todos os registros"
+
+#: admin/class-mcp-admin.php:1278
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr ""
 "Limpar todas as entradas do registro de auditoria? Isso não pode ser "
 "desfeito."
 
-#: admin/class-mcp-admin.php:1246
-msgid "Clear All Logs"
-msgstr "Limpar todos os registros"
-
 #. translators: %s: total number of log entries
-#: admin/class-mcp-admin.php:1249
+#: admin/class-mcp-admin.php:1281
 #, php-format
 msgid "%s entries total"
 msgstr "%s entradas no total"
 
-#: admin/class-mcp-admin.php:1255
+#: admin/class-mcp-admin.php:1287
 msgid "No log entries found."
 msgstr "Nenhuma entrada de registro encontrada."
 
-#: admin/class-mcp-admin.php:1261
+#: admin/class-mcp-admin.php:1293
 msgid "Timestamp"
 msgstr "Data/hora"
 
-#: admin/class-mcp-admin.php:1262 admin/class-mcp-admin.php:1387
+#: admin/class-mcp-admin.php:1294 admin/class-mcp-admin.php:1419
 msgid "Key"
 msgstr "Chave"
 
-#: admin/class-mcp-admin.php:1265 admin/class-mcp-admin.php:1388
+#: admin/class-mcp-admin.php:1297 admin/class-mcp-admin.php:1420
 msgid "Status"
 msgstr "Status"
 
-#: admin/class-mcp-admin.php:1266
+#: admin/class-mcp-admin.php:1298
 msgid "IP"
 msgstr "IP"
 
-#: admin/class-mcp-admin.php:1295
+#: admin/class-mcp-admin.php:1327
 msgid "Previous"
 msgstr "Anterior"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:1299
+#: admin/class-mcp-admin.php:1331
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Página %1$d de %2$d"
 
-#: admin/class-mcp-admin.php:1302
+#: admin/class-mcp-admin.php:1334
 msgid "Next"
 msgstr "Próxima"
 
-#: admin/class-mcp-admin.php:1325
+#: admin/class-mcp-admin.php:1357
 msgid "Undo conflict:"
 msgstr "Conflito de desfazer:"
 
-#: admin/class-mcp-admin.php:1330
+#: admin/class-mcp-admin.php:1362
 msgid "Force undo anyway"
 msgstr "Forçar desfazer mesmo assim"
 
-#: admin/class-mcp-admin.php:1339
+#: admin/class-mcp-admin.php:1371
 msgid "Database Checkpoints"
 msgstr "Pontos de verificação do banco de dados"
 
-#: admin/class-mcp-admin.php:1342
+#: admin/class-mcp-admin.php:1374
 msgid "Label (optional)"
 msgstr "Rótulo (opcional)"
 
-#: admin/class-mcp-admin.php:1343
+#: admin/class-mcp-admin.php:1375
 msgid "Create checkpoint now"
 msgstr "Criar ponto de verificação agora"
 
-#: admin/class-mcp-admin.php:1347 admin/class-mcp-admin.php:1385
+#: admin/class-mcp-admin.php:1379 admin/class-mcp-admin.php:1417
 msgid "ID"
 msgstr "ID"
 
-#: admin/class-mcp-admin.php:1348
+#: admin/class-mcp-admin.php:1380
 msgid "Trigger"
 msgstr "Gatilho"
 
-#: admin/class-mcp-admin.php:1349
+#: admin/class-mcp-admin.php:1381
 msgid "Size"
 msgstr "Tamanho"
 
-#: admin/class-mcp-admin.php:1353
+#: admin/class-mcp-admin.php:1385
 msgid "No checkpoints yet."
 msgstr "Nenhum ponto de verificação ainda."
 
 #. translators: 1: checkpoint ID number, 2: checkpoint creation date/time
-#: admin/class-mcp-admin.php:1365
+#: admin/class-mcp-admin.php:1397
 #, php-format
 msgid ""
 "Restore the database to checkpoint #%1$s (%2$s)? EVERYTHING changed since "
@@ -929,106 +945,106 @@ msgstr ""
 "será perdido. Um ponto de verificação de segurança pré-restauração é criado "
 "primeiro."
 
-#: admin/class-mcp-admin.php:1366
+#: admin/class-mcp-admin.php:1398
 msgid "Really sure? This rewrites every site table."
 msgstr "Tem certeza mesmo? Isso reescreve todas as tabelas do site."
 
-#: admin/class-mcp-admin.php:1369
+#: admin/class-mcp-admin.php:1401
 msgid "Restore"
 msgstr "Restaurar"
 
-#: admin/class-mcp-admin.php:1371
+#: admin/class-mcp-admin.php:1403
 msgid "Delete this checkpoint?"
 msgstr "Excluir este ponto de verificação?"
 
-#: admin/class-mcp-admin.php:1374
+#: admin/class-mcp-admin.php:1406
 msgid "Delete"
 msgstr "Excluir"
 
-#: admin/class-mcp-admin.php:1382
+#: admin/class-mcp-admin.php:1414
 msgid "Change Journal"
 msgstr "Diário de alterações"
 
-#: admin/class-mcp-admin.php:1385
+#: admin/class-mcp-admin.php:1417
 msgid "Time"
 msgstr "Hora"
 
-#: admin/class-mcp-admin.php:1386
+#: admin/class-mcp-admin.php:1418
 msgid "Object"
 msgstr "Objeto"
 
-#: admin/class-mcp-admin.php:1387
+#: admin/class-mcp-admin.php:1419
 msgid "Action"
 msgstr "Ação"
 
-#: admin/class-mcp-admin.php:1392
+#: admin/class-mcp-admin.php:1424
 msgid "No journaled changes yet."
 msgstr "Nenhuma alteração registrada no diário ainda."
 
 #. translators: %s: change ID number
-#: admin/class-mcp-admin.php:1412
+#: admin/class-mcp-admin.php:1444
 #, php-format
 msgid "Undo change #%s?"
 msgstr "Desfazer a alteração nº %s?"
 
-#: admin/class-mcp-admin.php:1416
+#: admin/class-mcp-admin.php:1448
 msgid "Undo"
 msgstr "Desfazer"
 
-#: admin/class-mcp-admin.php:1419
+#: admin/class-mcp-admin.php:1451
 msgid "Undo ALL active changes in this batch (newest first)?"
 msgstr ""
 "Desfazer TODAS as alterações ativas neste lote (das mais recentes para as "
 "mais antigas)?"
 
-#: admin/class-mcp-admin.php:1422
+#: admin/class-mcp-admin.php:1454
 msgid "Undo batch"
 msgstr "Desfazer lote"
 
-#: includes/class-mcp-oauth.php:349
+#: includes/class-mcp-oauth.php:355
 msgid "Unknown client"
 msgstr "Cliente desconhecido"
 
-#: includes/class-mcp-oauth.php:647
+#: includes/class-mcp-oauth.php:653
 msgid "The OAuth connector is not enabled on this site."
 msgstr "O conector OAuth não está ativado neste site."
 
-#: includes/class-mcp-oauth.php:666
+#: includes/class-mcp-oauth.php:672
 msgid "Unknown OAuth client."
 msgstr "Cliente OAuth desconhecido."
 
-#: includes/class-mcp-oauth.php:670
+#: includes/class-mcp-oauth.php:676
 msgid "Invalid redirect_uri for this client."
 msgstr "redirect_uri inválido para este cliente."
 
-#: includes/class-mcp-oauth.php:689
+#: includes/class-mcp-oauth.php:695
 msgid "You must be an administrator to authorize this connection."
 msgstr "Você precisa ser um administrador para autorizar esta conexão."
 
-#: includes/class-mcp-oauth.php:695
+#: includes/class-mcp-oauth.php:701
 msgid "Security check failed. Please try again."
 msgstr "A verificação de segurança falhou. Tente novamente."
 
-#: includes/class-mcp-oauth.php:747
+#: includes/class-mcp-oauth.php:758
 msgid "Connection error"
 msgstr "Erro de conexão"
 
-#: includes/class-mcp-oauth.php:754
+#: includes/class-mcp-oauth.php:765
 msgid "An application"
 msgstr "Um aplicativo"
 
-#: includes/class-mcp-oauth.php:778
+#: includes/class-mcp-oauth.php:796
 msgid "Authorize connection"
 msgstr "Autorizar conexão"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:785
+#: includes/class-mcp-oauth.php:803
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s quer se conectar"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:789
+#: includes/class-mcp-oauth.php:807
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -1038,33 +1054,39 @@ msgstr ""
 "permissões de administrador."
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:794
+#: includes/class-mcp-oauth.php:812
 #, php-format
 msgid "Authorizing as %s"
 msgstr "Autorizando como %s"
 
-#: includes/class-mcp-oauth.php:807
+#: includes/class-mcp-oauth.php:825
 msgid "Access level"
 msgstr "Nível de acesso"
 
-#: includes/class-mcp-oauth.php:810
+#. translators: %d: number of tools allowed in the connection's current custom scope
+#: includes/class-mcp-oauth.php:831
+#, php-format
+msgid "Keep current custom scope (%d tools)"
+msgstr "Manter o escopo personalizado atual (%d ferramentas)"
+
+#: includes/class-mcp-oauth.php:837
 msgid "Full access — read and manage the site"
 msgstr "Acesso completo — leia e gerencie o site"
 
-#: includes/class-mcp-oauth.php:814
+#: includes/class-mcp-oauth.php:841
 msgid "Read-only — inspect the site, make no changes"
 msgstr "Somente leitura — inspecione o site sem fazer alterações"
 
-#: includes/class-mcp-oauth.php:818
+#: includes/class-mcp-oauth.php:845
 msgid "Deny"
 msgstr "Negar"
 
-#: includes/class-mcp-oauth.php:819
+#: includes/class-mcp-oauth.php:846
 msgid "Approve"
 msgstr "Aprovar"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:824
+#: includes/class-mcp-oauth.php:851
 #, php-format
 msgid "Redirects to: %s"
 msgstr "Redireciona para: %s"

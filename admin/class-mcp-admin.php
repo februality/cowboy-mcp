@@ -158,9 +158,14 @@ class Cowboy_MCP_Admin {
             if ( $label === '' ) {
                 $label = 'API Key';
             }
-            $result = Cowboy_MCP_Auth::generate_key( $label, self::scope_from_post() );
-            set_transient( 'cowboy_mcp_new_key_' . get_current_user_id(), $result['key'], 3600 );
-            add_settings_error( 'cowboy_mcp', 'key_created', __( 'API key created. Copy it now — it will only be shown once.', 'cowboy-mcp' ), 'success' );
+            $scope = self::scope_from_post();
+            if ( false === $scope ) {
+                add_settings_error( 'cowboy_mcp', 'scope_invalid', __( 'Select an access level before saving.', 'cowboy-mcp' ), 'error' );
+            } else {
+                $result = Cowboy_MCP_Auth::generate_key( $label, $scope );
+                set_transient( 'cowboy_mcp_new_key_' . get_current_user_id(), $result['key'], 3600 );
+                add_settings_error( 'cowboy_mcp', 'key_created', __( 'API key created. Copy it now — it will only be shown once.', 'cowboy-mcp' ), 'success' );
+            }
         }
 
         // Revoke key.
@@ -172,8 +177,11 @@ class Cowboy_MCP_Admin {
 
         // Update key scope.
         if ( isset( $_POST['cowboy_mcp_update_key_scope'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_update_key_scope' ) ) {
-            $id = sanitize_text_field( wp_unslash( $_POST['key_id'] ?? '' ) );
-            if ( Cowboy_MCP_Auth::update_key_scope( $id, self::scope_from_post() ) ) {
+            $id    = sanitize_text_field( wp_unslash( $_POST['key_id'] ?? '' ) );
+            $scope = self::scope_from_post();
+            if ( false === $scope ) {
+                add_settings_error( 'cowboy_mcp', 'scope_invalid', __( 'Select an access level before saving.', 'cowboy-mcp' ), 'error' );
+            } elseif ( Cowboy_MCP_Auth::update_key_scope( $id, $scope ) ) {
                 add_settings_error( 'cowboy_mcp', 'scope_updated', __( 'Key scope updated. It takes effect on the key\'s next request.', 'cowboy-mcp' ), 'success' );
             } else {
                 add_settings_error( 'cowboy_mcp', 'scope_update_failed', __( 'Could not update key scope.', 'cowboy-mcp' ), 'error' );
@@ -191,8 +199,11 @@ class Cowboy_MCP_Admin {
 
         // Update OAuth connection scope.
         if ( isset( $_POST['cowboy_mcp_update_oauth_scope'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_update_oauth_scope' ) ) {
-            $cid = sanitize_text_field( wp_unslash( $_POST['oauth_client_id'] ?? '' ) );
-            if ( class_exists( 'Cowboy_MCP_OAuth' ) && $cid !== '' && Cowboy_MCP_OAuth::update_connection_scope( $cid, self::scope_from_post() ) ) {
+            $cid   = sanitize_text_field( wp_unslash( $_POST['oauth_client_id'] ?? '' ) );
+            $scope = self::scope_from_post();
+            if ( false === $scope ) {
+                add_settings_error( 'cowboy_mcp', 'scope_invalid', __( 'Select an access level before saving.', 'cowboy-mcp' ), 'error' );
+            } elseif ( class_exists( 'Cowboy_MCP_OAuth' ) && $cid !== '' && Cowboy_MCP_OAuth::update_connection_scope( $cid, $scope ) ) {
                 add_settings_error( 'cowboy_mcp', 'oauth_scope_updated', __( 'Connection scope updated. It takes effect on the connection\'s next request.', 'cowboy-mcp' ), 'success' );
             } else {
                 add_settings_error( 'cowboy_mcp', 'oauth_scope_update_failed', __( 'Could not update connection scope.', 'cowboy-mcp' ), 'error' );
@@ -312,10 +323,22 @@ class Cowboy_MCP_Admin {
         }
     }
 
-    /** Map posted key_scope_mode/allowed_tools[] fields to a scope array (null = full). */
-    private static function scope_from_post(): ?array {
+    /**
+     * Map posted key_scope_mode/allowed_tools[] fields to a scope array.
+     * Returns null for full access, an array for read_only/custom, or false
+     * (an "invalid" sentinel) when key_scope_mode is missing or unrecognized —
+     * callers must treat false as "reject the submission", never as "full".
+     */
+    private static function scope_from_post(): array|false|null {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- callers verify their own nonce before invoking.
-        $mode = sanitize_text_field( wp_unslash( $_POST['key_scope_mode'] ?? 'full' ) );
+        if ( ! isset( $_POST['key_scope_mode'] ) ) {
+            return false;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $mode = sanitize_text_field( wp_unslash( $_POST['key_scope_mode'] ) );
+        if ( 'full' === $mode ) {
+            return null;
+        }
         if ( 'read_only' === $mode ) {
             return [ 'mode' => 'read_only' ];
         }
@@ -324,7 +347,7 @@ class Cowboy_MCP_Admin {
             $tools = array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['allowed_tools'] ?? [] ) );
             return [ 'mode' => 'custom', 'allowed_tools' => $tools ];
         }
-        return null;
+        return false;
     }
 
     /** Flip oauth_enabled on (preserving the rest of the settings array). */
@@ -978,6 +1001,7 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
                         <?php endforeach; ?>
                     </details>
                 <?php endforeach; ?>
+                <p class="description"><?php esc_html_e( 'Note: read-only MCP resources (site info, user list, recent posts, etc.) are always available to every credential regardless of tool scope.', 'cowboy-mcp' ); ?></p>
             </div>
         </template>
         <?php
@@ -1003,7 +1027,10 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
 
     /** Human badge for a stored scope array. */
     private static function scope_badge( ?array $scope ): string {
-        $mode = $scope['mode'] ?? 'full';
+        if ( null === $scope ) {
+            return __( 'Full access', 'cowboy-mcp' );
+        }
+        $mode = $scope['mode'] ?? '';
         if ( 'read_only' === $mode ) {
             return __( 'Read-only', 'cowboy-mcp' );
         }
@@ -1011,7 +1038,12 @@ codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endp
             /* translators: %d: number of tools this credential may call */
             return sprintf( __( 'Custom (%d tools)', 'cowboy-mcp' ), count( $scope['allowed_tools'] ?? [] ) );
         }
-        return __( 'Full access', 'cowboy-mcp' );
+        if ( 'full' === $mode ) {
+            return __( 'Full access', 'cowboy-mcp' );
+        }
+        // An unrecognized non-empty mode is a corrupted/tampered scope record —
+        // fail closed rather than silently granting full access.
+        return __( 'Unknown (blocked)', 'cowboy-mcp' );
     }
 
     /* ── Settings tab ─────────────────────────────────────── */
