@@ -289,8 +289,17 @@ class Cowboy_MCP_Security {
      * collapse whitespace so blocklist regexes can't be evaded with `DROP/**​/TABLE`.
      */
     public static function normalize_sql( string $sql ): string {
-        // Block comments /* ... */ including /*! versioned */ comments.
-        $sql = preg_replace( '#/\*.*?\*/#s', ' ', $sql );
+        // MySQL EXECUTES the body of `/*! ... */` and version-gated `/*!NNNNN ... */`
+        // comments, so their contents must be unwrapped into the scanned text rather
+        // than stripped — deleting them would hide live SQL from the blocklist
+        // (`/*!50000 DROP */ TABLE t` reaches the server as `DROP TABLE t`). The
+        // version number is ignored on purpose: we do not know the server version, and
+        // scanning a body the server might skip only over-blocks, which is the safe
+        // direction. Must run BEFORE the plain-comment strip below, which would
+        // otherwise swallow these too.
+        $sql = preg_replace( '#/\*!\d*\s*(.*?)\*/#s', ' $1 ', $sql );
+        // Plain block comments /* ... */ are true comments — strip them.
+        $sql = preg_replace( '#/\*.*?\*/#s', ' ', (string) $sql );
         // Line comments -- ... and # ... to end of line.
         $sql = preg_replace( '/(--|#)[^\r\n]*/', ' ', (string) $sql );
         // Collapse whitespace.
