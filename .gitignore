@@ -2,6 +2,9 @@
 /cowboy-mcp.zip
 /cowboy-mcp-wporg.zip
 
+# wp-env test environment dependencies
+/node_modules/
+
 # macOS
 .DS_Store
 

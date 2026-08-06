@@ -1,0 +1,8 @@
+{
+  "name": "cowboy-mcp-wp-env",
+  "version": "1.0.0",
+  "description": "WordPress environment for Cowboy MCP testing",
+  "devDependencies": {
+    "@wordpress/env": "^11.11.0"
+  }
+}
