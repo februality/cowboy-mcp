@@ -3,13 +3,16 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
-= X.Y.Z =
+= 1.6.2 =
 * New: Gutenberg block editing - read any post as a block tree and apply surgical batch edits (update, insert, delete, move, replace) without resending full content.
 * New: block pattern tools - list registered and user patterns, create, update, and delete user patterns (synced or unsynced).
 * New: site editor tools - list, read, save, and reset block theme templates and template parts; editing a theme template creates an override you can undo back to the theme's version.
-* New: global styles tools - read and update theme.json user customizations (colors, typography, spacing).
-* New: navigation listing for block themes.
-* All Gutenberg writes are undoable from the Activity tab, with the same raw-HTML safety gate as the Elementor tools.
+* New: global styles tools - read and update theme.json user customizations (colors, typography, spacing); navigation listing for block themes.
+* New: all Gutenberg writes are undoable from the Activity tab, with the same raw-HTML safety gate as the Elementor tools.
+* New: per-credential tool scoping - limit any API key or OAuth connection to read-only access or a custom list of tools; existing credentials keep full access until you change them.
+* Security: a credential can never widen its own scope - scope settings are write-protected from the API, even in Power mode.
+* Security: hardened the WP-CLI safety blocklist against shell-quoting and flag-injection bypasses - commands are now tokenized the way the shell parses them before matching.
+* Security: SQL run through WP-CLI is now scanned with MySQL versioned comments unwrapped, and commands that cannot be safely parsed are rejected.
 
 = 1.6.1 =
 * New: user management - list, read, create, update, and delete users, including role changes.

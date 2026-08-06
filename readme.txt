@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, claude, chatgpt, ai-agent
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,6 +33,7 @@ Setup guides, the full capability list, and the security model live at [cowboymc
 = What you can do with it =
 
 * **Manage content by chat** - draft, edit, schedule, and publish posts and pages; upload media; sort categories and tags; build navigation menus.
+* **Edit pages block by block** - your agent reads any page as a Gutenberg block tree and makes surgical edits: update a heading, move a section, swap a pattern. On block themes it can edit site editor templates and global styles too - all undoable.
 * **Run the back office** - add and edit users, change roles, and tidy the media library: find every image missing alt text and fix it in one go. Deleted media is recoverable, and the site can never be left without an administrator.
 * **Run your store** - update WooCommerce products, prices, orders, and inventory in bulk.
 * **Fix things that break** - read error logs, test emails and HTTP requests, inspect hooks and REST routes, and repair database tables. No SSH required.
@@ -78,7 +79,7 @@ Yes. When WooCommerce is active, 40 store tools light up: products and variation
 
 = Is it safe to use on a live site? =
 
-Yes, with care. You're handing an AI real control, so Cowboy MCP is built to keep you in charge: keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, and changes can be previewed before they run. If a change turns out wrong, you can usually undo it - or restore the database to an earlier checkpoint - from the Activity tab, and every action is written to an audit log. Review it regularly.
+Yes, with care. You're handing an AI real control, so Cowboy MCP is built to keep you in charge: keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, and changes can be previewed before they run. Each API key and connection can also be scoped to read-only access or a hand-picked list of tools. If a change turns out wrong, you can usually undo it - or restore the database to an earlier checkpoint - from the Activity tab, and every action is written to an audit log. Review it regularly.
 
 = Can I vibe code my WordPress site? =
 
@@ -103,16 +104,16 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.6.1 =
-* New: user management - list, read, create, update, and delete users, including role changes.
-* New: navigation menus - create, rename, assign theme locations, and set menu items as a nested tree.
-* New: media library - list attachments with a filter for images missing alt text, edit titles, captions, and alt text, and delete attachments.
-* New: deleted media is recoverable - an attachment's files are moved aside instead of destroyed, so the deletion can be undone from the Activity tab, and featured-image and site-logo links are restored with it.
-* New: SEO meta management for Yoast SEO and Rank Math - read and update a post's SEO title, meta description, focus keyword, noindex/nofollow, canonical URL, and Facebook/X social overrides through one unified toolset, with template variables like %%category%% preserved.
-* New: SEO audit - scan posts and pages for missing or badly sized meta descriptions, missing focus keywords, over-long titles, and published posts still set to noindex.
-* New: SEO meta changes are undoable like everything else, and Yoast's indexable cache refreshes automatically so edits show up on the site immediately.
-* Security: granting an administrator-level role, setting a password, or changing a privileged user's email now requires Power mode.
-* Security: you can never change your own role, password, or email through the API, and the last administrator can be neither deleted nor demoted.
+= 1.6.2 =
+* New: Gutenberg block editing - read any post as a block tree and apply surgical batch edits (update, insert, delete, move, replace) without resending full content.
+* New: block pattern tools - list registered and user patterns, create, update, and delete user patterns (synced or unsynced).
+* New: site editor tools - list, read, save, and reset block theme templates and template parts; editing a theme template creates an override you can undo back to the theme's version.
+* New: global styles tools - read and update theme.json user customizations (colors, typography, spacing); navigation listing for block themes.
+* New: all Gutenberg writes are undoable from the Activity tab, with the same raw-HTML safety gate as the Elementor tools.
+* New: per-credential tool scoping - limit any API key or OAuth connection to read-only access or a custom list of tools; existing credentials keep full access until you change them.
+* Security: a credential can never widen its own scope - scope settings are write-protected from the API, even in Power mode.
+* Security: hardened the WP-CLI safety blocklist against shell-quoting and flag-injection bypasses - commands are now tokenized the way the shell parses them before matching.
+* Security: SQL run through WP-CLI is now scanned with MySQL versioned comments unwrapped, and commands that cannot be safely parsed are rejected.
 
 = Earlier versions =
 
