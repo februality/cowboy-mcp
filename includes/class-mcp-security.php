@@ -839,4 +839,50 @@ class Cowboy_MCP_Security {
         }
         return true;
     }
+
+    /* ── Local-development host heuristics (ADVISORY ONLY) ── */
+
+    /**
+     * Whether a hostname looks like a local development site.
+     *
+     * INVARIANT — advisory only, for UI copy and setup hints. This must NEVER
+     * gate security behavior (SSRF validation, auth, rate limits, scoping):
+     * it derives from home_url(), which is influenceable via WP_HOME, the
+     * home option, and domain-mapping plugins, so "local mode" must never
+     * loosen anything. Deliberately does no DNS lookups — string and
+     * IP-literal checks only, cheap enough for admin page render.
+     */
+    public static function host_looks_local( string $host ): bool {
+        $host = strtolower( trim( (string) $host, '[]' ) );
+        if ( '' === $host ) {
+            return true;
+        }
+        if ( self::host_is_loopback_shaped( $host ) ) {
+            return true;
+        }
+        if ( preg_match( '/\.(internal|example|invalid)$/', $host ) ) {
+            return true;
+        }
+        // Private/reserved IP literals (e.g. 192.168.1.20). No DNS resolution.
+        if ( filter_var( $host, FILTER_VALIDATE_IP ) && ! self::ip_is_public( $host ) ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Narrower than host_looks_local(): names that virtually always resolve to
+     * THIS machine (loopback). Used to decide when it is reasonable to suggest
+     * a plain-http connection snippet — a bare private IP like 192.168.1.20 is
+     * excluded on purpose, because that can be another machine on the LAN and
+     * a Bearer key must not be suggested over plaintext on a real network.
+     * Same ADVISORY-ONLY invariant as host_looks_local().
+     */
+    public static function host_is_loopback_shaped( string $host ): bool {
+        $host = strtolower( trim( (string) $host, '[]' ) );
+        if ( in_array( $host, [ 'localhost', '127.0.0.1', '::1' ], true ) ) {
+            return true;
+        }
+        return (bool) preg_match( '/\.(localhost|local|test)$/', $host );
+    }
 }

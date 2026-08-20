@@ -88,27 +88,39 @@ class Cowboy_MCP_Doctor {
 			$on ? null : 'Enable the server under Settings > Cowboy MCP > Settings.'
 		);
 
+		// Local-dev awareness reframes the https/public_hostname checks below.
+		// ADVISORY ONLY (display copy + statuses) — never gates any behavior.
+		$local = self::hostname_is_local( $host );
+
 		// https
-		$out[] = self::result(
-			'https',
-			'Site uses HTTPS',
-			$is_https ? 'pass' : ( $oauth_on ? 'fail' : 'warn' ),
-			$is_https ? 'Site address uses https.' : 'Site address uses plain http.',
-			[ 'home_url: ' . home_url() ],
-			null,
-			$is_https ? null : 'MCP connectors (claude.ai, ChatGPT) require a public HTTPS address. Install an SSL certificate and update the Site Address.'
-		);
+		if ( $is_https ) {
+			$out[] = self::result( 'https', 'Site uses HTTPS', 'pass', 'Site address uses https.', [ 'home_url: ' . home_url() ] );
+		} elseif ( $local && ! $oauth_on ) {
+			// Plain http on a local dev site is normal; terminal clients on the
+			// same machine do not need TLS. Cloud-connector intent (oauth_on)
+			// keeps the hard requirement.
+			$out[] = self::result( 'https', 'Site uses HTTPS', 'pass', 'Site address uses plain http - normal for a local development site.', [ 'home_url: ' . home_url() ] );
+		} else {
+			$out[] = self::result(
+				'https',
+				'Site uses HTTPS',
+				$oauth_on ? 'fail' : 'warn',
+				'Site address uses plain http.',
+				[ 'home_url: ' . home_url() ],
+				null,
+				'MCP connectors (claude.ai, ChatGPT) require a public HTTPS address. Install an SSL certificate and update the Site Address.'
+			);
+		}
 
 		// public_hostname
-		$local = self::hostname_is_local( $host );
 		$out[] = self::result(
 			'public_hostname',
 			'Hostname publicly reachable',
-			$local ? 'fail' : 'pass',
-			$local ? "Hostname '{$host}' is local or resolves to a private address - remote clients cannot reach it." : "Hostname '{$host}' looks publicly resolvable.",
+			$local ? 'warn' : 'pass',
+			$local ? "Hostname '{$host}' is local or resolves to a private address - terminal AI tools on this machine can connect, but cloud clients (claude.ai, ChatGPT) cannot reach it." : "Hostname '{$host}' looks publicly resolvable.",
 			[ 'host: ' . $host ],
 			$local ? 'local_host' : null,
-			$local ? 'Remote MCP clients need a public hostname. On local dev, use a tunnel (e.g. your host\'s preview URL) or test with Claude Code on the same machine.' : null
+			$local ? 'Terminal clients (Claude Code, Cursor, Codex...) work locally as-is, and Claude Desktop can connect through the local bridge on the Connection tab. claude.ai and ChatGPT need a public URL (tunnel or staging).' : null
 		);
 
 		// permalinks

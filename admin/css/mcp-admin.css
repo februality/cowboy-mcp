@@ -98,6 +98,23 @@
 .mcp-conn-item--active:hover { background: #135e96; color: #fff; }
 .mcp-conn-ic { width: 18px; height: 18px; flex: 0 0 18px; display: inline-flex; }
 .mcp-conn-ic svg { width: 18px; height: 18px; }
+.mcp-conn-label { flex: 1; min-width: 0; }
+.mcp-conn-badge {
+    font-size: 10px; font-weight: 600; line-height: 1; white-space: nowrap;
+    padding: 3px 6px; border-radius: 9px; flex: 0 0 auto;
+}
+.mcp-conn-badge--ok { background: #edfaef; color: #007017; }
+.mcp-conn-badge--warn { background: #fcf9e8; color: #996800; }
+.mcp-conn-item--active .mcp-conn-badge--ok,
+.mcp-conn-item--active .mcp-conn-badge--warn { background: rgba(255,255,255,.2); color: #fff; }
+.mcp-local-guidance ul { list-style: disc; margin: 8px 0 16px 20px; }
+.mcp-local-guidance li { margin-bottom: 6px; }
+.mcp-local-details { margin: 12px 0; }
+.mcp-local-details > summary { cursor: pointer; color: #2271b1; padding: 4px 0; }
+.mcp-local-details-body {
+    border: 1px solid #dcdcde; border-radius: 4px;
+    padding: 12px; margin-top: 8px; background: #fff;
+}
 .mcp-conn-main { flex: 1; min-width: 0; }
 .mcp-client-panel { display: none; }
 .mcp-client-panel--active { display: block; }

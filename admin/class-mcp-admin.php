@@ -118,16 +118,25 @@ class Cowboy_MCP_Admin {
     /* ── Client registry: single source for sidebar, panels, and AJAX validation ── */
 
     private static function client_registry(): array {
+        // 'local' is how the client behaves against a local dev site: it either
+        // works as-is ('works'), works through the on-machine mcp-remote bridge
+        // ('bridge'), or is cloud-initiated and needs a public URL ('tunnel').
+        // Display metadata only — never used for gating.
         return [
-            'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth' ],
-            'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth' ],
-            'chatgpt'        => [ 'label' => 'ChatGPT',        'group' => 'no-terminal', 'type' => 'oauth' ],
-            'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'apikey' ],
-            'codex'          => [ 'label' => 'Codex',          'group' => 'terminal',    'type' => 'apikey' ],
-            'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'apikey' ],
-            'cursor'         => [ 'label' => 'Cursor',         'group' => 'terminal',    'type' => 'apikey' ],
-            'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'apikey' ],
+            'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth',  'local' => 'tunnel' ],
+            'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth',  'local' => 'bridge' ],
+            'chatgpt'        => [ 'label' => 'ChatGPT',        'group' => 'no-terminal', 'type' => 'oauth',  'local' => 'tunnel' ],
+            'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'apikey', 'local' => 'works' ],
+            'codex'          => [ 'label' => 'Codex',          'group' => 'terminal',    'type' => 'apikey', 'local' => 'works' ],
+            'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'apikey', 'local' => 'works' ],
+            'cursor'         => [ 'label' => 'Cursor',         'group' => 'terminal',    'type' => 'apikey', 'local' => 'works' ],
+            'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'apikey', 'local' => 'works' ],
         ];
+    }
+
+    /** Whether this site's host looks like a local development site (advisory, UI only). */
+    private static function site_looks_local(): bool {
+        return Cowboy_MCP_Security::host_looks_local( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
     }
 
     /** Echo the static inline SVG icon for a client (monochrome, stroke = currentColor). */
@@ -478,9 +487,10 @@ class Cowboy_MCP_Admin {
 
     private static function render_connection_tab( array $keys, string $endpoint, $new_key, string $active_client ): void {
         $registry = self::client_registry();
+        $is_local = self::site_looks_local();
         ?>
         <div class="mcp-conn-layout">
-            <?php self::render_client_sidebar( $registry, $active_client ); ?>
+            <?php self::render_client_sidebar( $registry, $active_client, $is_local ); ?>
             <div class="mcp-conn-main">
 
                 <div class="mcp-client-panel mcp-client-panel--placeholder <?php echo esc_attr( $active_client === '' ? 'mcp-client-panel--active' : '' ); ?>" data-client-panel="">
@@ -501,9 +511,9 @@ class Cowboy_MCP_Admin {
                          tabindex="0">
                         <?php
                         if ( $client['type'] === 'oauth' ) {
-                            self::render_oauth_client_panel( $slug, $endpoint );
+                            self::render_oauth_client_panel( $slug, $endpoint, $is_local, $keys, $new_key );
                         } else {
-                            self::render_api_client_panel( $slug, $client['label'], $keys, $endpoint, $new_key );
+                            self::render_api_client_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local );
                         }
                         ?>
                     </div>
@@ -525,7 +535,7 @@ class Cowboy_MCP_Admin {
 
     /* ── Sidebar: grouped client buttons ─────────────────── */
 
-    private static function render_client_sidebar( array $registry, string $active_client ): void {
+    private static function render_client_sidebar( array $registry, string $active_client, bool $is_local = false ): void {
         $groups = [
             'no-terminal' => __( 'No terminal needed', 'cowboy-mcp' ),
             'terminal'    => __( 'Terminal & IDE tools', 'cowboy-mcp' ),
@@ -553,6 +563,13 @@ class Cowboy_MCP_Admin {
                             tabindex="<?php echo esc_attr( $tabindex ); ?>">
                         <span class="mcp-conn-ic" aria-hidden="true"><?php self::render_client_icon( $slug ); ?></span>
                         <span class="mcp-conn-label"><?php echo esc_html( $client['label'] ); ?></span>
+                        <?php if ( $is_local ) : // Local-site capability badge (advisory copy only). ?>
+                            <?php if ( 'tunnel' === ( $client['local'] ?? '' ) ) : ?>
+                                <span class="mcp-conn-badge mcp-conn-badge--warn"><?php esc_html_e( 'Needs public URL', 'cowboy-mcp' ); ?></span>
+                            <?php else : ?>
+                                <span class="mcp-conn-badge mcp-conn-badge--ok"><?php esc_html_e( 'Works locally', 'cowboy-mcp' ); ?></span>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </button>
                 <?php endforeach; ?>
             <?php endforeach; ?>
@@ -562,7 +579,33 @@ class Cowboy_MCP_Admin {
 
     /* ── OAuth clients: claude.ai / Claude Desktop ────────── */
 
-    private static function render_oauth_client_panel( string $slug, string $endpoint ): void {
+    private static function render_oauth_client_panel( string $slug, string $endpoint, bool $is_local = false, array $keys = [], $new_key = null ): void {
+        if ( $is_local && 'claude-desktop' === $slug ) {
+            // Local site: the cloud connector cannot reach it, but the
+            // on-machine mcp-remote bridge can. Bridge first, connector
+            // collapsed for the "site is actually public" case.
+            self::render_desktop_bridge_flow( $endpoint, $keys, $new_key );
+            ?>
+            <details class="mcp-local-details">
+                <summary><?php esc_html_e( 'Site actually on a public HTTPS address? Use the cloud connector instead', 'cowboy-mcp' ); ?></summary>
+                <div class="mcp-local-details-body">
+                    <?php self::render_oauth_connector_flow( $slug, $endpoint, false ); ?>
+                </div>
+            </details>
+            <?php
+            return;
+        }
+        if ( $is_local ) {
+            self::render_local_oauth_guidance( $slug );
+            self::render_oauth_connector_flow( $slug, $endpoint, false );
+            return;
+        }
+        self::render_oauth_connector_flow( $slug, $endpoint );
+    }
+
+    /* ── Cloud-connector flow (shared by all three OAuth panels) ── */
+
+    private static function render_oauth_connector_flow( string $slug, string $endpoint, bool $show_warning = true ): void {
         $oauth_avail = class_exists( 'Cowboy_MCP_OAuth' );
         // Read the option directly instead of Cowboy_MCP_OAuth::is_enabled(): that
         // helper memoizes settings at request start, so it still reports "off" in
@@ -597,7 +640,7 @@ class Cowboy_MCP_Admin {
             ? __( 'Custom connectors require a paid ChatGPT plan with <strong>Developer mode</strong> (beta) enabled.', 'cowboy-mcp' )
             : __( 'Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan.', 'cowboy-mcp' );
 
-        if ( ! $reachable ) :
+        if ( $show_warning && ! $reachable ) :
             ?>
             <div class="notice notice-warning inline"><p><?php
                 echo wp_kses( $warning_text, [ 'strong' => [] ] );
@@ -679,15 +722,123 @@ class Cowboy_MCP_Admin {
         self::render_connections_table( $connections );
     }
 
-    /* ── API-key clients: Claude Code / Codex / Opencode / Cursor / Gemini CLI ── */
+    /* ── Local-site guidance for the cloud-only panels (claude.ai / ChatGPT) ── */
 
-    private static function render_api_client_panel( string $slug, string $label, array $keys, string $endpoint, $new_key ): void {
-        $domain      = str_replace( '.', '-', wp_parse_url( home_url(), PHP_URL_HOST ) );
+    private static function render_local_oauth_guidance( string $slug ): void {
+        // Same two msgids the connector flow uses, so existing translations carry over.
+        $warning_text = ( 'chatgpt' === $slug )
+            ? __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. ChatGPT connects from OpenAI\'s cloud, so it cannot reach local, private, or non-HTTPS sites. A terminal tool works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' )
+            : __( '<strong>Heads up:</strong> this site does not appear to be on a public HTTPS address. The Claude apps connect from Anthropic\'s cloud, so they cannot reach local, private, or non-HTTPS sites. A terminal tool works here instead, or connect through a tunnel/staging URL.', 'cowboy-mcp' );
+        ?>
+        <div class="notice notice-warning inline"><p><?php echo wp_kses( $warning_text, [ 'strong' => [] ] ); ?></p></div>
+        <div class="mcp-local-guidance">
+            <p><strong><?php esc_html_e( 'What works on a local site:', 'cowboy-mcp' ); ?></strong></p>
+            <ul>
+                <li><?php echo wp_kses( __( '<strong>Terminal tools</strong> (Claude Code, Codex, Cursor, Gemini CLI) — connect right now, no public URL needed. Pick one in the sidebar.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                <li><?php echo wp_kses( __( '<strong>Claude Desktop</strong> — connects through a local bridge that runs on this computer. Pick it in the sidebar for instructions.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                <li><?php echo wp_kses( __( '<strong>claude.ai and ChatGPT</strong> — cloud-only: they need a public HTTPS address. A tunnel (e.g. ngrok or Cloudflare Tunnel) works temporarily, but it exposes your entire dev site to the internet while it runs, and the WordPress Site Address must be set to the tunnel URL for the sign-in to work.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+            </ul>
+        </div>
+        <?php
+    }
+
+    /* ── Claude Desktop on a local site: on-machine mcp-remote bridge ── */
+
+    private static function render_desktop_bridge_flow( string $endpoint, array $keys, $new_key ): void {
+        $host        = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+        $domain      = str_replace( '.', '-', $host );
         $key_display = $new_key ?: 'YOUR_API_KEY';
         $has_keys    = ! empty( $keys );
+        // Offer the plain-http fallback only for loopback-shaped hosts: the key
+        // must never be suggested over plaintext on a real network.
+        $offer_http  = 'https' === wp_parse_url( $endpoint, PHP_URL_SCHEME )
+            && Cowboy_MCP_Security::host_is_loopback_shaped( $host );
+        ?>
+        <div class="notice notice-info inline"><p><?php
+            echo wp_kses( __( 'This site runs on your computer, so the cloud connector cannot reach it. Connect Claude Desktop through a <strong>local bridge</strong> instead: a small helper that runs on this computer and forwards Claude Desktop to the site. Nothing is exposed to the internet.', 'cowboy-mcp' ), [ 'strong' => [] ] );
+        ?></p></div>
+        <?php
+        self::render_key_step( 'claude-desktop', 'Claude Desktop', $new_key, $has_keys, 'read_only' );
+        ?>
+        <div class="mcp-step <?php echo esc_attr( $new_key ? 'mcp-step--active' : '' ); ?>">
+            <div class="mcp-step-header">
+                <span class="mcp-step-number">2</span>
+                <h3 style="margin:0;"><?php esc_html_e( 'Add the bridge to Claude Desktop', 'cowboy-mcp' ); ?></h3>
+            </div>
+            <div class="mcp-step-body">
+                <p><?php echo wp_kses( __( 'Add this to <code>claude_desktop_config.json</code> (create the file if it does not exist), then fully quit and restart the Claude app:', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <div class="mcp-code-block">
+                    <code id="mcp-cmd-claude-desktop"><?php echo esc_html( self::bridge_config_snippet( $domain, $endpoint, $key_display ) ); ?></code>
+                </div>
+                <button type="button" class="button button-small mcp-copy-btn" data-copy-target="mcp-cmd-claude-desktop" aria-label="<?php echo esc_attr__( 'Copy setup command', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+                <p class="description"><?php echo wp_kses( __( 'macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> — Windows: <code>%APPDATA%\Claude\claude_desktop_config.json</code>', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <p class="description"><?php echo wp_kses( __( 'Requires Node.js on this computer — the bridge is the standard open-source <code>mcp-remote</code> package, started on demand via <code>npx</code>. It connects only from your computer to this site.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <p class="description"><?php echo wp_kses( __( 'Your API key is stored in plain text in that file, so prefer a <strong>read-only</strong> key unless this connection needs to make changes — and revoke it here when you no longer use it.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                <?php
+                if ( $offer_http ) {
+                    self::render_cert_error_details( 'claude-desktop', self::bridge_config_snippet( $domain, set_url_scheme( $endpoint, 'http' ), $key_display ) );
+                }
+                ?>
+            </div>
+        </div>
+        <div class="mcp-step">
+            <div class="mcp-step-header">
+                <span class="mcp-step-number">3</span>
+                <h3 style="margin:0;"><?php esc_html_e( 'Check it worked', 'cowboy-mcp' ); ?></h3>
+            </div>
+            <div class="mcp-step-body">
+                <p><?php
+                    /* translators: %s: the MCP server name shown in the client. */
+                    echo wp_kses( sprintf( __( 'Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> should be listed. The first start can take a moment while the bridge downloads.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
+                ?></p>
+            </div>
+        </div>
+        <?php
+        if ( $has_keys ) {
+            self::render_keys_table( $keys );
+        }
+    }
+
+    /** claude_desktop_config.json snippet. The Authorization header value goes
+     *  through mcp-remote's ${VAR} env expansion so the space in "Bearer <key>"
+     *  survives Claude Desktop's Windows argument handling. */
+    private static function bridge_config_snippet( string $domain, string $endpoint, string $key_display ): string {
+        return "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"mcp-remote\", \"{$endpoint}\",\n        \"--header\", \"Authorization:\${AUTH_HEADER}\"],\n      \"env\": { \"AUTH_HEADER\": \"Bearer {$key_display}\" }\n    }\n  }\n}";
+    }
+
+    /* ── Self-signed-certificate fallback (loopback-shaped local sites only) ── */
+
+    private static function render_cert_error_details( string $slug, string $alt_snippet ): void {
+        $alt_id = 'mcp-cmd-http-' . $slug;
+        ?>
+        <details class="mcp-local-details">
+            <summary><?php esc_html_e( 'Getting a certificate error?', 'cowboy-mcp' ); ?></summary>
+            <div class="mcp-local-details-body">
+                <p><?php echo wp_kses( __( 'Local sites usually use a self-signed certificate that AI tools reject. Since this site runs on this same computer, you can use the plain <code>http://</code> address instead — the connection never leaves your machine. Avoid the <code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> workaround you may see online: it disables certificate checks for everything that tool connects to.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <div class="mcp-code-block">
+                    <code id="<?php echo esc_attr( $alt_id ); ?>"><?php echo esc_html( $alt_snippet ); ?></code>
+                </div>
+                <button type="button" class="button button-small mcp-copy-btn" data-copy-target="<?php echo esc_attr( $alt_id ); ?>" aria-label="<?php echo esc_attr__( 'Copy setup command', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+            </div>
+        </details>
+        <?php
+    }
+
+    /* ── API-key clients: Claude Code / Codex / Opencode / Cursor / Gemini CLI ── */
+
+    private static function render_api_client_panel( string $slug, string $label, array $keys, string $endpoint, $new_key, bool $is_local = false ): void {
+        $host        = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+        $domain      = str_replace( '.', '-', $host );
+        $key_display = $new_key ?: 'YOUR_API_KEY';
+        $has_keys    = ! empty( $keys );
+        // Plain-http fallback only for loopback-shaped hosts (never bare private
+        // IPs — that can be another machine on the LAN).
+        $offer_http  = $is_local
+            && 'https' === wp_parse_url( $endpoint, PHP_URL_SCHEME )
+            && Cowboy_MCP_Security::host_is_loopback_shaped( $host );
 
         self::render_key_step( $slug, $label, $new_key, $has_keys );
-        self::render_install_step( $slug, $domain, $endpoint, $key_display, (bool) $new_key );
+        self::render_install_step( $slug, $domain, $endpoint, $key_display, (bool) $new_key, $offer_http );
         self::render_verify_step( $slug, $domain );
 
         if ( $has_keys ) {
@@ -697,7 +848,7 @@ class Cowboy_MCP_Admin {
 
     /* ── Step 1 partial: create an API key (one per API-key panel) ── */
 
-    private static function render_key_step( string $slug, string $label, $new_key, bool $has_keys ): void {
+    private static function render_key_step( string $slug, string $label, $new_key, bool $has_keys, string $default_scope = 'full' ): void {
         ?>
         <div class="mcp-step mcp-key-step <?php echo esc_attr( $new_key ? 'mcp-step--completed' : 'mcp-step--active' ); ?>">
             <div class="mcp-step-header">
@@ -720,7 +871,7 @@ class Cowboy_MCP_Admin {
                             /* translators: %s: client name, e.g. "Claude Code" */
                             echo esc_attr( sprintf( __( 'e.g. %s on my laptop', 'cowboy-mcp' ), $label ) );
                         ?>" class="regular-text" style="max-width: 240px;">
-                        <?php self::render_scope_radios( 'full' ); ?>
+                        <?php self::render_scope_radios( $default_scope ); ?>
                         <button type="submit" name="cowboy_mcp_generate_key" class="button button-primary"><?php echo $has_keys ? esc_html__( 'Generate another key', 'cowboy-mcp' ) : esc_html__( 'Generate API key', 'cowboy-mcp' ); ?></button>
                     </form>
                 <?php endif; ?>
@@ -731,8 +882,16 @@ class Cowboy_MCP_Admin {
 
     /* ── Step 2 partial: client-specific install instructions ── */
 
-    private static function render_install_step( string $slug, string $domain, string $endpoint, string $key_display, bool $step_active ): void {
+    private static function render_install_step( string $slug, string $domain, string $endpoint, string $key_display, bool $step_active, bool $offer_http_variant = false ): void {
         $code_id = 'mcp-cmd-' . $slug;
+        $intro   = match ( $slug ) {
+            'claude-code',
+            'gemini-cli' => esc_html__( 'Run this in your terminal:', 'cowboy-mcp' ),
+            'codex'      => esc_html__( 'Run these in your terminal:', 'cowboy-mcp' ),
+            'opencode'   => wp_kses( __( 'Add this to your <code>opencode.json</code>:', 'cowboy-mcp' ), [ 'code' => [] ] ),
+            'cursor'     => wp_kses( __( 'Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not exist), then reload Cursor:', 'cowboy-mcp' ), [ 'code' => [] ] ),
+            default      => '',
+        };
         ?>
         <div class="mcp-step <?php echo esc_attr( $step_active ? 'mcp-step--active' : '' ); ?>">
             <div class="mcp-step-header">
@@ -740,62 +899,31 @@ class Cowboy_MCP_Admin {
                 <h3 style="margin:0;"><?php esc_html_e( 'Add the server to your tool', 'cowboy-mcp' ); ?></h3>
             </div>
             <div class="mcp-step-body">
-                <?php switch ( $slug ) :
-                    case 'claude-code': ?>
-                        <p><?php esc_html_e( 'Run this in your terminal:', 'cowboy-mcp' ); ?></p>
-                        <div class="mcp-code-block">
-                            <code id="<?php echo esc_attr( $code_id ); ?>">claude mcp add --transport http <?php echo esc_html( $domain ); ?> <?php echo esc_url( $endpoint ); ?> --header "Authorization: Bearer <?php echo esc_html( $key_display ); ?>"</code>
-                        </div>
-                        <?php break; ?>
-                    <?php case 'codex': ?>
-                        <p><?php esc_html_e( 'Run these in your terminal:', 'cowboy-mcp' ); ?></p>
-                        <div class="mcp-code-block">
-                            <code id="<?php echo esc_attr( $code_id ); ?>">export COWBOY_MCP_API_KEY="<?php echo esc_html( $key_display ); ?>"
-codex mcp add <?php echo esc_html( $domain ); ?> --url <?php echo esc_url( $endpoint ); ?> --bearer-token-env-var COWBOY_MCP_API_KEY</code>
-                        </div>
-                        <?php break; ?>
-                    <?php case 'opencode': ?>
-                        <p><?php echo wp_kses( __( 'Add this to your <code>opencode.json</code>:', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
-                        <div class="mcp-code-block">
-                            <code id="<?php echo esc_attr( $code_id ); ?>">{
-  "mcp": {
-    "<?php echo esc_html( $domain ); ?>": {
-      "type": "remote",
-      "url": "<?php echo esc_url( $endpoint ); ?>",
-      "headers": {
-        "Authorization": "Bearer <?php echo esc_html( $key_display ); ?>"
-      }
-    }
-  }
-}</code>
-                        </div>
-                        <?php break; ?>
-                    <?php case 'cursor': ?>
-                        <p><?php echo wp_kses( __( 'Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not exist), then reload Cursor:', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
-                        <div class="mcp-code-block">
-                            <code id="<?php echo esc_attr( $code_id ); ?>">{
-  "mcpServers": {
-    "<?php echo esc_html( $domain ); ?>": {
-      "url": "<?php echo esc_url( $endpoint ); ?>",
-      "headers": {
-        "Authorization": "Bearer <?php echo esc_html( $key_display ); ?>"
-      }
-    }
-  }
-}</code>
-                        </div>
-                        <?php break; ?>
-                    <?php case 'gemini-cli': ?>
-                        <p><?php esc_html_e( 'Run this in your terminal:', 'cowboy-mcp' ); ?></p>
-                        <div class="mcp-code-block">
-                            <code id="<?php echo esc_attr( $code_id ); ?>">gemini mcp add --transport http <?php echo esc_html( $domain ); ?> <?php echo esc_url( $endpoint ); ?> --header "Authorization: Bearer <?php echo esc_html( $key_display ); ?>"</code>
-                        </div>
-                        <?php break; ?>
-                <?php endswitch; ?>
+                <p><?php echo $intro; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped per-branch in the match above. ?></p>
+                <div class="mcp-code-block">
+                    <code id="<?php echo esc_attr( $code_id ); ?>"><?php echo esc_html( self::install_snippet( $slug, $domain, $endpoint, $key_display ) ); ?></code>
+                </div>
                 <button type="button" class="button button-small mcp-copy-btn" data-copy-target="<?php echo esc_attr( $code_id ); ?>" aria-label="<?php echo esc_attr__( 'Copy setup command', 'cowboy-mcp' ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+                <?php
+                if ( $offer_http_variant ) {
+                    self::render_cert_error_details( $slug, self::install_snippet( $slug, $domain, set_url_scheme( $endpoint, 'http' ), $key_display ) );
+                }
+                ?>
             </div>
         </div>
         <?php
+    }
+
+    /** Raw (unescaped) setup snippet for an API-key client. Escaped at output. */
+    private static function install_snippet( string $slug, string $domain, string $endpoint, string $key_display ): string {
+        return match ( $slug ) {
+            'claude-code' => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
+            'codex'       => 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'codex mcp add ' . $domain . ' --url ' . $endpoint . ' --bearer-token-env-var COWBOY_MCP_API_KEY',
+            'opencode'    => "{\n  \"mcp\": {\n    \"{$domain}\": {\n      \"type\": \"remote\",\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
+            'cursor'      => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
+            'gemini-cli'  => 'gemini mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
+            default       => '',
+        };
     }
 
     /* ── Step 3 partial: client-specific verification ─────── */

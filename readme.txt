@@ -73,6 +73,10 @@ Any MCP-compatible client over Streamable HTTP - including Claude Code, Codex, O
 
 Install Cowboy MCP, generate an API key under **Settings > Cowboy MCP**, and add your site to Claude Code with one command - shown ready to copy on the Connection tab. For the Claude desktop and web apps, enable the Desktop Connector and approve the one-click sign-in; no terminal needed. ChatGPT, Cursor, Codex, and other clients have step-by-step guides on the same tab.
 
+= Does it work on a local development site (Local, Studio, MAMP, DevKinsta)? =
+
+Yes. Terminal tools like Claude Code, Cursor, Codex, and Gemini CLI run on the same computer as your local site, so they connect with an API key exactly like on a live site - no public URL needed. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connection tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
+
 = Does it work with WooCommerce? =
 
 Yes. When WooCommerce is active, 40 store tools light up: products and variations, orders and refunds, coupons, customers, stock, shipping zones, tax rates, payment gateways, and sales reports - so your agent can run the store, not just describe it.
