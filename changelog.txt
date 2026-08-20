@@ -3,6 +3,13 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.6.3 =
+* New: local development, first-class - Cowboy MCP now works just as well on a local site (Local, Studio, MAMP, DevKinsta, and any localhost setup) as on a live one. No public URL or tunnel needed: Claude Code, Cursor, Codex, and Gemini CLI connect with an API key exactly as they do in production, and Claude Desktop connects through a small local bridge.
+* New: the Connection tab recognises local sites and shows, per client, what works locally and what needs a public URL - with a ready-to-copy Claude Desktop config that bridges through mcp-remote (read-only key by default).
+* New: Connection Doctor understands local sites - plain HTTP on a local site passes with local context, and the public-hostname check becomes a warning with fix steps for both local and public setups instead of a failure.
+* New: self-signed certificate help - on loopback hosts the connection snippets offer a plain-http variant, with a clear warning against disabling TLS verification.
+* Compatibility: tested with WordPress 7.1.
+
 = 1.6.2 =
 * New: Gutenberg block editing - read any post as a block tree and apply surgical batch edits (update, insert, delete, move, replace) without resending full content.
 * New: block pattern tools - list registered and user patterns, create, update, and delete user patterns (synced or unsynced).

@@ -2,9 +2,9 @@
 Contributors: februality
 Tags: mcp, mcp-server, claude, chatgpt, ai-agent
 Requires at least: 6.2
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,7 +28,7 @@ Cowboy MCP is a full MCP server inside WordPress - Claude Code, Codex, and other
 
 Most WordPress AI plugins let an assistant write blog posts. Cowboy MCP lets your agent actually *run the site*: content, yes, but also the terminal-level work you'd normally stop and do by hand - WP-CLI, files, the database, error logs, and diagnostics. When something breaks, your agent can find it and fix it instead of just apologizing.
 
-Setup guides, the full capability list, and the security model live at [cowboymcp.com](https://cowboymcp.com).
+Setup guides, the full capability list, the security model, and comparisons with Novamira, AI Engine, and other WordPress MCP plugins live at [cowboymcp.com](https://cowboymcp.com).
 
 = What you can do with it =
 
@@ -85,6 +85,10 @@ Yes. When WooCommerce is active, 40 store tools light up: products and variation
 
 Yes, with care. You're handing an AI real control, so Cowboy MCP is built to keep you in charge: keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, and changes can be previewed before they run. Each API key and connection can also be scoped to read-only access or a hand-picked list of tools. If a change turns out wrong, you can usually undo it - or restore the database to an earlier checkpoint - from the Activity tab, and every action is written to an audit log. Review it regularly.
 
+= Is it like Novamira? =
+
+Pretty much - it does what Novamira does, but all of it is free. Every tool is included, there's no Pro tier, and every change your agent makes can be undone. See the full [Cowboy MCP vs Novamira comparison](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira).
+
 = Can I vibe code my WordPress site? =
 
 Yes - that's what it's built for. Your agent can write and edit theme and plugin code in `wp-content`, run WP-CLI, and read the error log to fix what it broke. Take a database checkpoint first (or let auto-checkpoint do it), and every change lands in the undo journal - so vibe coding a live site doesn't have to be a leap of faith.
@@ -108,16 +112,12 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.6.2 =
-* New: Gutenberg block editing - read any post as a block tree and apply surgical batch edits (update, insert, delete, move, replace) without resending full content.
-* New: block pattern tools - list registered and user patterns, create, update, and delete user patterns (synced or unsynced).
-* New: site editor tools - list, read, save, and reset block theme templates and template parts; editing a theme template creates an override you can undo back to the theme's version.
-* New: global styles tools - read and update theme.json user customizations (colors, typography, spacing); navigation listing for block themes.
-* New: all Gutenberg writes are undoable from the Activity tab, with the same raw-HTML safety gate as the Elementor tools.
-* New: per-credential tool scoping - limit any API key or OAuth connection to read-only access or a custom list of tools; existing credentials keep full access until you change them.
-* Security: a credential can never widen its own scope - scope settings are write-protected from the API, even in Power mode.
-* Security: hardened the WP-CLI safety blocklist against shell-quoting and flag-injection bypasses - commands are now tokenized the way the shell parses them before matching.
-* Security: SQL run through WP-CLI is now scanned with MySQL versioned comments unwrapped, and commands that cannot be safely parsed are rejected.
+= 1.6.3 =
+* New: local development, first-class - Cowboy MCP now works just as well on a local site (Local, Studio, MAMP, DevKinsta, and any localhost setup) as on a live one. No public URL or tunnel needed: Claude Code, Cursor, Codex, and Gemini CLI connect with an API key exactly as they do in production, and Claude Desktop connects through a small local bridge.
+* New: the Connection tab recognises local sites and shows, per client, what works locally and what needs a public URL - with a ready-to-copy Claude Desktop config that bridges through mcp-remote (read-only key by default).
+* New: Connection Doctor understands local sites - plain HTTP on a local site passes with local context, and the public-hostname check becomes a warning with fix steps for both local and public setups instead of a failure.
+* New: self-signed certificate help - on loopback hosts the connection snippets offer a plain-http variant, with a clear warning against disabling TLS verification.
+* Compatibility: tested with WordPress 7.1.
 
 = Earlier versions =
 
