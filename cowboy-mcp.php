@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Cowboy MCP - MCP Server with Undo for Claude, ChatGPT, Gemini & Cursor
+ * Plugin Name: Cowboy MCP
  * Plugin URI:  https://cowboymcp.com
  * Description: Exposes your WordPress site as a Model Context Protocol (MCP) server so AI coding agents like Claude Code can read, edit, and manage everything on the site.
  * Version:     1.6.2
