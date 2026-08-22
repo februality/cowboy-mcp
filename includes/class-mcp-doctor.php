@@ -367,6 +367,8 @@ class Cowboy_MCP_Doctor {
 		if ( false !== stripos( $chain, 'litespeed' ) ) {
 			$lines[] = 'Note: LiteSpeed server detected - if LiteSpeed Cache is active, exclude /wp-json/cowboy-mcp/ from caching.';
 		}
+		$lines[] = '';
+		$lines[] = 'Need help? Start a topic at https://wordpress.org/support/plugin/cowboy-mcp/ and paste this report.';
 		return implode( "\n", $lines );
 	}
 

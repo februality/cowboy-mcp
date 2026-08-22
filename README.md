@@ -1,224 +1,187 @@
-# Cowboy MCP 🤠 — WordPress MCP Server for AI Coding Agents
+# Cowboy MCP 🤠 — Free WordPress MCP Server with Undo
 
-Cowboy MCP is a WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so AI coding agents like **Claude Code**, **Codex**, and **Cursor** can manage it — in plain English.
+Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Cursor, Claude Code, Codex, Gemini** and any other MCP client can manage the site in plain English — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
 
-![Version](https://img.shields.io/badge/version-1.4.0-34ff7a)
+![Version](https://img.shields.io/badge/version-1.6.3-34ff7a)
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
+![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)
 
-**Website:** [cowboymcp.com](https://cowboymcp.com) · **Download:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/)
-
-Connect any MCP client that speaks Streamable HTTP over a single authenticated endpoint and manage posts, pages, plugins, themes, users, media, navigation menus, WooCommerce, and much more.
-
-*New in 1.4.0: a one-click OAuth connector for the Claude desktop & web apps — connect with no terminal and no API key. Now available in the WordPress.org plugin directory.*
+**Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/) (one click, auto-updates) · **Try it in your browser:** [Live Preview](https://wordpress.org/plugins/cowboy-mcp/?preview=1) · **Website & guides:** [cowboymcp.com](https://cowboymcp.com) · **Questions:** [support forum](https://wordpress.org/support/plugin/cowboy-mcp/) · **Bugs:** [issues](https://github.com/februality/cowboy-mcp/issues)
 
 ---
 
 ## Why Cowboy MCP?
 
-- **Built for coding agents — and now the Claude apps** — terminal workflows with Claude Code, Codex, Cursor, and any Streamable HTTP MCP client, plus a one-click OAuth connector for the Claude desktop & web apps (no terminal, no API key to paste).
-- **No Node.js proxy** — the MCP endpoint is served natively from WordPress. Unlike adapter-based approaches that run a separate Node bridge to expose remote HTTP, there's nothing extra to install or keep running.
-- **150 tools across core + popular plugins** — full content CRUD plus deep integrations for WooCommerce, ACF, Elementor, Wordfence, and cache plugins.
-- **Context-efficient tool gateway** — instead of dumping 150 tool schemas into your agent's context window, the server fronts them with two meta-tools (`cowboy_discover` / `cowboy_run`); the agent searches for what it needs and runs it on demand.
-- **Secure by default** — bcrypt-hashed API keys (shown once), per-key rate limiting, safe mode for destructive operations, and an always-on audit log.
-- **Zero dependencies** — native WordPress APIs, no Composer, no npm, no build step. Works even on hosts without WP-CLI or `shell_exec()`.
+- **Every tool is free.** Up to **168 tools** — content, Gutenberg/Site Editor, WooCommerce, users, media, menus, plugins, themes, files, database, WP-CLI, diagnostics, SEO, ACF, Elementor, Wordfence, caching, forms — GPL-licensed, no Pro tier, no credits, no usage meter.
+- **Every change is undoable.** A per-change undo journal (before-state snapshots, conflict detection, batch undo) plus one-click database checkpoints, with an always-on audit log. Plugin and theme updates take a file backup and a checkpoint first and auto-restore if the post-update health check fails.
+- **Nothing in the middle.** The MCP endpoint runs inside your WordPress install. No hosted relay, no account, no telemetry — your AI client connects straight to your site.
+- **Safe by default.** Safe mode (confirmation for destructive tools), dry run on every write tool, per-credential read-only/custom scoping, hashed keys shown once, per-key rate limits, denylists for sensitive options / dangerous SQL / WP-CLI commands, SSRF protection, path confinement to `wp-content`, and a Power mode only a human can enable in wp-admin.
+- **Two ways to connect.** A Bearer-token endpoint for terminal agents and editors, and a one-click OAuth 2.1 connector (admin consent, scope choice) for the Claude desktop/web apps and ChatGPT.
+- **Works locally too.** Local, Studio, MAMP, DevKinsta, wp-env: terminal tools connect with a key as on a live site; Claude Desktop connects through an `mcp-remote` bridge the Connection tab generates for you.
+- **Context-efficient.** `tools/list` returns two gateway tools (`cowboy_discover`, `cowboy_run`); the agent discovers and runs the other tools on demand instead of loading 168 schemas into its context.
+- **Zero dependencies.** Native WordPress APIs only — no Composer, no npm, no build step, no `wp-admin/includes` at request time. Works on hosts without WP-CLI or `shell_exec()`.
 
-## Highlights
+> "More access than any other MCP offers, easy to use, LOVE the change journal and the checkpoints — safe if you break something." — WordPress.org review
 
-- **Single REST endpoint** — JSON-RPC 2.0 over Streamable HTTP at `/wp-json/cowboy-mcp/v1/endpoint` (MCP `2025-06-18` spec)
-- **Two ways to connect** — a Bearer-token HTTP endpoint for terminal agents, or a one-click **OAuth custom connector** for the Claude desktop & web apps (RFC 8414 / 9728 discovery, Dynamic Client Registration, admin consent; off by default)
-- **150 tools behind a gateway** — full CRUD for posts, pages, CPTs, taxonomies, comments, options, users, media, and navigation menus, plus WP-CLI, database health checks, diagnostics, and conditional tools for popular plugins — surfaced through `cowboy_discover` / `cowboy_run` so they don't flood the agent's context
-- **17 read-only resources**, **4 resource templates**, and **8 workflow prompts** with argument auto-completion
-- **Secure by default** — bcrypt-hashed API keys, per-key rate limiting, safe mode for destructive operations, and an always-on audit log
-- **Zero dependencies** — no Composer, no npm, no build step, no CDN. Native WordPress APIs, so it works even on hosts without WP-CLI or `shell_exec()`.
+## Tool coverage
+
+| Area | Tools | What the agent can do |
+|---|---:|---|
+| Content | 5 posts/pages/CPTs · 4 taxonomies · 4 comments · 4 media · 6 menus · 1 options | draft, edit, schedule, publish; upload media, fix alt text; build nav menus |
+| Gutenberg & Site Editor | 15 (8 on classic themes) | read a page as a block tree and edit it by path; block types, patterns, FSE templates/parts, global styles, navigations |
+| Site administration | 5 users · 6 plugins · 5 themes · 4 files · 5 database · 3 WP-CLI/system · 1 site health | install/update/delete plugins & themes safely, manage roles, edit files in `wp-content`, repair tables, run WP-CLI |
+| Diagnostics | 10 | error log, HTTP & email tests, hooks, transients, REST routes, thumbnails, rewrite rules, snapshot, Connection Doctor |
+| Safety | 6 rollback · 2 batch/audit | list & undo changes, create/list/restore/delete checkpoints, batch execution, audit-log retrieval |
+| WooCommerce | 40 | products & variations, orders & refunds, customers, coupons, tax/shipping/payment settings, reports |
+| Wordfence | 17 | scans, blocks, firewall, live traffic, activity, settings |
+| ACF / Elementor | 9 / 7 | field groups, fields, repeaters / templates, page content, global styles, widgets |
+| SEO / Cache / Forms | 4 / 4 / 1 | Yoast & Rank Math meta read/write/audit / WP Rocket, LiteSpeed, W3TC / WPForms, Gravity Forms, CF7 |
+
+Plus **17 read-only resources** (incl. `wordpress://tools/catalog`), **4 resource templates** (`wordpress://posts/{id}`, `wordpress://options/{name}`, `wordpress://plugins/{slug}`, `wordpress://users/{id}`) and **8 workflow prompts** with argument auto-completion. Integrations register only when their plugin is active.
 
 ## Requirements
 
-- WordPress **6.2+**
+- WordPress **6.2+** (tested up to 7.1)
 - PHP **8.0+**
+- HTTPS for the OAuth connector and for cloud clients (claude.ai, ChatGPT); plain HTTP is fine for terminal tools on a local site
 
 ## Installation
 
-Install straight from the WordPress.org plugin directory:
+1. **Plugins → Add New**, search for **Cowboy MCP**, install and activate — or download from [WordPress.org](https://wordpress.org/plugins/cowboy-mcp/).
+2. **Settings → Cowboy MCP → Generate API Key**. Copy it — it is shown once and stored hashed.
+3. Connect your client (below). The **Connection** tab shows every snippet pre-filled with your site's endpoint.
 
-1. In WordPress: **Plugins → Add New**, search for **Cowboy MCP**, and click **Install Now**.
-2. **Activate** the plugin.
-3. Go to **Settings → Cowboy MCP** and click **Generate API Key**. Copy the key — it is shown only once.
-
-Updates arrive automatically through the normal WordPress updates screen, served by WordPress.org.
+Updates arrive through the normal WordPress updates screen.
 
 ## Connecting an agent
 
-Cowboy MCP offers two connection styles: a **Bearer-token endpoint** for terminal coding agents, and a **one-click OAuth connector** for the Claude desktop & web apps. The admin **Connection** tab walks you through whichever you pick.
+The endpoint is `https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint` (JSON-RPC 2.0 over Streamable HTTP, MCP `2025-06-18`).
 
-### Claude Code (terminal)
+**Claude Code**
 
 ```bash
-claude mcp add --transport http wordpress \
-  https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
+claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
   --header "Authorization: Bearer YOUR_API_KEY"
 ```
 
-### Codex (terminal)
+**Claude desktop & web, ChatGPT (one-click, no key)** — turn on **Settings → Cowboy MCP → Settings → Desktop Connector**, add the endpoint as a custom connector in the app, approve the consent screen on your site (choose full, read-only or custom access). Requires a public HTTPS site.
 
-Set the key as an environment variable:
+**Claude Desktop on a local site** — use the `mcp-remote` bridge config shown on the Connection tab:
+
+```json
+{
+  "mcpServers": {
+    "your-site": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://yoursite.local/wp-json/cowboy-mcp/v1/endpoint",
+        "--header", "Authorization:${AUTH_HEADER}"],
+      "env": { "AUTH_HEADER": "Bearer YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+**Cursor / Windsurf / Cline / Zed / VS Code** (e.g. `~/.cursor/mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "your-site": {
+      "url": "https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint",
+      "headers": { "Authorization": "Bearer YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+**Codex CLI**
 
 ```bash
 export COWBOY_MCP_API_KEY="YOUR_API_KEY"
+codex mcp add your-site --url https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --bearer-token-env-var COWBOY_MCP_API_KEY
 ```
 
-Then add to `~/.codex/config.toml`:
+**Gemini CLI**
 
-```toml
-[mcp_servers.wordpress]
-url = "https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint"
-bearer_token_env_var = "COWBOY_MCP_API_KEY"
+```bash
+gemini mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
+  --header "Authorization: Bearer YOUR_API_KEY"
 ```
 
-Any MCP client supporting Streamable HTTP with a Bearer token works the same way.
+Any client that speaks Streamable HTTP with a Bearer header works the same way (n8n, Opencode, LibreChat, your own agent). Step-by-step guides per client: [cowboymcp.com](https://cowboymcp.com/guides).
 
-### Claude desktop & web app (one-click OAuth)
+**Quick smoke test with curl**
 
-No terminal and no API key required. Enable it once under **Settings → Cowboy MCP → Settings → Desktop Connector** (it's off by default), then:
-
-1. In the Claude desktop app — or at `claude.ai` — open **Settings → Connectors** and click **Add custom connector**.
-2. Paste your endpoint URL: `https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint`
-3. Claude opens a sign-in page on *your* site. Review the request and click **Allow**.
-
-The connector authenticates as the WordPress admin who approved it, and you can revoke any connected app from the same screen. Requires a public HTTPS site (Anthropic's cloud can't reach localhost) and a Claude **Pro, Max, Team, or Enterprise** plan.
-
-## Capabilities
-
-### Tools
-
-Core tools are always available; plugin-integration tools register only when the matching plugin is active. To keep them from flooding an agent's context window, all tools are reached through two gateway meta-tools — `cowboy_discover` (search or browse by keyword/category) and `cowboy_run` (execute by name) — alongside a `wordpress://tools/catalog` resource that lists every tool with a one-line description. The counts below are the underlying tools available through that gateway.
-
-| Domain | Tools | Examples |
-|---|---:|---|
-| **Core** | 71 | posts/pages/CPT CRUD, taxonomies, comments, nav menus, plugins, themes, options, users & roles, media library, DB health checks, WP-CLI, search-replace, site info, site health, 10 diagnostics, undo journal & checkpoints, batch execution, audit log |
-| **WooCommerce** | 40 | products & variations, orders & refunds, customers, coupons, tax/shipping/gateway settings, sales reports |
-| **Wordfence** | 17 | scans, IP/country blocks, firewall, live traffic, activity log, settings |
-| **ACF** | 9 | field groups, field CRUD, repeater operations |
-| **Elementor** | 7 | templates, page content, global styles, widgets |
-| **Cache** | 4 | provider detect, flush, preload, settings (WP Rocket / LiteSpeed / W3TC) |
-| **SEO** | 1 | provider detection (Yoast / Rank Math) |
-| **Forms** | 1 | provider detection (WPForms / Gravity Forms / CF7) |
-| **Total** | **150** | with every integration active |
-
-### Resources
-
-17 read-only resources (site info, recent posts, plugin/theme lists, WooCommerce summaries, Wordfence status, and more) plus 4 resource templates:
-
-```
-wordpress://posts/{id}
-wordpress://options/{name}
-wordpress://plugins/{slug}
-wordpress://users/{id}
+```bash
+curl -s -X POST https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
+  -H "Authorization: Bearer YOUR_API_KEY" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"cowboy_run","arguments":{"tool":"wp_site_info","arguments":{}}}}'
 ```
 
-### Prompts
+## Safety model
 
-8 guided workflow prompts: `wordpress-site-audit`, `content-migration`, `seo-optimization`, `woocommerce-store-setup`, `troubleshoot-issue`, `bulk-content-update`, `security-hardening`, `performance-optimization`.
+- **Safe mode** (default on): tools annotated `destructiveHint` refuse to run until the call is resent with `confirm: true`; the refusal includes a preview.
+- **Dry run**: every non-read-only tool accepts `dry_run: true` and reports exactly what would change.
+- **Undo journal**: before-state snapshots for journaled changes (posts, options, users, media, menus, terms, comments, WooCommerce objects, SEO meta, Gutenberg/FSE edits, search-replace rows, plugin/theme packages); `wp_list_changes` / `wp_undo_change`, batch undo, conflict detection, redo-on-undo; 7-day retention by default.
+- **Database checkpoints**: prefix-scoped dump of the site's tables, atomic restore; up to 5 kept; taken automatically before plugin/theme updates and mutating WP-CLI commands. Checkpoints restore tables, not uploaded files or code.
+- **Audit log**: every tool call, error and auth event in `{prefix}cowboy_mcp_audit_log` (key, tool, arguments, result, IP); pruned after 30 days; secrets redacted on read.
+- **Scoped credentials**: API keys and OAuth connections carry `{mode: full|read_only|custom, allowed_tools[]}`; enforced at dispatch, also for tools called through `cowboy_run` and batches. `readOnlyHint` is treated as a security boundary.
+- **Keys & limits**: keys stored as one-way hashes, shown once, revocable individually; per-key rate limit (120/min default); request `Origin` allowlist; OAuth tokens stored hashed, off by default, admin consent required.
+- **Guardrails**: protected-option denylist (`siteurl`, `active_plugins`, credentials, the plugin's own settings…), dangerous-SQL and WP-CLI blocklists (`eval`, `shell`, `db drop`, …) applied on a shell-style tokenizer, SSRF validation on outbound requests, `wp-content` path confinement with atomic writes, self-delete and last-administrator protection.
+- **Power mode**: an admin-only checkbox that lifts the curated guardrails for one-off jobs; it can never be enabled through the API, and it never lifts credential-option protection, secret redaction or self-protection.
+- **Connection Doctor**: one-click self-test (HTTPS, reachability, REST, OAuth discovery, host blockers such as Cloudflare challenges, ModSecurity-style WAFs, LiteSpeed caching) with fingerprinted causes and fixes; also `wp cowboy-mcp doctor` and the `wp_connection_doctor` tool.
 
-## FAQ
+## How it compares
 
-### What is a WordPress MCP server?
-
-A WordPress MCP server exposes your site's management capabilities through the Model Context Protocol — the open standard AI agents use to call tools. Cowboy MCP implements one as a plugin: it serves a single Streamable HTTP endpoint that lets agents like Claude Code read, create, update, and delete WordPress content securely.
-
-### How do I connect Claude Code to WordPress?
-
-Install Cowboy MCP, generate an API key under **Settings → Cowboy MCP**, then run `claude mcp add --transport http wordpress https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"`. Claude Code can then manage posts, plugins, themes, WooCommerce, and more by calling Cowboy MCP's tools over the MCP protocol.
-
-### Can I connect the Claude desktop or web app without a terminal?
-
-Yes. Enable the **Desktop Connector** once under **Settings → Cowboy MCP → Settings** (it's off by default), then in Claude open **Settings → Connectors → Add custom connector** and paste your endpoint URL. Claude sends you to a sign-in page on your own site; click **Allow** and you're connected — no API key to copy. It needs a public HTTPS site and a Claude Pro/Max/Team/Enterprise plan.
-
-### Does Cowboy MCP work with WooCommerce?
-
-Yes. When WooCommerce is active, Cowboy MCP registers 40 extra tools for products and variations, orders and refunds, customers, coupons, tax/shipping/gateway settings, and sales reports — using WooCommerce's own CRUD classes rather than raw SQL. Tools for ACF, Elementor, Wordfence, and cache plugins register automatically the same way.
-
-### Do I need Node.js or WP-CLI?
-
-No. Cowboy MCP serves the MCP endpoint natively from WordPress with zero external dependencies — no Node.js bridge, no Composer, no build step. It uses core WordPress APIs, so it works even on managed hosts that disable `shell_exec()` or lack WP-CLI. WP-CLI remains an optional power-user escape hatch when present.
-
-### Is it safe to give an AI agent access to my site?
-
-You're granting real control, so Cowboy MCP is built defensively. API keys are bcrypt-hashed and shown once, every request is rate-limited, safe mode requires explicit confirmation for destructive actions, and every tool call is recorded in an audit log. Sensitive options, dangerous SQL, and SSRF attempts are blocked by default.
-
-### Which AI agents are supported?
-
-Any MCP client that supports Streamable HTTP with a Bearer token — including Claude Code, Codex, and Cursor — point the agent at your site's URL and supply the API key. The **Claude desktop and web apps** can also connect with no terminal and no API key via the optional OAuth custom connector. More agents add MCP support regularly.
-
-## Security
-
-You are granting an AI agent significant control over your site. Cowboy MCP is built to keep that safe:
-
-- **Authentication** — API keys are bcrypt-hashed (`wp_hash_password()`) and never stored in plain text. Keys are shown once at generation and can be revoked individually.
-- **Rate limiting** — per-key, per-minute window (default 120/min).
-- **Safe mode** *(on by default)* — destructive tools (delete posts, drop tables, write-mode WP-CLI, etc.) require an explicit `confirm: true`.
-- **Dry run** — non-read-only tools accept a `dry_run` parameter to preview changes.
-- **Audit log** — every tool call, error, and auth event is recorded in a database table with automatic 30-day pruning. Sensitive fields are redacted.
-- **Guardrails** — option blocklist for sensitive settings, SQL blocklist for dangerous DDL, WP-CLI command blocklist, SSRF protection on outbound requests, `wp-content` path confinement for file ops, and self-delete protection.
-- **OAuth connector** *(off by default)* — when enabled, access is granted only after an admin clicks **Allow** in a consent screen. Tokens are stored as SHA-256 hashes, carry an audience bound to your site (RFC 8707), and authenticate as the approving admin — if that user loses `manage_options`, the token fails closed. Enabling OAuth never lifts the settings/credential write-protection.
-
-### Power mode
-
-An **admin-only, opt-in** setting (off by default) that lifts a curated set of hard guardrails for advanced users (WP-CLI/SQL blocklists, sensitive-option writes, path confinement, SSRF protection). It can **only** be enabled by a human in `wp-admin` — the agent can never enable it through the API.
-
-Power mode **never** lifts credential protections: writes to API keys / plugin settings and other credential options stay blocked, secret-touching DB queries stay blocked, result/secret redaction stays on, and self-delete protection remains.
-
-## Configuration
-
-Settings live under **Settings → Cowboy MCP** (`cowboy_mcp_settings` option):
-
-| Setting | Default | Purpose |
-|---|---|---|
-| `enabled` | `true` | Master on/off switch for the MCP endpoint |
-| `safe_mode` | `true` | Require `confirm: true` for destructive tools |
-| `power_mode` | `false` | Lift curated guardrails (admin-only opt-in) |
-| `allowed_tools` | `all` | Restrict which tools are exposed |
-| `log_requests` | `false` | Also mirror audit entries to `error_log()` |
-| `rate_limit` | `120` | Requests per key, per minute |
-| `oauth_enabled` | `false` | Enable the OAuth custom connector for the Claude desktop & web apps |
-
-## Updates
-
-Cowboy MCP is distributed through the [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/), so updates arrive automatically through WordPress's native update system — new versions appear on your Plugins and Updates screens, with the usual per-plugin auto-update toggle.
-
-## Extensibility
-
-Two filters let you customize the tool surface:
-
-```php
-// Add custom tool definitions.
-add_filter( 'cowboy_mcp_tools', function ( $tools ) { /* … */ return $tools; } );
-
-// Block specific tools per request.
-add_filter( 'cowboy_mcp_tool_allowed', function ( $allowed, $tool_name ) { /* … */ return $allowed; }, 10, 2 );
-```
+Factual, dated comparisons live on the site: [all WordPress MCP plugins compared](https://cowboymcp.com/compare) · [vs Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira) · [vs AI Engine](https://cowboymcp.com/compare/cowboy-mcp-vs-ai-engine) · [vs WPVibe](https://cowboymcp.com/compare/cowboy-mcp-vs-wpvibe) · [vs InstaWP](https://cowboymcp.com/compare/cowboy-mcp-vs-instawp) · [vs the WordPress MCP Adapter](https://cowboymcp.com/compare/cowboy-mcp-vs-wordpress-mcp-adapter) · [self-hosted vs hosted](https://cowboymcp.com/compare/self-hosted-vs-hosted-wordpress-mcp). Short version: the endpoint is self-hosted with no relay or metering, every tool is free, and undo + checkpoints + audit log ship together.
 
 ## Architecture
 
-A single-endpoint MCP server built on the WordPress REST API. No autoloader — classes are required from the entry point; tools are split into lazily-loaded domain files under `includes/tools/`.
-
 ```
-cowboy-mcp.php          Entry point — constants, requires, lifecycle hooks
+cowboy-mcp.php                 # entry point, constants, activation/uninstall
 includes/
-  class-mcp-transport.php   REST route, JSON-RPC dispatch, sessions
-  class-mcp-auth.php        API keys, Bearer validation, rate limiting
-  class-mcp-oauth.php       OAuth 2.1 server (discovery, DCR, consent, tokens)
-  class-mcp-tools.php       Tool registry + cowboy_discover/cowboy_run gateway, dispatch, dry-run/safe-mode gating
-  class-mcp-resources.php   Read-only resources + templates
-  class-mcp-prompts.php     Workflow prompts
-  class-mcp-audit-log.php   DB-backed audit log
-  class-mcp-security.php    Shared guardrails (blocklists, redaction, power mode)
-  tools/                    Domain tool files (core, woocommerce, acf, …)
-admin/
-  class-mcp-admin.php       Settings page
+  class-mcp-transport.php      # REST route, JSON-RPC dispatch, sessions (Streamable HTTP)
+  class-mcp-auth.php           # API keys (hashed), Bearer validation, rate limits, Origin allowlist
+  class-mcp-oauth.php          # OAuth 2.1 authorization server (discovery, DCR, consent, tokens)
+  class-mcp-security.php       # denylists, SSRF, SQL/WP-CLI gates, scoping, secret scrubbing
+  class-mcp-tools.php          # registry, gateway meta-tools, dispatch, lazy domain loading
+  class-mcp-rollback.php       # undo journal   class-mcp-checkpoint.php  # DB checkpoints
+  class-mcp-audit-log.php      # audit table    class-mcp-installer.php   # WP.org package installer
+  class-mcp-doctor.php         # Connection Doctor   class-mcp-compat.php  # admin-free reimplementations
+  class-mcp-resources.php / class-mcp-prompts.php / class-mcp-completion.php
+  tools/{core,gutenberg,acf,woocommerce,seo,forms,cache,elementor,wordfence}/
+admin/                         # settings page (Connection, Settings, Activity, Logs, About), assets
+languages/                     # 12 bundled locales for the admin UI (ru, uk, zh_CN, ja, ko, es, fr, de, pt_BR, it, hi, id)
 ```
+
+Tool descriptions and error messages returned to agents are intentionally English; the admin UI is translated.
+
+### Extensibility
+
+- `cowboy_mcp_tools` filter — register your own tool definitions and handlers.
+- `cowboy_mcp_tool_allowed` filter — block specific tools per request.
+- `cowboy_mcp_allowed_origins` filter — extend the request `Origin` allowlist.
+
+## Development
+
+```bash
+npx wp-env start          # local WordPress at http://localhost:8890 with this checkout mounted as the plugin
+CLI="$(docker container ls -q --filter 'name=^[0-9a-f]+-cli-1$')"
+docker exec "$CLI" wp plugin check cowboy-mcp --format=csv   # Plugin Check (install it in wp-env first)
+find . -name '*.php' -not -path './node_modules/*' -exec php -l {} +  # syntax check
+```
+
+No build step. Pull requests welcome — keep the WordPress.org review invariants (no `wp-admin/includes` requires, no path constants, prepared/validated `$wpdb` queries, escaped output).
+
+## Support, reviews, security
+
+- **Questions and connection problems:** the [WordPress.org support forum](https://wordpress.org/support/plugin/cowboy-mcp/) — paste your Connection Doctor report; topics are usually answered within a day.
+- **Bugs and feature requests:** [GitHub issues](https://github.com/februality/cowboy-mcp/issues).
+- **Security issues:** please report privately through this repository's Security tab (private vulnerability reporting) rather than a public issue.
+- **Reviews:** if Cowboy MCP saves you time, a [review on WordPress.org](https://wordpress.org/support/plugin/cowboy-mcp/reviews/#new-post) helps other site owners find it.
 
 ## License
 
-[GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html). Cowboy MCP is free software.
+GPL-2.0-or-later. © Andrew Ivanov ([februality](https://profiles.wordpress.org/februality/)).

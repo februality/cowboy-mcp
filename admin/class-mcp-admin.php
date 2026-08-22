@@ -469,6 +469,20 @@ class Cowboy_MCP_Admin {
                             <span class="mcp-res-sub"><?php esc_html_e( 'Source, issues & releases.', 'cowboy-mcp' ); ?></span>
                         </span>
                     </a>
+                    <a class="mcp-res-card" href="https://wordpress.org/support/plugin/cowboy-mcp/" target="_blank" rel="noopener noreferrer">
+                        <span class="mcp-res-ic" aria-hidden="true">&#x1f4ac;</span>
+                        <span class="mcp-res-body">
+                            <span class="mcp-res-title"><?php esc_html_e( 'Get help', 'cowboy-mcp' ); ?> &rarr;</span>
+                            <span class="mcp-res-sub"><?php esc_html_e( 'Ask in the WordPress.org support forum. Paste your Connection Doctor report for a fast answer.', 'cowboy-mcp' ); ?></span>
+                        </span>
+                    </a>
+                    <a class="mcp-res-card" href="https://wordpress.org/support/plugin/cowboy-mcp/reviews/#new-post" target="_blank" rel="noopener noreferrer">
+                        <span class="mcp-res-ic" aria-hidden="true">&#x2b50;</span>
+                        <span class="mcp-res-body">
+                            <span class="mcp-res-title"><?php esc_html_e( 'Leave a review', 'cowboy-mcp' ); ?> &rarr;</span>
+                            <span class="mcp-res-sub"><?php esc_html_e( 'Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find it.', 'cowboy-mcp' ); ?></span>
+                        </span>
+                    </a>
                 </div>
 
                 <p class="mcp-about-foot"><?php
@@ -527,6 +541,7 @@ class Cowboy_MCP_Admin {
             <p><?php esc_html_e( 'Test whether AI clients can reach this site and get a copy-pasteable diagnosis for anything broken.', 'cowboy-mcp' ); ?></p>
             <button type="button" class="button button-secondary" id="cowboy-doctor-run"><?php esc_html_e( 'Run checks', 'cowboy-mcp' ); ?></button>
             <button type="button" class="button" id="cowboy-doctor-copy" hidden><?php esc_html_e( 'Copy report', 'cowboy-mcp' ); ?></button>
+            <a class="button" id="cowboy-doctor-help" href="https://wordpress.org/support/plugin/cowboy-mcp/" target="_blank" rel="noopener noreferrer" hidden><?php esc_html_e( 'Get help on WordPress.org', 'cowboy-mcp' ); ?> &#x2197;</a>
             <div id="cowboy-doctor-results" aria-live="polite"></div>
         </div>
         <?php

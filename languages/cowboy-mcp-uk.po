@@ -4,15 +4,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.1\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-18 12:05-0700\n"
-"PO-Revision-Date: 2026-07-08 15:32-0700\n"
+"POT-Creation-Date: 2026-08-22 00:50-0700\n"
+"PO-Revision-Date: 2026-08-22 00:55-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Domain: cowboy-mcp\n"
 
 #: admin/class-mcp-admin.php:28 admin/class-mcp-admin.php:29
@@ -71,15 +72,13 @@ msgstr "Налаштування збережено."
 msgid "Audit log cleared."
 msgstr "Журнал аудиту очищено."
 
-#. translators: 1: change ID number, 2: optional note appended after the
-#. message
+#. translators: 1: change ID number, 2: optional note appended after the message
 #: admin/class-mcp-admin.php:273
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Зміну №%1$d скасовано.%2$s"
 
-#. translators: 1: number of entries undone, 2: total number of entries in the
-#. batch
+#. translators: 1: number of entries undone, 2: total number of entries in the batch
 #: admin/class-mcp-admin.php:288
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
@@ -91,8 +90,7 @@ msgstr "Скасовано записів пакета: %1$d з %2$d."
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Контрольну точку №%1$d створено (%2$s)."
 
-#. translators: 1: restored checkpoint ID number, 2: pre-restore safety
-#. checkpoint ID number
+#. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
 #: admin/class-mcp-admin.php:316
 #, php-format
 msgid ""
@@ -112,9 +110,9 @@ msgid ""
 "<strong>Codex</strong> to this WordPress site over the Model Context "
 "Protocol."
 msgstr ""
-"Підключіть ШІ-агентів, таких як <strong>Claude</strong>, "
-"<strong>ChatGPT</strong> чи <strong>Codex</strong>, до цього сайту WordPress "
-"через протокол Model Context Protocol."
+"Підключіть ШІ-агентів, таких як <strong>Claude</strong>, <strong>ChatGPT</"
+"strong> чи <strong>Codex</strong>, до цього сайту WordPress через протокол "
+"Model Context Protocol."
 
 #: admin/class-mcp-admin.php:416
 msgid "Connection"
@@ -167,17 +165,41 @@ msgstr "GitHub"
 msgid "Source, issues & releases."
 msgstr "Вихідний код, задачі та релізи."
 
+#: admin/class-mcp-admin.php:475
+msgid "Get help"
+msgstr "Отримати допомогу"
+
+#: admin/class-mcp-admin.php:476
+msgid ""
+"Ask in the WordPress.org support forum. Paste your Connection Doctor report "
+"for a fast answer."
+msgstr ""
+"Поставте запитання на форумі підтримки WordPress.org. Вставте звіт "
+"«Діагностика підключення», щоб швидше отримати відповідь."
+
+#: admin/class-mcp-admin.php:482
+msgid "Leave a review"
+msgstr "Залишити відгук"
+
+#: admin/class-mcp-admin.php:483
+msgid ""
+"Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
+"it."
+msgstr ""
+"Подобається Cowboy MCP? Відгук на WordPress.org допоможе іншим власникам "
+"сайтів знайти плагін."
+
 #. translators: %s: plugin version number
-#: admin/class-mcp-admin.php:477
+#: admin/class-mcp-admin.php:491
 #, php-format
 msgid "v%s · GPL-2.0"
 msgstr "v%s · GPL-2.0"
 
-#: admin/class-mcp-admin.php:499
+#: admin/class-mcp-admin.php:513
 msgid "Which app do you want to connect?"
 msgstr "Який застосунок ви хочете підключити?"
 
-#: admin/class-mcp-admin.php:500
+#: admin/class-mcp-admin.php:514
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -185,11 +207,11 @@ msgstr ""
 "Виберіть зі списку ШІ-застосунок або інструмент для програмування, щоб "
 "побачити покрокові інструкції з налаштування."
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:540
 msgid "Connection Doctor"
 msgstr "Діагностика підключення"
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:541
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -197,42 +219,46 @@ msgstr ""
 "Перевірте, чи можуть ШІ-клієнти отримати доступ до цього сайту, і отримайте "
 "готову для копіювання діагностику будь-яких несправностей."
 
-#: admin/class-mcp-admin.php:528
+#: admin/class-mcp-admin.php:542
 msgid "Run checks"
 msgstr "Запустити перевірку"
 
-#: admin/class-mcp-admin.php:529
+#: admin/class-mcp-admin.php:543
 msgid "Copy report"
 msgstr "Скопіювати звіт"
 
-#: admin/class-mcp-admin.php:540
+#: admin/class-mcp-admin.php:544
+msgid "Get help on WordPress.org"
+msgstr "Отримати допомогу на WordPress.org"
+
+#: admin/class-mcp-admin.php:555
 msgid "No terminal needed"
 msgstr "Термінал не потрібен"
 
-#: admin/class-mcp-admin.php:541
+#: admin/class-mcp-admin.php:556
 msgid "Terminal & IDE tools"
 msgstr "Інструменти термінала та IDE"
 
-#: admin/class-mcp-admin.php:545
+#: admin/class-mcp-admin.php:560
 msgid "AI clients"
 msgstr "ШІ-клієнти"
 
-#: admin/class-mcp-admin.php:568
+#: admin/class-mcp-admin.php:583
 msgid "Needs public URL"
 msgstr "Потрібен публічний URL"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:585
 msgid "Works locally"
 msgstr "Працює локально"
 
-#: admin/class-mcp-admin.php:590
+#: admin/class-mcp-admin.php:605
 msgid ""
 "Site actually on a public HTTPS address? Use the cloud connector instead"
 msgstr ""
 "Сайт усе ж доступний за публічною HTTPS-адресою? Скористайтеся хмарним "
 "конектором"
 
-#: admin/class-mcp-admin.php:623 admin/class-mcp-admin.php:730
+#: admin/class-mcp-admin.php:638 admin/class-mcp-admin.php:745
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. ChatGPT connects from OpenAI's cloud, so it cannot reach local, "
@@ -244,19 +270,19 @@ msgstr ""
 "локальних, приватних сайтів або сайтів без HTTPS. Тут підійде інструмент "
 "термінала або підключення через тунель чи тестовий URL."
 
-#: admin/class-mcp-admin.php:624 admin/class-mcp-admin.php:731
+#: admin/class-mcp-admin.php:639 admin/class-mcp-admin.php:746
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
-"address. The Claude apps connect from Anthropic's cloud, so they cannot reach"
-" local, private, or non-HTTPS sites. A terminal tool works here instead, or "
-"connect through a tunnel/staging URL."
+"address. The Claude apps connect from Anthropic's cloud, so they cannot "
+"reach local, private, or non-HTTPS sites. A terminal tool works here "
+"instead, or connect through a tunnel/staging URL."
 msgstr ""
 "<strong>Увага:</strong> схоже, цей сайт не розміщено за публічною адресою "
 "HTTPS. Застосунки Claude підключаються з хмари Anthropic, тому не можуть "
 "отримати доступ до локальних, приватних сайтів або сайтів без HTTPS. Тут "
 "підійде інструмент термінала або підключення через тунель чи тестовий URL."
 
-#: admin/class-mcp-admin.php:626
+#: admin/class-mcp-admin.php:641
 msgid ""
 "This opens a secure sign-in so ChatGPT can connect without a terminal. No "
 "access is granted until you approve it in your browser."
@@ -264,7 +290,7 @@ msgstr ""
 "Відкриється безпечний вхід, щоб ChatGPT міг підключитися без термінала. "
 "Доступ не надається, доки ви не підтвердите його у браузері."
 
-#: admin/class-mcp-admin.php:627
+#: admin/class-mcp-admin.php:642
 msgid ""
 "This opens a secure sign-in so the Claude apps can connect without a "
 "terminal. No access is granted until you approve it in your browser."
@@ -272,37 +298,37 @@ msgstr ""
 "Відкриється безпечний вхід, щоб застосунки Claude могли підключитися без "
 "термінала. Доступ не надається, доки ви не підтвердите його у браузері."
 
-#: admin/class-mcp-admin.php:629
+#: admin/class-mcp-admin.php:644
 msgid "You'll paste this into ChatGPT in the next step."
 msgstr "Ви вставите це у ChatGPT на наступному кроці."
 
-#: admin/class-mcp-admin.php:630
+#: admin/class-mcp-admin.php:645
 msgid "You'll paste this into Claude in the next step."
 msgstr "Ви вставите це у Claude на наступному кроці."
 
-#: admin/class-mcp-admin.php:632
+#: admin/class-mcp-admin.php:647
 msgid "Add it in ChatGPT"
 msgstr "Додайте це у ChatGPT"
 
-#: admin/class-mcp-admin.php:633
+#: admin/class-mcp-admin.php:648
 msgid "Add it in the Claude app"
 msgstr "Додайте це у застосунку Claude"
 
-#: admin/class-mcp-admin.php:634
+#: admin/class-mcp-admin.php:649
 msgid "Add it on claude.ai"
 msgstr "Додайте це на claude.ai"
 
-#: admin/class-mcp-admin.php:637
+#: admin/class-mcp-admin.php:652
 msgid ""
-"ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is"
-" asking for and click <strong>Approve</strong>. That is it — you are "
+"ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
+"is asking for and click <strong>Approve</strong>. That is it — you are "
 "connected."
 msgstr ""
 "ChatGPT відкриє сторінку входу на <strong>вашому сайті</strong>. Перегляньте "
 "запитувані дозволи та натисніть <strong>Підтвердити</strong>. Готово — вас "
 "підключено."
 
-#: admin/class-mcp-admin.php:638
+#: admin/class-mcp-admin.php:653
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
 "asking for and click <strong>Approve</strong>. That is it — you are "
@@ -312,52 +338,52 @@ msgstr ""
 "запитувані дозволи та натисніть <strong>Підтвердити</strong>. Готово — вас "
 "підключено."
 
-#: admin/class-mcp-admin.php:640
+#: admin/class-mcp-admin.php:655
 msgid ""
-"Custom connectors require a paid ChatGPT plan with <strong>Developer "
-"mode</strong> (beta) enabled."
+"Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
+"strong> (beta) enabled."
 msgstr ""
 "Користувацькі конектори потребують платного тарифу ChatGPT з увімкненим "
 "<strong>Developer mode</strong> (бета)."
 
-#: admin/class-mcp-admin.php:641
+#: admin/class-mcp-admin.php:656
 msgid ""
-"Custom connectors require a Claude <strong>Pro, Max, Team, or "
-"Enterprise</strong> plan."
+"Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
+"strong> plan."
 msgstr ""
 "Користувацькі конектори потребують тарифу Claude <strong>Pro, Max, Team або "
 "Enterprise</strong>."
 
-#: admin/class-mcp-admin.php:657
+#: admin/class-mcp-admin.php:672
 msgid "Turn on the Desktop Connector"
 msgstr "Увімкніть Desktop Connector"
 
-#: admin/class-mcp-admin.php:663
+#: admin/class-mcp-admin.php:678
 msgid "Enable Desktop Connector"
 msgstr "Увімкнути Desktop Connector"
 
-#: admin/class-mcp-admin.php:674
+#: admin/class-mcp-admin.php:689
 msgid "Copy your connection link"
 msgstr "Скопіюйте посилання для підключення"
 
-#: admin/class-mcp-admin.php:681
+#: admin/class-mcp-admin.php:696
 msgid "Copy connector URL"
 msgstr "Скопіювати URL конектора"
 
-#: admin/class-mcp-admin.php:681 admin/class-mcp-admin.php:773
-#: admin/class-mcp-admin.php:821 admin/class-mcp-admin.php:864
-#: admin/class-mcp-admin.php:906
+#: admin/class-mcp-admin.php:696 admin/class-mcp-admin.php:788
+#: admin/class-mcp-admin.php:836 admin/class-mcp-admin.php:879
+#: admin/class-mcp-admin.php:921
 msgid "Copy"
 msgstr "Копіювати"
 
-#: admin/class-mcp-admin.php:693
+#: admin/class-mcp-admin.php:708
 msgid ""
 "Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
 msgstr ""
 "Перейдіть на <code>chatgpt.com</code> (або відкрийте настільний застосунок "
 "ChatGPT) та увійдіть."
 
-#: admin/class-mcp-admin.php:694
+#: admin/class-mcp-admin.php:709
 msgid ""
 "Go to <code>Settings → Connectors → Advanced</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
@@ -365,12 +391,12 @@ msgstr ""
 "Перейдіть у <code>Settings → Connectors → Advanced</code> та увімкніть "
 "<strong>Developer mode</strong> (одноразово)."
 
-#: admin/class-mcp-admin.php:695
+#: admin/class-mcp-admin.php:710
 msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
 msgstr ""
 "Повернувшись у <code>Connectors</code>, натисніть <strong>Create</strong>."
 
-#: admin/class-mcp-admin.php:696
+#: admin/class-mcp-admin.php:711
 msgid ""
 "Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
 "Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
@@ -379,35 +405,35 @@ msgstr ""
 "встановіть Authentication у <strong>OAuth</strong> та натисніть "
 "<strong>Create</strong>."
 
-#: admin/class-mcp-admin.php:699
+#: admin/class-mcp-admin.php:714
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
 msgstr "Відкрийте настільний застосунок <strong>Claude</strong> та увійдіть."
 
-#: admin/class-mcp-admin.php:701
+#: admin/class-mcp-admin.php:716
 msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "Перейдіть на <code>claude.ai</code> у браузері та увійдіть."
 
-#: admin/class-mcp-admin.php:703
+#: admin/class-mcp-admin.php:718
 msgid "Go to <code>Customize → Connections</code>."
 msgstr "Перейдіть у <code>Customize → Connections</code>."
 
-#: admin/class-mcp-admin.php:704
+#: admin/class-mcp-admin.php:719
 msgid "Click <strong>Add custom connector</strong>."
 msgstr "Натисніть <strong>Add custom connector</strong>."
 
-#: admin/class-mcp-admin.php:705
+#: admin/class-mcp-admin.php:720
 msgid "Paste the link from step 1 and click <strong>Add</strong>."
 msgstr "Вставте посилання з кроку 1 та натисніть <strong>Add</strong>."
 
-#: admin/class-mcp-admin.php:714
+#: admin/class-mcp-admin.php:729
 msgid "Approve access"
 msgstr "Підтвердьте доступ"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:750
 msgid "What works on a local site:"
 msgstr "Що працює на локальному сайті:"
 
-#: admin/class-mcp-admin.php:737
+#: admin/class-mcp-admin.php:752
 msgid ""
 "<strong>Terminal tools</strong> (Claude Code, Codex, Cursor, Gemini CLI) — "
 "connect right now, no public URL needed. Pick one in the sidebar."
@@ -416,7 +442,7 @@ msgstr ""
 "CLI) — підключаються просто зараз, публічна URL-адреса не потрібна. Виберіть "
 "один у бічній панелі."
 
-#: admin/class-mcp-admin.php:738
+#: admin/class-mcp-admin.php:753
 msgid ""
 "<strong>Claude Desktop</strong> — connects through a local bridge that runs "
 "on this computer. Pick it in the sidebar for instructions."
@@ -425,11 +451,11 @@ msgstr ""
 "працює на цьому комп'ютері. Виберіть його в бічній панелі, щоб побачити "
 "інструкції."
 
-#: admin/class-mcp-admin.php:739
+#: admin/class-mcp-admin.php:754
 msgid ""
-"<strong>claude.ai and ChatGPT</strong> — cloud-only: they need a public HTTPS"
-" address. A tunnel (e.g. ngrok or Cloudflare Tunnel) works temporarily, but "
-"it exposes your entire dev site to the internet while it runs, and the "
+"<strong>claude.ai and ChatGPT</strong> — cloud-only: they need a public "
+"HTTPS address. A tunnel (e.g. ngrok or Cloudflare Tunnel) works temporarily, "
+"but it exposes your entire dev site to the internet while it runs, and the "
 "WordPress Site Address must be set to the tunnel URL for the sign-in to work."
 msgstr ""
 "<strong>claude.ai та ChatGPT</strong> — лише хмара: їм потрібна публічна "
@@ -437,7 +463,7 @@ msgstr ""
 "тимчасово, але поки він працює, увесь ваш дев-сайт відкритий в інтернет, а "
 "щоб вхід працював, адресу сайту WordPress треба змінити на URL тунелю."
 
-#: admin/class-mcp-admin.php:758
+#: admin/class-mcp-admin.php:773
 msgid ""
 "This site runs on your computer, so the cloud connector cannot reach it. "
 "Connect Claude Desktop through a <strong>local bridge</strong> instead: a "
@@ -449,11 +475,11 @@ msgstr ""
 "невеликий помічник, який працює на цьому комп'ютері та передає запити Claude "
 "Desktop до сайту. В інтернет нічого не відкривається."
 
-#: admin/class-mcp-admin.php:766
+#: admin/class-mcp-admin.php:781
 msgid "Add the bridge to Claude Desktop"
 msgstr "Додайте міст у Claude Desktop"
 
-#: admin/class-mcp-admin.php:769
+#: admin/class-mcp-admin.php:784
 msgid ""
 "Add this to <code>claude_desktop_config.json</code> (create the file if it "
 "does not exist), then fully quit and restart the Claude app:"
@@ -461,32 +487,32 @@ msgstr ""
 "Додайте це у <code>claude_desktop_config.json</code> (створіть файл, якщо "
 "його немає), потім повністю закрийте та знову запустіть застосунок Claude:"
 
-#: admin/class-mcp-admin.php:773 admin/class-mcp-admin.php:821
-#: admin/class-mcp-admin.php:906
+#: admin/class-mcp-admin.php:788 admin/class-mcp-admin.php:836
+#: admin/class-mcp-admin.php:921
 msgid "Copy setup command"
 msgstr "Скопіювати команду налаштування"
 
-#: admin/class-mcp-admin.php:774
+#: admin/class-mcp-admin.php:789
 msgid ""
-"macOS: <code>~/Library/Application "
-"Support/Claude/claude_desktop_config.json</code> — Windows: "
-"<code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
+"macOS: <code>~/Library/Application Support/Claude/"
+"claude_desktop_config.json</code> — Windows: <code>%APPDATA%"
+"\\Claude\\claude_desktop_config.json</code>"
 msgstr ""
-"macOS: <code>~/Library/Application "
-"Support/Claude/claude_desktop_config.json</code> — Windows: "
-"<code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
+"macOS: <code>~/Library/Application Support/Claude/"
+"claude_desktop_config.json</code> — Windows: <code>%APPDATA%"
+"\\Claude\\claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin.php:775
+#: admin/class-mcp-admin.php:790
 msgid ""
 "Requires Node.js on this computer — the bridge is the standard open-source "
 "<code>mcp-remote</code> package, started on demand via <code>npx</code>. It "
 "connects only from your computer to this site."
 msgstr ""
 "Потрібен Node.js на цьому комп'ютері — міст є стандартним відкритим пакетом "
-"<code>mcp-remote</code>, який запускається за потреби через <code>npx</code>."
-" Він з'єднує лише ваш комп'ютер із цим сайтом."
+"<code>mcp-remote</code>, який запускається за потреби через <code>npx</"
+"code>. Він з'єднує лише ваш комп'ютер із цим сайтом."
 
-#: admin/class-mcp-admin.php:776
+#: admin/class-mcp-admin.php:791
 msgid ""
 "Your API key is stored in plain text in that file, so prefer a <strong>read-"
 "only</strong> key unless this connection needs to make changes — and revoke "
@@ -496,12 +522,12 @@ msgstr ""
 "ключ <strong>лише для читання</strong>, якщо цьому підключенню не потрібно "
 "вносити зміни, — і відкличте його тут, коли перестанете ним користуватися."
 
-#: admin/class-mcp-admin.php:787 admin/class-mcp-admin.php:949
+#: admin/class-mcp-admin.php:802 admin/class-mcp-admin.php:964
 msgid "Check it worked"
 msgstr "Перевірте, що все працює"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:792
+#: admin/class-mcp-admin.php:807
 #, php-format
 msgid ""
 "Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> "
@@ -509,20 +535,20 @@ msgid ""
 "downloads."
 msgstr ""
 "Відкрийте новий чат у Claude Desktop і натисніть значок інструментів — у "
-"списку має з'явитися <code>%s</code>. Перший запуск може тривати трохи довше,"
-" поки завантажується міст."
+"списку має з'явитися <code>%s</code>. Перший запуск може тривати трохи "
+"довше, поки завантажується міст."
 
-#: admin/class-mcp-admin.php:815
+#: admin/class-mcp-admin.php:830
 msgid "Getting a certificate error?"
 msgstr "Помилка сертифіката?"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:832
 msgid ""
-"Local sites usually use a self-signed certificate that AI tools reject. Since"
-" this site runs on this same computer, you can use the plain "
+"Local sites usually use a self-signed certificate that AI tools reject. "
+"Since this site runs on this same computer, you can use the plain "
 "<code>http://</code> address instead — the connection never leaves your "
-"machine. Avoid the <code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> workaround you"
-" may see online: it disables certificate checks for everything that tool "
+"machine. Avoid the <code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> workaround "
+"you may see online: it disables certificate checks for everything that tool "
 "connects to."
 msgstr ""
 "Локальні сайти зазвичай використовують самопідписаний сертифікат, який ШІ-"
@@ -532,56 +558,56 @@ msgstr ""
 "<code>NODE_TLS_REJECT_UNAUTHORIZED=0</code>, який трапляється в інтернеті: "
 "він вимикає перевірку сертифікатів для всіх з'єднань цього інструмента."
 
-#: admin/class-mcp-admin.php:856
+#: admin/class-mcp-admin.php:871
 msgid "Create an API key"
 msgstr "Створіть API-ключ"
 
-#: admin/class-mcp-admin.php:860
+#: admin/class-mcp-admin.php:875
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr ""
 "<strong>Скопіюйте ключ зараз</strong> — з міркувань безпеки його більше не "
 "буде показано."
 
-#: admin/class-mcp-admin.php:864
+#: admin/class-mcp-admin.php:879
 msgid "Copy API key"
 msgstr "Скопіювати API-ключ"
 
-#: admin/class-mcp-admin.php:865
+#: admin/class-mcp-admin.php:880
 msgid "I've saved my key"
 msgstr "Ключ збережено"
 
-#: admin/class-mcp-admin.php:867
+#: admin/class-mcp-admin.php:882
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "Дайте йому назву, щоб розпізнати його пізніше, потім згенеруйте."
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin.php:872
+#: admin/class-mcp-admin.php:887
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "напр., %s на моєму ноутбуці"
 
-#: admin/class-mcp-admin.php:875
+#: admin/class-mcp-admin.php:890
 msgid "Generate another key"
 msgstr "Згенерувати ще один ключ"
 
-#: admin/class-mcp-admin.php:875
+#: admin/class-mcp-admin.php:890
 msgid "Generate API key"
 msgstr "Згенерувати API-ключ"
 
-#: admin/class-mcp-admin.php:889
+#: admin/class-mcp-admin.php:904
 msgid "Run this in your terminal:"
 msgstr "Виконайте це в терміналі:"
 
-#: admin/class-mcp-admin.php:890
+#: admin/class-mcp-admin.php:905
 msgid "Run these in your terminal:"
 msgstr "Виконайте ці команди в терміналі:"
 
-#: admin/class-mcp-admin.php:891
+#: admin/class-mcp-admin.php:906
 msgid "Add this to your <code>opencode.json</code>:"
 msgstr "Додайте це у ваш <code>opencode.json</code>:"
 
-#: admin/class-mcp-admin.php:892
+#: admin/class-mcp-admin.php:907
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then reload Cursor:"
@@ -589,22 +615,22 @@ msgstr ""
 "Додайте це у <code>~/.cursor/mcp.json</code> (створіть файл, якщо його "
 "немає), потім перезавантажте Cursor:"
 
-#: admin/class-mcp-admin.php:899
+#: admin/class-mcp-admin.php:914
 msgid "Add the server to your tool"
 msgstr "Додайте сервер до свого інструмента"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:934
+#: admin/class-mcp-admin.php:949
 #, php-format
 msgid ""
 "Open a new Claude Code session and run <code>/mcp</code> — <code>%s</code> "
 "should be listed as connected."
 msgstr ""
-"Відкрийте нову сесію Claude Code та виконайте <code>/mcp</code> — "
-"<code>%s</code> має відображатися як підключений."
+"Відкрийте нову сесію Claude Code та виконайте <code>/mcp</code> — <code>%s</"
+"code> має відображатися як підключений."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:936
+#: admin/class-mcp-admin.php:951
 #, php-format
 msgid ""
 "Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
@@ -613,17 +639,17 @@ msgstr ""
 "списку."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:938
+#: admin/class-mcp-admin.php:953
 #, php-format
 msgid ""
 "Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
 "be available."
 msgstr ""
-"Перезапустіть Opencode та попросіть вивести список MCP-серверів — "
-"<code>%s</code> має бути доступним."
+"Перезапустіть Opencode та попросіть вивести список MCP-серверів — <code>%s</"
+"code> має бути доступним."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:940
+#: admin/class-mcp-admin.php:955
 #, php-format
 msgid ""
 "Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
@@ -633,93 +659,93 @@ msgstr ""
 "із зеленим індикатором стану."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:942
+#: admin/class-mcp-admin.php:957
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
 msgstr ""
-"Виконайте <code>gemini mcp list</code> — <code>%s</code> має відображатися як"
-" підключений."
+"Виконайте <code>gemini mcp list</code> — <code>%s</code> має відображатися "
+"як підключений."
 
-#: admin/class-mcp-admin.php:962
+#: admin/class-mcp-admin.php:977
 msgid "Existing keys"
 msgstr "Наявні ключі"
 
-#: admin/class-mcp-admin.php:967 admin/class-mcp-admin.php:1508
+#: admin/class-mcp-admin.php:982 admin/class-mcp-admin.php:1523
 msgid "Label"
 msgstr "Мітка"
 
-#: admin/class-mcp-admin.php:968
+#: admin/class-mcp-admin.php:983
 msgid "Prefix"
 msgstr "Префікс"
 
-#: admin/class-mcp-admin.php:969 admin/class-mcp-admin.php:1507
+#: admin/class-mcp-admin.php:984 admin/class-mcp-admin.php:1522
 msgid "Created"
 msgstr "Створено"
 
-#: admin/class-mcp-admin.php:970 admin/class-mcp-admin.php:1040
+#: admin/class-mcp-admin.php:985 admin/class-mcp-admin.php:1055
 msgid "Last Used"
 msgstr "Останнє використання"
 
-#: admin/class-mcp-admin.php:971 admin/class-mcp-admin.php:1041
+#: admin/class-mcp-admin.php:986 admin/class-mcp-admin.php:1056
 msgid "Scope"
 msgstr "Область"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
 #. translators: %s: human-readable time difference
-#: admin/class-mcp-admin.php:984 admin/class-mcp-admin.php:1054
+#: admin/class-mcp-admin.php:999 admin/class-mcp-admin.php:1069
 #, php-format
 msgid "%s ago"
 msgstr "%s тому"
 
-#: admin/class-mcp-admin.php:986 admin/class-mcp-admin.php:1056
+#: admin/class-mcp-admin.php:1001 admin/class-mcp-admin.php:1071
 msgid "never"
 msgstr "ніколи"
 
-#: admin/class-mcp-admin.php:991 admin/class-mcp-admin.php:1061
+#: admin/class-mcp-admin.php:1006 admin/class-mcp-admin.php:1076
 msgid "Edit"
 msgstr "Змінити"
 
-#: admin/class-mcp-admin.php:998
+#: admin/class-mcp-admin.php:1013
 msgid "Revoke this key? Any client using it will lose access."
 msgstr ""
 "Відкликати цей ключ? Усі клієнти, що його використовують, втратять доступ."
 
-#: admin/class-mcp-admin.php:998 admin/class-mcp-admin.php:1068
+#: admin/class-mcp-admin.php:1013 admin/class-mcp-admin.php:1083
 msgid "Revoke"
 msgstr "Відкликати"
 
-#: admin/class-mcp-admin.php:1014 admin/class-mcp-admin.php:1084
+#: admin/class-mcp-admin.php:1029 admin/class-mcp-admin.php:1099
 msgid "Save scope"
 msgstr "Зберегти область"
 
-#: admin/class-mcp-admin.php:1032
+#: admin/class-mcp-admin.php:1047
 msgid "Connected apps"
 msgstr "Підключені застосунки"
 
-#: admin/class-mcp-admin.php:1037
+#: admin/class-mcp-admin.php:1052
 msgid "App"
 msgstr "Застосунок"
 
-#: admin/class-mcp-admin.php:1038
+#: admin/class-mcp-admin.php:1053
 msgid "Authorized by"
 msgstr "Авторизовано користувачем"
 
-#: admin/class-mcp-admin.php:1039
+#: admin/class-mcp-admin.php:1054
 msgid "Connected"
 msgstr "Підключено"
 
-#: admin/class-mcp-admin.php:1068
+#: admin/class-mcp-admin.php:1083
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "Відкликати це підключення? Застосунок негайно втратить доступ."
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin.php:1118
+#: admin/class-mcp-admin.php:1133
 #, php-format
 msgid "Select all %s tools"
 msgstr "Вибрати всі інструменти категорії «%s»"
 
-#: admin/class-mcp-admin.php:1132
+#: admin/class-mcp-admin.php:1147
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -728,54 +754,54 @@ msgstr ""
 "користувачів, останні дописи тощо) завжди доступні для будь-якого ключа чи "
 "підключення незалежно від області інструментів."
 
-#: admin/class-mcp-admin.php:1146 admin/class-mcp-admin.php:1159
-#: admin/class-mcp-admin.php:1170
+#: admin/class-mcp-admin.php:1161 admin/class-mcp-admin.php:1174
+#: admin/class-mcp-admin.php:1185
 msgid "Full access"
 msgstr "Повний доступ"
 
-#: admin/class-mcp-admin.php:1148 admin/class-mcp-admin.php:1163
+#: admin/class-mcp-admin.php:1163 admin/class-mcp-admin.php:1178
 msgid "Read-only"
 msgstr "Лише читання"
 
-#: admin/class-mcp-admin.php:1150
+#: admin/class-mcp-admin.php:1165
 msgid "Custom…"
 msgstr "Настроюваний…"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin.php:1167
+#: admin/class-mcp-admin.php:1182
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "Настроюваний (%d інструментів)"
 
-#: admin/class-mcp-admin.php:1174
+#: admin/class-mcp-admin.php:1189
 msgid "Unknown (blocked)"
 msgstr "Невідомо (заблоковано)"
 
-#: admin/class-mcp-admin.php:1185
+#: admin/class-mcp-admin.php:1200
 msgid "General"
 msgstr "Загальні"
 
-#: admin/class-mcp-admin.php:1189
+#: admin/class-mcp-admin.php:1204
 msgid "MCP Server"
 msgstr "MCP-сервер"
 
-#: admin/class-mcp-admin.php:1193
+#: admin/class-mcp-admin.php:1208
 msgid "Enabled"
 msgstr "Увімкнено"
 
-#: admin/class-mcp-admin.php:1195
+#: admin/class-mcp-admin.php:1210
 msgid "When off, every MCP request is rejected."
 msgstr "Коли вимкнено, усі запити MCP відхиляються."
 
-#: admin/class-mcp-admin.php:1199
+#: admin/class-mcp-admin.php:1214
 msgid "Safe Mode"
 msgstr "Безпечний режим"
 
-#: admin/class-mcp-admin.php:1203
+#: admin/class-mcp-admin.php:1218
 msgid "Require confirmation for destructive operations"
 msgstr "Вимагати підтвердження для деструктивних операцій"
 
-#: admin/class-mcp-admin.php:1207
+#: admin/class-mcp-admin.php:1222
 msgid ""
 "Tools marked as destructive (delete, drop, WP-CLI write commands, etc.) "
 "require <code>confirm: true</code> in the request."
@@ -783,15 +809,15 @@ msgstr ""
 "Інструменти, позначені як деструктивні (видалення, drop, команди запису WP-"
 "CLI тощо), потребують <code>confirm: true</code> у запиті."
 
-#: admin/class-mcp-admin.php:1214
+#: admin/class-mcp-admin.php:1229
 msgid "Desktop Connector"
 msgstr "Desktop Connector"
 
-#: admin/class-mcp-admin.php:1218
+#: admin/class-mcp-admin.php:1233
 msgid "Allow connecting via Claude Desktop / web (OAuth)"
 msgstr "Дозволити підключення через Claude Desktop / веб (OAuth)"
 
-#: admin/class-mcp-admin.php:1222
+#: admin/class-mcp-admin.php:1237
 msgid ""
 "Turns on the one-click browser sign-in used by the &#8220;Claude "
 "Desktop&#8221; connection path. This exposes public OAuth discovery, "
@@ -805,7 +831,7 @@ msgstr ""
 "видаються, доки адміністратор не підтвердить вхід у браузері. Залиште "
 "вимкненим, якщо підключаєтеся лише через термінал."
 
-#: admin/class-mcp-admin.php:1227
+#: admin/class-mcp-admin.php:1242
 msgid ""
 "Tip: run the Connection Doctor on the Connection tab to verify the connector "
 "end to end."
@@ -813,37 +839,37 @@ msgstr ""
 "Порада: запустіть Діагностику підключення на вкладці «Підключення», щоб "
 "перевірити конектор від початку до кінця."
 
-#: admin/class-mcp-admin.php:1232
+#: admin/class-mcp-admin.php:1247
 msgid "Rate Limit"
 msgstr "Обмеження запитів"
 
-#: admin/class-mcp-admin.php:1235
+#: admin/class-mcp-admin.php:1250
 msgid "requests per minute, per key"
 msgstr "запитів на хвилину на кожен ключ"
 
-#: admin/class-mcp-admin.php:1239
+#: admin/class-mcp-admin.php:1254
 msgid "Request Logging"
 msgstr "Журналювання запитів"
 
-#: admin/class-mcp-admin.php:1243
+#: admin/class-mcp-admin.php:1258
 msgid "Log all tool calls to <code>debug.log</code>"
 msgstr "Записувати всі виклики інструментів у <code>debug.log</code>"
 
-#: admin/class-mcp-admin.php:1252
+#: admin/class-mcp-admin.php:1267
 msgid "Undo & Checkpoints"
 msgstr "Скасування та контрольні точки"
 
-#: admin/class-mcp-admin.php:1256
+#: admin/class-mcp-admin.php:1271
 msgid "Undo Journal"
 msgstr "Журнал скасування"
 
-#: admin/class-mcp-admin.php:1260
+#: admin/class-mcp-admin.php:1275
 msgid "Undo journal — capture before-state of every mutating tool call"
 msgstr ""
 "Журнал скасування — зберігати стан перед кожним викликом інструмента, що "
 "вносить зміни"
 
-#: admin/class-mcp-admin.php:1262
+#: admin/class-mcp-admin.php:1277
 msgid ""
 "Lets changes made through MCP be undone from the Activity tab. Disabling "
 "stops new entries from being captured; existing history is kept until it "
@@ -853,31 +879,31 @@ msgstr ""
 "Вимкнення припиняє збереження нових записів; наявна історія зберігається до "
 "завершення терміну."
 
-#: admin/class-mcp-admin.php:1266
+#: admin/class-mcp-admin.php:1281
 msgid "Undo Retention"
 msgstr "Зберігання історії скасування"
 
-#: admin/class-mcp-admin.php:1269
+#: admin/class-mcp-admin.php:1284
 msgid "days to keep undo history"
 msgstr "днів зберігання історії скасування"
 
-#: admin/class-mcp-admin.php:1273
+#: admin/class-mcp-admin.php:1288
 msgid "Checkpoint Limit"
 msgstr "Ліміт контрольних точок"
 
-#: admin/class-mcp-admin.php:1276
+#: admin/class-mcp-admin.php:1291
 msgid "checkpoints to keep"
 msgstr "контрольних точок для зберігання"
 
-#: admin/class-mcp-admin.php:1280 admin/class-mcp-admin.php:1290
+#: admin/class-mcp-admin.php:1295 admin/class-mcp-admin.php:1305
 msgid "Auto-Checkpoint"
 msgstr "Автоматичні контрольні точки"
 
-#: admin/class-mcp-admin.php:1284
+#: admin/class-mcp-admin.php:1299
 msgid "Auto-checkpoint before mutating WP-CLI commands"
 msgstr "Автоматична контрольна точка перед командами WP-CLI, що вносять зміни"
 
-#: admin/class-mcp-admin.php:1286
+#: admin/class-mcp-admin.php:1301
 msgid ""
 "Takes a full-database checkpoint before running a WP-CLI command that is not "
 "read-only, so it can be rolled back even if the command itself cannot be "
@@ -887,11 +913,11 @@ msgstr ""
 "яка не лише для читання, щоб її можна було відкотити, навіть якщо саму "
 "команду скасувати не можна."
 
-#: admin/class-mcp-admin.php:1294
+#: admin/class-mcp-admin.php:1309
 msgid "Auto-checkpoint before plugin & theme updates"
 msgstr "Автоматична контрольна точка перед оновленням плагінів і тем"
 
-#: admin/class-mcp-admin.php:1296
+#: admin/class-mcp-admin.php:1311
 msgid ""
 "Takes a full-database checkpoint before plugin or theme updates, so database "
 "migrations run by an update can be rolled back. The old files are separately "
@@ -901,19 +927,19 @@ msgstr ""
 "щоб міграції бази даних, виконані оновленням, можна було відкотити. Старі "
 "файли додатково зберігаються в резервній копії для скасування."
 
-#: admin/class-mcp-admin.php:1304 admin/class-mcp-admin.php:1308
+#: admin/class-mcp-admin.php:1319 admin/class-mcp-admin.php:1323
 msgid "Power Mode"
 msgstr "Посилений режим"
 
-#: admin/class-mcp-admin.php:1304
+#: admin/class-mcp-admin.php:1319
 msgid "advanced · off by default"
 msgstr "для досвідчених · вимкнено за замовчуванням"
 
-#: admin/class-mcp-admin.php:1312
+#: admin/class-mcp-admin.php:1327
 msgid "Lift safety restrictions for advanced operations"
 msgstr "Зняти обмеження безпеки для розширених операцій"
 
-#: admin/class-mcp-admin.php:1316
+#: admin/class-mcp-admin.php:1331
 msgid ""
 "<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, "
 "dangerous SQL, writing files anywhere, and requests to internal addresses. "
@@ -922,23 +948,23 @@ msgid ""
 "Your MCP API keys and the plugin&#8217;s own settings stay protected."
 msgstr ""
 "<strong>Небезпечно:</strong> дозволяє <code>eval</code>/<code>shell</code>, "
-"небезпечний SQL, запис файлів у будь-яке місце та запити до внутрішніх адрес."
-" Це фактично надає <strong>віддалене виконання коду</strong> будь-кому, хто "
-"має API-ключ. Вмикайте лише на довіреному, надійно захищеному сайті, який ви "
-"контролюєте. Ваші API-ключі MCP та власні налаштування плагіна залишаються "
-"захищеними."
+"небезпечний SQL, запис файлів у будь-яке місце та запити до внутрішніх "
+"адрес. Це фактично надає <strong>віддалене виконання коду</strong> будь-"
+"кому, хто має API-ключ. Вмикайте лише на довіреному, надійно захищеному "
+"сайті, який ви контролюєте. Ваші API-ключі MCP та власні налаштування "
+"плагіна залишаються захищеними."
 
-#: admin/class-mcp-admin.php:1327
+#: admin/class-mcp-admin.php:1342
 msgid "Save Settings"
 msgstr "Зберегти налаштування"
 
-#: admin/class-mcp-admin.php:1337
+#: admin/class-mcp-admin.php:1352
 msgid ""
 "Audit log is not available. Please deactivate and reactivate the plugin."
 msgstr ""
 "Журнал аудиту недоступний. Будь ласка, деактивуйте та знову активуйте плагін."
 
-#: admin/class-mcp-admin.php:1361
+#: admin/class-mcp-admin.php:1376
 msgid ""
 "Structured log of all MCP tool calls, errors, and auth events. Auto-pruned "
 "after 30 days."
@@ -946,133 +972,133 @@ msgstr ""
 "Структурований журнал усіх викликів інструментів MCP, помилок та подій "
 "автентифікації. Автоматично очищається через 30 днів."
 
-#: admin/class-mcp-admin.php:1368 admin/class-mcp-admin.php:1423
+#: admin/class-mcp-admin.php:1383 admin/class-mcp-admin.php:1438
 msgid "Event"
 msgstr "Подія"
 
-#: admin/class-mcp-admin.php:1370
+#: admin/class-mcp-admin.php:1385
 msgid "All events"
 msgstr "Усі події"
 
-#: admin/class-mcp-admin.php:1377 admin/class-mcp-admin.php:1424
-#: admin/class-mcp-admin.php:1546
+#: admin/class-mcp-admin.php:1392 admin/class-mcp-admin.php:1439
+#: admin/class-mcp-admin.php:1561
 msgid "Tool"
 msgstr "Інструмент"
 
-#: admin/class-mcp-admin.php:1378
+#: admin/class-mcp-admin.php:1393
 msgid "e.g. wp_list_posts"
 msgstr "напр., wp_list_posts"
 
-#: admin/class-mcp-admin.php:1381
+#: admin/class-mcp-admin.php:1396
 msgid "From"
 msgstr "З"
 
-#: admin/class-mcp-admin.php:1385
+#: admin/class-mcp-admin.php:1400
 msgid "To"
 msgstr "До"
 
-#: admin/class-mcp-admin.php:1389
+#: admin/class-mcp-admin.php:1404
 msgid "Per page"
 msgstr "На сторінці"
 
-#: admin/class-mcp-admin.php:1396
+#: admin/class-mcp-admin.php:1411
 msgid "Filter"
 msgstr "Фільтрувати"
 
-#: admin/class-mcp-admin.php:1398
+#: admin/class-mcp-admin.php:1413
 msgid "Filtered"
 msgstr "Відфільтровано"
 
-#: admin/class-mcp-admin.php:1398
+#: admin/class-mcp-admin.php:1413
 msgid "Reset"
 msgstr "Скинути"
 
-#: admin/class-mcp-admin.php:1406
+#: admin/class-mcp-admin.php:1421
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "Очистити всі записи журналу аудиту? Цю дію не можна скасувати."
 
-#: admin/class-mcp-admin.php:1406
+#: admin/class-mcp-admin.php:1421
 msgid "Clear All Logs"
 msgstr "Очистити всі журнали"
 
 #. translators: %s: total number of log entries
-#: admin/class-mcp-admin.php:1409
+#: admin/class-mcp-admin.php:1424
 #, php-format
 msgid "%s entries total"
 msgstr "усього записів: %s"
 
-#: admin/class-mcp-admin.php:1415
+#: admin/class-mcp-admin.php:1430
 msgid "No log entries found."
 msgstr "Записів журналу не знайдено."
 
-#: admin/class-mcp-admin.php:1421
+#: admin/class-mcp-admin.php:1436
 msgid "Timestamp"
 msgstr "Позначка часу"
 
-#: admin/class-mcp-admin.php:1422 admin/class-mcp-admin.php:1547
+#: admin/class-mcp-admin.php:1437 admin/class-mcp-admin.php:1562
 msgid "Key"
 msgstr "Ключ"
 
-#: admin/class-mcp-admin.php:1425 admin/class-mcp-admin.php:1548
+#: admin/class-mcp-admin.php:1440 admin/class-mcp-admin.php:1563
 msgid "Status"
 msgstr "Статус"
 
-#: admin/class-mcp-admin.php:1426
+#: admin/class-mcp-admin.php:1441
 msgid "IP"
 msgstr "IP"
 
-#: admin/class-mcp-admin.php:1455
+#: admin/class-mcp-admin.php:1470
 msgid "Previous"
 msgstr "Попередня"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:1459
+#: admin/class-mcp-admin.php:1474
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Сторінка %1$d з %2$d"
 
-#: admin/class-mcp-admin.php:1462
+#: admin/class-mcp-admin.php:1477
 msgid "Next"
 msgstr "Наступна"
 
-#: admin/class-mcp-admin.php:1485
+#: admin/class-mcp-admin.php:1500
 msgid "Undo conflict:"
 msgstr "Конфлікт скасування:"
 
-#: admin/class-mcp-admin.php:1490
+#: admin/class-mcp-admin.php:1505
 msgid "Force undo anyway"
 msgstr "Усе одно примусово скасувати"
 
-#: admin/class-mcp-admin.php:1499
+#: admin/class-mcp-admin.php:1514
 msgid "Database Checkpoints"
 msgstr "Контрольні точки бази даних"
 
-#: admin/class-mcp-admin.php:1502
+#: admin/class-mcp-admin.php:1517
 msgid "Label (optional)"
 msgstr "Мітка (необов'язково)"
 
-#: admin/class-mcp-admin.php:1503
+#: admin/class-mcp-admin.php:1518
 msgid "Create checkpoint now"
 msgstr "Створити контрольну точку зараз"
 
-#: admin/class-mcp-admin.php:1507 admin/class-mcp-admin.php:1545
+#: admin/class-mcp-admin.php:1522 admin/class-mcp-admin.php:1560
 msgid "ID"
 msgstr "ID"
 
-#: admin/class-mcp-admin.php:1508
+#: admin/class-mcp-admin.php:1523
 msgid "Trigger"
 msgstr "Тригер"
 
-#: admin/class-mcp-admin.php:1509
+#: admin/class-mcp-admin.php:1524
 msgid "Size"
 msgstr "Розмір"
 
-#: admin/class-mcp-admin.php:1513
+#: admin/class-mcp-admin.php:1528
 msgid "No checkpoints yet."
 msgstr "Поки що немає контрольних точок."
 
 #. translators: 1: checkpoint ID number, 2: checkpoint creation date/time
-#: admin/class-mcp-admin.php:1525
+#: admin/class-mcp-admin.php:1540
 #, php-format
 msgid ""
 "Restore the database to checkpoint #%1$s (%2$s)? EVERYTHING changed since "
@@ -1083,57 +1109,57 @@ msgstr ""
 "відтоді — включно зі змінами, зробленими поза MCP — буде втрачено. Спочатку "
 "створюється резервна контрольна точка перед відновленням."
 
-#: admin/class-mcp-admin.php:1526
+#: admin/class-mcp-admin.php:1541
 msgid "Really sure? This rewrites every site table."
 msgstr "Справді впевнені? Це перезапише всі таблиці сайту."
 
-#: admin/class-mcp-admin.php:1529
+#: admin/class-mcp-admin.php:1544
 msgid "Restore"
 msgstr "Відновити"
 
-#: admin/class-mcp-admin.php:1531
+#: admin/class-mcp-admin.php:1546
 msgid "Delete this checkpoint?"
 msgstr "Видалити цю контрольну точку?"
 
-#: admin/class-mcp-admin.php:1534
+#: admin/class-mcp-admin.php:1549
 msgid "Delete"
 msgstr "Видалити"
 
-#: admin/class-mcp-admin.php:1542
+#: admin/class-mcp-admin.php:1557
 msgid "Change Journal"
 msgstr "Журнал змін"
 
-#: admin/class-mcp-admin.php:1545
+#: admin/class-mcp-admin.php:1560
 msgid "Time"
 msgstr "Час"
 
-#: admin/class-mcp-admin.php:1546
+#: admin/class-mcp-admin.php:1561
 msgid "Object"
 msgstr "Об'єкт"
 
-#: admin/class-mcp-admin.php:1547
+#: admin/class-mcp-admin.php:1562
 msgid "Action"
 msgstr "Дія"
 
-#: admin/class-mcp-admin.php:1552
+#: admin/class-mcp-admin.php:1567
 msgid "No journaled changes yet."
 msgstr "Поки що немає записаних змін."
 
 #. translators: %s: change ID number
-#: admin/class-mcp-admin.php:1572
+#: admin/class-mcp-admin.php:1587
 #, php-format
 msgid "Undo change #%s?"
 msgstr "Скасувати зміну №%s?"
 
-#: admin/class-mcp-admin.php:1576
+#: admin/class-mcp-admin.php:1591
 msgid "Undo"
 msgstr "Скасувати"
 
-#: admin/class-mcp-admin.php:1579
+#: admin/class-mcp-admin.php:1594
 msgid "Undo ALL active changes in this batch (newest first)?"
 msgstr "Скасувати ВСІ активні зміни в цьому пакеті (спочатку найновіші)?"
 
-#: admin/class-mcp-admin.php:1582
+#: admin/class-mcp-admin.php:1597
 msgid "Undo batch"
 msgstr "Скасувати пакет"
 
@@ -1199,8 +1225,7 @@ msgstr "Авторизація як %s"
 msgid "Access level"
 msgstr "Рівень доступу"
 
-#. translators: %d: number of tools allowed in the connection's current custom
-#. scope
+#. translators: %d: number of tools allowed in the connection's current custom scope
 #: includes/class-mcp-oauth.php:831
 #, php-format
 msgid "Keep current custom scope (%d tools)"

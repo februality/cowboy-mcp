@@ -195,6 +195,7 @@
 		}
 		var resultsEl = document.getElementById( 'cowboy-doctor-results' );
 		var copyBtn   = document.getElementById( 'cowboy-doctor-copy' );
+		var helpLink  = document.getElementById( 'cowboy-doctor-help' );
 		var reportText = '';
 
 		run.addEventListener( 'click', function() {
@@ -217,6 +218,7 @@
 							return '[' + c.status.toUpperCase() + '] ' + c.label + ( c.detail ? ' - ' + c.detail : '' ) + ( c.fix ? '\n       Fix: ' + c.fix : '' );
 						} ).join( '\n' );
 					copyBtn.hidden = false;
+					if ( helpLink ) { helpLink.hidden = false; }
 					run.disabled = false;
 				} )
 				.catch( function( err ) {

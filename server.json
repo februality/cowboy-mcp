@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.februality/cowboy-mcp",
   "title": "Cowboy MCP",
-  "description": "Turn any WordPress site into an MCP server with 131 tools for AI coding agents like Claude Code.",
-  "version": "1.3.0",
+  "description": "Free WordPress MCP server with undo: 168 tools for Claude, ChatGPT, Cursor & Claude Code. Self-hosted, no relay, no Pro tier.",
+  "version": "1.6.3",
   "websiteUrl": "https://cowboymcp.com",
   "repository": {
     "url": "https://github.com/februality/cowboy-mcp",
@@ -15,7 +15,7 @@
       "url": "https://{site_host}/wp-json/cowboy-mcp/v1/endpoint",
       "variables": {
         "site_host": {
-          "description": "Your WordPress site domain, e.g. example.com",
+          "description": "Your WordPress site domain, e.g. example.com (install the plugin from wordpress.org/plugins/cowboy-mcp first)",
           "isRequired": true
         }
       },
