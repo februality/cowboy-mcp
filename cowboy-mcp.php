@@ -146,6 +146,13 @@ register_activation_hook( __FILE__, function () {
     // Flag a one-time redirect to the connection page on next admin load.
     set_transient( 'cowboy_mcp_activation_redirect', 1, 60 );
 
+    // Persistent "connect your AI" notice for sites that have never created a
+    // key (catches bulk/CLI activations the redirect skips); a reactivated,
+    // already-connected site stays quiet.
+    if ( ! get_option( 'cowboy_mcp_api_keys' ) ) {
+        update_option( 'cowboy_mcp_setup_notice', 1 );
+    }
+
     flush_rewrite_rules();
 });
 
@@ -166,6 +173,7 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_oauth_refresh' );
     delete_option( 'cowboy_mcp_oauth_clients' );
     delete_option( 'cowboy_mcp_db_version' );
+    delete_option( 'cowboy_mcp_setup_notice' );
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );

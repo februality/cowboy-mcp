@@ -19,7 +19,9 @@ class Cowboy_MCP_Admin {
         add_action( 'admin_init',            [ __CLASS__, 'maybe_redirect_after_activation' ] );
         add_action( 'admin_init',            [ __CLASS__, 'handle_actions' ] );
         add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
+        add_action( 'admin_notices',         [ __CLASS__, 'render_setup_notice' ] );
         add_action( 'wp_ajax_cowboy_mcp_dismiss_new_key', [ __CLASS__, 'ajax_dismiss_new_key' ] );
+        add_action( 'wp_ajax_cowboy_mcp_dismiss_setup_notice', [ __CLASS__, 'ajax_dismiss_setup_notice' ] );
         add_action( 'wp_ajax_cowboy_mcp_set_conn_client', [ __CLASS__, 'ajax_set_conn_client' ] );
     }
 
@@ -54,7 +56,74 @@ class Cowboy_MCP_Admin {
         exit;
     }
 
+    /* ── Persistent "connect your AI" notice until the first key exists ── */
+
+    /**
+     * Whether the post-activation setup notice should render on this request.
+     *
+     * The flag is set on activation (only when no key exists) and cleared by
+     * the dismiss AJAX or — here — the moment a key exists, so a site that
+     * completed setup never sees it again even if nobody clicked the ×.
+     */
+    private static function setup_notice_due(): bool {
+        if ( ! get_option( 'cowboy_mcp_setup_notice' ) || ! current_user_can( 'manage_options' ) ) {
+            return false;
+        }
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+        if ( ! $screen || ! in_array( $screen->id, [ 'dashboard', 'plugins' ], true ) ) {
+            return false;
+        }
+        if ( get_option( 'cowboy_mcp_api_keys' ) ) {
+            delete_option( 'cowboy_mcp_setup_notice' );
+            return false;
+        }
+        return true;
+    }
+
+    public static function render_setup_notice(): void {
+        if ( ! self::setup_notice_due() ) {
+            return;
+        }
+        ?>
+        <div class="notice notice-success is-dismissible mcp-setup-notice">
+            <p class="mcp-setup-notice-title"><strong><?php esc_html_e( 'Cowboy MCP is active!', 'cowboy-mcp' ); ?></strong></p>
+            <p><?php esc_html_e( 'Connect Claude, Cursor, or any MCP client — it takes about a minute.', 'cowboy-mcp' ); ?></p>
+            <p><a class="button button-primary mcp-setup-notice-cta" href="<?php echo esc_url( admin_url( 'options-general.php?page=' . self::SLUG ) ); ?>"><?php esc_html_e( 'Connect your AI', 'cowboy-mcp' ); ?></a></p>
+        </div>
+        <?php
+    }
+
+    public static function ajax_dismiss_setup_notice(): void {
+        check_ajax_referer( 'cowboy_mcp_dismiss_setup_notice' );
+        if ( current_user_can( 'manage_options' ) ) {
+            delete_option( 'cowboy_mcp_setup_notice' );
+        }
+        wp_die();
+    }
+
     public static function enqueue_assets( string $hook ): void {
+        if ( self::setup_notice_due() ) {
+            $css_path = COWBOY_MCP_PATH . 'admin/css/mcp-notice.css';
+            $js_path  = COWBOY_MCP_PATH . 'admin/js/mcp-notice.js';
+            wp_enqueue_style(
+                'cowboy-mcp-notice',
+                COWBOY_MCP_URL . 'admin/css/mcp-notice.css',
+                [],
+                file_exists( $css_path ) ? (string) filemtime( $css_path ) : COWBOY_MCP_VERSION
+            );
+            wp_enqueue_script(
+                'cowboy-mcp-notice',
+                COWBOY_MCP_URL . 'admin/js/mcp-notice.js',
+                [],
+                file_exists( $js_path ) ? (string) filemtime( $js_path ) : COWBOY_MCP_VERSION,
+                true
+            );
+            wp_localize_script( 'cowboy-mcp-notice', 'cowboyMcpNotice', [
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'cowboy_mcp_dismiss_setup_notice' ),
+            ] );
+        }
+
         if ( $hook !== 'settings_page_' . self::SLUG ) {
             return;
         }

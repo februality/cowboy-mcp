@@ -1,0 +1,15 @@
+.mcp-setup-notice {
+    padding-top: 8px;
+    padding-bottom: 10px;
+}
+.mcp-setup-notice .mcp-setup-notice-title {
+    font-size: 15px;
+    margin-bottom: 2px;
+}
+.mcp-setup-notice .mcp-setup-notice-cta {
+    font-size: 14px;
+    min-height: 36px;
+    line-height: 2.4;
+    padding: 0 22px;
+    margin-top: 2px;
+}
