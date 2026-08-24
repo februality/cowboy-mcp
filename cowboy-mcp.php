@@ -146,10 +146,10 @@ register_activation_hook( __FILE__, function () {
     // Flag a one-time redirect to the connection page on next admin load.
     set_transient( 'cowboy_mcp_activation_redirect', 1, 60 );
 
-    // Persistent "connect your AI" notice for sites that have never created a
-    // key (catches bulk/CLI activations the redirect skips); a reactivated,
-    // already-connected site stays quiet.
-    if ( ! get_option( 'cowboy_mcp_api_keys' ) ) {
+    // Persistent "connect your AI" notice for sites that have never connected
+    // (catches bulk/CLI activations the redirect skips); a reactivated site
+    // with an API key or an OAuth client stays quiet.
+    if ( ! Cowboy_MCP_Auth::site_has_credentials() ) {
         update_option( 'cowboy_mcp_setup_notice', 1 );
     }
 

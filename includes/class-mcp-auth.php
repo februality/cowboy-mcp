@@ -145,6 +145,15 @@ class Cowboy_MCP_Auth {
         }, array_values( $keys ) );
     }
 
+    /**
+     * Whether anything can authenticate to this site yet — an API key or a
+     * registered OAuth client. Drives the post-activation setup notice.
+     */
+    public static function site_has_credentials(): bool {
+        return ! empty( get_option( self::OPTION_KEY ) )
+            || ! empty( get_option( Cowboy_MCP_OAuth::CLIENTS_OPTION ) );
+    }
+
     /* ── Validation ────────────────────────────────────────── */
 
     /**

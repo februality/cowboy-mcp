@@ -61,9 +61,10 @@ class Cowboy_MCP_Admin {
     /**
      * Whether the post-activation setup notice should render on this request.
      *
-     * The flag is set on activation (only when no key exists) and cleared by
-     * the dismiss AJAX or — here — the moment a key exists, so a site that
-     * completed setup never sees it again even if nobody clicked the ×.
+     * The flag is set on activation (only when the site has no credentials)
+     * and cleared by the dismiss AJAX or — here — the moment an API key or
+     * OAuth client exists, so a site that completed setup never sees it
+     * again even if nobody clicked the ×.
      */
     private static function setup_notice_due(): bool {
         if ( ! get_option( 'cowboy_mcp_setup_notice' ) || ! current_user_can( 'manage_options' ) ) {
@@ -73,7 +74,7 @@ class Cowboy_MCP_Admin {
         if ( ! $screen || ! in_array( $screen->id, [ 'dashboard', 'plugins' ], true ) ) {
             return false;
         }
-        if ( get_option( 'cowboy_mcp_api_keys' ) ) {
+        if ( Cowboy_MCP_Auth::site_has_credentials() ) {
             delete_option( 'cowboy_mcp_setup_notice' );
             return false;
         }
