@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *  Guard — return empty when Elementor is not active.
  * ================================================================ */
 
-if ( ! did_action( 'elementor/loaded' ) && ! class_exists( '\Elementor\Plugin' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

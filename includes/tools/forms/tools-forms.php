@@ -5,9 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *  Guard — return empty when no supported form plugin active.
  * ================================================================ */
 
-if ( ! function_exists( 'wpforms' )
-     && ! class_exists( 'GFAPI' )
-     && ! class_exists( 'WPCF7_ContactForm' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

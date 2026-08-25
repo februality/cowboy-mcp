@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *  Guard — return empty when no supported SEO plugin active.
  * ================================================================ */
 
-if ( ! class_exists( 'WPSEO_Options' ) && ! defined( 'RANK_MATH_VERSION' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

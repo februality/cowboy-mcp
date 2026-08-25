@@ -58,7 +58,7 @@ function cowboy_mcp_woo_format_coupon( WC_Coupon $coupon ): array {
  *  WooCommerce guard — return empty arrays when WC is not active.
  * ================================================================ */
 
-if ( ! class_exists( 'WooCommerce' ) || ! class_exists( 'WC_Coupon' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

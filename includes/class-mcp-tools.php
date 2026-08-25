@@ -49,6 +49,28 @@ class Cowboy_MCP_Tools {
         'wordfence/tools-wordfence.php',
     ];
 
+    /**
+     * Domain files whose availability depends on another plugin/theme feature.
+     * Their guard lives in domain_available() — the same booleans feed the
+     * Abilities-bridge index signature, so the cache is keyed on exactly the
+     * conditions that decide which tools exist (not on active_plugins, which
+     * misses mu-plugins, theme-bundled libraries and --skip-plugins).
+     */
+    private const CONDITIONAL_DOMAIN_FILES = [
+        'acf/tools-acf.php',
+        'woocommerce/products.php',
+        'woocommerce/orders.php',
+        'woocommerce/customers.php',
+        'woocommerce/coupons.php',
+        'woocommerce/settings.php',
+        'woocommerce/reports.php',
+        'seo/tools-seo.php',
+        'forms/tools-forms.php',
+        'cache/tools-cache.php',
+        'elementor/tools-elementor.php',
+        'wordfence/tools-wordfence.php',
+    ];
+
     /** Map from domain file path to category name. */
     private const CATEGORY_MAP = [
         'core/options.php'            => 'options',
@@ -80,6 +102,7 @@ class Cowboy_MCP_Tools {
         'cache/tools-cache.php'             => 'cache',
         'elementor/tools-elementor.php'     => 'elementor',
         'wordfence/tools-wordfence.php'     => 'wordfence',
+        'abilities/tools-abilities.php'     => 'abilities',   // loaded in phase 2, not in DOMAIN_FILES
     ];
 
     /** Human-readable category descriptions for gateway instructions. */
@@ -107,6 +130,7 @@ class Cowboy_MCP_Tools {
         'cache'          => 'provider detect, flush, preload, settings',
         'elementor'      => 'templates, page content, global styles, widgets',
         'wordfence'      => 'scan, blocks, firewall, live traffic, activity, settings',
+        'abilities'      => 'abilities registered by other plugins through the WordPress Abilities API (WooCommerce, Rank Math, core...) - each runs its own permission check; not undoable',
     ];
 
     /** @var array<array> Cached tool definitions. */
@@ -124,8 +148,11 @@ class Cowboy_MCP_Tools {
     /** @var bool Whether domain files have been loaded. */
     private static bool $loaded = false;
 
-    /** @var bool Whether dry_run params have been injected. */
-    private static bool $dry_run_injected = false;
+    /** @var bool Whether the inbound `abilities` domain has been loaded (or deliberately skipped). */
+    private static bool $abilities_loaded = false;
+
+    /** @var bool Re-entrancy guard while the abilities domain file is being required. */
+    private static bool $abilities_loading = false;
 
     /** @var array|null Cached settings to avoid repeated get_option() calls. */
     private static ?array $settings_cache = null;
@@ -380,18 +407,19 @@ class Cowboy_MCP_Tools {
      * Public proxy for site info — called by Cowboy_MCP_Resources.
      */
     public static function tool_site_info(): array {
-        self::load_domains();
+        self::load_domains( false );
         $handler = self::$handlers['wp_site_info'] ?? null;
         return $handler ? $handler( [] ) : [];
     }
 
     /**
-     * Public wrapper so Cowboy_MCP_Rollback can load domain helper functions
-     * (e.g. cowboy_mcp_resolve_wp_content_path) outside a tools/call, such as
-     * when an undo is triggered from the wp-admin Activity tab.
+     * Public wrapper so Cowboy_MCP_Rollback (restore/prune, incl. the daily cron)
+     * and dry-run previews can load domain helper functions. Static domains
+     * only: these callers need PHP helpers, not third-party abilities, and must
+     * never instantiate the Abilities registry from cron.
      */
     public static function boot_domains(): void {
-        self::load_domains();
+        self::load_domains( false );
     }
 
     /* ================================================================
@@ -508,6 +536,13 @@ class Cowboy_MCP_Tools {
             'description' => $description,
             'parameters'  => $filtered_args,
         ];
+        // Inbound abilities: Cowboy has no model of a third-party ability's effect.
+        if ( ( self::$tool_categories[ $name ] ?? '' ) === 'abilities' ) {
+            $preview['description'] = "Would run ability {$name} with the provided parameters.";
+            $preview['note']        = 'Third-party ability - Cowboy cannot simulate its effect; this preview echoes the input only.';
+            $preview['provider']    = explode( '/', $name, 2 )[0];
+            $preview['undoable']    = false;
+        }
         // Installer tools: resolve the real WP.org plan (versions, download URL,
         // backup/checkpoint intentions) — far more useful than the generic echo.
         if ( class_exists( 'Cowboy_MCP_Installer' ) && in_array( $name, Cowboy_MCP_Installer::TOOLS, true ) ) {
@@ -573,6 +608,9 @@ class Cowboy_MCP_Tools {
             'tool_disabled'  => 'This tool is disabled in Cowboy MCP settings.',
             'tool_scope_denied' => 'This credential\'s scope does not allow the tool. A site administrator can widen the key\'s scope on the Cowboy MCP settings page.',
             'confirmation_required' => 'Safe mode is ON. Add confirm: true to the arguments to execute this destructive tool.',
+            'ability_policy_denied' => 'This tool is withheld from the Abilities API (wp_cli and wp_write_file need Power mode; other tools must be in allowed_tools). Call it through the Cowboy MCP endpoint instead.',
+            'ability_invalid_permissions' => "The ability's permission check rejected the current user (Cowboy runs as the first administrator for API keys, or as the OAuth user).",
+            'ability_missing' => 'Call cowboy_discover(category="abilities") to refresh the list of abilities.',
             default          => null,
         };
     }
@@ -673,7 +711,7 @@ class Cowboy_MCP_Tools {
         foreach ( $all_tools as $tool ) {
             $score      = 0.0;
             $name_lower = strtolower( $tool['name'] );
-            $name_words = explode( '_', $name_lower );
+            $name_words = preg_split( '/[_\/-]+/', $name_lower, -1, PREG_SPLIT_NO_EMPTY );   // wp_list_posts, woocommerce/products-query
             $desc_lower = strtolower( $tool['description'] ?? '' );
             $desc_words = preg_split( '/[\s,.\-:;()\[\]{}\/]+/', $desc_lower, -1, PREG_SPLIT_NO_EMPTY );
 
@@ -809,14 +847,14 @@ class Cowboy_MCP_Tools {
      * @param array $tools Tool definition arrays (each with 'name' and 'description').
      */
     private static function closest_tool_names( string $query, array $tools, int $limit = 5 ): array {
-        $q      = strtolower( str_replace( '_', ' ', $query ) );
+        $q      = strtolower( str_replace( [ '_', '/', '-' ], ' ', $query ) );
         $ranked = [];
         foreach ( $tools as $tool ) {
             $name = $tool['name'] ?? '';
             if ( $name === '' ) {
                 continue;
             }
-            $hay = strtolower( str_replace( '_', ' ', $name ) );
+            $hay = strtolower( str_replace( [ '_', '/', '-' ], ' ', $name ) );
             $pct = 0.0;
             similar_text( $q, $hay, $pct );
             $ranked[] = [
@@ -923,34 +961,6 @@ class Cowboy_MCP_Tools {
     private static function get_tool_definitions(): array {
         self::load_domains();
 
-        // Inject dry_run and confirm parameters into non-read-only tools.
-        if ( ! self::$dry_run_injected ) {
-            self::$dry_run_injected = true;
-            foreach ( self::$tools as &$tool ) {
-                $ro = $tool['annotations']['readOnlyHint'] ?? false;
-                if ( ! $ro ) {
-                    // Convert stdClass to array only when injecting properties.
-                    // tool() uses (object)[] for JSON Schema compliance (serializes as {}),
-                    // but array syntax on stdClass is a fatal error in PHP 8.0+.
-                    if ( $tool['inputSchema']['properties'] instanceof \stdClass ) {
-                        $tool['inputSchema']['properties'] = [];
-                    }
-                    $tool['inputSchema']['properties']['dry_run'] = [
-                        'type'        => 'boolean',
-                        'description' => 'If true, preview what this tool would do without making changes.',
-                    ];
-                }
-                $destructive = $tool['annotations']['destructiveHint'] ?? false;
-                if ( $destructive ) {
-                    $tool['inputSchema']['properties']['confirm'] = [
-                        'type'        => 'boolean',
-                        'description' => 'Required when safe mode is ON. Set to true to confirm execution of this destructive operation.',
-                    ];
-                }
-            }
-            unset( $tool );
-        }
-
         /**
          * Filter the full list of MCP tool definitions.
          *
@@ -960,30 +970,163 @@ class Cowboy_MCP_Tools {
     }
 
     /**
-     * Load all domain files once and cache tools + handlers.
+     * Whether a conditional domain file's host plugin/theme feature is present.
+     * Single source of truth for the guard at the top of each conditional domain
+     * file AND for the Abilities-bridge index signature. Core domains (any file
+     * not listed) are always available.
+     *
+     * @param string $file `__FILE__` from inside a domain file, or a `dir/file.php` key.
      */
-    private static function load_domains(): void {
-        if ( self::$loaded ) {
+    public static function domain_available( string $file ): bool {
+        $key = basename( dirname( $file ) ) . '/' . basename( $file );
+        return match ( $key ) {
+            'acf/tools-acf.php'             => function_exists( 'acf_get_field_groups' ),
+            'woocommerce/products.php',
+            'woocommerce/settings.php'      => class_exists( 'WooCommerce' ) && function_exists( 'wc_get_products' ),
+            'woocommerce/orders.php',
+            'woocommerce/reports.php'       => class_exists( 'WooCommerce' ) && function_exists( 'wc_get_orders' ),
+            'woocommerce/customers.php'     => class_exists( 'WooCommerce' ) && class_exists( 'WC_Customer' ),
+            'woocommerce/coupons.php'       => class_exists( 'WooCommerce' ) && class_exists( 'WC_Coupon' ),
+            'seo/tools-seo.php'             => class_exists( 'WPSEO_Options' ) || defined( 'RANK_MATH_VERSION' ),
+            'forms/tools-forms.php'         => function_exists( 'wpforms' ) || class_exists( 'GFAPI' ) || class_exists( 'WPCF7_ContactForm' ),
+            'cache/tools-cache.php'         => function_exists( 'rocket_clean_domain' ) || class_exists( 'LiteSpeed_Cache_API' ) || defined( 'LSCWP_V' ) || defined( 'W3TC_VERSION' ),
+            'elementor/tools-elementor.php' => (bool) did_action( 'elementor/loaded' ) || class_exists( '\Elementor\Plugin' ),
+            'wordfence/tools-wordfence.php' => class_exists( 'wordfence' ),
+            default                         => true,
+        };
+    }
+
+    /**
+     * Fingerprint of everything that decides which tools exist: plugin version,
+     * WP version, theme + block-theme status, and every conditional-domain guard.
+     * Cowboy_MCP_Abilities keys its cached definitions index on this.
+     */
+    public static function domain_signature(): string {
+        $guards = [];
+        foreach ( self::CONDITIONAL_DOMAIN_FILES as $file ) {
+            $guards[ $file ] = self::domain_available( $file );
+        }
+        return md5( (string) wp_json_encode( [
+            COWBOY_MCP_VERSION,
+            get_bloginfo( 'version' ),
+            get_stylesheet(),
+            get_template(),
+            wp_is_block_theme(),
+            $guards,
+        ] ) );
+    }
+
+    /**
+     * Definitions for the outbound Abilities bridge: every static-domain tool
+     * (never the inbound `abilities` wrappers, never filter-added definitions —
+     * those have no handler), gate params injected, with the category map.
+     * Loads the static domains only.
+     *
+     * @return array{tools: array, categories: array<string,string>}
+     */
+    public static function get_bridge_definitions(): array {
+        self::load_domains( false );
+        $tools = [];
+        foreach ( self::$tools as $tool ) {
+            if ( ( self::$tool_categories[ $tool['name'] ] ?? '' ) === 'abilities' ) {
+                continue;
+            }
+            $tools[] = $tool;
+        }
+        return [ 'tools' => $tools, 'categories' => self::$tool_categories ];
+    }
+
+    /** Category of a loaded tool, or null. Inbound wrappers are known once the abilities phase has run. */
+    public static function tool_category( string $name ): ?string {
+        self::load_domains( false );
+        return self::$tool_categories[ $name ] ?? null;
+    }
+
+    /**
+     * Load domain files once and cache tools + handlers. Phase 1 = the static
+     * DOMAIN_FILES. Phase 2 (opt-in via $with_abilities) = the inbound abilities
+     * domain, which enumerates the WordPress Abilities registry and therefore
+     * must not run while wp_abilities_api_init is in progress (partial registry)
+     * nor before init (core asserts did_action('init')).
+     */
+    private static function load_domains( bool $with_abilities = true ): void {
+        if ( ! self::$loaded ) {
+            self::$loaded = true;
+            $dir = COWBOY_MCP_PATH . 'includes/tools/';
+            foreach ( self::DOMAIN_FILES as $file ) {
+                $domain = require $dir . $file;
+                self::append_domain( is_array( $domain ) ? $domain : [], self::CATEGORY_MAP[ $file ] ?? 'system' );
+            }
+        }
+        if ( $with_abilities ) {
+            self::maybe_load_abilities_domain();
+        }
+    }
+
+    /** Phase 2: the inbound abilities domain (see load_domains()). Retried on every entry while pending. */
+    private static function maybe_load_abilities_domain(): void {
+        if ( self::$abilities_loaded || self::$abilities_loading ) {
             return;
         }
-        self::$loaded = true;
+        $consume = self::get_settings()['abilities_consume'] ?? true;
+        if ( ! function_exists( 'wp_get_abilities' ) || empty( $consume ) ) {
+            self::$abilities_loaded = true;   // nothing to load on this site / switched off
+            return;
+        }
+        if ( ! did_action( 'init' ) || doing_action( 'wp_abilities_api_init' ) ) {
+            return;                           // pending — the next entry after the action completes loads it
+        }
+        self::$abilities_loading = true;
+        try {
+            $domain = require COWBOY_MCP_PATH . 'includes/tools/abilities/tools-abilities.php';
+            self::append_domain( is_array( $domain ) ? $domain : [], 'abilities' );
+        } finally {
+            self::$abilities_loading = false;
+            self::$abilities_loaded  = true;
+        }
+    }
 
-        $dir = COWBOY_MCP_PATH . 'includes/tools/';
-
-        foreach ( self::DOMAIN_FILES as $file ) {
-            $domain   = require $dir . $file;
-            $category = self::CATEGORY_MAP[ $file ] ?? 'system';
-
-            if ( ! empty( $domain['tools'] ) ) {
-                array_push( self::$tools, ...$domain['tools'] );
-                foreach ( $domain['tools'] as $tool_def ) {
-                    self::$tool_map[ $tool_def['name'] ]        = $tool_def;
-                    self::$tool_categories[ $tool_def['name'] ] = $category;
-                }
-            }
-            if ( ! empty( $domain['handlers'] ) ) {
-                self::$handlers = array_merge( self::$handlers, $domain['handlers'] );
+    /** Append one domain's tools (gate params injected) and handlers to the registry. */
+    private static function append_domain( array $domain, string $category ): void {
+        if ( ! empty( $domain['tools'] ) ) {
+            $tools = self::inject_gate_params( $domain['tools'] );
+            array_push( self::$tools, ...$tools );
+            foreach ( $tools as $tool_def ) {
+                self::$tool_map[ $tool_def['name'] ]        = $tool_def;
+                self::$tool_categories[ $tool_def['name'] ] = $category;
             }
         }
+        if ( ! empty( $domain['handlers'] ) ) {
+            self::$handlers = array_merge( self::$handlers, $domain['handlers'] );
+        }
+    }
+
+    /**
+     * Inject the dry_run / confirm parameters into non-read-only tool definitions.
+     * Applied per batch at append time so tools loaded later (phase 2) get them too.
+     */
+    private static function inject_gate_params( array $tools ): array {
+        foreach ( $tools as &$tool ) {
+            $ro = $tool['annotations']['readOnlyHint'] ?? false;
+            if ( ! $ro ) {
+                // tool() uses (object)[] for JSON Schema compliance (serializes as {}),
+                // but array syntax on stdClass is a fatal error in PHP 8.0+.
+                if ( $tool['inputSchema']['properties'] instanceof \stdClass ) {
+                    $tool['inputSchema']['properties'] = [];
+                }
+                $tool['inputSchema']['properties']['dry_run'] = [
+                    'type'        => 'boolean',
+                    'description' => 'If true, preview what this tool would do without making changes.',
+                ];
+            }
+            if ( ! empty( $tool['annotations']['destructiveHint'] ) ) {
+                $tool['inputSchema']['properties']['confirm'] = [
+                    'type'        => 'boolean',
+                    'description' => 'Required when safe mode is ON. Set to true to confirm execution of this destructive operation.',
+                ];
+            }
+        }
+        unset( $tool );
+        return $tools;
     }
 }

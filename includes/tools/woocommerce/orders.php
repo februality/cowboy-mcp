@@ -125,7 +125,7 @@ function cowboy_mcp_woo_format_order( WC_Order $order ): array {
  *  WooCommerce guard — return empty arrays when WC is not active.
  * ================================================================ */
 
-if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_orders' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

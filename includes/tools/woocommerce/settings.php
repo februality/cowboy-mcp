@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *  WooCommerce guard — return empty arrays when WC is not active.
  * ================================================================ */
 
-if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_products' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

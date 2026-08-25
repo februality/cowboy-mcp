@@ -5,10 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *  Guard — return empty when no supported cache plugin active.
  * ================================================================ */
 
-if ( ! function_exists( 'rocket_clean_domain' )
-     && ! class_exists( 'LiteSpeed_Cache_API' )
-     && ! defined( 'LSCWP_V' )
-     && ! defined( 'W3TC_VERSION' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

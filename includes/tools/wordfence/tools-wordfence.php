@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *  Guard — return empty when Wordfence is not active.
  * ================================================================ */
 
-if ( ! class_exists( 'wordfence' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

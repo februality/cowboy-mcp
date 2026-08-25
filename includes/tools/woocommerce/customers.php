@@ -49,7 +49,7 @@ function cowboy_mcp_woo_format_customer( WC_Customer $customer ): array {
  *  WooCommerce guard — return empty arrays when WC is not active.
  * ================================================================ */
 
-if ( ! class_exists( 'WooCommerce' ) || ! class_exists( 'WC_Customer' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 

@@ -59,7 +59,7 @@ function cowboy_mcp_acf_format_field( array $field ): array {
  *  ACF guard — return empty arrays when ACF is not active.
  * ================================================================ */
 
-if ( ! function_exists( 'acf_get_field_groups' ) ) {
+if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
     return [ 'tools' => [], 'handlers' => [] ];
 }
 
