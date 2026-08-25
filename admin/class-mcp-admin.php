@@ -313,8 +313,16 @@ class Cowboy_MCP_Admin {
                 'checkpoint_max'         => max( 1, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_checkpoint_max'] ?? '5' ) ) ),
                 'auto_checkpoint_wp_cli' => ! empty( $_POST['cowboy_mcp_auto_checkpoint_wp_cli'] ),
                 'auto_checkpoint_updates' => ! empty( $_POST['cowboy_mcp_auto_checkpoint_updates'] ),
+
+                // Abilities bridge switches are only rendered on WP >= 6.9; carry the stored
+                // values forward otherwise so a save on an older core cannot persist `false`.
+                'abilities_expose'        => function_exists( 'wp_register_ability' ) ? ! empty( $_POST['cowboy_mcp_abilities_expose'] ) : ( $existing['abilities_expose'] ?? true ),
+                'abilities_consume'       => function_exists( 'wp_register_ability' ) ? ! empty( $_POST['cowboy_mcp_abilities_consume'] ) : ( $existing['abilities_consume'] ?? true ),
             ];
             update_option( 'cowboy_mcp_settings', $settings );
+            if ( class_exists( 'Cowboy_MCP_Abilities' ) && function_exists( 'wp_register_ability' ) ) {
+                Cowboy_MCP_Abilities::rebuild_index();   // escape hatch: a settings save always refreshes the ability index
+            }
             add_settings_error( 'cowboy_mcp', 'settings_saved', __( 'Settings saved.', 'cowboy-mcp' ), 'success' );
         }
 
@@ -1382,6 +1390,38 @@ class Cowboy_MCP_Admin {
                             </td>
                         </tr>
                     </table>
+                </div>
+            </div>
+
+            <div class="postbox">
+                <div class="postbox-header"><h2><?php esc_html_e( 'WordPress Abilities API', 'cowboy-mcp' ); ?></h2></div>
+                <div class="inside">
+                    <?php if ( function_exists( 'wp_register_ability' ) ) : ?>
+                    <table class="form-table" role="presentation">
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Expose Tools', 'cowboy-mcp' ); ?></th>
+                            <td>
+                                <label class="mcp-switch-label">
+                                    <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_abilities_expose" value="1" <?php checked( ! isset( $settings['abilities_expose'] ) || $settings['abilities_expose'] ); ?>><span class="mcp-switch-track"></span></span>
+                                    <?php esc_html_e( 'Expose tools as WordPress Abilities', 'cowboy-mcp' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( "Registers every allowed tool as a cowboy-mcp/* ability so WP-CLI, the REST API, MCP adapters and AI agents can call it — with Cowboy's safe mode, audit log and undo.", 'cowboy-mcp' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Use Abilities', 'cowboy-mcp' ); ?></th>
+                            <td>
+                                <label class="mcp-switch-label">
+                                    <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_abilities_consume" value="1" <?php checked( ! isset( $settings['abilities_consume'] ) || $settings['abilities_consume'] ); ?>><span class="mcp-switch-track"></span></span>
+                                    <?php esc_html_e( 'Use abilities from other plugins', 'cowboy-mcp' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( 'Shows abilities registered by other plugins as tools in the abilities category. They run their own permission checks and are not undoable.', 'cowboy-mcp' ); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    <?php else : ?>
+                    <p class="description"><?php esc_html_e( 'WordPress Abilities API requires WordPress 6.9 or newer.', 'cowboy-mcp' ); ?></p>
+                    <?php endif; ?>
                 </div>
             </div>
 
