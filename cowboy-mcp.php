@@ -56,6 +56,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-doctor.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-transport.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-tools.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-abilities.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-resources.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-prompts.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-completion.php';
@@ -72,6 +73,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
     Cowboy_MCP_OAuth::init();
+    Cowboy_MCP_Abilities::init();
 
     // Activation hooks don't re-run on plugin updates: create any missing
     // tables once per version bump so upgraded installs get the undo journal
@@ -174,6 +176,7 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_oauth_clients' );
     delete_option( 'cowboy_mcp_db_version' );
     delete_option( 'cowboy_mcp_setup_notice' );
+    delete_option( 'cowboy_mcp_ability_index' );
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
