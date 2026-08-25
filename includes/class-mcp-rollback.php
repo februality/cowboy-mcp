@@ -136,6 +136,22 @@ class Cowboy_MCP_Rollback {
 		'wp_wordfence_delete_scan_issues' => 'Scan issue state is managed by Wordfence and not journaled.',
 	];
 
+	/**
+	 * Whether wp_undo_change can revert what a tool does. Strategy-backed tools,
+	 * the installer tools and wp_delete_media (both journal from inside their
+	 * handlers) are undoable; NOT_UNDOABLE and read-only/unknown tools are not.
+	 * The Abilities bridge advertises this per ability.
+	 */
+	public static function is_undoable_tool( string $tool ): bool {
+		if ( isset( self::NOT_UNDOABLE[ $tool ] ) ) {
+			return false;
+		}
+		if ( isset( self::STRATEGIES[ $tool ] ) || 'wp_delete_media' === $tool ) {
+			return true;
+		}
+		return class_exists( 'Cowboy_MCP_Installer' ) && in_array( $tool, Cowboy_MCP_Installer::TOOLS, true );
+	}
+
 	/* ── Capture plumbing (called from Cowboy_MCP_Tools::call_tool) ── */
 
 	public static function begin( string $tool, array $args, array $annotations ): ?array {
@@ -180,11 +196,16 @@ class Cowboy_MCP_Rollback {
 
 			$strategy = self::STRATEGIES[ $tool ] ?? null;
 			if ( $strategy === null ) {
-				// Unknown mutating tool (filter-added / future): visible gap, not silent.
+				// Unknown mutating tool (filter-added / future) or an inbound ability
+				// wrapper: visible gap, not silent.
+				$reason = 'No capture strategy registered for this tool.';
+				if ( class_exists( 'Cowboy_MCP_Tools' ) && Cowboy_MCP_Tools::tool_category( $tool ) === 'abilities' ) {
+					$reason = 'Ability provided by another plugin (' . explode( '/', $tool, 2 )[0] . '); Cowboy has no before-state capture for it.';
+				}
 				$handle = [
 					'tool' => $tool, 'type' => 'none', 'action' => 'update',
 					'object_id' => '', 'object_label' => null, 'before' => null, 'rows' => [],
-					'reason' => 'No capture strategy registered for this tool.',
+					'reason' => $reason,
 				];
 				self::$pending = $handle;
 				return $handle;
