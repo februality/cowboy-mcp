@@ -244,6 +244,15 @@ class Cowboy_MCP_Tools {
             return new WP_Error( 'tool_disabled', "Tool is disabled: {$name}", [ 'code' => -32603 ] );
         }
 
+        // Abilities-transport policy: while a cowboy-mcp/* ability is executing
+        // (REST run, WP-CLI, an MCP adapter), nested dispatch through batch or
+        // cowboy_run may not reach tools the outbound policy withholds (wp_cli /
+        // wp_write_file without Power mode, tools outside allowed_tools, inbound
+        // wrappers). Registration and the permission callback only see the outer name.
+        if ( class_exists( 'Cowboy_MCP_Abilities' ) && Cowboy_MCP_Abilities::transport_active() && ! Cowboy_MCP_Abilities::is_exposable( $name ) ) {
+            return new WP_Error( 'ability_policy_denied', "{$name} is not available through the Abilities API on this site.", [ 'code' => -32603 ] );
+        }
+
         $handler = self::$handlers[ $name ] ?? null;
         if ( ! $handler ) {
             // Self-correcting: point the agent at the nearest real tool names so it can
