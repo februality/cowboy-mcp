@@ -5,7 +5,7 @@ return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_list_changes', '[Rollback] Query the undo journal: every mutating MCP tool call with its captured before-state (secrets redacted). Filter by object, tool, batch, session, status, or date. Use the returned change_id/batch_id with wp_undo_change.', [
             'object_type' => [ 'type' => 'string', 'description' => 'Filter by object type (post, option, file, term, comment, user, plugin, theme, media, wc_object, wf_config, db_rows)' ],
-            'object_id'   => [ 'type' => 'string', 'description' => 'Filter by object id (e.g. post ID, option name, relative file path)' ],
+            'object_id'   => [ 'type' => [ 'string', 'integer' ], 'description' => 'Filter by object id (e.g. post ID, option name, relative file path)' ],
             'tool'        => [ 'type' => 'string', 'description' => 'Filter by tool name' ],
             'batch_id'    => [ 'type' => 'string', 'description' => 'Filter by batch UUID' ],
             'session_id'  => [ 'type' => 'string', 'description' => 'Filter by MCP session id' ],

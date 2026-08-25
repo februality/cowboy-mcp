@@ -5,7 +5,7 @@ return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_update_option', '[Settings] Update a WordPress option value. Protected options (core URLs, admin email, credentials, API keys, role/capability maps, mail relay, and plugin internals) are blocked from modification.', [
             'option_name'  => [ 'type' => 'string', 'description' => 'Option name', 'required' => true ],
-            'option_value' => [ 'description' => 'New value (string, number, array, or object)', 'required' => true ],
+            'option_value' => [ 'type' => [ 'string', 'number', 'integer', 'boolean', 'array', 'object', 'null' ], 'description' => 'New value (string, number, boolean, array, or object)', 'required' => true ],
         ], [
             'title'           => 'Update Option',
             'readOnlyHint'    => false,
