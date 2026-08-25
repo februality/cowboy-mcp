@@ -99,7 +99,9 @@ class Cowboy_MCP_Auth {
         }
         if ( 'custom' === $mode ) {
             $tools = array_values( array_unique( array_filter( array_map(
-                static fn( $t ) => preg_match( '/^[a-z0-9_]{1,64}$/', (string) $t ) ? (string) $t : '',
+                // Cowboy tool names (underscores, no slash) or Abilities API names
+                // (namespace/name, dashes) — the inbound bridge exposes the latter as tools.
+                static fn( $t ) => preg_match( '/^(?:[a-z0-9_]{1,64}|[a-z0-9-]{1,64}\/[a-z0-9-]{1,64})$/', (string) $t ) ? (string) $t : '',
                 (array) ( $scope['allowed_tools'] ?? [] )
             ) ) ) );
             return [ 'mode' => 'custom', 'allowed_tools' => $tools ];
@@ -333,8 +335,9 @@ class Cowboy_MCP_Auth {
      * the non-atomic read-check-write cycle means two simultaneous requests could both pass
      * the limit check. This is acceptable for the plugin's use case (AI agent rate limiting)
      * but should not be relied upon as a strict security boundary.
+     * Public so the Abilities bridge can limit foreign-transport callers per user.
      */
-    private static function check_rate_limit( string $key_id, int $per_minute ): bool {
+    public static function check_rate_limit( string $key_id, int $per_minute ): bool {
         $transient  = 'cowboy_mcp_rl_' . $key_id;
         $window     = get_transient( $transient );
 
