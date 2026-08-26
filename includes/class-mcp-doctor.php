@@ -179,6 +179,27 @@ class Cowboy_MCP_Doctor {
 			$out[] = self::result( 'rest_blockers', 'REST-blocking plugins', 'pass', 'No known REST-disabling security plugin active.' );
 		}
 
+		// abilities_bridge — informational; never warn/fail.
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			$out[] = self::result( 'abilities_bridge', 'WordPress Abilities API bridge', 'skip', 'Abilities API needs WordPress 6.9 or newer (this site runs ' . get_bloginfo( 'version' ) . ').' );
+		} elseif ( empty( $settings['abilities_expose'] ?? true ) && empty( $settings['abilities_consume'] ?? true ) ) {
+			$out[] = self::result( 'abilities_bridge', 'WordPress Abilities API bridge', 'skip', 'Bridge disabled in Settings.' );
+		} else {
+			$stats = Cowboy_MCP_Abilities::doctor_stats();
+			$out[] = self::result(
+				'abilities_bridge',
+				'WordPress Abilities API bridge',
+				'pass',
+				sprintf(
+					'Outbound: %d tools registered as cowboy-mcp/* abilities (%d withheld by allowed_tools/Power mode). Inbound: %d abilities from other plugins available as tools.',
+					$stats['registered'],
+					$stats['withheld'],
+					$stats['inbound']
+				),
+				$stats['evidence']
+			);
+		}
+
 		return $out;
 	}
 

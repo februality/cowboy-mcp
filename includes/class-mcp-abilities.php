@@ -208,6 +208,30 @@ class Cowboy_MCP_Abilities {
         ];
     }
 
+    /** Counts + evidence for the Connection Doctor. Instantiates the registry (which registers the bridge). */
+    public static function doctor_stats(): array {
+        $registered = $withheld = $inbound = 0;
+        if ( function_exists( 'wp_get_abilities' ) ) {
+            wp_get_abilities();                               // fires wp_abilities_api_init -> register_outbound()
+            $registered = count( self::$registered );
+            $withheld   = max( 0, count( self::index() ) - $registered );
+        }
+        if ( ! empty( Cowboy_MCP_Tools::get_settings()['abilities_consume'] ?? true ) ) {
+            $inbound = (int) ( Cowboy_MCP_Tools::get_tool_catalog()['categories']['abilities']['count'] ?? 0 );
+        }
+        $meta = self::index_meta();
+        return [
+            'registered' => $registered,
+            'withheld'   => $withheld,
+            'inbound'    => $inbound,
+            'evidence'   => [
+                'wp-abilities REST: ' . ( class_exists( 'WP_REST_Abilities_V1_Run_Controller' ) ? 'yes' : 'no' ),
+                'mcp-adapter: ' . ( class_exists( 'WP\MCP\Core\McpAdapter' ) ? 'loaded (bundled by an active plugin or installed)' : 'not loaded' ),
+                'index: ' . ( $meta['built'] ? 'built ' . gmdate( 'Y-m-d H:i', $meta['built'] ) . ' UTC' : 'not stored' ) . ( $meta['rebuilt_now'] ? ', rebuilt now' : ', signature ok' ),
+            ],
+        ];
+    }
+
     /**
      * Build the definitions index from the live domain files (~35 ms) and
      * persist it. Returns the abilities map even when persisting fails, so a
