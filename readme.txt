@@ -40,6 +40,7 @@ Try it without installing anything: click **Live Preview** above to open a throw
 * **Do the developer stuff** - run WP-CLI commands, edit files in `wp-content`, and take site snapshots before big changes.
 * **Vibe code your site** - describe the theme tweak or feature you want; your agent writes the code, checks the error log, and fixes what it broke. With per-change undo and database checkpoints, vibe coding a live site stops being reckless.
 * **Keep SEO tidy** - read, write and audit Yoast SEO or Rank Math meta across the site with one vocabulary.
+* **Plug into the WordPress Abilities API** - every tool doubles as a `cowboy-mcp/*` ability, so WP-CLI (`wp ability run`), the REST API, the official MCP Adapter and WordPress's own AI tooling can call it - with safe mode, the audit log and undo still in front. Abilities other plugins register (WooCommerce, Rank Math, core) show up as tools for your agent automatically.
 * **Get more done, faster** - the server fronts its tools with a two-tool gateway (`cowboy_discover` + `cowboy_run`), so your agent stays sharp and accurate with a big toolset and picks the right action the first time.
 
 = Tool coverage =
@@ -127,7 +128,7 @@ You are handing an AI real control, so Cowboy MCP is built to keep you in charge
 * **Every tool is free.** Some plugins gate the useful tools - plugins, themes, the database, WooCommerce - behind a Pro licence. Cowboy MCP ships all of them, GPL-licensed, with no paid tier.
 * **Typed tools with undo, not a PHP shell.** Power tools that let an agent execute arbitrary PHP are built for development and staging copies, with backups. Cowboy MCP gives the agent typed, annotated tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills. (Want the comparison? See [Cowboy MCP vs Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira).)
 * **Undo, checkpoints and an audit trail together.** Several MCP plugins now offer approval gates or a time-boxed undo. Cowboy MCP pairs per-change undo with whole-database checkpoints and an always-on audit log, plus dry run and safe mode in front of them - so you can see what happened, preview what will happen, and reverse either one change or all of them.
-* **A complete server today, friendly to the official pieces.** WordPress core is growing an Abilities API and an official MCP adapter; they are a framework for exposing capabilities, not a turnkey server. Cowboy MCP is the turnkey server - install, generate a key, connect - and works on WordPress 6.2 or later with no Composer, Node.js or build step.
+* **A complete server today, wired into the official pieces.** WordPress core is growing an Abilities API and an official MCP adapter; they are a framework for exposing capabilities, not a turnkey server. Cowboy MCP is the turnkey server - install, generate a key, connect - and on WordPress 6.9+ it bridges both ways: its tools are registered as abilities (so the adapter, WP-CLI and REST get them with undo), and abilities from other plugins become tools for your agent. Works on WordPress 6.2 or later with no Composer, Node.js or build step.
 
 Setup guides for every client, the full capability list, the security model and head-to-head comparisons with Novamira, AI Engine, WPVibe, InstaWP, the WordPress MCP Adapter and StifLi Flex MCP live at [cowboymcp.com](https://cowboymcp.com).
 
@@ -233,6 +234,10 @@ Cowboy MCP is built for single sites and is not network-aware. On a multisite ne
 
 No. Publishing content and running your store work through plain conversation. The developer tools (WP-CLI, files, database) are there when you want them, and gated behind safe mode until you say go.
 
+= Does it work with the WordPress Abilities API and the MCP Adapter? =
+
+Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a `cowboy-mcp/*` ability (for example `cowboy-mcp/wp-update-post`), so `wp ability run cowboy-mcp/wp-update-post --input='{"post_id":5,"title":"New"}' --user=admin`, the core REST endpoint `/wp-json/wp-abilities/v1/abilities/cowboy-mcp/wp-update-post/run`, the official MCP Adapter's discover/execute tools and the AI plugin's Abilities Explorer all reach it - and every call still goes through safe mode, dry run, the audit log and the undo journal (the result includes a `change_id`). Read-only tools use GET, destructive-and-idempotent tools use DELETE, everything else POST; for GET and DELETE pass input as query parameters (`?input[post_id]=5&input[confirm]=true`), for POST as JSON (`{"input":{...}}`). Callers need an administrator account; `wp_cli` and `wp_write_file` are only exposed while Power mode is on. In the other direction, abilities registered by other plugins (WooCommerce, Rank Math, the AI plugin's core abilities) appear as tools in the `abilities` category for your agent; they run their own permission checks and are not undoable. Both directions have a switch under Settings.
+
 == Screenshots ==
 
 1. Connection tab - pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Existing API keys are listed with one-click revoke.
@@ -244,12 +249,12 @@ No. Publishing content and running your store work through plain conversation. T
 
 == Changelog ==
 
-= 1.6.3 =
-* New: local development, first-class - Cowboy MCP now works just as well on a local site (Local, Studio, MAMP, DevKinsta, and any localhost setup) as on a live one. No public URL or tunnel needed: Claude Code, Cursor, Codex, and Gemini CLI connect with an API key exactly as they do in production, and Claude Desktop connects through a small local bridge.
-* New: the Connection tab recognises local sites and shows, per client, what works locally and what needs a public URL - with a ready-to-copy Claude Desktop config that bridges through mcp-remote (read-only key by default).
-* New: Connection Doctor understands local sites - plain HTTP on a local site passes with local context, and the public-hostname check becomes a warning with fix steps for both local and public setups instead of a failure.
-* New: self-signed certificate help - on loopback hosts the connection snippets offer a plain-http variant, with a clear warning against disabling TLS verification.
-* Compatibility: tested with WordPress 7.1.
+= 1.7.0 =
+* New: WordPress Abilities API bridge (WordPress 6.9+). Every allowed tool is registered as a cowboy-mcp/* ability, so WP-CLI (wp ability run), the core REST endpoint, the official MCP Adapter and WordPress's AI tooling can call Cowboy's tools - with safe mode, dry run, the audit log and per-change undo applied to every caller. Two switches under Settings, both on by default.
+* New: abilities registered by other plugins (WooCommerce, Rank Math, the AI plugin's core abilities) appear as tools in a new abilities category, with safe-mode confirmation and read-only scoping; they run their own permission checks and are not undoable.
+* New: Connection Doctor reports the bridge state (registered, withheld, inbound counts; adapter presence).
+* Fix: custom key scopes now accept Abilities API names; wp_update_option and wp_list_changes declare the value types they accept.
+* Under the hood: tool definitions for the bridge are cached (rebuilt when plugins, theme or version change) so registration costs ~1 ms on sites whose plugins initialise the Abilities registry on every request.
 
 = Earlier versions =
 

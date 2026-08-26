@@ -14,13 +14,13 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 
 ## Why Cowboy MCP?
 
-- **Every tool is free.** Up to **168 tools** — content, Gutenberg/Site Editor, WooCommerce, users, media, menus, plugins, themes, files, database, WP-CLI, diagnostics, SEO, ACF, Elementor, Wordfence, caching, forms — GPL-licensed, no Pro tier, no credits, no usage meter.
+- **Every tool is free.** Up to **168 built-in tools** plus every ability your plugins register through the WordPress Abilities API — content, Gutenberg/Site Editor, WooCommerce, users, media, menus, plugins, themes, files, database, WP-CLI, diagnostics, SEO, ACF, Elementor, Wordfence, caching, forms — GPL-licensed, no Pro tier, no credits, no usage meter.
 - **Every change is undoable.** A per-change undo journal (before-state snapshots, conflict detection, batch undo) plus one-click database checkpoints, with an always-on audit log. Plugin and theme updates take a file backup and a checkpoint first and auto-restore if the post-update health check fails.
 - **Nothing in the middle.** The MCP endpoint runs inside your WordPress install. No hosted relay, no account, no telemetry — your AI client connects straight to your site.
 - **Safe by default.** Safe mode (confirmation for destructive tools), dry run on every write tool, per-credential read-only/custom scoping, hashed keys shown once, per-key rate limits, denylists for sensitive options / dangerous SQL / WP-CLI commands, SSRF protection, path confinement to `wp-content`, and a Power mode only a human can enable in wp-admin.
 - **Two ways to connect.** A Bearer-token endpoint for terminal agents and editors, and a one-click OAuth 2.1 connector (admin consent, scope choice) for the Claude desktop/web apps and ChatGPT.
 - **Works locally too.** Local, Studio, MAMP, DevKinsta, wp-env: terminal tools connect with a key as on a live site; Claude Desktop connects through an `mcp-remote` bridge the Connection tab generates for you.
-- **Context-efficient.** `tools/list` returns two gateway tools (`cowboy_discover`, `cowboy_run`); the agent discovers and runs the other tools on demand instead of loading 168 schemas into its context.
+- **Context-efficient.** `tools/list` returns two gateway tools (`cowboy_discover`, `cowboy_run`); the agent discovers and runs the other tools on demand instead of loading 168 schemas into its context. On WordPress 6.9+ every tool is also a `cowboy-mcp/*` ability for WP-CLI, REST and the official MCP Adapter — with undo.
 - **Zero dependencies.** Native WordPress APIs only — no Composer, no npm, no build step, no `wp-admin/includes` at request time. Works on hosts without WP-CLI or `shell_exec()`.
 
 > "More access than any other MCP offers, easy to use, LOVE the change journal and the checkpoints — safe if you break something." — WordPress.org review
