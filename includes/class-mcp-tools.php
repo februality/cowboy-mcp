@@ -130,7 +130,7 @@ class Cowboy_MCP_Tools {
         'cache'          => 'provider detect, flush, preload, settings',
         'elementor'      => 'templates, page content, global styles, widgets',
         'wordfence'      => 'scan, blocks, firewall, live traffic, activity, settings',
-        'abilities'      => 'abilities registered by other plugins through the WordPress Abilities API (WooCommerce, Rank Math, core...) - each runs its own permission check; not undoable',
+        'abilities'      => 'abilities registered by other plugins through the WordPress Abilities API (WooCommerce, the AI plugin\'s core abilities, core...) - each runs its own permission check; not undoable',
     ];
 
     /** @var array<array> Cached tool definitions. */
@@ -1089,6 +1089,11 @@ class Cowboy_MCP_Tools {
         try {
             $domain = require COWBOY_MCP_PATH . 'includes/tools/abilities/tools-abilities.php';
             self::append_domain( is_array( $domain ) ? $domain : [], 'abilities' );
+        } catch ( \Throwable $e ) {
+            // A third-party ability's schema blew up the enumeration: leave a trail
+            // before the fatal, since the flags below make this a one-shot load.
+            Cowboy_MCP_Auth::log( 'abilities_domain_failed', [ 'error' => $e->getMessage() ] );
+            throw $e;
         } finally {
             self::$abilities_loading = false;
             self::$abilities_loaded  = true;

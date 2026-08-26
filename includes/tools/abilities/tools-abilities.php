@@ -58,8 +58,9 @@ if ( ! function_exists( 'cowboy_mcp_ability_properties' ) ) {
     }
 }
 
-$cowboy_mcp_ability_tools    = [];
-$cowboy_mcp_ability_handlers = [];
+$cowboy_mcp_ability_tools      = [];
+$cowboy_mcp_ability_handlers   = [];
+$cowboy_mcp_ability_collisions = [];
 
 foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
     if ( ! is_object( $cowboy_mcp_ability ) || ! method_exists( $cowboy_mcp_ability, 'get_name' ) ) {
@@ -83,6 +84,13 @@ foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
     $cowboy_mcp_destr   = ( $cowboy_mcp_ann['destructive'] ?? null ) === true;
     $cowboy_mcp_idem    = ( $cowboy_mcp_ann['idempotent'] ?? null ) === true;
     [ $cowboy_mcp_props, $cowboy_mcp_shape ] = cowboy_mcp_ability_properties( (array) $cowboy_mcp_ability->get_input_schema() );
+    // Cowboy injects dry_run/confirm into every mutating wrapper and strips them again
+    // before execute(). An ability that declares a property of the same name would lose
+    // that argument (or have a gate answered by its own payload) — skip it instead.
+    if ( isset( $cowboy_mcp_props['dry_run'] ) || isset( $cowboy_mcp_props['confirm'] ) ) {
+        $cowboy_mcp_ability_collisions[] = $cowboy_mcp_name;
+        continue;
+    }
 
     $cowboy_mcp_label = trim( (string) $cowboy_mcp_ability->get_label() );
     if ( $cowboy_mcp_label === '' ) {
@@ -121,9 +129,44 @@ foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
             'wrapped' => $args['input'] ?? null,
             default   => ( $args === [] && array_key_exists( 'default', (array) $ability->get_input_schema() ) ) ? null : $args,
         };
-        return $ability->execute( $input );   // data or WP_Error; call_tool() encodes / formats either
+        // Bootstrap invariant: a third-party ability runs as the admin user, but it may never
+        // write Cowboy's credential/settings options (Power mode, scopes, the bridge switches).
+        // pre_update_option keeps the old value; added_option undoes a fresh insert.
+        // Core's generic filter passes ( $value, $option, $old_value ) — a different argument
+        // order from the option-specific pre_update_option_{$option}.
+        $freeze = static function ( $value, $option, $old_value ) {
+            if ( ! Cowboy_MCP_Security::is_hard_protected_option( (string) $option ) ) {
+                return $value;
+            }
+            if ( $value !== $old_value ) {
+                Cowboy_MCP_Auth::log( 'ability_option_write_blocked', [ 'option' => $option ] );
+            }
+            return $old_value;
+        };
+        $undo_add = static function ( $option ) {
+            if ( Cowboy_MCP_Security::is_hard_protected_option( (string) $option ) ) {
+                delete_option( $option );
+                Cowboy_MCP_Auth::log( 'ability_option_write_blocked', [ 'option' => $option ] );
+            }
+        };
+        add_filter( 'pre_update_option', $freeze, 0, 3 );
+        add_action( 'added_option', $undo_add, 0, 1 );
+        try {
+            return $ability->execute( $input );   // data or WP_Error; call_tool() encodes / formats either
+        } finally {
+            remove_filter( 'pre_update_option', $freeze, 0 );
+            remove_action( 'added_option', $undo_add, 0 );
+        }
     };
 }
 unset( $cowboy_mcp_ability, $cowboy_mcp_name, $cowboy_mcp_ns, $cowboy_mcp_meta, $cowboy_mcp_exposed, $cowboy_mcp_ann, $cowboy_mcp_ro, $cowboy_mcp_destr, $cowboy_mcp_idem, $cowboy_mcp_props, $cowboy_mcp_shape, $cowboy_mcp_label, $cowboy_mcp_desc );
+
+if ( $cowboy_mcp_ability_collisions ) {
+    // One row per listing, not one per ability.
+    Cowboy_MCP_Auth::log( 'ability_skipped_param_collision', [
+        'count'     => count( $cowboy_mcp_ability_collisions ),
+        'abilities' => implode( ',', $cowboy_mcp_ability_collisions ),
+    ] );
+}
 
 return [ 'tools' => $cowboy_mcp_ability_tools, 'handlers' => $cowboy_mcp_ability_handlers ];

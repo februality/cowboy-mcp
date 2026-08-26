@@ -15,8 +15,8 @@
  * so the index only ever affects discovery.
  *
  * Every WordPress 6.9+ function used here is guarded by function_exists() in
- * THIS file: Requires at least is 6.2 and Plugin Check's compatibility scan
- * honours same-file guards. On older cores the class is inert.
+ * THIS file: the plugin's `Requires at least` is 6.2 and Plugin Check's
+ * compatibility scan honours same-file guards. On older cores the class is inert.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -84,7 +84,14 @@ class Cowboy_MCP_Abilities {
         if ( ! function_exists( 'wp_register_ability' ) || ! self::enabled() ) {
             return;
         }
+        $failed = [];
         foreach ( self::index() as $ability_name => $row ) {
+            // A tampered index row must not relabel an ability or poison $by_tool
+            // (is_exposable() and the execution shim's schema both read it).
+            if ( ! self::row_is_consistent( (string) $ability_name, (array) $row ) ) {
+                $failed[] = $ability_name . ' (inconsistent index row)';
+                continue;
+            }
             $tool                   = (string) $row['tool'];
             self::$by_tool[ $tool ] = $row;
             if ( ! self::is_exposable( $tool ) ) {
@@ -122,9 +129,23 @@ class Cowboy_MCP_Abilities {
             if ( $ability ) {
                 self::$registered[ $tool ] = $ability_name;
             } else {
-                Cowboy_MCP_Auth::log( 'ability_register_failed', [ 'tool' => $tool, 'ability' => $ability_name ] );
+                $failed[] = $tool;
             }
         }
+        if ( $failed ) {
+            // One row per registration pass: a systemic failure would otherwise write ~170.
+            Cowboy_MCP_Auth::log( 'ability_register_failed', [ 'count' => count( $failed ), 'tools' => implode( ',', $failed ) ] );
+        }
+    }
+
+    /**
+     * Whether an index row's `tool` really derives the ability name it is filed
+     * under. The index is a stored option: without this, editing one row could
+     * point a trusted ability name (cowboy-mcp/wp-site-info) at another tool.
+     */
+    public static function row_is_consistent( string $ability_name, array $row ): bool {
+        $tool = (string) ( $row['tool'] ?? '' );
+        return '' !== $tool && $ability_name === self::NAMESPACE . '/' . str_replace( '_', '-', $tool );
     }
 
     /** tool name => ability name registered during this request. */
@@ -171,7 +192,12 @@ class Cowboy_MCP_Abilities {
      * Hide cowboy-mcp/* from users without manage_options in every
      * wp_get_abilities() consumer (REST list, adapter discover-abilities...).
      * Core lists show_in_rest abilities to any `read` user; Cowboy's catalog is
-     * admin-only everywhere else. Execution is gated separately by can_execute().
+     * admin-only everywhere else.
+     *
+     * ENUMERATION only. Core's single-item route GET /wp-abilities/v1/abilities/
+     * {name} resolves through wp_has_ability()/wp_get_ability(), which never run
+     * this filter, so a `read` user who guesses a name still sees its label,
+     * description and schema. Execution is gated separately by can_execute().
      */
     public static function filter_visibility( $include, $ability ) {
         if ( $include && is_object( $ability ) && method_exists( $ability, 'get_name' )
@@ -265,9 +291,13 @@ class Cowboy_MCP_Abilities {
             $schema['type']    = 'object';
             $schema['default'] = [];   // stored as a plain array; register_outbound() casts to (object) at registration
 
+            $undoable    = ! $readonly && Cowboy_MCP_Rollback::is_undoable_tool( $name );
             $description = (string) ( $tool['description'] ?? '' );
             if ( ! $readonly ) {
-                $description .= ' Mutating call: pass dry_run:true to preview; destructive tools need confirm:true while safe mode is on; the change is journaled and can be reverted with cowboy-mcp/wp-undo-change.';
+                // The undo sentence is a promise; only make it where it holds.
+                $description .= $undoable
+                    ? ' Mutating call: pass dry_run:true to preview; destructive tools need confirm:true while safe mode is on; the change is journaled and can be reverted with cowboy-mcp/wp-undo-change.'
+                    : ' Mutating call: pass dry_run:true to preview; destructive tools need confirm:true while safe mode is on. This tool is not undoable (see meta.cowboy_mcp.undoable).';
             }
 
             $abilities[ self::NAMESPACE . '/' . str_replace( '_', '-', $name ) ] = [
@@ -277,7 +307,7 @@ class Cowboy_MCP_Abilities {
                 'input_schema' => $schema,
                 'annotations'  => [ 'readOnlyHint' => $readonly, 'destructiveHint' => $destructive, 'idempotentHint' => $idempotent ],
                 'category'     => (string) ( $defs['categories'][ $name ] ?? 'system' ),
-                'undoable'     => ! $readonly && Cowboy_MCP_Rollback::is_undoable_tool( $name ),
+                'undoable'     => $undoable,
                 // Mirrors core's REST verb rule (readonly -> GET, destructive AND idempotent -> DELETE, else POST).
                 'http_method'  => $readonly ? 'GET' : ( ( $destructive && $idempotent ) ? 'DELETE' : 'POST' ),
             ];
@@ -338,9 +368,19 @@ class Cowboy_MCP_Abilities {
         }
 
         $args = is_array( $input ) ? $input : (array) $input;   // stdClass from the schema default / a {} body
+        // Coerce every value to the registered schema (core validated it already). On 6.9/7.0 the
+        // run controller passes GET/DELETE query input through as strings, and handlers test
+        // booleans with empty()/(bool) — "false" must not read as true (e.g. wp_delete_post force).
+        $schema  = self::$by_tool[ $tool ]['input_schema'] ?? [ 'type' => 'object' ];
+        $coerced = rest_sanitize_value_from_schema( $args, $schema, 'input' );
+        if ( is_array( $coerced ) ) {
+            $args = $coerced;
+        } elseif ( $coerced instanceof \stdClass ) {
+            $args = (array) $coerced;
+        }
         foreach ( [ 'dry_run', 'confirm' ] as $flag ) {
             if ( array_key_exists( $flag, $args ) ) {
-                $args[ $flag ] = rest_sanitize_boolean( $args[ $flag ] );   // 6.9 GET/DELETE input arrives as strings
+                $args[ $flag ] = rest_sanitize_boolean( $args[ $flag ] );   // belt and braces on the two gate keys
             }
         }
 

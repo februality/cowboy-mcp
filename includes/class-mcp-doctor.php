@@ -186,18 +186,20 @@ class Cowboy_MCP_Doctor {
 			$out[] = self::result( 'abilities_bridge', 'WordPress Abilities API bridge', 'skip', 'Bridge disabled in Settings.' );
 		} else {
 			$stats = Cowboy_MCP_Abilities::doctor_stats();
-			$out[] = self::result(
-				'abilities_bridge',
-				'WordPress Abilities API bridge',
-				'pass',
-				sprintf(
+			// enabled() covers both the outbound switch and the server master switch:
+			// with either off, "0 registered (0 withheld)" would read like a fault.
+			$detail = Cowboy_MCP_Abilities::enabled()
+				? sprintf(
 					'Outbound: %d tools registered as cowboy-mcp/* abilities (%d withheld by allowed_tools/Power mode). Inbound: %d abilities from other plugins available as tools.',
 					$stats['registered'],
 					$stats['withheld'],
 					$stats['inbound']
-				),
-				$stats['evidence']
-			);
+				)
+				: sprintf(
+					'Outbound: switched off. Inbound: %d abilities from other plugins available as tools.',
+					$stats['inbound']
+				);
+			$out[] = self::result( 'abilities_bridge', 'WordPress Abilities API bridge', 'pass', $detail, $stats['evidence'] );
 		}
 
 		return $out;
@@ -366,11 +368,14 @@ class Cowboy_MCP_Doctor {
 		];
 		foreach ( $results['checks'] as $c ) {
 			$tag = '[' . strtoupper( 'error' === $c['status'] ? 'FAIL' : $c['status'] ) . ']';
-			if ( in_array( $c['status'], [ 'pass', 'skip' ], true ) ) {
+			if ( 'skip' === $c['status'] ) {
 				$lines[] = "{$tag} {$c['label']}";
 				continue;
 			}
 			$lines[] = "{$tag} {$c['label']} - {$c['detail']}";
+			if ( 'pass' === $c['status'] ) {
+				continue;   // passing checks carry counts worth reading; evidence and fixes belong to problems
+			}
 			foreach ( $c['evidence'] as $ev ) {
 				$lines[] = '       ' . $ev;
 			}
