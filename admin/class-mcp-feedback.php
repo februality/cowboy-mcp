@@ -30,6 +30,7 @@ class Cowboy_MCP_Feedback {
     const DECISIONS      = [ 'later', 'review', 'support', 'already' ];
 
     public static function init(): void {
+        add_action( 'admin_notices', [ __CLASS__, 'render_notice' ] );
         add_action( 'wp_ajax_cowboy_mcp_feedback', [ __CLASS__, 'ajax_decide' ] );
     }
 
@@ -154,6 +155,50 @@ class Cowboy_MCP_Feedback {
 
     public static function doctor_url(): string {
         return admin_url( 'options-general.php?page=cowboy-mcp&tab=connection#cowboy-doctor' );
+    }
+
+    /* ── Notice ────────────────────────────────────────────── */
+
+    /**
+     * Three-panel notice (spec §6). Panels other than "ask" start hidden;
+     * mcp-notice.js switches them. The review/support CTAs are real links so
+     * they keep working without JS. Strings are human UI → translated.
+     */
+    public static function render_notice(): void {
+        if ( ! self::is_due() ) {
+            return;
+        }
+        ?>
+        <div class="notice notice-info is-dismissible mcp-feedback-notice">
+            <div data-panel="ask">
+                <p class="mcp-feedback-title"><strong><?php esc_html_e( 'How do you like Cowboy MCP so far?', 'cowboy-mcp' ); ?></strong></p>
+                <p class="mcp-feedback-actions">
+                    <button type="button" class="button" data-feedback="positive"><span aria-hidden="true">&#x1f44d;</span> <?php esc_html_e( 'Great, it works', 'cowboy-mcp' ); ?></button>
+                    <button type="button" class="button" data-feedback="negative"><span aria-hidden="true">&#x1f44e;</span> <?php esc_html_e( 'Not so good', 'cowboy-mcp' ); ?></button>
+                    <button type="button" class="button-link" data-feedback="later"><?php esc_html_e( 'Maybe later', 'cowboy-mcp' ); ?></button>
+                </p>
+            </div>
+            <div data-panel="positive" hidden>
+                <p><?php esc_html_e( "Glad to hear it! Would you leave a quick review on WordPress.org? It's the single best way to help other site owners find Cowboy MCP.", 'cowboy-mcp' ); ?></p>
+                <p class="mcp-feedback-actions">
+                    <a class="button button-primary" href="<?php echo esc_url( self::REVIEW_URL ); ?>" target="_blank" rel="noopener noreferrer" data-feedback="review"><?php esc_html_e( 'Leave a review', 'cowboy-mcp' ); ?> &#x2197;</a>
+                    <button type="button" class="button-link" data-feedback="already"><?php esc_html_e( 'I already did', 'cowboy-mcp' ); ?></button>
+                    <button type="button" class="button-link" data-feedback="later"><?php esc_html_e( 'Maybe later', 'cowboy-mcp' ); ?></button>
+                </p>
+            </div>
+            <div data-panel="negative" hidden>
+                <p><?php esc_html_e( "Sorry about that — let's fix it. Open a support topic on WordPress.org; topics are usually answered within a day.", 'cowboy-mcp' ); ?></p>
+                <p class="mcp-feedback-actions">
+                    <a class="button button-primary" href="<?php echo esc_url( self::SUPPORT_URL ); ?>" target="_blank" rel="noopener noreferrer" data-feedback="support"><?php esc_html_e( 'Open a support topic', 'cowboy-mcp' ); ?> &#x2197;</a>
+                    <a class="button" href="<?php echo esc_url( self::doctor_url() ); ?>"><?php esc_html_e( 'Run Connection Doctor', 'cowboy-mcp' ); ?></a>
+                    <button type="button" class="button-link" data-feedback="later"><?php esc_html_e( 'Maybe later', 'cowboy-mcp' ); ?></button>
+                </p>
+            </div>
+            <div data-panel="thanks" hidden>
+                <p><?php esc_html_e( 'Thanks!', 'cowboy-mcp' ); ?></p>
+            </div>
+        </div>
+        <?php
     }
 
     /* ── AJAX ──────────────────────────────────────────────── */

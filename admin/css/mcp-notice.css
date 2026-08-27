@@ -13,3 +13,28 @@
     padding: 0 22px;
     margin-top: 2px;
 }
+.mcp-feedback-notice {
+    padding-top: 8px;
+    padding-bottom: 10px;
+}
+.mcp-feedback-notice .mcp-feedback-title {
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+.mcp-feedback-notice .mcp-feedback-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin: 6px 0 2px;
+}
+.mcp-feedback-notice .button-link {
+    text-decoration: underline;
+}
+.mcp-feedback-notice [hidden] {
+    display: none !important;
+}
+.mcp-feedback-notice.is-leaving {
+    opacity: 0;
+    transition: opacity .3s ease;
+}
