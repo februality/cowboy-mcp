@@ -26,7 +26,7 @@ class Cowboy_MCP_Feedback {
     const MAX_ASKS       = 3;
     const REVIEW_URL     = 'https://wordpress.org/support/plugin/cowboy-mcp/reviews/#new-post';
     const SUPPORT_URL    = 'https://wordpress.org/support/plugin/cowboy-mcp/#new-post';
-    const SCREENS        = [ 'dashboard', 'plugins', 'settings_page_cowboy-mcp' ];
+    const SCREENS        = [ 'dashboard', 'plugins', 'settings_page_' . Cowboy_MCP_Admin::SLUG ];
     const DECISIONS      = [ 'later', 'review', 'support', 'already' ];
 
     public static function init(): void {
@@ -68,6 +68,9 @@ class Cowboy_MCP_Feedback {
             return false;
         }
         $state = self::state();
+        if ( 'done' === $state['status'] ) {
+            return true; // terminal — a late "later" from a stale tab / the × during the thanks fade is a no-op
+        }
         if ( 'later' === $decision ) {
             $state['shown'] = (int) $state['shown'] + 1;
             if ( $state['shown'] >= self::MAX_ASKS ) {
@@ -122,12 +125,17 @@ class Cowboy_MCP_Feedback {
     }
 
     /**
-     * ≥ MIN_CALLS completed tool calls (tool_call rows minus tool_error rows,
-     * gateway meta-tools excluded) whose earliest row is ≥ MIN_AGE_DAYS old.
-     * A negative result is cached for 12 hours so admin loads stay cheap.
+     * ≥ MIN_CALLS completed tool calls (tool_call rows minus tool_error/tool_exception
+     * rows, gateway meta-tools excluded) whose earliest row is ≥ MIN_AGE_DAYS old.
+     * A result is cached for 12 hours in either direction so admin loads stay cheap;
+     * the state option takes over once a decision is recorded.
      */
     public static function usage_met(): bool {
-        if ( get_transient( self::GATE_TRANSIENT ) ) {
+        $cached = get_transient( self::GATE_TRANSIENT );
+        if ( 'met' === $cached ) {
+            return true;
+        }
+        if ( $cached ) {
             return false;
         }
         global $wpdb;
@@ -138,7 +146,7 @@ class Cowboy_MCP_Feedback {
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT SUM( event = 'tool_call' ) - SUM( event = 'tool_error' ) AS completed, MIN( timestamp ) <= ( NOW() - INTERVAL %d DAY ) AS old_enough FROM %i WHERE event IN ( 'tool_call', 'tool_error' ) AND tool NOT IN ( 'cowboy_run', 'cowboy_discover' )",
+                "SELECT SUM( event = 'tool_call' ) - SUM( event IN ( 'tool_error', 'tool_exception' ) ) AS completed, MIN( timestamp ) <= ( NOW() - INTERVAL %d DAY ) AS old_enough FROM %i WHERE event IN ( 'tool_call', 'tool_error', 'tool_exception' ) AND tool NOT IN ( 'cowboy_run', 'cowboy_discover' )",
                 self::MIN_AGE_DAYS,
                 $table
             ),
@@ -147,22 +155,22 @@ class Cowboy_MCP_Feedback {
         // phpcs:enable
 
         $met = (int) ( $row['completed'] ?? 0 ) >= self::MIN_CALLS && ! empty( $row['old_enough'] );
-        if ( ! $met ) {
-            set_transient( self::GATE_TRANSIENT, 1, 12 * HOUR_IN_SECONDS );
-        }
+        set_transient( self::GATE_TRANSIENT, $met ? 'met' : 1, 12 * HOUR_IN_SECONDS );
         return $met;
     }
 
     public static function doctor_url(): string {
-        return admin_url( 'options-general.php?page=cowboy-mcp&tab=connection#cowboy-doctor' );
+        return admin_url( 'options-general.php?page=' . Cowboy_MCP_Admin::SLUG . '&tab=connection#cowboy-doctor' );
     }
 
     /* ── Notice ────────────────────────────────────────────── */
 
     /**
      * Three-panel notice (spec §6). Panels other than "ask" start hidden;
-     * mcp-notice.js switches them. The review/support CTAs are real links so
-     * they keep working without JS. Strings are human UI → translated.
+     * mcp-notice.js switches them. The review/support CTAs are real links
+     * (not JS navigation) so they keep native link affordances — new tab,
+     * middle-click, copy link — and no popup blocker is involved; the panels
+     * themselves are JS-revealed. Strings are human UI → translated.
      */
     public static function render_notice(): void {
         if ( ! self::is_due() ) {
@@ -194,7 +202,7 @@ class Cowboy_MCP_Feedback {
                     <button type="button" class="button-link" data-feedback="later"><?php esc_html_e( 'Maybe later', 'cowboy-mcp' ); ?></button>
                 </p>
             </div>
-            <div data-panel="thanks" hidden>
+            <div data-panel="thanks" hidden role="status">
                 <p><?php esc_html_e( 'Thanks!', 'cowboy-mcp' ); ?></p>
             </div>
         </div>

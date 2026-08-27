@@ -8,15 +8,12 @@
 	// Fire-and-forget admin-ajax POST. keepalive lets the request finish even
 	// when the click also navigates (the review / support links).
 	function send( params ) {
-		var body = new URLSearchParams( params );
-		if ( window.fetch ) {
-			window.fetch( cowboyMcpNotice.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin', keepalive: true } ).catch( function() {} );
-			return;
-		}
-		var xhr = new XMLHttpRequest();
-		xhr.open( 'POST', cowboyMcpNotice.ajaxUrl );
-		xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-		xhr.send( body.toString() );
+		window.fetch( cowboyMcpNotice.ajaxUrl, {
+			method: 'POST',
+			body: new URLSearchParams( params ),
+			credentials: 'same-origin',
+			keepalive: true
+		} ).catch( function() {} );
 	}
 
 	/* ── Post-activation setup notice ── */
@@ -37,6 +34,7 @@
 	if ( ! fb || ! cowboyMcpNotice.feedbackNonce ) {
 		return;
 	}
+	var dismissed = false;
 
 	function decide( decision ) {
 		send( { action: 'cowboy_mcp_feedback', _wpnonce: cowboyMcpNotice.feedbackNonce, decision: decision } );
@@ -46,6 +44,10 @@
 		fb.querySelectorAll( '[data-panel]' ).forEach( function( el ) {
 			el.hidden = el.getAttribute( 'data-panel' ) !== name;
 		} );
+		var first = fb.querySelector( '[data-panel="' + name + '"] button, [data-panel="' + name + '"] a' );
+		if ( first ) {
+			first.focus();
+		}
 	}
 
 	function finish() {
@@ -58,6 +60,10 @@
 
 	fb.addEventListener( 'click', function( e ) {
 		if ( e.target.closest( '.notice-dismiss' ) ) {
+			if ( dismissed ) {
+				return;
+			}
+			dismissed = true;
 			decide( 'later' ); // core removes the notice itself
 			return;
 		}
