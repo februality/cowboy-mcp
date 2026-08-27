@@ -3,13 +3,11 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
-= 1.7.0 =
-* New: WordPress Abilities API bridge (WordPress 6.9+). Every allowed tool is registered as a cowboy-mcp/* ability, so WP-CLI (wp ability run), the core REST endpoint, the official MCP Adapter and WordPress's AI tooling can call Cowboy's tools - with safe mode, dry run, the audit log and per-change undo applied to every caller. Two switches under Settings, both on by default.
-* New: abilities registered by other plugins (WooCommerce, the AI plugin's core abilities, core) appear as tools in a new abilities category, with safe-mode confirmation and read-only scoping; they run their own permission checks and are not undoable.
-* New: Connection Doctor reports the bridge state (registered, withheld, inbound counts; adapter presence).
-* New: a one-time "How do you like Cowboy MCP so far?" prompt after the plugin has done real work on your site - a thumbs-up leads to the WordPress.org review form, a thumbs-down to a new support topic. Dismissible, snoozes for 30 days, never asks more than three times, and sends nothing anywhere.
-* Fix: custom key scopes now accept Abilities API names; wp_update_option and wp_list_changes declare the value types they accept.
-* Under the hood: tool definitions for the bridge are cached (rebuilt when plugins, theme or version change) so registration costs ~1 ms on sites whose plugins initialise the Abilities registry on every request.
+= 1.6.4 =
+* New: WordPress Abilities API bridge (WordPress 6.9+). Cowboy's tools become cowboy-mcp/* abilities for WP-CLI, the REST API, the MCP Adapter and WordPress AI tooling - with safe mode, dry run, audit log and undo still applied - and abilities from other plugins appear as Cowboy tools. Two switches under Settings, on by default.
+* New: Connection Doctor reports the bridge state.
+* New: a welcome notice after activation and a one-time feedback prompt (review or support).
+* Fix: custom key scopes accept Abilities API names; wp_update_option and wp_list_changes declare their value types.
 
 = 1.6.3 =
 * New: local development, first-class - Cowboy MCP now works just as well on a local site (Local, Studio, MAMP, DevKinsta, and any localhost setup) as on a live one. No public URL or tunnel needed: Claude Code, Cursor, Codex, and Gemini CLI connect with an API key exactly as they do in production, and Claude Desktop connects through a small local bridge.

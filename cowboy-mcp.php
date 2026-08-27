@@ -3,7 +3,7 @@
  * Plugin Name: Cowboy MCP
  * Plugin URI:  https://cowboymcp.com
  * Description: Turns your WordPress site into a Model Context Protocol (MCP) server so AI agents like Claude, ChatGPT, Cursor and Claude Code can read, edit, and manage everything on the site - with per-change undo and database checkpoints.
- * Version:     1.6.3
+ * Version:     1.6.4
  * Author:      februality
  * Author URI:  https://profiles.wordpress.org/februality/
  * License:     GPL-2.0-or-later
@@ -41,7 +41,7 @@ along with Cowboy MCP. If not, see https://www.gnu.org/licenses/gpl-2.0.html.
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'COWBOY_MCP_VERSION', '1.6.3' );
+define( 'COWBOY_MCP_VERSION', '1.6.4' );
 define( 'COWBOY_MCP_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'COWBOY_MCP_URL',     plugin_dir_url( __FILE__ ) );
 

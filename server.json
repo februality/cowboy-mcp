@@ -3,7 +3,7 @@
   "name": "io.github.februality/cowboy-mcp",
   "title": "Cowboy MCP",
   "description": "Free WordPress MCP server with undo: 168 built-in tools plus WordPress Abilities API bridge, for Claude, ChatGPT, Cursor & Claude Code. Self-hosted, no relay, no Pro tier.",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "websiteUrl": "https://cowboymcp.com",
   "repository": {
     "url": "https://github.com/februality/cowboy-mcp",

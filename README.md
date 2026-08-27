@@ -2,7 +2,7 @@
 
 Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Cursor, Claude Code, Codex, Gemini** and any other MCP client can manage the site in plain English — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
 
-![Version](https://img.shields.io/badge/version-1.6.3-34ff7a)
+![Version](https://img.shields.io/badge/version-1.6.4-34ff7a)
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
 ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b)
