@@ -62,6 +62,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-prompts.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-completion.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-oauth.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
+require_once COWBOY_MCP_PATH . 'admin/class-mcp-feedback.php';
 
 /* ── Boot ─────────────────────────────────────────────────── */
 add_action( 'plugins_loaded', function () {
@@ -72,6 +73,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
+    Cowboy_MCP_Feedback::init();
     Cowboy_MCP_OAuth::init();
     Cowboy_MCP_Abilities::init();
 
@@ -177,6 +179,8 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_db_version' );
     delete_option( 'cowboy_mcp_setup_notice' );
     delete_option( 'cowboy_mcp_ability_index' );
+    delete_option( 'cowboy_mcp_feedback' );
+    delete_transient( 'cowboy_mcp_feedback_gate' );
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
