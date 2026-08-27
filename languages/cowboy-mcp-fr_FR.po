@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-27 00:24-0700\n"
+"POT-Creation-Date: 2026-08-27 09:42-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: French\n"
@@ -191,7 +191,7 @@ msgstr ""
 "Posez votre question sur le forum de support de WordPress.org. Collez votre "
 "rapport du Diagnostic de connexion pour obtenir une réponse plus rapide."
 
-#: admin/class-mcp-admin.php:563 admin/class-mcp-feedback.php:184
+#: admin/class-mcp-admin.php:563 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "Laisser un avis"
 
@@ -1239,44 +1239,53 @@ msgstr ""
 msgid "Undo batch"
 msgstr "Annuler le lot"
 
-#: admin/class-mcp-feedback.php:174
+#: admin/class-mcp-feedback.php:182
 msgid "How do you like Cowboy MCP so far?"
 msgstr "Que pensez-vous de Cowboy MCP jusqu'ici ?"
 
-#: admin/class-mcp-feedback.php:176
-msgid "Great, it works"
-msgstr "Super, ça marche"
+#: admin/class-mcp-feedback.php:184
+msgid "Great!"
+msgstr "Super !"
 
-#: admin/class-mcp-feedback.php:177
+#: admin/class-mcp-feedback.php:185
 msgid "Not so good"
 msgstr "Pas terrible"
 
-#: admin/class-mcp-feedback.php:178 admin/class-mcp-feedback.php:186
-#: admin/class-mcp-feedback.php:194
+#: admin/class-mcp-feedback.php:186 admin/class-mcp-feedback.php:194
+#: admin/class-mcp-feedback.php:202
 msgid "Maybe later"
 msgstr "Peut-être plus tard"
 
-#: admin/class-mcp-feedback.php:182
-msgid "Glad to hear it! Would you leave a quick review on WordPress.org? It's the single best way to help other site owners find Cowboy MCP."
-msgstr "Ravi de l'entendre ! Laisseriez-vous un court avis sur WordPress.org ? C'est le meilleur moyen d'aider d'autres propriétaires de sites à découvrir Cowboy MCP."
+#: admin/class-mcp-feedback.php:190
+msgid ""
+"Glad to hear it! Would you leave a quick review on WordPress.org? It's the "
+"single best way to help other site owners find Cowboy MCP."
+msgstr ""
+"Ravi de l'entendre ! Laisseriez-vous un court avis sur WordPress.org ? C'est "
+"le meilleur moyen d'aider d'autres propriétaires de sites à découvrir Cowboy "
+"MCP."
 
-#: admin/class-mcp-feedback.php:185
+#: admin/class-mcp-feedback.php:193
 msgid "I already did"
 msgstr "C'est déjà fait"
 
-#: admin/class-mcp-feedback.php:190
-msgid "Sorry about that — let's fix it. Open a support topic on WordPress.org; topics are usually answered within a day."
-msgstr "Désolé. Réglons ça : ouvrez un sujet sur le forum de support WordPress.org ; nous répondons généralement sous 24 h."
+#: admin/class-mcp-feedback.php:198
+msgid ""
+"Sorry about that — let's fix it. Open a support topic on WordPress.org; "
+"topics are usually answered within a day."
+msgstr ""
+"Désolé. Réglons ça : ouvrez un sujet sur le forum de support WordPress.org ; "
+"nous répondons généralement sous 24 h."
 
-#: admin/class-mcp-feedback.php:192
+#: admin/class-mcp-feedback.php:200
 msgid "Open a support topic"
 msgstr "Ouvrir un sujet de support"
 
-#: admin/class-mcp-feedback.php:193
+#: admin/class-mcp-feedback.php:201
 msgid "Run Connection Doctor"
 msgstr "Lancer le diagnostic de connexion"
 
-#: admin/class-mcp-feedback.php:198
+#: admin/class-mcp-feedback.php:206
 msgid "Thanks!"
 msgstr "Merci !"
 

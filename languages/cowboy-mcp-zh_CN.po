@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-27 00:24-0700\n"
+"POT-Creation-Date: 2026-08-27 09:42-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -177,7 +177,7 @@ msgid ""
 "for a fast answer."
 msgstr "在 WordPress.org 支持论坛提问。粘贴您的连接诊断报告，可更快获得解答。"
 
-#: admin/class-mcp-admin.php:563 admin/class-mcp-feedback.php:184
+#: admin/class-mcp-admin.php:563 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "留下评价"
 
@@ -1155,44 +1155,52 @@ msgstr "撤销此批处理中的所有活动变更（从最新开始）？"
 msgid "Undo batch"
 msgstr "撤销批处理"
 
-#: admin/class-mcp-feedback.php:174
+#: admin/class-mcp-feedback.php:182
 msgid "How do you like Cowboy MCP so far?"
 msgstr "到目前为止，您觉得 Cowboy MCP 怎么样？"
 
-#: admin/class-mcp-feedback.php:176
-msgid "Great, it works"
-msgstr "很好，一切正常"
+#: admin/class-mcp-feedback.php:184
+msgid "Great!"
+msgstr "很好！"
 
-#: admin/class-mcp-feedback.php:177
+#: admin/class-mcp-feedback.php:185
 msgid "Not so good"
 msgstr "不太好"
 
-#: admin/class-mcp-feedback.php:178 admin/class-mcp-feedback.php:186
-#: admin/class-mcp-feedback.php:194
+#: admin/class-mcp-feedback.php:186 admin/class-mcp-feedback.php:194
+#: admin/class-mcp-feedback.php:202
 msgid "Maybe later"
 msgstr "以后再说"
 
-#: admin/class-mcp-feedback.php:182
-msgid "Glad to hear it! Would you leave a quick review on WordPress.org? It's the single best way to help other site owners find Cowboy MCP."
-msgstr "很高兴听到这个！能在 WordPress.org 上留下一个简短的评价吗？这是帮助其他站长发现 Cowboy MCP 的最佳方式。"
+#: admin/class-mcp-feedback.php:190
+msgid ""
+"Glad to hear it! Would you leave a quick review on WordPress.org? It's the "
+"single best way to help other site owners find Cowboy MCP."
+msgstr ""
+"很高兴听到这个！能在 WordPress.org 上留下一个简短的评价吗？这是帮助其他站长发"
+"现 Cowboy MCP 的最佳方式。"
 
-#: admin/class-mcp-feedback.php:185
+#: admin/class-mcp-feedback.php:193
 msgid "I already did"
 msgstr "我已经评价过了"
 
-#: admin/class-mcp-feedback.php:190
-msgid "Sorry about that — let's fix it. Open a support topic on WordPress.org; topics are usually answered within a day."
-msgstr "很抱歉——让我们来解决它。请在 WordPress.org 上发起一个支持主题；通常会在一天内得到回复。"
+#: admin/class-mcp-feedback.php:198
+msgid ""
+"Sorry about that — let's fix it. Open a support topic on WordPress.org; "
+"topics are usually answered within a day."
+msgstr ""
+"很抱歉——让我们来解决它。请在 WordPress.org 上发起一个支持主题；通常会在一天内"
+"得到回复。"
 
-#: admin/class-mcp-feedback.php:192
+#: admin/class-mcp-feedback.php:200
 msgid "Open a support topic"
 msgstr "发起支持主题"
 
-#: admin/class-mcp-feedback.php:193
+#: admin/class-mcp-feedback.php:201
 msgid "Run Connection Doctor"
 msgstr "运行连接诊断"
 
-#: admin/class-mcp-feedback.php:198
+#: admin/class-mcp-feedback.php:206
 msgid "Thanks!"
 msgstr "谢谢！"
 

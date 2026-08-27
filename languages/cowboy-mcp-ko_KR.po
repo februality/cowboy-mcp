@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.5.2\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-27 00:24-0700\n"
+"POT-Creation-Date: 2026-08-27 09:42-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -183,7 +183,7 @@ msgstr ""
 "WordPress.org 지원 포럼에 질문하세요. 연결 진단 보고서를 붙여넣으면 더 빠르"
 "게 답변을 받을 수 있습니다."
 
-#: admin/class-mcp-admin.php:563 admin/class-mcp-feedback.php:184
+#: admin/class-mcp-admin.php:563 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "리뷰 남기기"
 
@@ -1193,44 +1193,52 @@ msgstr "이 배치의 활성 변경을 모두 실행 취소하시겠습니까(�
 msgid "Undo batch"
 msgstr "배치 실행 취소"
 
-#: admin/class-mcp-feedback.php:174
+#: admin/class-mcp-feedback.php:182
 msgid "How do you like Cowboy MCP so far?"
 msgstr "지금까지 Cowboy MCP는 어떠셨나요?"
 
-#: admin/class-mcp-feedback.php:176
-msgid "Great, it works"
-msgstr "좋아요, 잘 작동해요"
+#: admin/class-mcp-feedback.php:184
+msgid "Great!"
+msgstr "좋아요!"
 
-#: admin/class-mcp-feedback.php:177
+#: admin/class-mcp-feedback.php:185
 msgid "Not so good"
 msgstr "별로예요"
 
-#: admin/class-mcp-feedback.php:178 admin/class-mcp-feedback.php:186
-#: admin/class-mcp-feedback.php:194
+#: admin/class-mcp-feedback.php:186 admin/class-mcp-feedback.php:194
+#: admin/class-mcp-feedback.php:202
 msgid "Maybe later"
 msgstr "나중에"
 
-#: admin/class-mcp-feedback.php:182
-msgid "Glad to hear it! Would you leave a quick review on WordPress.org? It's the single best way to help other site owners find Cowboy MCP."
-msgstr "다행이네요! WordPress.org에 짧은 리뷰를 남겨 주시겠어요? 다른 사이트 운영자가 Cowboy MCP를 찾는 데 가장 큰 도움이 됩니다."
+#: admin/class-mcp-feedback.php:190
+msgid ""
+"Glad to hear it! Would you leave a quick review on WordPress.org? It's the "
+"single best way to help other site owners find Cowboy MCP."
+msgstr ""
+"다행이네요! WordPress.org에 짧은 리뷰를 남겨 주시겠어요? 다른 사이트 운영자"
+"가 Cowboy MCP를 찾는 데 가장 큰 도움이 됩니다."
 
-#: admin/class-mcp-feedback.php:185
+#: admin/class-mcp-feedback.php:193
 msgid "I already did"
 msgstr "이미 남겼어요"
 
-#: admin/class-mcp-feedback.php:190
-msgid "Sorry about that — let's fix it. Open a support topic on WordPress.org; topics are usually answered within a day."
-msgstr "죄송합니다. 함께 해결해 봐요. WordPress.org 지원 포럼에 글을 남겨 주세요. 보통 하루 안에 답변드립니다."
+#: admin/class-mcp-feedback.php:198
+msgid ""
+"Sorry about that — let's fix it. Open a support topic on WordPress.org; "
+"topics are usually answered within a day."
+msgstr ""
+"죄송합니다. 함께 해결해 봐요. WordPress.org 지원 포럼에 글을 남겨 주세요. 보"
+"통 하루 안에 답변드립니다."
 
-#: admin/class-mcp-feedback.php:192
+#: admin/class-mcp-feedback.php:200
 msgid "Open a support topic"
 msgstr "지원 글 남기기"
 
-#: admin/class-mcp-feedback.php:193
+#: admin/class-mcp-feedback.php:201
 msgid "Run Connection Doctor"
 msgstr "연결 진단 실행"
 
-#: admin/class-mcp-feedback.php:198
+#: admin/class-mcp-feedback.php:206
 msgid "Thanks!"
 msgstr "감사합니다!"
 

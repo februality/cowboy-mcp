@@ -181,7 +181,7 @@ class Cowboy_MCP_Feedback {
             <div data-panel="ask">
                 <p class="mcp-feedback-title"><strong><?php esc_html_e( 'How do you like Cowboy MCP so far?', 'cowboy-mcp' ); ?></strong></p>
                 <p class="mcp-feedback-actions">
-                    <button type="button" class="button" data-feedback="positive"><span aria-hidden="true">&#x1f44d;</span> <?php esc_html_e( 'Great, it works', 'cowboy-mcp' ); ?></button>
+                    <button type="button" class="button" data-feedback="positive"><span aria-hidden="true">&#x1f44d;</span> <?php esc_html_e( 'Great!', 'cowboy-mcp' ); ?></button>
                     <button type="button" class="button" data-feedback="negative"><span aria-hidden="true">&#x1f44e;</span> <?php esc_html_e( 'Not so good', 'cowboy-mcp' ); ?></button>
                     <button type="button" class="button-link" data-feedback="later"><?php esc_html_e( 'Maybe later', 'cowboy-mcp' ); ?></button>
                 </p>
