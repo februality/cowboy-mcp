@@ -250,9 +250,9 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 == Changelog ==
 
 = 1.6.5 =
-* Security: wp_write_file refuses to write into mu-plugins/ unless Power mode is on. Must-use plugins load on every request and cannot be paused by WordPress recovery mode, so one broken file there took a site - and the undo journal that would have fixed it - offline at once. Agents are pointed to a regular plugin plus wp_activate_plugin instead.
-* Fix: PHP files are syntax-checked before they are written - a truncated or malformed payload is rejected with the line number and nothing lands on disk. A dry run of wp_write_file reports the same refusals instead of a generic preview.
-* Fix: a short write (disk full, quota) is treated as a failure instead of renaming a truncated file into place.
+* Security: writes into mu-plugins/ now require Power mode. Must-use plugins load on every request and cannot be paused by recovery mode, so one broken file there takes down the site and the undo journal with it. Agents are pointed to a regular plugin plus wp_activate_plugin instead.
+* Fix: PHP files are syntax-checked before they are written; a truncated or malformed file is rejected with the line number and nothing lands on disk. Dry runs report the same refusals.
+* Fix: a short write (disk full, quota) fails cleanly instead of renaming a truncated file into place.
 
 = Earlier versions =
 
