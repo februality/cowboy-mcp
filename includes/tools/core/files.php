@@ -79,13 +79,87 @@ function cowboy_mcp_is_blocked_upload_write( string $full ): bool {
     return in_array( $ext, [ 'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps', 'phar', 'pht', 'htaccess' ], true );
 }
 
+/**
+ * Whether a resolved path lands inside wp-content/mu-plugins/ (any depth).
+ *
+ * Must-use plugins load on every request — front end, wp-admin, REST, and this
+ * MCP endpoint — before regular plugins, and WordPress recovery mode cannot pause
+ * them. A broken file there locks the agent out of the undo journal that would
+ * fix it, so writes are refused unless a human has enabled Power mode in wp-admin.
+ */
+function cowboy_mcp_is_blocked_mu_plugin_write( string $full ): bool {
+    if ( Cowboy_MCP_Security::power_mode_enabled() ) {
+        return false;
+    }
+    $content = realpath( Cowboy_MCP_Compat::content_dir() ) ?: Cowboy_MCP_Compat::content_dir();
+    $mu      = $content . '/mu-plugins';
+    $mu_real = realpath( $mu ) ?: $mu; // dir may not exist yet, or be a symlink
+    return str_starts_with( $full . '/', $mu_real . '/' ) || str_starts_with( $full . '/', $mu . '/' );
+}
+
+/**
+ * Pure-PHP syntax check for PHP file content (no shell, no admin includes).
+ * Returns null when the content parses, or "message on line N" otherwise.
+ * The tokenizer is the same C code PHP compiles the file with, so an unclosed
+ * brace or string from a truncated agent payload is caught before any byte lands.
+ */
+function cowboy_mcp_php_syntax_error( string $content ): ?string {
+    try {
+        token_get_all( $content, TOKEN_PARSE );
+    } catch ( ParseError $e ) {
+        $msg = $e->getMessage(); // some messages already carry "on line N" (e.g. Unclosed '{')
+        return str_contains( $msg, ' on line ' ) ? $msg : $msg . ' on line ' . $e->getLine();
+    }
+    return null;
+}
+
+/** Whether a path is executed by PHP (used to decide when to lint before writing). */
+function cowboy_mcp_is_php_path( string $full ): bool {
+    $ext = strtolower( pathinfo( $full, PATHINFO_EXTENSION ) );
+    return in_array( $ext, [ 'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps', 'pht' ], true );
+}
+
+/**
+ * Dry-run plan for wp_write_file: runs the same path guards and PHP lint the
+ * real write runs, so a preview of a write that would be refused says so
+ * instead of "Would write file". Never touches the filesystem.
+ */
+function cowboy_mcp_write_file_plan( array $a ): array {
+    $rel     = (string) ( $a['path'] ?? '' );
+    $content = (string) ( $a['content'] ?? '' );
+    $plan    = [ 'path' => $rel, 'bytes' => strlen( $content ), 'would_fail' => null, 'reason' => null ];
+
+    $full = cowboy_mcp_resolve_wp_content_path( $rel );
+    if ( is_wp_error( $full ) ) {
+        $plan['would_fail'] = $full->get_error_code();
+        $plan['reason']     = $full->get_error_message();
+        return $plan;
+    }
+    $plan['exists'] = is_file( $full );
+    if ( cowboy_mcp_is_blocked_upload_write( $full ) ) {
+        $plan['would_fail'] = 'blocked_extension';
+        $plan['reason']     = 'Executable files cannot be written into the uploads directory.';
+    } elseif ( cowboy_mcp_is_blocked_mu_plugin_write( $full ) ) {
+        $plan['would_fail'] = 'mu_plugins_blocked';
+        $plan['reason']     = 'Writes into mu-plugins/ are refused unless Power mode is on. Write a regular plugin under plugins/<slug>/ and activate it with wp_activate_plugin instead.';
+    } elseif ( cowboy_mcp_is_php_path( $full ) ) {
+        $err              = cowboy_mcp_php_syntax_error( $content );
+        $plan['php_lint'] = $err === null ? 'ok' : $err;
+        if ( $err !== null ) {
+            $plan['would_fail'] = 'php_syntax_error';
+            $plan['reason']     = 'PHP syntax error - ' . $err . '. If the content was cut off, resend the complete file.';
+        }
+    }
+    return $plan;
+}
+
 return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_read_file', '[Files] Read the contents of a theme or plugin file.', [
             'path' => [ 'type' => 'string', 'description' => 'Path relative to wp-content/ (e.g. themes/flavor/style.css)', 'required' => true ],
         ], [ 'title' => 'Read File', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ]),
 
-        Cowboy_MCP_Tools::tool( 'wp_write_file', '[Files] Write or overwrite a theme/plugin file. Creates parent directories if needed.', [
+        Cowboy_MCP_Tools::tool( 'wp_write_file', '[Files] Write or overwrite a theme/plugin file. Creates parent directories if needed. PHP content is syntax-checked before it lands. Writes into mu-plugins/ are refused unless Power mode is on (must-use plugins load on every request, including this endpoint, and cannot be paused by WordPress recovery mode) - write a regular plugin under plugins/ and activate it with wp_activate_plugin instead.', [
             'path'    => [ 'type' => 'string', 'description' => 'Path relative to wp-content/', 'required' => true ],
             'content' => [ 'type' => 'string', 'description' => 'File content', 'required' => true ],
         ], [ 'title' => 'Write File', 'readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ]),
@@ -127,6 +201,15 @@ return [
             if ( cowboy_mcp_is_blocked_upload_write( $path ) ) {
                 return new WP_Error( 'blocked_extension', 'Refusing to write executable files (.php/.phar/.htaccess) into the uploads directory.' );
             }
+            if ( cowboy_mcp_is_blocked_mu_plugin_write( $path ) ) {
+                return new WP_Error( 'mu_plugins_blocked', 'Refusing to write into mu-plugins/. Must-use plugins run on every request (front end, wp-admin, and this MCP endpoint) and WordPress recovery mode cannot pause them, so a single fatal error there locks the site and the undo journal out at once. Write a regular plugin under plugins/<slug>/ and activate it with wp_activate_plugin instead. A site administrator can lift this restriction by enabling Power mode in wp-admin > Cowboy MCP > Settings.' );
+            }
+            if ( cowboy_mcp_is_php_path( $path ) ) {
+                $syntax_error = cowboy_mcp_php_syntax_error( $a['content'] );
+                if ( $syntax_error !== null ) {
+                    return new WP_Error( 'php_syntax_error', "Refusing to write {$a['path']}: PHP syntax error - {$syntax_error}. Nothing was written. If the content was cut off, resend the complete file." );
+                }
+            }
 
             $dir = dirname( $path );
             if ( ! is_dir( $dir ) ) {
@@ -138,6 +221,11 @@ return [
             if ( $bytes === false ) {
                 wp_delete_file( $tmp );
                 return new WP_Error( 'write_failed', "Could not write to {$a['path']}. Check permissions." );
+            }
+            if ( $bytes !== $content_len ) {
+                // Short write (disk full / quota) — never rename a truncated file live.
+                wp_delete_file( $tmp );
+                return new WP_Error( 'write_failed', "Short write for {$a['path']}: {$bytes} of {$content_len} bytes. Nothing was changed. Check free disk space or quota." );
             }
             // Atomic replace via native rename. $tmp lives in the same directory as
             // $path, so this is atomic and needs no WP_Filesystem/admin include.

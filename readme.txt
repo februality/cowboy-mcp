@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.4
+Stable tag: 1.6.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -119,7 +119,7 @@ You are handing an AI real control, so Cowboy MCP is built to keep you in charge
 * **Audit log** - every tool call, error and authentication event, with key, tool, arguments and result, on the Logs tab; pruned after 30 days.
 * **Scoped credentials** - each API key and each OAuth connection can be full access, read-only, or a custom list of tools; a read-only key cannot write even if the agent tries.
 * **Hashed keys, rate limits, origin checks** - keys are shown once and stored as one-way hashes, requests are rate-limited per key (120/minute by default), and requests from unknown browser origins are rejected.
-* **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection on outbound requests, path confinement to `wp-content`, self-delete and last-administrator protection, and a Power mode for the rare job that needs the gloves off - which only a human can switch on in wp-admin. The agent can never grant itself more power through Cowboy's own tools, and abilities from other plugins cannot touch Cowboy's credentials or settings either.
+* **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection on outbound requests, path confinement to `wp-content` with a syntax check on every PHP write and no writes to `mu-plugins`, self-delete and last-administrator protection, and a Power mode for the rare job that needs the gloves off - which only a human can switch on in wp-admin. The agent can never grant itself more power through Cowboy's own tools, and abilities from other plugins cannot touch Cowboy's credentials or settings either.
 * **Connection Doctor** - a one-click self-test that checks HTTPS, reachability, REST, OAuth discovery and common host blockers (Cloudflare challenges and bot rules, ModSecurity-style firewalls, LiteSpeed caching), names the exact thing in the way, and hands you a report you can paste into a support topic.
 
 = How Cowboy MCP is different =
@@ -249,11 +249,10 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 == Changelog ==
 
-= 1.6.4 =
-* New: WordPress Abilities API bridge (WordPress 6.9+). Cowboy's tools become cowboy-mcp/* abilities for WP-CLI, the REST API, the MCP Adapter and WordPress AI tooling - with safe mode, dry run, audit log and undo still applied - and abilities from other plugins appear as Cowboy tools. Two switches under Settings, on by default.
-* New: Connection Doctor reports the bridge state.
-* New: a welcome notice after activation and a one-time feedback prompt (review or support).
-* Fix: custom key scopes accept Abilities API names; wp_update_option and wp_list_changes declare their value types.
+= 1.6.5 =
+* Security: wp_write_file refuses to write into mu-plugins/ unless Power mode is on. Must-use plugins load on every request and cannot be paused by WordPress recovery mode, so one broken file there took a site - and the undo journal that would have fixed it - offline at once. Agents are pointed to a regular plugin plus wp_activate_plugin instead.
+* Fix: PHP files are syntax-checked before they are written - a truncated or malformed payload is rejected with the line number and nothing lands on disk.
+* Fix: a short write (disk full, quota) is treated as a failure instead of renaming a truncated file into place.
 
 = Earlier versions =
 

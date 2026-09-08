@@ -578,6 +578,18 @@ class Cowboy_MCP_Tools {
                 ];
             }
         }
+        // wp_write_file: run the real path guards + PHP lint so a preview of a
+        // write that would be refused (mu-plugins, uploads, syntax error) says so.
+        if ( $name === 'wp_write_file' ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_write_file_plan' ) ) {
+                $plan            = cowboy_mcp_write_file_plan( $filtered_args );
+                $preview['plan'] = $plan;
+                if ( ! empty( $plan['would_fail'] ) ) {
+                    $preview['description'] = "Would be refused ({$plan['would_fail']}): {$plan['reason']}";
+                }
+            }
+        }
         // wp_edit_blocks: resolve the real op plan against the live tree — the
         // generic parameter echo cannot see inside the operations array.
         if ( $name === 'wp_edit_blocks' ) {

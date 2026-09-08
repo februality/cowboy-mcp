@@ -319,7 +319,7 @@ class Cowboy_MCP_Transport {
             . "\n"
             . "IMPORTANT: Read the wordpress://tools/catalog resource first — it lists every available tool with a one-line description, grouped by category. Find the tool you need there, then call cowboy_run directly; use cowboy_discover only to search by keyword or to fetch a tool's full inputSchema.\n"
             . "\n"
-            . "Safety: Safe mode is {$safe_mode}. When ON, destructive tools require confirm: true. All non-read-only tools support dry_run: true to preview changes without executing.\n"
+            . "Safety: Safe mode is {$safe_mode}. When ON, destructive tools require confirm: true. All non-read-only tools support dry_run: true to preview changes without executing. Never write into wp-content/mu-plugins/ (refused unless Power mode is on): must-use plugins cannot be paused by recovery mode, so a fatal there locks out wp-admin and this endpoint. Ship code as a regular plugin under plugins/ and activate it with wp_activate_plugin.\n"
             . "\n"
             . "Beyond tools, use resources/list for read-only site data (site info, recent posts, plugin list, etc.), resources/templates/list for parameterized lookups like wordpress://posts/{id}, and prompts/list for guided workflows (site audit, SEO optimization, content migration, troubleshooting, security hardening, performance optimization).\n"
             . "\n"
