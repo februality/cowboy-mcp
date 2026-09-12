@@ -740,8 +740,12 @@ class Cowboy_MCP_OAuth {
     }
 
     private static function current_authorize_url(): string {
-        $uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/cowboy-mcp-oauth/authorize';
-        return self::issuer() . $uri;
+        // REQUEST_URI already contains percent-encoded OAuth values. Running it through
+        // sanitize_text_field() strips those octets and corrupts redirect_uri/resource
+        // when the authorization flow round-trips through wp-login.php.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Preserve encoded OAuth query values; the complete URL is sanitized below.
+        $uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/cowboy-mcp-oauth/authorize';
+        return esc_url_raw( self::issuer() . $uri, [ 'https', 'http' ] );
     }
 
     private static function authorize_redirect_error( string $redirect_uri, string $state, string $error, string $desc ): void {
