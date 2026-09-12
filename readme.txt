@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.5
+Stable tag: 1.6.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,10 +249,13 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 == Changelog ==
 
-= 1.6.5 =
-* Security: writes into mu-plugins/ now require Power mode. Must-use plugins load on every request and cannot be paused by recovery mode, so one broken file there takes down the site and the undo journal with it. Agents are pointed to a regular plugin plus wp_activate_plugin instead.
-* Fix: PHP files are syntax-checked before they are written; a truncated or malformed file is rejected with the line number and nothing lands on disk. Dry runs report the same refusals.
-* Fix: a short write (disk full, quota) fails cleanly instead of renaming a truncated file into place.
+= 1.6.6 =
+* Fix: connecting over OAuth while logged out of wp-admin works again. The login round-trip was stripping the percent-encoding from the authorization request, which corrupted redirect_uri and resource so the connection could not resume after signing in. Thanks to @lukaszliniewicz for the report and the fix.
+* Fix: the per-IP request limit that guards the endpoint against credential stuffing now counts only failed authentication attempts. Busy sessions behind one IP (cloud connectors, parallel tool calls) were being refused with 429 before their own per-key limit applied.
+* Fix: scheduled publishing works. wp_create_post and wp_update_post accept a date ("YYYY-MM-DD HH:MM:SS" in the site timezone, or ISO 8601 with an offset), and wp_update_post accepts status "future".
+* Fix: wp_db_health_report counted autoloaded options using only the pre-6.6 "yes" value and undercounted on current WordPress.
+* Fix: the Activity tab and audit log now record whether each tool call succeeded, failed, or threw.
+* Change: the cache tools are always available. Without WP Rocket, LiteSpeed Cache, or W3 Total Cache, wp_cache_flush clears the WordPress object cache and expired transients instead of the tool being absent.
 
 = Earlier versions =
 
