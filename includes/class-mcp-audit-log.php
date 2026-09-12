@@ -73,7 +73,7 @@ class Cowboy_MCP_Audit_Log {
 	 * @param string $event  Event name (e.g. 'tool_call', 'auth_invalid_key').
 	 * @param array  $context Contextual data — supports keys: key_id, key_label, tool, args, result_status, session_id, ip.
 	 */
-	public static function log( string $event, array $context = [] ): void {
+	public static function log( string $event, array $context = [] ): ?int {
 		global $wpdb;
 
 		$args = $context['args'] ?? null;
@@ -101,7 +101,22 @@ class Cowboy_MCP_Audit_Log {
 		if ( false === $inserted ) {
 			$entry = array_merge( [ 'event' => $event, 'timestamp' => gmdate( 'Y-m-d\TH:i:s\Z' ) ], $context );
 			error_log( '[COWBOY_MCP] ' . wp_json_encode( $entry, JSON_UNESCAPED_SLASHES ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			return null;
 		}
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Stamp the outcome on an existing row. tool_call rows are written before the
+	 * handler runs, so the dispatcher reports success / error / exception afterwards.
+	 */
+	public static function set_result( ?int $id, string $status ): void {
+		global $wpdb;
+		if ( ! $id ) {
+			return;
+		}
+		$wpdb->update( self::table(), [ 'result_status' => substr( $status, 0, 20 ) ], [ 'id' => $id ], [ '%s' ], [ '%d' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 	}
 
 	/**

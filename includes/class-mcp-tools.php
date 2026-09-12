@@ -66,7 +66,6 @@ class Cowboy_MCP_Tools {
         'woocommerce/reports.php',
         'seo/tools-seo.php',
         'forms/tools-forms.php',
-        'cache/tools-cache.php',
         'elementor/tools-elementor.php',
         'wordfence/tools-wordfence.php',
     ];
@@ -171,8 +170,16 @@ class Cowboy_MCP_Tools {
      * Write a structured JSON log line when log_requests is enabled.
      * Delegates to Cowboy_MCP_Auth::log() with key context merged in.
      */
-    private static function mcp_log( string $event, array $context = [] ): void {
-        Cowboy_MCP_Auth::log( $event, array_merge( Cowboy_MCP_Auth::$current_key_context, $context ) );
+    private static function mcp_log( string $event, array $context = [] ): ?int {
+        return Cowboy_MCP_Auth::log( $event, array_merge( Cowboy_MCP_Auth::$current_key_context, $context ) );
+    }
+
+    /** Audit result_status for a call_tool() return value: success, or error for WP_Error / isError results. */
+    private static function result_status( $result ): string {
+        if ( is_wp_error( $result ) || ( is_array( $result ) && ! empty( $result['isError'] ) ) ) {
+            return 'error';
+        }
+        return 'success';
     }
 
     /* ================================================================
@@ -215,21 +222,25 @@ class Cowboy_MCP_Tools {
             if ( $inner_tool === 'cowboy_run' || $inner_tool === 'cowboy_discover' ) {
                 return new WP_Error( 'invalid_params', 'Cannot invoke gateway meta-tools through cowboy_run.', [ 'code' => -32602 ] );
             }
-            self::mcp_log( 'tool_call', [ 'tool' => 'cowboy_run', 'inner_tool' => $inner_tool ] );
-            return self::call_tool( [
+            $log_id = self::mcp_log( 'tool_call', [ 'tool' => 'cowboy_run', 'inner_tool' => $inner_tool ] );
+            $result = self::call_tool( [
                 'name'      => $inner_tool,
                 'arguments' => $args['arguments'] ?? [],
             ] );
+            Cowboy_MCP_Audit_Log::set_result( $log_id, self::result_status( $result ) );
+            return $result;
         }
 
         // Gateway meta-tool: cowboy_discover searches/browses tools.
         if ( $name === 'cowboy_discover' ) {
-            self::mcp_log( 'tool_call', [ 'tool' => 'cowboy_discover', 'args' => $args ] );
+            $log_id = self::mcp_log( 'tool_call', [ 'tool' => 'cowboy_discover', 'args' => $args ] );
             $result = self::handle_discover_tools( $args );
             if ( is_wp_error( $result ) ) {
                 self::mcp_log( 'tool_error', [ 'tool' => 'cowboy_discover', 'error' => $result->get_error_message() ] );
+                Cowboy_MCP_Audit_Log::set_result( $log_id, 'error' );
                 return $result;
             }
+            Cowboy_MCP_Audit_Log::set_result( $log_id, 'success' );
             $text = wp_json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
             return [ 'content' => [[ 'type' => 'text', 'text' => $text ]] ];
         }
@@ -338,7 +349,7 @@ class Cowboy_MCP_Tools {
             Cowboy_MCP_Transport::queue_notification( 'info', "Executing tool: {$name}" );
         }
 
-        self::mcp_log( 'tool_call', [ 'tool' => $name, 'args' => $args, 'power_mode' => Cowboy_MCP_Security::power_mode_enabled() ] );
+        $log_id = self::mcp_log( 'tool_call', [ 'tool' => $name, 'args' => $args, 'power_mode' => Cowboy_MCP_Security::power_mode_enabled() ] );
 
         $capture = class_exists( 'Cowboy_MCP_Rollback' )
             ? Cowboy_MCP_Rollback::begin( $name, $args, self::$tool_map[ $name ]['annotations'] ?? [] )
@@ -351,6 +362,7 @@ class Cowboy_MCP_Tools {
                     Cowboy_MCP_Rollback::discard( $capture );
                 }
                 self::mcp_log( 'tool_error', [ 'tool' => $name, 'error' => $result->get_error_message() ] );
+                Cowboy_MCP_Audit_Log::set_result( $log_id, 'error' );
 
                 // Enhanced error response with suggestions.
                 $suggestion = $result->get_error_data()['suggestion']
@@ -397,12 +409,14 @@ class Cowboy_MCP_Tools {
                 $response['structuredContent'] = $result;
             }
 
+            Cowboy_MCP_Audit_Log::set_result( $log_id, 'success' );
             return $response;
         } catch ( \Throwable $e ) {
             if ( $capture !== null ) {
                 Cowboy_MCP_Rollback::discard( $capture );
             }
             self::mcp_log( 'tool_exception', [ 'tool' => $name, 'exception' => $e->getMessage() ] );
+            Cowboy_MCP_Audit_Log::set_result( $log_id, 'exception' );
             return [
                 'content' => [
                     [ 'type' => 'text', 'text' => 'Exception: ' . $e->getMessage() ],
@@ -1010,7 +1024,6 @@ class Cowboy_MCP_Tools {
             'woocommerce/coupons.php'       => class_exists( 'WooCommerce' ) && class_exists( 'WC_Coupon' ),
             'seo/tools-seo.php'             => class_exists( 'WPSEO_Options' ) || defined( 'RANK_MATH_VERSION' ),
             'forms/tools-forms.php'         => function_exists( 'wpforms' ) || class_exists( 'GFAPI' ) || class_exists( 'WPCF7_ContactForm' ),
-            'cache/tools-cache.php'         => function_exists( 'rocket_clean_domain' ) || class_exists( 'LiteSpeed_Cache_API' ) || defined( 'LSCWP_V' ) || defined( 'W3TC_VERSION' ),
             'elementor/tools-elementor.php' => (bool) did_action( 'elementor/loaded' ) || class_exists( '\Elementor\Plugin' ),
             'wordfence/tools-wordfence.php' => class_exists( 'wordfence' ),
             default                         => true,

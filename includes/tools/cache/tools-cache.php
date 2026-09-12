@@ -2,14 +2,6 @@
 defined( 'ABSPATH' ) || exit;
 
 /* ================================================================
- *  Guard — return empty when no supported cache plugin active.
- * ================================================================ */
-
-if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
-    return [ 'tools' => [], 'handlers' => [] ];
-}
-
-/* ================================================================
  *  Helpers
  * ================================================================ */
 
@@ -41,7 +33,7 @@ function cowboy_mcp_cache_get_provider(): ?array {
 
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_cache_get_provider', '[Cache] Detect which cache plugin is active (WP Rocket, LiteSpeed Cache, or W3 Total Cache) and its version.', [], [
+        Cowboy_MCP_Tools::tool( 'wp_cache_get_provider', '[Cache] Detect which page-cache plugin is active (WP Rocket, LiteSpeed Cache, or W3 Total Cache) and its version. Returns provider "none" when no supported plugin is active.', [], [
             'title'           => 'Get Cache Provider',
             'readOnlyHint'    => true,
             'destructiveHint' => false,
@@ -55,7 +47,7 @@ return [
             ],
         ] ),
 
-        Cowboy_MCP_Tools::tool( 'wp_cache_flush', '[Cache] Flush/purge the page cache. Scope: all (entire site), post (single post by ID), or home (front page only).', [
+        Cowboy_MCP_Tools::tool( 'wp_cache_flush', '[Cache] Flush/purge the page cache (WP Rocket, LiteSpeed Cache, W3 Total Cache). Scope: all (entire site), post (single post by ID), or home (front page only). Without a page-cache plugin this flushes the WordPress object cache and expired transients (scope all/home) or the post\'s cached data (scope post) instead.', [
             'scope'   => [ 'type' => 'string', 'description' => 'Cache scope to flush', 'enum' => [ 'all', 'post', 'home' ], 'default' => 'all' ],
             'post_id' => [ 'type' => 'integer', 'description' => 'Post ID — required when scope is "post"' ],
         ], [
@@ -102,12 +94,8 @@ return [
 
         'wp_cache_flush' => function ( array $a ): array|WP_Error {
             $provider = cowboy_mcp_cache_get_provider();
-            if ( ! $provider ) {
-                return new WP_Error( 'no_provider', 'No supported cache plugin detected.' );
-            }
-
-            $scope   = $a['scope'] ?? 'all';
-            $post_id = isset( $a['post_id'] ) ? (int) $a['post_id'] : 0;
+            $scope    = $a['scope'] ?? 'all';
+            $post_id  = isset( $a['post_id'] ) ? (int) $a['post_id'] : 0;
 
             if ( $scope === 'post' && $post_id <= 0 ) {
                 return new WP_Error( 'invalid_params', 'post_id is required when scope is "post".' );
@@ -115,6 +103,25 @@ return [
 
             if ( $scope === 'post' && ! get_post( $post_id ) ) {
                 return new WP_Error( 'not_found', "Post #{$post_id} not found." );
+            }
+
+            // No page-cache plugin: flush what WordPress itself caches so the call
+            // still does something useful instead of failing.
+            if ( ! $provider ) {
+                if ( $scope === 'post' ) {
+                    clean_post_cache( $post_id );
+                } else {
+                    wp_cache_flush();
+                    delete_expired_transients( true );
+                }
+                return [
+                    'flushed'      => true,
+                    'scope'        => $scope,
+                    'post_id'      => $scope === 'post' ? $post_id : null,
+                    'provider'     => 'none',
+                    'object_cache' => wp_using_ext_object_cache() ? 'persistent' : 'non-persistent',
+                    'note'         => 'No page-cache plugin detected; flushed the WordPress object cache' . ( $scope === 'post' ? ' for this post.' : ' and expired transients.' ),
+                ];
             }
 
             match ( $provider['provider'] ) {

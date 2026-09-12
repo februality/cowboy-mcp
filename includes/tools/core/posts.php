@@ -55,6 +55,29 @@ function cowboy_mcp_set_post_fields( array &$data, array $a ): void {
     if ( isset( $a['menu_order'] ) ) $data['menu_order']   = (int) $a['menu_order'];
 }
 
+/**
+ * Parse an agent-supplied publish date into post_date / post_date_gmt.
+ * ISO 8601 with an offset or "Z" is converted exactly; anything else is read in
+ * the site timezone. Returns WP_Error when the value cannot be parsed.
+ */
+function cowboy_mcp_parse_post_date( string $raw ): array|WP_Error {
+    $raw = trim( $raw );
+    if ( $raw === '' ) {
+        return new WP_Error( 'invalid_param', 'date must not be empty.' );
+    }
+    $has_offset = (bool) preg_match( '/(Z|[+-]\d{2}:?\d{2})$/i', $raw );
+    try {
+        $dt = $has_offset ? new DateTimeImmutable( $raw ) : new DateTimeImmutable( $raw, wp_timezone() );
+    } catch ( \Exception $e ) {
+        return new WP_Error( 'invalid_param', 'date could not be parsed. Use "YYYY-MM-DD HH:MM:SS" (site timezone) or ISO 8601 with an offset, e.g. 2026-10-01T09:00:00+02:00.' );
+    }
+    $gmt = $dt->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+    return [
+        'post_date'     => get_date_from_gmt( $gmt ),
+        'post_date_gmt' => $gmt,
+    ];
+}
+
 return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_list_posts', '[Content] List posts, pages, or custom post types with filtering and pagination.', [
@@ -89,6 +112,7 @@ return [
             'content'    => [ 'type' => 'string',  'description' => 'Post content (HTML allowed)' ],
             'excerpt'    => [ 'type' => 'string',  'description' => 'Post excerpt' ],
             'status'     => [ 'type' => 'string',  'description' => 'Post status (default "draft")', 'default' => 'draft', 'enum' => [ 'publish', 'draft', 'pending', 'private', 'future' ] ],
+            'date'       => [ 'type' => 'string',  'description' => 'Publish date: "YYYY-MM-DD HH:MM:SS" in the site timezone, or ISO 8601 with an offset (e.g. 2026-10-01T09:00:00+02:00). With status "future" - or "publish" and a date in the future - the post is scheduled.' ],
             'post_type'  => [ 'type' => 'string',  'description' => 'Post type (default "post")', 'default' => 'post' ],
             'slug'       => [ 'type' => 'string',  'description' => 'Post slug' ],
             'author'     => [ 'type' => 'integer', 'description' => 'Author user ID' ],
@@ -109,7 +133,8 @@ return [
             'title'      => [ 'type' => 'string',  'description' => 'New title' ],
             'content'    => [ 'type' => 'string',  'description' => 'New content (HTML allowed)' ],
             'excerpt'    => [ 'type' => 'string',  'description' => 'New excerpt' ],
-            'status'     => [ 'type' => 'string',  'description' => 'New status', 'enum' => [ 'publish', 'draft', 'pending', 'private', 'trash' ] ],
+            'status'     => [ 'type' => 'string',  'description' => 'New status', 'enum' => [ 'publish', 'draft', 'pending', 'private', 'future', 'trash' ] ],
+            'date'       => [ 'type' => 'string',  'description' => 'New publish date: "YYYY-MM-DD HH:MM:SS" in the site timezone, or ISO 8601 with an offset. Combine with status "future" to schedule; a "publish" status with a future date is scheduled too.' ],
             'slug'       => [ 'type' => 'string',  'description' => 'New slug' ],
             'author'     => [ 'type' => 'integer', 'description' => 'New author user ID' ],
             'parent'     => [ 'type' => 'integer', 'description' => 'New parent post ID' ],
@@ -198,6 +223,13 @@ return [
                 return new WP_Error( 'invalid_param', "author {$a['author']} is not an existing user." );
             }
             cowboy_mcp_set_post_fields( $data, $a );
+            if ( isset( $a['date'] ) ) {
+                $when = cowboy_mcp_parse_post_date( (string) $a['date'] );
+                if ( is_wp_error( $when ) ) {
+                    return $when;
+                }
+                $data = array_merge( $data, $when );
+            }
 
             // wp_slash() to counteract wp_insert_post's wp_unslash().
             $post_id = wp_insert_post( wp_slash( $data ), true );
@@ -248,6 +280,14 @@ return [
 
             $data = [ 'ID' => $post_id ];
             cowboy_mcp_set_post_fields( $data, $a );
+            if ( isset( $a['date'] ) ) {
+                $when = cowboy_mcp_parse_post_date( (string) $a['date'] );
+                if ( is_wp_error( $when ) ) {
+                    return $when;
+                }
+                // edit_date: otherwise wp_update_post() clears the date on drafts/pending.
+                $data = array_merge( $data, $when, [ 'edit_date' => true ] );
+            }
 
             // Only call wp_update_post if there are fields beyond ID.
             if ( count( $data ) > 1 ) {

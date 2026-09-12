@@ -16,10 +16,21 @@ class Cowboy_MCP_Auth {
     private const RATE_LIMIT_WINDOW = 60;
 
     /** Per-IP request ceiling per window (applies to all requests, incl. auth failures). */
-    private const IP_RATE_LIMIT = 30;
+    private const IP_RATE_LIMIT = 30; // failed auth attempts per IP per minute
 
     /** Populated on successful validation so log entries can identify the key. */
     public static array $current_key_context = [];
+
+    /**
+     * Memoized result of validate_request() for the current HTTP request.
+     * WordPress invokes a route's permission_callback several times per request
+     * (building the Allow header, matching the handler, dispatching), so without
+     * this the rate-limit counters were incremented several times for one request
+     * — a client's real request budget was a fraction of the configured limit.
+     * A PHP static is per-request (a fresh script execution each time under
+     * php-fpm/mod_php), so it never leaks between requests. Sentinel: not-yet-run.
+     */
+    private static $request_decision = "\0unset";
 
     /**
      * Bootstrap hook — intentionally empty.
@@ -164,16 +175,34 @@ class Cowboy_MCP_Auth {
      * @return bool|WP_Error
      */
     public static function validate_request( WP_REST_Request $request ) {
+        // Evaluate (and account for rate limits) exactly once per HTTP request;
+        // return the cached decision on the extra permission_callback invocations.
+        if ( self::$request_decision !== "\0unset" ) {
+            return self::$request_decision;
+        }
+        self::$request_decision = self::evaluate_request( $request );
+        return self::$request_decision;
+    }
+
+    /**
+     * The real validation + rate-limit accounting. Runs once per request; wrapped
+     * by validate_request() so WordPress's repeated permission_callback calls do
+     * not multiply the rate-limit counters.
+     *
+     * @return bool|WP_Error
+     */
+    private static function evaluate_request( WP_REST_Request $request ) {
         $settings = Cowboy_MCP_Tools::get_settings();
         if ( empty( $settings['enabled'] ) ) {
             return new WP_Error( 'mcp_disabled', 'MCP server is disabled.', [ 'status' => 503 ] );
         }
 
-        // Per-IP throttle BEFORE any token work, applied to every request including
-        // failures. Bounds credential stuffing and bcrypt CPU cost (the per-key limit
-        // below only protects already-authenticated callers).
+        // Per-IP throttle on FAILED authentication attempts, checked before any token
+        // work. Only requests that fail below count toward it (note_auth_failure()), so
+        // it bounds credential stuffing and bcrypt CPU cost without ever throttling a
+        // caller holding a valid credential — those are governed by the per-key limit.
         $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
-        if ( $client_ip !== '' && ! self::check_rate_limit( 'ip_' . md5( $client_ip ), self::IP_RATE_LIMIT ) ) {
+        if ( $client_ip !== '' && self::rate_limit_exhausted( 'ip_' . md5( $client_ip ), self::IP_RATE_LIMIT ) ) {
             self::log( 'rate_limit_ip_exceeded', [ 'ip' => $client_ip ] );
             return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
         }
@@ -193,6 +222,7 @@ class Cowboy_MCP_Auth {
                 'ip'              => sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) ),
                 'x_forwarded_for' => $request->get_header( 'X-Forwarded-For' ) ?: null,
             ] );
+            self::note_auth_failure( $client_ip );
             self::send_www_authenticate();
             return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
         }
@@ -205,12 +235,14 @@ class Cowboy_MCP_Auth {
         // behaves exactly like an API key.
         if ( str_starts_with( $token, 'cmcp_at_' ) ) {
             if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || ! Cowboy_MCP_OAuth::is_enabled() ) {
+                self::note_auth_failure( $client_ip );
                 self::send_www_authenticate();
                 return new WP_Error( 'mcp_unauthorized', 'OAuth connector is not enabled.', [ 'status' => 401 ] );
             }
             $user_id = Cowboy_MCP_OAuth::validate_access_token( $token );
             if ( is_wp_error( $user_id ) ) {
                 self::log( 'auth_invalid_oauth', [ 'reason' => $user_id->get_error_code() ] );
+                self::note_auth_failure( $client_ip );
                 self::send_www_authenticate();
                 return new WP_Error( 'mcp_unauthorized', 'Invalid or expired access token.', [ 'status' => 401 ] );
             }
@@ -266,6 +298,7 @@ class Cowboy_MCP_Auth {
         }
 
         self::log( 'auth_invalid_key', [ 'token_hash' => substr( hash( 'sha256', $token ), 0, 12 ) ] );
+        self::note_auth_failure( $client_ip );
         self::send_www_authenticate();
         return new WP_Error( 'mcp_unauthorized', 'Invalid API key.', [ 'status' => 401 ] );
     }
@@ -310,9 +343,9 @@ class Cowboy_MCP_Auth {
      * Write a structured JSON log line for auth events when log_requests is enabled.
      * Public so Cowboy_MCP_Tools can delegate to a single logging implementation.
      */
-    public static function log( string $event, array $context = [] ): void {
+    public static function log( string $event, array $context = [] ): ?int {
         // Always write to the DB audit log.
-        Cowboy_MCP_Audit_Log::log( $event, $context );
+        $row_id = Cowboy_MCP_Audit_Log::log( $event, $context );
 
         // Also write to error_log when log_requests is enabled.
         $settings = Cowboy_MCP_Tools::get_settings();
@@ -326,6 +359,8 @@ class Cowboy_MCP_Auth {
             );
             error_log( '[COWBOY_MCP] ' . wp_json_encode( $entry, JSON_UNESCAPED_SLASHES ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
         }
+
+        return $row_id;
     }
 
     /* ── Rate limiting (transient-based) ───────────────────── */
@@ -358,5 +393,28 @@ class Cowboy_MCP_Auth {
         $window['count']++;
         set_transient( $transient, $window, self::RATE_LIMIT_WINDOW );
         return true;
+    }
+
+    /**
+     * Whether a rate-limit window is already exhausted — a read-only peek that
+     * does NOT count the current request. Pairs with note_auth_failure().
+     */
+    public static function rate_limit_exhausted( string $key_id, int $per_minute ): bool {
+        $window = get_transient( 'cowboy_mcp_rl_' . $key_id );
+        if ( false === $window || time() - $window['start'] > self::RATE_LIMIT_WINDOW ) {
+            return false;
+        }
+        return $window['count'] >= $per_minute;
+    }
+
+    /**
+     * Count one failed authentication attempt against the caller's IP. Successful
+     * requests never reach this, so a valid credential cannot exhaust the IP budget.
+     */
+    private static function note_auth_failure( string $client_ip ): void {
+        if ( $client_ip === '' ) {
+            return;
+        }
+        self::check_rate_limit( 'ip_' . md5( $client_ip ), self::IP_RATE_LIMIT );
     }
 }
