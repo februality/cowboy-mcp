@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.6
+Stable tag: 1.6.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -249,13 +249,9 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 == Changelog ==
 
-= 1.6.6 =
-* Fix: connecting over OAuth while logged out of wp-admin works again. The login round-trip was stripping the percent-encoding from the authorization request, which corrupted redirect_uri and resource so the connection could not resume after signing in. Thanks to @lukaszliniewicz for the report and the fix.
-* Fix: the per-IP request limit that guards the endpoint against credential stuffing now counts only failed authentication attempts. Busy sessions behind one IP (cloud connectors, parallel tool calls) were being refused with 429 before their own per-key limit applied.
-* Fix: scheduled publishing works. wp_create_post and wp_update_post accept a date ("YYYY-MM-DD HH:MM:SS" in the site timezone, or ISO 8601 with an offset), and wp_update_post accepts status "future".
-* Fix: wp_db_health_report counted autoloaded options using only the pre-6.6 "yes" value and undercounted on current WordPress.
-* Fix: the Activity tab and audit log now record whether each tool call succeeded, failed, or threw.
-* Change: the cache tools are always available. Without WP Rocket, LiteSpeed Cache, or W3 Total Cache, wp_cache_flush clears the WordPress object cache and expired transients instead of the tool being absent.
+= 1.6.7 =
+* Fix: WooCommerce product reviews are listed again. WooCommerce hides reviews from any comment query that does not ask for them explicitly, so wp_list_comments returned none and agents reported that a store had no reviews at all. Reviews now appear alongside comments, each with its star rating and verified-owner flag, and ordinary comments left on a product come back with them.
+* New: wp_list_comments takes a type parameter - "comment", "review", "pingback", "trackback", "pings", "all", or a custom comment type - to narrow a listing to one kind.
 
 = Earlier versions =
 

@@ -3,8 +3,9 @@ defined( 'ABSPATH' ) || exit;
 
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_list_comments', '[Comments] List comments with filtering and pagination.', [
-            'post_id'      => [ 'type' => 'integer', 'description' => 'Filter by post ID' ],
+        Cowboy_MCP_Tools::tool( 'wp_list_comments', '[Comments] List comments, product reviews, pingbacks and trackbacks with filtering and pagination. WooCommerce reviews carry rating and verified fields.', [
+            'post_id'      => [ 'type' => 'integer', 'description' => 'Filter by post ID. Pass a product ID to list only that product\'s reviews.' ],
+            'type'         => [ 'type' => 'string',  'description' => 'Filter by comment type: "comment" (visitor comments), "review" (WooCommerce product reviews), "pingback", "trackback", "pings" (pingbacks and trackbacks), "all" (every type), or a custom type registered by a plugin. Omit to return comments and reviews together.' ],
             'status'       => [ 'type' => 'string',  'description' => 'Comment status: approve, hold, spam, trash, all (default "all")', 'default' => 'all', 'enum' => [ 'approve', 'hold', 'spam', 'trash', 'all' ] ],
             'author_email' => [ 'type' => 'string',  'description' => 'Filter by author email' ],
             'per_page'     => [ 'type' => 'integer', 'description' => 'Results per page, max 100 (default 20)', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ],
@@ -72,6 +73,25 @@ return [
             if ( isset( $a['post_id'] ) )      $comment_args['post_id']      = (int) $a['post_id'];
             if ( isset( $a['author_email'] ) )  $comment_args['author_email'] = sanitize_email( $a['author_email'] );
 
+            // Comment type. WooCommerce hooks `comments_clauses` to strip every
+            // comment whose post is a product -- that is, every product review --
+            // from any comment query that does not set one of a specific list of
+            // query vars (ReviewsUtil::comments_clauses_without_product_reviews).
+            // `type__not_in` is on that list, so setting it disables the exclusion.
+            //
+            // The default `type__not_in => ['note']` reproduces WP_Comment_Query's
+            // own default exactly (core appends 'note' to NOT IN whenever no type
+            // var is given), so the only behaviour change is that reviews -- and
+            // ordinary comments left on products -- stop silently disappearing.
+            // Order notes, webhook deliveries and action log entries stay hidden
+            // whatever is requested: WooCommerce excludes those unconditionally.
+            $type = isset( $a['type'] ) ? sanitize_key( $a['type'] ) : '';
+            if ( $type !== '' ) {
+                $comment_args['type'] = $type;
+            } else {
+                $comment_args['type__not_in'] = [ 'note' ];
+            }
+
             $comments = get_comments( $comment_args );
 
             // Separate count query for total.
@@ -80,18 +100,36 @@ return [
             $count_args['count'] = true;
             $total = (int) get_comments( $count_args );
 
-            $formatted = array_map( fn( WP_Comment $c ) => [
-                'comment_id'   => (int) $c->comment_ID,
-                'post_id'      => (int) $c->comment_post_ID,
-                'author'       => $c->comment_author,
-                'author_email' => $c->comment_author_email,
-                'author_url'   => $c->comment_author_url,
-                'content'      => $c->comment_content,
-                'date'         => $c->comment_date,
-                'status'       => wp_get_comment_status( $c ),
-                'parent'       => (int) $c->comment_parent,
-                'type'         => $c->comment_type ?: 'comment',
-            ], $comments );
+            $formatted = array_map( function ( WP_Comment $c ): array {
+                $row = [
+                    'comment_id'   => (int) $c->comment_ID,
+                    'post_id'      => (int) $c->comment_post_ID,
+                    'author'       => $c->comment_author,
+                    'author_email' => $c->comment_author_email,
+                    'author_url'   => $c->comment_author_url,
+                    'content'      => $c->comment_content,
+                    'date'         => $c->comment_date,
+                    'status'       => wp_get_comment_status( $c ),
+                    'parent'       => (int) $c->comment_parent,
+                    'type'         => $c->comment_type ?: 'comment',
+                ];
+
+                // WooCommerce stores the star rating and the verified-owner flag
+                // in comment meta, so a review without them reads as an unrated
+                // blob of text. Always emitted for reviews (null when absent, so
+                // "unrated" stays distinguishable from "field not supported"),
+                // and for any other comment that actually carries the meta.
+                // get_comments() primes the meta cache, so these are cache hits.
+                $rating   = get_comment_meta( $c->comment_ID, 'rating', true );
+                $verified = get_comment_meta( $c->comment_ID, 'verified', true );
+
+                if ( $row['type'] === 'review' || $rating !== '' || $verified !== '' ) {
+                    $row['rating']   = ( $rating !== '' )   ? (int) $rating              : null;
+                    $row['verified'] = ( $verified !== '' ) ? (bool) (int) $verified : null;
+                }
+
+                return $row;
+            }, $comments );
 
             return [
                 'comments' => $formatted,

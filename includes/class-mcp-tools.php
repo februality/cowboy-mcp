@@ -119,7 +119,7 @@ class Cowboy_MCP_Tools {
         'plugins'        => 'list, activate, and deactivate plugins',
         'themes'         => 'list themes and switch the active theme',
         'taxonomies'     => 'list, create, update, and delete taxonomy terms',
-        'comments'       => 'list, create, update, and delete comments',
+        'comments'       => 'list, create, update, and delete comments and product reviews',
         'menus'          => 'list, create, update, and delete classic navigation menus and their items',
         'gutenberg'      => 'block editing, patterns, FSE templates, template parts, global styles, navigation',
         'acf'            => 'ACF field groups, field CRUD, repeater operations',

@@ -3,6 +3,10 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.6.7 =
+* Fix: WooCommerce product reviews are listed again. WooCommerce hides reviews from any comment query that does not ask for them explicitly, so wp_list_comments returned none and agents reported that a store had no reviews at all. Reviews now appear alongside comments, each with its star rating and verified-owner flag, and ordinary comments left on a product come back with them.
+* New: wp_list_comments takes a type parameter - "comment", "review", "pingback", "trackback", "pings", "all", or a custom comment type - to narrow a listing to one kind.
+
 = 1.6.6 =
 * Fix: connecting over OAuth while logged out of wp-admin works again. The login round-trip was stripping the percent-encoding from the authorization request, which corrupted redirect_uri and resource so the connection could not resume after signing in. Thanks to @lukaszliniewicz for the report and the fix.
 * Fix: the per-IP request limit that guards the endpoint against credential stuffing now counts only failed authentication attempts. Busy sessions behind one IP (cloud connectors, parallel tool calls) were being refused with 429 before their own per-key limit applied.
