@@ -729,6 +729,12 @@ class Cowboy_MCP_OAuth {
         if ( $code === '' ) {
             return self::rest_error( 'invalid_request', 'Missing code.', 400 );
         }
+        if ( ! self::client_is_known( $client_id ) ) {
+            // RFC 6749 §5.2. MCP clients treat invalid_client as "registration is
+            // gone — register again"; invalid_grant only makes them drop tokens.
+            // Checked before the code is read so an unknown client cannot burn it.
+            return self::rest_error( 'invalid_client', 'Unknown client. Register again.', 401 );
+        }
 
         $ctx = get_transient( self::CODE_PREFIX . $code );
         delete_transient( self::CODE_PREFIX . $code ); // single use
@@ -760,6 +766,10 @@ class Cowboy_MCP_OAuth {
     private static function token_refresh( WP_REST_Request $request ) {
         $refresh   = (string) $request->get_param( 'refresh_token' );
         $client_id = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
+
+        if ( $client_id !== '' && ! self::client_is_known( $client_id ) ) {
+            return self::rest_error( 'invalid_client', 'Unknown client. Register again.', 401 );
+        }
 
         $t = self::rotate_refresh_token( $refresh, $client_id );
         if ( is_wp_error( $t ) ) {
