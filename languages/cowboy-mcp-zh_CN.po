@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-27 09:42-0700\n"
+"POT-Creation-Date: 2026-09-21 12:46-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -1204,50 +1204,55 @@ msgstr "运行连接诊断"
 msgid "Thanks!"
 msgstr "谢谢！"
 
-#: includes/class-mcp-oauth.php:355
+#: includes/class-mcp-oauth.php:472
 msgid "Unknown client"
 msgstr "未知客户端"
 
-#: includes/class-mcp-oauth.php:653
+#: includes/class-mcp-oauth.php:791
 msgid "The OAuth connector is not enabled on this site."
 msgstr "此站点未启用 OAuth 连接器。"
 
-#: includes/class-mcp-oauth.php:672
-msgid "Unknown OAuth client."
-msgstr "未知的 OAuth 客户端。"
+#: includes/class-mcp-oauth.php:811
+msgid ""
+"This site does not recognize this connection. This usually happens after the "
+"site's database was restored or copied from another site. Remove the "
+"connector in your AI app, add it again, then approve it here."
+msgstr ""
+"本站无法识别此连接。这通常发生在站点数据库被恢复或从其他站点复制之后。请在您"
+"的 AI 应用中移除该连接器，重新添加，然后在此处批准。"
 
-#: includes/class-mcp-oauth.php:676
+#: includes/class-mcp-oauth.php:814
 msgid "Invalid redirect_uri for this client."
 msgstr "此客户端的 redirect_uri 无效。"
 
-#: includes/class-mcp-oauth.php:695
+#: includes/class-mcp-oauth.php:833
 msgid "You must be an administrator to authorize this connection."
 msgstr "您必须是管理员才能授权此连接。"
 
-#: includes/class-mcp-oauth.php:701
+#: includes/class-mcp-oauth.php:844
 msgid "Security check failed. Please try again."
 msgstr "安全检查失败。请重试。"
 
-#: includes/class-mcp-oauth.php:758
+#: includes/class-mcp-oauth.php:906
 msgid "Connection error"
 msgstr "连接错误"
 
-#: includes/class-mcp-oauth.php:765
+#: includes/class-mcp-oauth.php:913
 msgid "An application"
 msgstr "某个应用程序"
 
-#: includes/class-mcp-oauth.php:796
+#: includes/class-mcp-oauth.php:944
 msgid "Authorize connection"
 msgstr "授权连接"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:803
+#: includes/class-mcp-oauth.php:951
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s 想要连接"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:807
+#: includes/class-mcp-oauth.php:955
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -1255,39 +1260,51 @@ msgid ""
 msgstr "它将能够通过 MCP 服务器读取和管理 %s，并以您的管理员权限执行操作。"
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:812
+#: includes/class-mcp-oauth.php:960
 #, php-format
 msgid "Authorizing as %s"
 msgstr "以 %s 身份授权"
 
-#: includes/class-mcp-oauth.php:825
+#: includes/class-mcp-oauth.php:964
+msgid ""
+"This site has no stored record of this connection. That is normal after a "
+"database restore or a staging sync. If you did not just start this from your "
+"AI app, choose Deny."
+msgstr ""
+"本站没有此连接的存储记录。在数据库恢复或测试站同步之后，这是正常现象。如果您"
+"刚才没有在 AI 应用中发起此连接，请选择「拒绝」。"
+
+#: includes/class-mcp-oauth.php:976
 msgid "Access level"
 msgstr "访问级别"
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:831
+#: includes/class-mcp-oauth.php:982
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr "保留当前的自定义范围(%d 个工具)"
 
-#: includes/class-mcp-oauth.php:837
+#: includes/class-mcp-oauth.php:988
 msgid "Full access — read and manage the site"
 msgstr "完全访问权限——可读取并管理站点"
 
-#: includes/class-mcp-oauth.php:841
+#: includes/class-mcp-oauth.php:992
 msgid "Read-only — inspect the site, make no changes"
 msgstr "只读——仅查看站点，不做任何更改"
 
-#: includes/class-mcp-oauth.php:845
+#: includes/class-mcp-oauth.php:996
 msgid "Deny"
 msgstr "拒绝"
 
-#: includes/class-mcp-oauth.php:846
+#: includes/class-mcp-oauth.php:997
 msgid "Approve"
 msgstr "批准"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:851
+#: includes/class-mcp-oauth.php:1002
 #, php-format
 msgid "Redirects to: %s"
 msgstr "重定向到：%s"
+
+#~ msgid "Unknown OAuth client."
+#~ msgstr "未知的 OAuth 客户端。"

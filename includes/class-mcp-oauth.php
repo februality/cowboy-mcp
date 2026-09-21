@@ -808,7 +808,7 @@ class Cowboy_MCP_OAuth {
         // Verify only: this runs for unauthenticated visitors and must not write.
         $client = self::resolve_client( $client_id );
         if ( null === $client ) {
-            self::authorize_fatal( __( 'Unknown OAuth client.', 'cowboy-mcp' ) );
+            self::authorize_fatal( __( 'This site does not recognize this connection. This usually happens after the site\'s database was restored or copied from another site. Remove the connector in your AI app, add it again, then approve it here.', 'cowboy-mcp' ) );
         }
         if ( $redirect_uri === '' || ! in_array( $redirect_uri, $client['redirect_uris'], true ) ) {
             self::authorize_fatal( __( 'Invalid redirect_uri for this client.', 'cowboy-mcp' ) );
@@ -960,6 +960,9 @@ class Cowboy_MCP_OAuth {
     printf( esc_html__( 'Authorizing as %s', 'cowboy-mcp' ), '<strong>' . esc_html( $user->user_login ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     ?>
  </div>
+ <?php if ( ! empty( $client['rehydrated'] ) ) : ?>
+ <p class="muted"><?php esc_html_e( 'This site has no stored record of this connection. That is normal after a database restore or a staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
+ <?php endif; ?>
  <form method="post" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url above ?>">
     <?php wp_nonce_field( 'cowboy_mcp_oauth_consent' ); ?>
     <input type="hidden" name="client_id" value="<?php echo esc_attr( $client['client_id'] ); ?>">

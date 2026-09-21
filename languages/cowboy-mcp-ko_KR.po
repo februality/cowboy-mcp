@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-08-27 09:42-0700\n"
+"POT-Creation-Date: 2026-09-21 12:46-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -1242,50 +1242,56 @@ msgstr "연결 진단 실행"
 msgid "Thanks!"
 msgstr "감사합니다!"
 
-#: includes/class-mcp-oauth.php:355
+#: includes/class-mcp-oauth.php:472
 msgid "Unknown client"
 msgstr "알 수 없는 클라이언트"
 
-#: includes/class-mcp-oauth.php:653
+#: includes/class-mcp-oauth.php:791
 msgid "The OAuth connector is not enabled on this site."
 msgstr "이 사이트에서는 OAuth 커넥터가 활성화되어 있지 않습니다."
 
-#: includes/class-mcp-oauth.php:672
-msgid "Unknown OAuth client."
-msgstr "알 수 없는 OAuth 클라이언트입니다."
+#: includes/class-mcp-oauth.php:811
+msgid ""
+"This site does not recognize this connection. This usually happens after the "
+"site's database was restored or copied from another site. Remove the "
+"connector in your AI app, add it again, then approve it here."
+msgstr ""
+"이 사이트에서 이 연결을 인식하지 못합니다. 보통 사이트 데이터베이스를 복원했"
+"거나 다른 사이트에서 복사한 뒤에 발생합니다. AI 앱에서 커넥터를 제거하고 다"
+"시 추가한 다음 여기에서 승인하세요."
 
-#: includes/class-mcp-oauth.php:676
+#: includes/class-mcp-oauth.php:814
 msgid "Invalid redirect_uri for this client."
 msgstr "이 클라이언트의 redirect_uri가 유효하지 않습니다."
 
-#: includes/class-mcp-oauth.php:695
+#: includes/class-mcp-oauth.php:833
 msgid "You must be an administrator to authorize this connection."
 msgstr "이 연결을 승인하려면 관리자여야 합니다."
 
-#: includes/class-mcp-oauth.php:701
+#: includes/class-mcp-oauth.php:844
 msgid "Security check failed. Please try again."
 msgstr "보안 검사에 실패했습니다. 다시 시도하세요."
 
-#: includes/class-mcp-oauth.php:758
+#: includes/class-mcp-oauth.php:906
 msgid "Connection error"
 msgstr "연결 오류"
 
-#: includes/class-mcp-oauth.php:765
+#: includes/class-mcp-oauth.php:913
 msgid "An application"
 msgstr "애플리케이션"
 
-#: includes/class-mcp-oauth.php:796
+#: includes/class-mcp-oauth.php:944
 msgid "Authorize connection"
 msgstr "연결 승인"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:803
+#: includes/class-mcp-oauth.php:951
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s이(가) 연결하려고 합니다"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:807
+#: includes/class-mcp-oauth.php:955
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -1295,39 +1301,52 @@ msgstr ""
 "로 작동합니다."
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:812
+#: includes/class-mcp-oauth.php:960
 #, php-format
 msgid "Authorizing as %s"
 msgstr "%s(으)로 승인 중"
 
-#: includes/class-mcp-oauth.php:825
+#: includes/class-mcp-oauth.php:964
+msgid ""
+"This site has no stored record of this connection. That is normal after a "
+"database restore or a staging sync. If you did not just start this from your "
+"AI app, choose Deny."
+msgstr ""
+"이 사이트에는 이 연결에 대한 저장된 기록이 없습니다. 데이터베이스 복원이나 스"
+"테이징 동기화 후에는 정상입니다. 방금 AI 앱에서 직접 시작한 연결이 아니라면 "
+"'거부'를 선택하세요."
+
+#: includes/class-mcp-oauth.php:976
 msgid "Access level"
 msgstr "액세스 수준"
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:831
+#: includes/class-mcp-oauth.php:982
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr "현재 사용자 지정 범위 유지(%d개 도구)"
 
-#: includes/class-mcp-oauth.php:837
+#: includes/class-mcp-oauth.php:988
 msgid "Full access — read and manage the site"
 msgstr "전체 액세스 — 사이트를 읽고 관리"
 
-#: includes/class-mcp-oauth.php:841
+#: includes/class-mcp-oauth.php:992
 msgid "Read-only — inspect the site, make no changes"
 msgstr "읽기 전용 — 사이트를 확인만 하고 변경하지 않음"
 
-#: includes/class-mcp-oauth.php:845
+#: includes/class-mcp-oauth.php:996
 msgid "Deny"
 msgstr "거부"
 
-#: includes/class-mcp-oauth.php:846
+#: includes/class-mcp-oauth.php:997
 msgid "Approve"
 msgstr "승인"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:851
+#: includes/class-mcp-oauth.php:1002
 #, php-format
 msgid "Redirects to: %s"
 msgstr "리디렉션 대상: %s"
+
+#~ msgid "Unknown OAuth client."
+#~ msgstr "알 수 없는 OAuth 클라이언트입니다."
