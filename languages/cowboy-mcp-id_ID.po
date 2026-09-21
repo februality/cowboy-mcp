@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 12:46-0700\n"
+"POT-Creation-Date: 2026-09-21 16:16-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Indonesian\n"
@@ -1268,15 +1268,15 @@ msgstr "Jalankan Diagnostik Koneksi"
 msgid "Thanks!"
 msgstr "Terima kasih!"
 
-#: includes/class-mcp-oauth.php:472
+#: includes/class-mcp-oauth.php:477
 msgid "Unknown client"
 msgstr "Klien tidak dikenal"
 
-#: includes/class-mcp-oauth.php:791
+#: includes/class-mcp-oauth.php:815
 msgid "The OAuth connector is not enabled on this site."
 msgstr "Konektor OAuth tidak diaktifkan di situs ini."
 
-#: includes/class-mcp-oauth.php:811
+#: includes/class-mcp-oauth.php:839
 msgid ""
 "This site does not recognize this connection. This usually happens after the "
 "site's database was restored or copied from another site. Remove the "
@@ -1286,38 +1286,54 @@ msgstr ""
 "situs dipulihkan atau disalin dari situs lain. Hapus konektor di aplikasi AI "
 "Anda, tambahkan lagi, lalu setujui di sini."
 
-#: includes/class-mcp-oauth.php:814
+#: includes/class-mcp-oauth.php:842
 msgid "Invalid redirect_uri for this client."
 msgstr "redirect_uri tidak valid untuk klien ini."
 
-#: includes/class-mcp-oauth.php:833
+#: includes/class-mcp-oauth.php:851
 msgid "You must be an administrator to authorize this connection."
 msgstr "Anda harus menjadi administrator untuk mengotorisasi koneksi ini."
 
-#: includes/class-mcp-oauth.php:844
+#: includes/class-mcp-oauth.php:859
+msgid ""
+"This connection request is missing a required security parameter (PKCE "
+"S256). Start the connection again from your AI app."
+msgstr ""
+"Permintaan koneksi ini tidak memiliki parameter keamanan wajib (PKCE S256). "
+"Mulai lagi koneksi dari aplikasi AI Anda."
+
+#: includes/class-mcp-oauth.php:863
+msgid ""
+"This connection request is for a different address than this site's MCP "
+"endpoint. Check the server URL in your AI app."
+msgstr ""
+"Permintaan koneksi ini ditujukan ke alamat yang berbeda dari endpoint MCP "
+"situs ini. Periksa URL server di aplikasi AI Anda."
+
+#: includes/class-mcp-oauth.php:874
 msgid "Security check failed. Please try again."
 msgstr "Pemeriksaan keamanan gagal. Silakan coba lagi."
 
-#: includes/class-mcp-oauth.php:906
+#: includes/class-mcp-oauth.php:936
 msgid "Connection error"
 msgstr "Kesalahan koneksi"
 
-#: includes/class-mcp-oauth.php:913
+#: includes/class-mcp-oauth.php:943
 msgid "An application"
 msgstr "Sebuah aplikasi"
 
-#: includes/class-mcp-oauth.php:944
+#: includes/class-mcp-oauth.php:975
 msgid "Authorize connection"
 msgstr "Otorisasi koneksi"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:951
+#: includes/class-mcp-oauth.php:982
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s ingin terhubung"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:955
+#: includes/class-mcp-oauth.php:986
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -1327,12 +1343,26 @@ msgstr ""
 "bertindak dengan izin administrator Anda."
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:960
+#: includes/class-mcp-oauth.php:991
 #, php-format
 msgid "Authorizing as %s"
 msgstr "Mengotorisasi sebagai %s"
 
-#: includes/class-mcp-oauth.php:964
+#. translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com
+#: includes/class-mcp-oauth.php:996
+#, php-format
+msgid "After you approve, you will be sent to %s"
+msgstr "Setelah Anda menyetujui, Anda akan diarahkan ke %s"
+
+#: includes/class-mcp-oauth.php:998
+msgid ""
+"The app name above is supplied by the app and is not verified. Approve only "
+"if you just started this connection yourself."
+msgstr ""
+"Nama aplikasi di atas diberikan oleh aplikasi itu sendiri dan tidak "
+"diverifikasi. Setujui hanya jika Anda baru saja memulai koneksi ini sendiri."
+
+#: includes/class-mcp-oauth.php:1000
 msgid ""
 "This site has no stored record of this connection. That is normal after a "
 "database restore or a staging sync. If you did not just start this from your "
@@ -1342,34 +1372,34 @@ msgstr ""
 "wajar setelah pemulihan database atau sinkronisasi staging. Jika Anda tidak "
 "baru saja memulainya dari aplikasi AI Anda, pilih Tolak."
 
-#: includes/class-mcp-oauth.php:976
+#: includes/class-mcp-oauth.php:1012
 msgid "Access level"
 msgstr "Tingkat Akses"
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:982
+#: includes/class-mcp-oauth.php:1018
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr "Pertahankan cakupan kustom saat ini (%d alat)"
 
-#: includes/class-mcp-oauth.php:988
+#: includes/class-mcp-oauth.php:1024
 msgid "Full access — read and manage the site"
 msgstr "Akses penuh — baca dan kelola situs"
 
-#: includes/class-mcp-oauth.php:992
+#: includes/class-mcp-oauth.php:1028
 msgid "Read-only — inspect the site, make no changes"
 msgstr "Hanya baca — periksa situs, tanpa membuat perubahan"
 
-#: includes/class-mcp-oauth.php:996
+#: includes/class-mcp-oauth.php:1032
 msgid "Deny"
 msgstr "Tolak"
 
-#: includes/class-mcp-oauth.php:997
+#: includes/class-mcp-oauth.php:1033
 msgid "Approve"
 msgstr "Setujui"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:1002
+#: includes/class-mcp-oauth.php:1038
 #, php-format
 msgid "Redirects to: %s"
 msgstr "Mengalihkan ke: %s"

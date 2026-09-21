@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.8\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 12:46-0700\n"
+"POT-Creation-Date: 2026-09-21 16:16-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1115,53 +1115,65 @@ msgstr ""
 msgid "Thanks!"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:472
+#: includes/class-mcp-oauth.php:477
 msgid "Unknown client"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:791
+#: includes/class-mcp-oauth.php:815
 msgid "The OAuth connector is not enabled on this site."
 msgstr ""
 
-#: includes/class-mcp-oauth.php:811
+#: includes/class-mcp-oauth.php:839
 msgid ""
 "This site does not recognize this connection. This usually happens after the "
 "site's database was restored or copied from another site. Remove the "
 "connector in your AI app, add it again, then approve it here."
 msgstr ""
 
-#: includes/class-mcp-oauth.php:814
+#: includes/class-mcp-oauth.php:842
 msgid "Invalid redirect_uri for this client."
 msgstr ""
 
-#: includes/class-mcp-oauth.php:833
+#: includes/class-mcp-oauth.php:851
 msgid "You must be an administrator to authorize this connection."
 msgstr ""
 
-#: includes/class-mcp-oauth.php:844
+#: includes/class-mcp-oauth.php:859
+msgid ""
+"This connection request is missing a required security parameter (PKCE "
+"S256). Start the connection again from your AI app."
+msgstr ""
+
+#: includes/class-mcp-oauth.php:863
+msgid ""
+"This connection request is for a different address than this site's MCP "
+"endpoint. Check the server URL in your AI app."
+msgstr ""
+
+#: includes/class-mcp-oauth.php:874
 msgid "Security check failed. Please try again."
 msgstr ""
 
-#: includes/class-mcp-oauth.php:906
+#: includes/class-mcp-oauth.php:936
 msgid "Connection error"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:913
+#: includes/class-mcp-oauth.php:943
 msgid "An application"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:944
+#: includes/class-mcp-oauth.php:975
 msgid "Authorize connection"
 msgstr ""
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:951
+#: includes/class-mcp-oauth.php:982
 #, php-format
 msgid "%s wants to connect"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:955
+#: includes/class-mcp-oauth.php:986
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -1169,46 +1181,58 @@ msgid ""
 msgstr ""
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:960
+#: includes/class-mcp-oauth.php:991
 #, php-format
 msgid "Authorizing as %s"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:964
+#. translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com
+#: includes/class-mcp-oauth.php:996
+#, php-format
+msgid "After you approve, you will be sent to %s"
+msgstr ""
+
+#: includes/class-mcp-oauth.php:998
+msgid ""
+"The app name above is supplied by the app and is not verified. Approve only "
+"if you just started this connection yourself."
+msgstr ""
+
+#: includes/class-mcp-oauth.php:1000
 msgid ""
 "This site has no stored record of this connection. That is normal after a "
 "database restore or a staging sync. If you did not just start this from your "
 "AI app, choose Deny."
 msgstr ""
 
-#: includes/class-mcp-oauth.php:976
+#: includes/class-mcp-oauth.php:1012
 msgid "Access level"
 msgstr ""
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:982
+#: includes/class-mcp-oauth.php:1018
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:988
+#: includes/class-mcp-oauth.php:1024
 msgid "Full access — read and manage the site"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:992
+#: includes/class-mcp-oauth.php:1028
 msgid "Read-only — inspect the site, make no changes"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:996
+#: includes/class-mcp-oauth.php:1032
 msgid "Deny"
 msgstr ""
 
-#: includes/class-mcp-oauth.php:997
+#: includes/class-mcp-oauth.php:1033
 msgid "Approve"
 msgstr ""
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:1002
+#: includes/class-mcp-oauth.php:1038
 #, php-format
 msgid "Redirects to: %s"
 msgstr ""

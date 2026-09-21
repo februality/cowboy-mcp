@@ -20,6 +20,11 @@ class Cowboy_MCP_OAuth {
     const REFRESH_TTL    = 2592000;
     const CODE_TTL       = 60;
     const MAX_CLIENTS    = 100;
+    // Registration is unauthenticated by design (RFC 7591), so everything it stores is bounded.
+    const MAX_CLIENT_NAME_LEN  = 100;
+    const MAX_REDIRECT_URIS    = 10;  // VS Code registers six; leave headroom
+    const MAX_REDIRECT_URI_LEN = 512;
+    const REGISTER_RATE_LIMIT  = 20;  // per IP per minute; its own bucket, never the auth-failure one
     const SIGNED_PREFIX = 'cmcp_client_s1_';
     const SIGNED_MAX_ID = 255; // whole id; longer registrations keep the legacy random id
     const SIGNED_SIG_LEN = 16; // bytes of HMAC-SHA256 kept (128-bit tag)
@@ -629,13 +634,26 @@ class Cowboy_MCP_OAuth {
             $body = $request->get_params();
         }
 
+        $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+        if ( $client_ip !== '' && ! Cowboy_MCP_Auth::check_rate_limit( 'reg_' . md5( $client_ip ), self::REGISTER_RATE_LIMIT ) ) {
+            $resp = self::rest_error( 'too_many_requests', 'Too many registrations. Try again in a minute.', 429 );
+            $resp->header( 'Retry-After', '60' );
+            return $resp;
+        }
+
         $redirect_uris = $body['redirect_uris'] ?? [];
         if ( ! is_array( $redirect_uris ) || empty( $redirect_uris ) ) {
             return self::rest_error( 'invalid_redirect_uri', 'redirect_uris is required.', 400 );
         }
+        if ( count( $redirect_uris ) > self::MAX_REDIRECT_URIS ) {
+            return self::rest_error( 'invalid_redirect_uri', 'At most ' . self::MAX_REDIRECT_URIS . ' redirect_uris are accepted.', 400 );
+        }
         $clean = [];
         foreach ( $redirect_uris as $uri ) {
-            $uri = esc_url_raw( (string) $uri, [ 'https', 'http' ] );
+            if ( ! is_string( $uri ) || strlen( $uri ) > self::MAX_REDIRECT_URI_LEN ) {
+                return self::rest_error( 'invalid_redirect_uri', 'Each redirect_uri must be a string of at most ' . self::MAX_REDIRECT_URI_LEN . ' characters.', 400 );
+            }
+            $uri = esc_url_raw( $uri, [ 'https', 'http' ] );
             if ( $uri !== '' ) {
                 $clean[] = $uri;
             }
@@ -651,7 +669,13 @@ class Cowboy_MCP_OAuth {
         }
 
         $now  = time();
-        $name = sanitize_text_field( (string) ( $body['client_name'] ?? 'MCP Client' ) );
+        // Truncate, never reject: a long display name must not stop a real client connecting.
+        $raw_name = $body['client_name'] ?? '';
+        $name     = sanitize_text_field( substr( is_string( $raw_name ) ? $raw_name : '', 0, 4 * self::MAX_CLIENT_NAME_LEN ) );
+        $name     = function_exists( 'mb_substr' ) ? mb_substr( $name, 0, self::MAX_CLIENT_NAME_LEN ) : substr( $name, 0, self::MAX_CLIENT_NAME_LEN );
+        if ( $name === '' ) {
+            $name = 'MCP Client';
+        }
         // Self-describing id so the registration survives a database overwrite;
         // registrations too long for one keep the row-only random id.
         $client_id = self::mint_signed_client_id( $name, $clean, $now )
@@ -791,6 +815,10 @@ class Cowboy_MCP_OAuth {
             self::authorize_fatal( __( 'The OAuth connector is not enabled on this site.', 'cowboy-mcp' ) );
         }
 
+        // The consent screen hands out administrator access on one click: never frameable.
+        header( 'X-Frame-Options: DENY' );
+        header( "Content-Security-Policy: frame-ancestors 'none'" );
+
         $method  = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
         $is_post = ( strtoupper( $method ) === 'POST' );
         // phpcs:ignore WordPress.Security.NonceVerification
@@ -814,16 +842,6 @@ class Cowboy_MCP_OAuth {
             self::authorize_fatal( __( 'Invalid redirect_uri for this client.', 'cowboy-mcp' ) );
         }
 
-        // PKCE is mandatory.
-        if ( $challenge === '' || $challenge_m !== 'S256' ) {
-            self::authorize_redirect_error( $redirect_uri, $state, 'invalid_request', 'PKCE S256 is required.' );
-        }
-
-        // Enforce RFC 8707 audience: only this server's resource is supported.
-        if ( $resource !== self::resource_url() ) {
-            self::authorize_redirect_error( $redirect_uri, $state, 'invalid_target', 'Unsupported resource.' );
-        }
-
         // Must be a logged-in administrator.
         if ( ! is_user_logged_in() ) {
             wp_safe_redirect( wp_login_url( self::current_authorize_url() ) );
@@ -831,6 +849,18 @@ class Cowboy_MCP_OAuth {
         }
         if ( ! current_user_can( 'manage_options' ) ) {
             self::authorize_fatal( __( 'You must be an administrator to authorize this connection.', 'cowboy-mcp' ) );
+        }
+
+        // Malformed requests get an error page, never a redirect: anyone can register a
+        // client with any redirect_uri, so redirecting here (least of all before login)
+        // would make this URL an open redirector on the site's own domain. A working
+        // client never reaches these branches; an admin's Deny below still redirects.
+        if ( $challenge === '' || $challenge_m !== 'S256' ) {
+            self::authorize_fatal( __( 'This connection request is missing a required security parameter (PKCE S256). Start the connection again from your AI app.', 'cowboy-mcp' ) );
+        }
+        // RFC 8707 audience: only this server's resource is supported.
+        if ( $resource !== self::resource_url() ) {
+            self::authorize_fatal( __( 'This connection request is for a different address than this site\'s MCP endpoint. Check the server URL in your AI app.', 'cowboy-mcp' ) );
         }
 
         // An administrator is present: a signature-only client may now be persisted
@@ -913,6 +943,7 @@ class Cowboy_MCP_OAuth {
         $client_name = $client['client_name'] ?? __( 'An application', 'cowboy-mcp' );
         $user        = wp_get_current_user();
         $action      = esc_url( self::issuer() . '/cowboy-mcp-oauth/authorize' );
+        $dest_host   = (string) wp_parse_url( $redirect_uri, PHP_URL_HOST );
 
         // Preselect the radio matching the client's currently stored scope so
         // re-consent doesn't silently overwrite a custom grant (see handle_authorize()).
@@ -960,6 +991,11 @@ class Cowboy_MCP_OAuth {
     printf( esc_html__( 'Authorizing as %s', 'cowboy-mcp' ), '<strong>' . esc_html( $user->user_login ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     ?>
  </div>
+ <div class="dest"><?php
+    /* translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com */
+    printf( esc_html__( 'After you approve, you will be sent to %s', 'cowboy-mcp' ), '<strong>' . esc_html( $dest_host ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+ ?></div>
+ <p class="muted"><?php esc_html_e( 'The app name above is supplied by the app and is not verified. Approve only if you just started this connection yourself.', 'cowboy-mcp' ); ?></p>
  <?php if ( ! empty( $client['rehydrated'] ) ) : ?>
  <p class="muted"><?php esc_html_e( 'This site has no stored record of this connection. That is normal after a database restore or a staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
  <?php endif; ?>
