@@ -995,9 +995,9 @@ class Cowboy_MCP_OAuth {
     /* translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com */
     printf( esc_html__( 'After you approve, you will be sent to %s', 'cowboy-mcp' ), '<strong>' . esc_html( $dest_host ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
  ?></div>
- <p class="muted"><?php esc_html_e( 'The app name above is supplied by the app and is not verified. Approve only if you just started this connection yourself.', 'cowboy-mcp' ); ?></p>
+ <p class="muted note"><?php esc_html_e( 'The app name above is supplied by the app and is not verified. Approve only if you just started this connection yourself.', 'cowboy-mcp' ); ?></p>
  <?php if ( ! empty( $client['rehydrated'] ) ) : ?>
- <p class="muted"><?php esc_html_e( 'This site has no stored record of this connection. That is normal after a database restore or a staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
+ <p class="muted note"><?php esc_html_e( 'This site has no stored record of this connection. That is normal after a database restore or a staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
  <?php endif; ?>
  <form method="post" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url above ?>">
     <?php wp_nonce_field( 'cowboy_mcp_oauth_consent' ); ?>
