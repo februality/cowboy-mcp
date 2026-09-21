@@ -20,6 +20,9 @@ class Cowboy_MCP_OAuth {
     const REFRESH_TTL    = 2592000;
     const CODE_TTL       = 60;
     const MAX_CLIENTS    = 100;
+    const SIGNED_PREFIX = 'cmcp_client_s1_';
+    const SIGNED_MAX_ID = 255; // whole id; longer registrations keep the legacy random id
+    const SIGNED_SIG_LEN = 16; // bytes of HMAC-SHA256 kept (128-bit tag)
 
     /** Populated by validate_access_token() so Cowboy_MCP_Auth can log the connection. */
     public static array $last_token_context = [];
@@ -84,6 +87,13 @@ class Cowboy_MCP_OAuth {
         return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' );
     }
 
+    public static function base64url_decode( string $data ): ?string {
+        $b64 = strtr( $data, '-_', '+/' );
+        $b64 = str_pad( $b64, strlen( $b64 ) + ( 4 - strlen( $b64 ) % 4 ) % 4, '=' );
+        $out = base64_decode( $b64, true );
+        return ( false === $out ) ? null : $out;
+    }
+
     public static function verify_pkce( string $verifier, string $challenge, string $method ): bool {
         if ( $method !== 'S256' || $verifier === '' || $challenge === '' ) {
             return false;
@@ -101,6 +111,113 @@ class Cowboy_MCP_OAuth {
     private static function random_secret(): string {
         return bin2hex( random_bytes( 32 ) );
     }
+
+    /* ── Signed client ids ─────────────────────────────────── */
+
+    /**
+     * Key for self-describing client ids. Derived from the wp-config.php salts
+     * (which a database overwrite — staging sync, backup restore — does not touch)
+     * and bound to this site's issuer so an id minted on production does not
+     * verify on a staging copy that shares the same salts.
+     */
+    private static function client_signing_key(): string {
+        // Blog id too: subdirectory-multisite subsites share both salts and issuer().
+        return hash_hmac( 'sha256', 'cowboy-mcp-oauth-client-v1|' . self::issuer() . '|' . get_current_blog_id(), wp_salt( 'auth' ), true );
+    }
+
+    private static function client_signature( string $body ): string {
+        return self::base64url_encode( substr( hash_hmac( 'sha256', $body, self::client_signing_key(), true ), 0, self::SIGNED_SIG_LEN ) );
+    }
+
+    /** Returns null when the registration is too large to travel inside a 255-char client_id. */
+    private static function mint_signed_client_id( string $name, array $redirect_uris, int $created ): ?string {
+        // 'j' keeps ids unique: identical metadata in the same second must not share a row (and its tool_scope).
+        $payload = wp_json_encode( [ 'n' => $name, 'r' => array_values( $redirect_uris ), 't' => $created, 'j' => bin2hex( random_bytes( 8 ) ) ], JSON_UNESCAPED_SLASHES );
+        if ( ! is_string( $payload ) ) {
+            return null;
+        }
+        $body = self::base64url_encode( $payload );
+        $id   = self::SIGNED_PREFIX . $body . '.' . self::client_signature( $body );
+        // Stay inside the most conservative client-side storage assumption (255 chars).
+        return ( strlen( $id ) <= self::SIGNED_MAX_ID ) ? $id : null;
+    }
+
+    /**
+     * Verify a self-describing client id and return the client record it encodes,
+     * or null. Never touches the database.
+     */
+    public static function verify_signed_client_id( string $client_id ): ?array {
+        if ( strlen( $client_id ) > self::SIGNED_MAX_ID || ! str_starts_with( $client_id, self::SIGNED_PREFIX ) ) {
+            return null;
+        }
+        $parts = explode( '.', substr( $client_id, strlen( self::SIGNED_PREFIX ) ) );
+        if ( count( $parts ) !== 2 || $parts[0] === '' || $parts[1] === '' ) {
+            return null;
+        }
+        [ $body, $sig ] = $parts;
+        if ( ! hash_equals( self::client_signature( $body ), $sig ) ) {
+            return null;
+        }
+        $json = self::base64url_decode( $body );
+        $data = is_string( $json ) ? json_decode( $json, true ) : null;
+        if ( ! is_array( $data ) || ! is_string( $data['n'] ?? null ) || ! is_array( $data['r'] ?? null ) || empty( $data['r'] ) ) {
+            return null;
+        }
+        foreach ( $data['r'] as $uri ) {
+            if ( ! is_string( $uri ) || $uri === '' || esc_url_raw( $uri, [ 'https', 'http' ] ) !== $uri ) {
+                return null;
+            }
+        }
+        return [
+            'client_id'                  => $client_id,
+            'client_name'                => sanitize_text_field( $data['n'] ),
+            'redirect_uris'              => array_values( $data['r'] ),
+            'created'                    => (int) ( $data['t'] ?? 0 ),
+            'last_used'                  => null,
+            'token_endpoint_auth_method' => 'none',
+        ];
+    }
+
+    /**
+     * Look a client up: stored row first, then a valid signature. With $rehydrate
+     * the row is re-created from the signature. SECURITY: call with $rehydrate only
+     * once a logged-in administrator is present (handle_authorize() does) — signed
+     * ids never expire, so an unauthenticated caller must not be able to make this write.
+     */
+    public static function resolve_client( string $client_id, bool $rehydrate = false ): ?array {
+        if ( $client_id === '' ) {
+            return null;
+        }
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        if ( ! empty( $clients[ $client_id ] ) ) {
+            return $clients[ $client_id ];
+        }
+        $client = self::verify_signed_client_id( $client_id );
+        if ( null === $client || ! $rehydrate ) {
+            return $client;
+        }
+        // The tool scope lived on the lost row. Any token that outlived it (a refresh
+        // token survives row eviction) would come back UNSCOPED = full access, so a
+        // re-created client always starts with no tokens: the only way to a token is
+        // the consent screen, which sets the scope again. revoke_connection() finds no
+        // row here and just clears the client's access + refresh tokens.
+        self::revoke_connection( $client_id );
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        if ( count( $clients ) >= self::MAX_CLIENTS ) {
+            $clients = self::prune_unused_clients( $clients );
+        }
+        $client['rehydrated']  = time();
+        $clients[ $client_id ] = $client;
+        update_option( self::CLIENTS_OPTION, $clients, false );
+        Cowboy_MCP_Auth::log( 'oauth_client_rehydrated', [ 'client_name' => $client['client_name'] ] );
+        return $client;
+    }
+
+    public static function client_is_known( string $client_id ): bool {
+        return null !== self::resolve_client( $client_id );
+    }
+
+    /* ── Tokens ────────────────────────────────────────────── */
 
     private static function revoke_token_record( string $access_id ): void {
         $tokens = get_option( self::TOKENS_OPTION, [] );
@@ -533,9 +650,12 @@ class Cowboy_MCP_OAuth {
             $clients = self::prune_unused_clients( $clients );
         }
 
-        $client_id = 'cmcp_client_' . bin2hex( random_bytes( 8 ) );
-        $now       = time();
-        $name      = sanitize_text_field( (string) ( $body['client_name'] ?? 'MCP Client' ) );
+        $now  = time();
+        $name = sanitize_text_field( (string) ( $body['client_name'] ?? 'MCP Client' ) );
+        // Self-describing id so the registration survives a database overwrite;
+        // registrations too long for one keep the row-only random id.
+        $client_id = self::mint_signed_client_id( $name, $clean, $now )
+            ?? 'cmcp_client_' . bin2hex( random_bytes( 8 ) );
 
         $clients[ $client_id ] = [
             'client_id'                  => $client_id,
@@ -565,6 +685,14 @@ class Cowboy_MCP_OAuth {
         foreach ( $tokens as $t ) {
             if ( ! empty( $t['client_id'] ) ) {
                 $active_ids[ $t['client_id'] ] = true;
+            }
+        }
+        // A connection idle for over an hour has no access token but still holds a
+        // 30-day refresh token — it is not "unused", and DCR spam must not evict it.
+        $now = time();
+        foreach ( get_option( self::REFRESH_OPTION, [] ) as $r ) {
+            if ( ! empty( $r['client_id'] ) && empty( $r['used'] ) && (int) ( $r['expires'] ?? 0 ) > $now ) {
+                $active_ids[ $r['client_id'] ] = true;
             }
         }
         $unused = array_filter( $clients, fn( $c ) => empty( $active_ids[ $c['client_id'] ] ) );
@@ -667,11 +795,11 @@ class Cowboy_MCP_OAuth {
         $resource     = esc_url_raw( wp_unslash( $src['resource'] ?? self::resource_url() ), [ 'https', 'http' ] );
 
         // Validate client + redirect_uri BEFORE trusting them for any redirect.
-        $clients = get_option( self::CLIENTS_OPTION, [] );
-        if ( $client_id === '' || empty( $clients[ $client_id ] ) ) {
+        // Verify only: this runs for unauthenticated visitors and must not write.
+        $client = self::resolve_client( $client_id );
+        if ( null === $client ) {
             self::authorize_fatal( __( 'Unknown OAuth client.', 'cowboy-mcp' ) );
         }
-        $client = $clients[ $client_id ];
         if ( $redirect_uri === '' || ! in_array( $redirect_uri, $client['redirect_uris'], true ) ) {
             self::authorize_fatal( __( 'Invalid redirect_uri for this client.', 'cowboy-mcp' ) );
         }
@@ -694,6 +822,11 @@ class Cowboy_MCP_OAuth {
         if ( ! current_user_can( 'manage_options' ) ) {
             self::authorize_fatal( __( 'You must be an administrator to authorize this connection.', 'cowboy-mcp' ) );
         }
+
+        // An administrator is present: a signature-only client may now be persisted
+        // (this also clears any token that outlived its row — see resolve_client()).
+        $client  = self::resolve_client( $client_id, true ) ?? $client;
+        $clients = get_option( self::CLIENTS_OPTION, [] );
 
         if ( $is_post ) {
             if ( ! isset( $_POST['_wpnonce'] )
@@ -727,6 +860,7 @@ class Cowboy_MCP_OAuth {
                 // full, fail-safe, rather than silently discarding nothing.
                 unset( $clients[ $client_id ]['tool_scope'] );
             }
+            unset( $clients[ $client_id ]['rehydrated'] );
             $clients[ $client_id ]['last_used'] = time();
             update_option( self::CLIENTS_OPTION, $clients, false );
 
