@@ -4,7 +4,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.7
+Stable tag: 1.6.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,10 @@ Yes. Every API key and every OAuth connection carries a scope: full access, read
 
 Run the **Connection Doctor** on the Connection tab. It tests HTTPS, reachability, the REST API, OAuth discovery and the common host blockers (Cloudflare challenges and "Block AI bots" rules, web application firewalls such as ModSecurity, LiteSpeed caching of `/wp-json/`), names the exact thing in the way, and gives you a fix. If you are still stuck, paste the report into a new topic in the support forum.
 
+= My connector stopped working after a staging sync or database restore =
+
+OAuth connections (Claude, ChatGPT) are stored in the site's database. When a backup or staging tool overwrites that database - for example pushing production to staging with WPvivid - the connection's tokens are replaced too. Since 1.6.8 the connector itself survives: click Reconnect in your AI app and approve the connection again. Connectors added before 1.6.8 need to be removed and added once. You never need to uninstall the plugin. Also check that the OAuth connector is still switched on in Settings - Cowboy MCP, because the sync copies that setting from the source site. Keep in mind that a database copy also copies API keys, so keys created on production will work on the staging copy.
+
 = Claude or ChatGPT connects but says no tools are available =
 
 Cowboy MCP lists two gateway tools (`cowboy_discover` and `cowboy_run`) instead of dumping 168 schemas into your agent's context; the agent discovers the tools it needs on demand. Ask it to "discover tools for WooCommerce" or read the `wordpress://tools/catalog` resource. If even the two gateway tools are missing, the key's scope may be empty - check it on the Connection tab.
@@ -249,9 +253,10 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 == Changelog ==
 
-= 1.6.7 =
-* Fix: WooCommerce product reviews are listed again. WooCommerce hides reviews from any comment query that does not ask for them explicitly, so wp_list_comments returned none and agents reported that a store had no reviews at all. Reviews now appear alongside comments, each with its star rating and verified-owner flag, and ordinary comments left on a product come back with them.
-* New: wp_list_comments takes a type parameter - "comment", "review", "pingback", "trackback", "pings", "all", or a custom comment type - to narrow a listing to one kind.
+= 1.6.8 =
+* Fix: OAuth connectors (Claude, ChatGPT) recover from a database overwrite. After a staging sync or backup restore replaced the site's database, the AI app kept a client registration the site no longer knew and landed on a dead-end "Unknown OAuth client" page; the only way out was removing and re-adding the connector. New connections now carry a signed registration that the site recognises without a database row, so recovery is Reconnect and Approve. Existing connections and tokens are untouched; connectors added before 1.6.8 get the new behaviour after being re-added once.
+* Fix: the OAuth token endpoint answers invalid_client (401) for a registration it does not know, so MCP clients register again instead of retrying with a dead one.
+* Improved: the unknown-connection page explains what happened and what to do, and a connection the site has no record of says so on the consent screen and asks for its access level again.
 
 = Earlier versions =
 
