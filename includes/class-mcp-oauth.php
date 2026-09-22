@@ -43,7 +43,7 @@ class Cowboy_MCP_OAuth {
      * via the cowboy_mcp_oauth_redirect_hosts filter; oauth_redirect_allowlist=false
      * restores the old any-host behaviour.
      */
-    const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'anthropic.com', 'vscode.dev' ];
+    const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'claude.com', 'anthropic.com', 'vscode.dev', 'cursor.com', 'perplexity.ai', 'n8n.cloud' ];
     const LOOPBACK_HOSTS         = [ 'localhost', '127.0.0.1', '::1' ];
     const SIGNED_PREFIX = 'cmcp_client_s1_';
     const SIGNED_MAX_ID = 255; // whole id; longer registrations keep the legacy random id
@@ -773,7 +773,11 @@ class Cowboy_MCP_OAuth {
         if ( count( $redirect_uris ) > self::MAX_REDIRECT_URIS ) {
             return self::rest_error( 'invalid_redirect_uri', 'At most ' . self::MAX_REDIRECT_URIS . ' redirect_uris are accepted.', 400 );
         }
-        $clean = [];
+        // Filter, never reject on one bad entry: Cursor and VS Code register a list that
+        // mixes a loopback URL with custom-scheme and vendor-web entries. Only the
+        // entries that pass are registered; the request fails only if none survive.
+        $clean   = [];
+        $dropped = [];
         foreach ( $redirect_uris as $uri ) {
             if ( ! is_string( $uri ) || strlen( $uri ) > self::MAX_REDIRECT_URI_LEN ) {
                 return self::rest_error( 'invalid_redirect_uri', 'Each redirect_uri must be a string of at most ' . self::MAX_REDIRECT_URI_LEN . ' characters.', 400 );
@@ -783,19 +787,23 @@ class Cowboy_MCP_OAuth {
                 continue;
             }
             if ( ! self::redirect_uri_allowed( $uri ) ) {
+                $dropped[] = (string) wp_parse_url( $uri, PHP_URL_HOST );
+                continue;
+            }
+            $clean[] = $uri;
+        }
+        if ( empty( $clean ) ) {
+            if ( ! empty( $dropped ) ) {
                 return self::rest_error(
                     'invalid_redirect_uri',
                     sprintf(
                         '%s is not an allowed redirect host on this site. Known AI apps (%s) and localhost are accepted over https; an administrator can add other hosts under Settings > Cowboy MCP > Desktop Connector.',
-                        (string) wp_parse_url( $uri, PHP_URL_HOST ),
+                        implode( ', ', array_unique( $dropped ) ),
                         implode( ', ', self::DEFAULT_REDIRECT_HOSTS )
                     ),
                     400
                 );
             }
-            $clean[] = $uri;
-        }
-        if ( empty( $clean ) ) {
             return self::rest_error( 'invalid_redirect_uri', 'No valid redirect_uris supplied.', 400 );
         }
 

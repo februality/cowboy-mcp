@@ -216,7 +216,7 @@ New AI apps can register with the site only while "New connections" is enabled. 
 
 = My MCP client is refused with "not an allowed redirect host" =
 
-Since 1.6.8 the OAuth connector only sends approval back to known AI apps (chatgpt.com, openai.com, claude.ai, anthropic.com, vscode.dev) and to localhost, because anyone can start a connection request and this is what stops an attacker from pointing one at their own server. If you use another OAuth client, such as a self-hosted n8n, add its host name under Settings > Cowboy MCP > Desktop Connector > Additional allowed hosts. Clients that use an API key are not affected.
+Since 1.6.8 the OAuth connector only sends approval back to known AI apps (chatgpt.com, openai.com, claude.ai, claude.com, anthropic.com, vscode.dev, cursor.com, perplexity.ai, n8n.cloud) and to localhost, because anyone can start a connection request and this is what stops an attacker from pointing one at their own server. If you use another OAuth client, such as a self-hosted n8n, add its host name under Settings > Cowboy MCP > Desktop Connector > Additional allowed hosts. Clients that use an API key are not affected.
 
 = Claude or ChatGPT connects but says no tools are available =
 
@@ -266,7 +266,7 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 * Fix: the OAuth token endpoint answers invalid_client (401) for a registration it does not know, so MCP clients register again instead of retrying with a dead one.
 * Improved: the unknown-connection page explains what happened and what to do, and a connection the site has no record of says so on the consent screen and asks for its access level again.
 * Security: new AI apps can only register with the site while "New connections" is enabled - a button at the top of the Connection tab that switches itself off after 30 minutes (and is switched on when the connector is enabled). Everything an existing connection uses - approval, tokens, refresh, the endpoint, recovery after a database sync - is unaffected, so nothing needs to be reconnected. The Connection Doctor reports the window; the cowboy_mcp_oauth_registration_open filter keeps it open for automated setups.
-* Security: OAuth connections are only sent back to known AI apps (chatgpt.com, openai.com, claude.ai, anthropic.com, vscode.dev) and to localhost for command-line tools. Other hosts, such as a self-hosted n8n, can be added under Settings > Cowboy MCP > Desktop Connector, where the check can also be turned off. Existing connections keep working; a client on another host is asked for the host to be added the next time it needs approval.
+* Security: OAuth connections are only sent back to known AI apps (chatgpt.com, openai.com, claude.ai, claude.com, anthropic.com, vscode.dev, cursor.com, perplexity.ai, n8n.cloud) and to localhost for command-line tools. Other hosts, such as a self-hosted n8n, can be added under Settings > Cowboy MCP > Desktop Connector, where the check can also be turned off. Existing connections keep working; a client on another host is asked for the host to be added the next time it needs approval.
 * Hardening: the OAuth consent screen now states where you will be sent after approving, marks the app name as unverified, and cannot be embedded in another page. Client registration is size- and rate-limited, and malformed connection requests show an error page. Working connections are unaffected.
 
 = Earlier versions =
