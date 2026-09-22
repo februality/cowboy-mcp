@@ -5,7 +5,7 @@ release; older entries are kept here.
 
 = 1.6.8 =
 * Fix: OAuth connectors (Claude, ChatGPT) recover after a staging sync or backup restore. Previously the AI app kept a registration the site no longer knew and landed on an "Unknown OAuth client" page; the only way out was removing and re-adding the connector. Recovery is now Reconnect and Approve.
-* Fix: connections made before 1.6.8 can be recovered the same way: enable New connections on the Connection tab, click Reconnect in the app, and approve it. Nothing has to be removed or re-added. Existing connections and tokens are untouched.
+* Fix: connections made before 1.6.8 recover the same way. Existing connections and tokens are untouched.
 * New: a "New connections" button at the top of the Claude and ChatGPT panels on the Connection tab. Adding an app to the site needs it enabled; it switches itself off after 30 minutes. Existing connections never need it.
 * Improved: the OAuth consent and error pages say what will happen and what to do next.
 * Security: hardening of the OAuth connector's registration and consent flow. Working connections are unaffected. Apps that send you back to a host other than the known AI apps or localhost, such as a self-hosted n8n, can be allowed under Settings > Cowboy MCP > Desktop Connector.
