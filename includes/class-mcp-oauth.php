@@ -25,6 +25,17 @@ class Cowboy_MCP_OAuth {
     const MAX_REDIRECT_URIS    = 10;  // VS Code registers six; leave headroom
     const MAX_REDIRECT_URI_LEN = 512;
     const REGISTER_RATE_LIMIT  = 20;  // per IP per minute; its own bucket, never the auth-failure one
+    /**
+     * Hosts an OAuth client may send the browser back to. Registration is open to
+     * anyone, so without this an attacker registers "ChatGPT" with their own
+     * redirect_uri and phishes an administrator's Approve click into admin tokens.
+     * Subdomains match; loopback hosts may use plain http (CLI clients).
+     * Administrators extend the list in Settings (oauth_extra_redirect_hosts) or
+     * via the cowboy_mcp_oauth_redirect_hosts filter; oauth_redirect_allowlist=false
+     * restores the old any-host behaviour.
+     */
+    const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'anthropic.com', 'vscode.dev' ];
+    const LOOPBACK_HOSTS         = [ 'localhost', '127.0.0.1', '::1' ];
     const SIGNED_PREFIX = 'cmcp_client_s1_';
     const SIGNED_MAX_ID = 255; // whole id; longer registrations keep the legacy random id
     const SIGNED_SIG_LEN = 16; // bytes of HMAC-SHA256 kept (128-bit tag)
@@ -84,6 +95,78 @@ class Cowboy_MCP_OAuth {
             return false;
         }
         return true;
+    }
+
+    /* ── Redirect-host allowlist ───────────────────────────── */
+
+    public static function redirect_allowlist_enabled(): bool {
+        if ( ! class_exists( 'Cowboy_MCP_Tools' ) ) {
+            return true;
+        }
+        $s = Cowboy_MCP_Tools::get_settings();
+        return ! isset( $s['oauth_redirect_allowlist'] ) || ! empty( $s['oauth_redirect_allowlist'] );
+    }
+
+    /** Administrator-added hosts (Settings), normalised. */
+    public static function extra_redirect_hosts(): array {
+        $s     = class_exists( 'Cowboy_MCP_Tools' ) ? Cowboy_MCP_Tools::get_settings() : [];
+        $hosts = $s['oauth_extra_redirect_hosts'] ?? [];
+        return self::sanitize_host_list( is_array( $hosts ) ? $hosts : [] );
+    }
+
+    /** Lower-case, strip scheme/path/port, keep only syntactically valid host names. */
+    public static function sanitize_host_list( array $hosts ): array {
+        $out = [];
+        foreach ( $hosts as $h ) {
+            $h = strtolower( trim( (string) $h ) );
+            if ( $h === '' ) {
+                continue;
+            }
+            if ( str_contains( $h, '://' ) ) {
+                $h = (string) wp_parse_url( $h, PHP_URL_HOST );
+            }
+            $h = preg_replace( '~[/:].*$~', '', $h );
+            if ( preg_match( '/^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}$/', $h ) && ! in_array( $h, $out, true ) ) {
+                $out[] = $h;
+            }
+        }
+        return array_slice( $out, 0, 50 );
+    }
+
+    /**
+     * Whether a redirect_uri may receive an authorization code from this site.
+     * Only ever loosened by the site's own administrator — never by a registrant.
+     */
+    public static function redirect_uri_allowed( string $uri ): bool {
+        $scheme = strtolower( (string) wp_parse_url( $uri, PHP_URL_SCHEME ) );
+        $host   = strtolower( trim( (string) wp_parse_url( $uri, PHP_URL_HOST ), '[]' ) );
+        if ( $host === '' || ! in_array( $scheme, [ 'https', 'http' ], true ) ) {
+            return false;
+        }
+        if ( ! self::redirect_allowlist_enabled() ) {
+            return true;
+        }
+        if ( in_array( $host, self::LOOPBACK_HOSTS, true ) ) {
+            return true; // CLI clients listen on a local port over plain http
+        }
+        $extra = self::extra_redirect_hosts();
+        /**
+         * Filters the redirect hosts accepted for OAuth clients (subdomains match).
+         *
+         * @param string[] $hosts Default vendor hosts plus administrator-added hosts.
+         */
+        $allowed = apply_filters( 'cowboy_mcp_oauth_redirect_hosts', array_merge( self::DEFAULT_REDIRECT_HOSTS, $extra ) );
+        foreach ( (array) $allowed as $a ) {
+            $a = strtolower( trim( (string) $a ) );
+            if ( $a === '' ) {
+                continue;
+            }
+            if ( $host === $a || str_ends_with( $host, '.' . $a ) ) {
+                // Admin-added hosts may be internal http; vendor defaults must be https.
+                return $scheme === 'https' || in_array( $a, $extra, true );
+            }
+        }
+        return false;
     }
 
     /* ── PKCE helpers ──────────────────────────────────────── */
@@ -654,9 +737,21 @@ class Cowboy_MCP_OAuth {
                 return self::rest_error( 'invalid_redirect_uri', 'Each redirect_uri must be a string of at most ' . self::MAX_REDIRECT_URI_LEN . ' characters.', 400 );
             }
             $uri = esc_url_raw( $uri, [ 'https', 'http' ] );
-            if ( $uri !== '' ) {
-                $clean[] = $uri;
+            if ( $uri === '' ) {
+                continue;
             }
+            if ( ! self::redirect_uri_allowed( $uri ) ) {
+                return self::rest_error(
+                    'invalid_redirect_uri',
+                    sprintf(
+                        '%s is not an allowed redirect host on this site. Known AI apps (%s) and localhost are accepted over https; an administrator can add other hosts under Settings > Cowboy MCP > Desktop Connector.',
+                        (string) wp_parse_url( $uri, PHP_URL_HOST ),
+                        implode( ', ', self::DEFAULT_REDIRECT_HOSTS )
+                    ),
+                    400
+                );
+            }
+            $clean[] = $uri;
         }
         if ( empty( $clean ) ) {
             return self::rest_error( 'invalid_redirect_uri', 'No valid redirect_uris supplied.', 400 );
@@ -861,6 +956,17 @@ class Cowboy_MCP_OAuth {
         // RFC 8707 audience: only this server's resource is supported.
         if ( $resource !== self::resource_url() ) {
             self::authorize_fatal( __( 'This connection request is for a different address than this site\'s MCP endpoint. Check the server URL in your AI app.', 'cowboy-mcp' ) );
+        }
+
+        // Checked here, not only at registration: a client registered before this list
+        // existed (or before an administrator removed a host) must not be usable either.
+        // Error page, never a redirect - the destination is the very thing in question.
+        if ( ! self::redirect_uri_allowed( $redirect_uri ) ) {
+            self::authorize_fatal( sprintf(
+                /* translators: %s: host name the app asked to be sent back to */
+                __( 'This connection would send you to %s, which is not an allowed destination on this site. If you trust that app, an administrator can add its host under Settings > Cowboy MCP > Desktop Connector.', 'cowboy-mcp' ),
+                (string) wp_parse_url( $redirect_uri, PHP_URL_HOST )
+            ) );
         }
 
         // An administrator is present: a signature-only client may now be persisted

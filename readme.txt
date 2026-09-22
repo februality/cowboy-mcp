@@ -210,6 +210,10 @@ Run the **Connection Doctor** on the Connection tab. It tests HTTPS, reachabilit
 
 OAuth connections (Claude, ChatGPT) are stored in the site's database. When a backup or staging tool overwrites that database - for example pushing production to staging with WPvivid - the connection's tokens are replaced too. Since 1.6.8 the connector itself survives: click Reconnect in your AI app and approve the connection again. Connectors added before 1.6.8 need to be removed and added once. You never need to uninstall the plugin. Also check that the OAuth connector is still switched on in Settings - Cowboy MCP, because the sync copies that setting from the source site. Keep in mind that a database copy also copies API keys, so keys created on production will work on the staging copy.
 
+= My MCP client is refused with "not an allowed redirect host" =
+
+Since 1.6.8 the OAuth connector only sends approval back to known AI apps (chatgpt.com, openai.com, claude.ai, anthropic.com, vscode.dev) and to localhost, because anyone can start a connection request and this is what stops an attacker from pointing one at their own server. If you use another OAuth client, such as a self-hosted n8n, add its host name under Settings > Cowboy MCP > Desktop Connector > Additional allowed hosts. Clients that use an API key are not affected.
+
 = Claude or ChatGPT connects but says no tools are available =
 
 Cowboy MCP lists two gateway tools (`cowboy_discover` and `cowboy_run`) instead of dumping 168 schemas into your agent's context; the agent discovers the tools it needs on demand. Ask it to "discover tools for WooCommerce" or read the `wordpress://tools/catalog` resource. If even the two gateway tools are missing, the key's scope may be empty - check it on the Connection tab.
@@ -257,6 +261,7 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 * Fix: OAuth connectors (Claude, ChatGPT) recover from a database overwrite. After a staging sync or backup restore replaced the site's database, the AI app kept a client registration the site no longer knew and landed on a dead-end "Unknown OAuth client" page; the only way out was removing and re-adding the connector. New connections now carry a signed registration that the site recognises without a database row, so recovery is Reconnect and Approve. Existing connections and tokens are untouched; connectors added before 1.6.8 get the new behaviour after being re-added once.
 * Fix: the OAuth token endpoint answers invalid_client (401) for a registration it does not know, so MCP clients register again instead of retrying with a dead one.
 * Improved: the unknown-connection page explains what happened and what to do, and a connection the site has no record of says so on the consent screen and asks for its access level again.
+* Security: OAuth connections are only sent back to known AI apps (chatgpt.com, openai.com, claude.ai, anthropic.com, vscode.dev) and to localhost for command-line tools. Other hosts, such as a self-hosted n8n, can be added under Settings > Cowboy MCP > Desktop Connector, where the check can also be turned off. Existing connections keep working; a client on another host is asked for the host to be added the next time it needs approval.
 * Hardening: the OAuth consent screen now states where you will be sent after approving, marks the app name as unverified, and cannot be embedded in another page. Client registration is size- and rate-limited, and malformed connection requests show an error page. Working connections are unaffected.
 
 = Earlier versions =

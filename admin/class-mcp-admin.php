@@ -310,6 +310,8 @@ class Cowboy_MCP_Admin {
                 'log_requests'  => ! empty( $_POST['cowboy_mcp_log_requests'] ),
                 'rate_limit'    => max( 10, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_rate_limit'] ?? '' ) ) ),
                 'oauth_enabled' => ! empty( $_POST['cowboy_mcp_oauth_enabled'] ),
+                'oauth_redirect_allowlist'   => ! empty( $_POST['cowboy_mcp_oauth_redirect_allowlist'] ),
+                'oauth_extra_redirect_hosts' => Cowboy_MCP_OAuth::sanitize_host_list( preg_split( '/[\s,]+/', sanitize_textarea_field( wp_unslash( $_POST['cowboy_mcp_oauth_extra_redirect_hosts'] ?? '' ) ) ) ?: [] ),
 
                 'undo_enabled'           => ! empty( $_POST['cowboy_mcp_undo_enabled'] ),
                 'undo_retention_days'    => max( 1, (int) sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_undo_retention_days'] ?? '7' ) ) ),
@@ -1322,6 +1324,22 @@ class Cowboy_MCP_Admin {
                                 <?php if ( ! empty( $settings['oauth_enabled'] ) ) : ?>
                                     <p class="description"><?php esc_html_e( 'Tip: run the Connection Doctor on the Connection tab to verify the connector end to end.', 'cowboy-mcp' ); ?></p>
                                 <?php endif; ?>
+                                <label class="mcp-switch-label" style="margin-top:12px">
+                                    <span class="mcp-switch"><input type="checkbox" name="cowboy_mcp_oauth_redirect_allowlist" value="1" <?php checked( ! isset( $settings['oauth_redirect_allowlist'] ) || ! empty( $settings['oauth_redirect_allowlist'] ) ); ?>><span class="mcp-switch-track"></span></span>
+                                    <?php esc_html_e( 'Only allow connections from known AI apps (recommended)', 'cowboy-mcp' ); ?>
+                                </label>
+                                <p class="description"><?php
+                                    printf(
+                                        /* translators: %s: comma-separated list of host names */
+                                        esc_html__( 'Anyone can start a connection request, so the site only sends approval back to %s, and to localhost for command-line tools. Turning this off accepts any https address.', 'cowboy-mcp' ),
+                                        esc_html( implode( ', ', Cowboy_MCP_OAuth::DEFAULT_REDIRECT_HOSTS ) )
+                                    );
+                                ?></p>
+                                <p style="margin-top:8px">
+                                    <label for="cowboy_mcp_oauth_extra_redirect_hosts"><strong><?php esc_html_e( 'Additional allowed hosts', 'cowboy-mcp' ); ?></strong></label><br>
+                                    <textarea id="cowboy_mcp_oauth_extra_redirect_hosts" name="cowboy_mcp_oauth_extra_redirect_hosts" rows="2" class="large-text code" placeholder="n8n.example.com"><?php echo esc_textarea( implode( "\n", Cowboy_MCP_OAuth::extra_redirect_hosts() ) ); ?></textarea>
+                                </p>
+                                <p class="description"><?php esc_html_e( 'One host name per line, for tools such as n8n or a self-hosted client. Subdomains are included.', 'cowboy-mcp' ); ?></p>
                             </td>
                         </tr>
                         <tr>
