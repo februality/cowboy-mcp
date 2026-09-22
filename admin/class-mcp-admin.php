@@ -595,8 +595,9 @@ class Cowboy_MCP_Admin {
 
     /**
      * "New connections" switch (safety lock): the only time the connector accepts a
-     * registration from a new AI app. Sits above the client picker as step one.
-     * Rendered only when the Desktop Connector is on - API keys never use it.
+     * registration from a new AI app. Rendered at the top of each OAuth client
+     * panel (claude.ai, Claude app, ChatGPT) once the connector is on - API-key
+     * tools never see it because they never register.
      */
     private static function render_connections_gate(): void {
         $settings = get_option( 'cowboy_mcp_settings', [] );
@@ -632,7 +633,6 @@ class Cowboy_MCP_Admin {
     private static function render_connection_tab( array $keys, string $endpoint, $new_key, string $active_client ): void {
         $registry = self::client_registry();
         $is_local = self::site_looks_local();
-        self::render_connections_gate();
         ?>
         <div class="mcp-conn-layout">
             <?php self::render_client_sidebar( $registry, $active_client, $is_local ); ?>
@@ -793,6 +793,10 @@ class Cowboy_MCP_Admin {
             ?></p></div>
             <?php
         endif;
+
+        if ( $oauth_on ) {
+            self::render_connections_gate();
+        }
 
         if ( ! $oauth_on ) :
             // Browsing never flips settings — enabling the connector is an explicit click.

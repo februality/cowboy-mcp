@@ -406,28 +406,38 @@ document.addEventListener('submit', function (e) {
 	/* ── "New connections" countdown (Connection tab) ─────── */
 
 	( function() {
-		var el = document.querySelector( '[data-mcp-lock-until]' );
-		if ( ! el ) {
+		var els = document.querySelectorAll( '[data-mcp-lock-until]' );
+		if ( ! els.length ) {
 			return;
 		}
-		var gate = el.closest( '.mcp-conn-gate' ),
-			skew = Math.floor( Date.now() / 1000 ) - ( parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - parseInt( el.textContent.split( ':' )[ 0 ], 10 ) * 60 - parseInt( el.textContent.split( ':' )[ 1 ], 10 ) );
-		function tick() {
-			var left = parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - ( Math.floor( Date.now() / 1000 ) - skew );
-			if ( left > 0 ) {
-				el.textContent = Math.floor( left / 60 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 );
-				setTimeout( tick, 1000 );
+		var first = els[ 0 ].textContent.split( ':' ),
+			skew  = Math.floor( Date.now() / 1000 ) - ( parseInt( els[ 0 ].getAttribute( 'data-mcp-lock-until' ), 10 ) - parseInt( first[ 0 ], 10 ) * 60 - parseInt( first[ 1 ], 10 ) );
+		function expire( el ) {
+			var gate = el.closest( '.mcp-conn-gate' ), l10n = window.cowboyMcpAdmin || {};
+			if ( ! gate ) {
 				return;
 			}
-			// Expired: show the disabled state without a reload.
-			var l10n = window.cowboyMcpAdmin || {};
-			if ( gate ) {
-				gate.classList.remove( 'mcp-conn-gate--on' );
-				gate.classList.add( 'mcp-conn-gate--off' );
-				var label = gate.querySelector( '.mcp-conn-gate-label' ), timer = gate.querySelector( '.mcp-conn-gate-timer' ), btn = gate.querySelector( 'button[name="cowboy_mcp_toggle_connections"]' );
-				if ( label ) { label.textContent = l10n.gateOff || 'New connections: disabled'; }
-				if ( timer ) { timer.remove(); }
-				if ( btn ) { btn.value = 'enable'; btn.textContent = l10n.gateEnable || 'Enable for 30 minutes'; btn.classList.add( 'button-primary' ); }
+			gate.classList.remove( 'mcp-conn-gate--on' );
+			gate.classList.add( 'mcp-conn-gate--off' );
+			var label = gate.querySelector( '.mcp-conn-gate-label' ), timer = gate.querySelector( '.mcp-conn-gate-timer' ), btn = gate.querySelector( 'button[name="cowboy_mcp_toggle_connections"]' );
+			if ( label ) { label.textContent = l10n.gateOff || 'New connections: disabled'; }
+			if ( timer ) { timer.remove(); }
+			if ( btn ) { btn.value = 'enable'; btn.textContent = l10n.gateEnable || 'Enable for 30 minutes'; btn.classList.add( 'button-primary' ); }
+		}
+		function tick() {
+			var now = Math.floor( Date.now() / 1000 ) - skew, live = false;
+			Array.prototype.forEach.call( els, function( el ) {
+				var left = parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - now;
+				if ( left > 0 ) {
+					el.textContent = Math.floor( left / 60 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 );
+					live = true;
+				} else if ( ! el.hasAttribute( 'data-mcp-expired' ) ) {
+					el.setAttribute( 'data-mcp-expired', '1' );
+					expire( el );
+				}
+			} );
+			if ( live ) {
+				setTimeout( tick, 1000 );
 			}
 		}
 		setTimeout( tick, 1000 );
