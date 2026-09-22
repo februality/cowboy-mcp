@@ -403,4 +403,29 @@ document.addEventListener('submit', function (e) {
 			}
 		}
 	});
+	/* ── Safety-lock countdown (Connection tab) ──────────── */
+
+	( function() {
+		var nodes = document.querySelectorAll( '[data-mcp-lock-until]' );
+		if ( ! nodes.length ) {
+			return;
+		}
+		var skew = Math.floor( Date.now() / 1000 ) - parseInt( nodes[ 0 ].getAttribute( 'data-mcp-lock-until' ), 10 ) + 900;
+		function tick() {
+			var now = Math.floor( Date.now() / 1000 ) - skew, done = true;
+			Array.prototype.forEach.call( nodes, function( el ) {
+				var left = parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - now;
+				if ( left > 0 ) {
+					done = false;
+					el.textContent = Math.floor( left / 60 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 );
+				} else {
+					el.textContent = ( window.cowboyMcpAdmin && cowboyMcpAdmin.lockClosed ) || 'closed';
+				}
+			} );
+			if ( ! done ) {
+				setTimeout( tick, 1000 );
+			}
+		}
+		tick();
+	} )();
 })();

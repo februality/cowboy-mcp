@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 20:53-0700\n"
+"POT-Creation-Date: 2026-09-21 21:52-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -16,7 +16,7 @@ msgstr ""
 "X-Domain: cowboy-mcp\n"
 
 #: admin/class-mcp-admin.php:30 admin/class-mcp-admin.php:31
-#: admin/class-mcp-admin.php:487
+#: admin/class-mcp-admin.php:489
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -33,72 +33,76 @@ msgstr ""
 msgid "Connect your AI"
 msgstr "AI 연결하기"
 
-#: admin/class-mcp-admin.php:245 admin/class-mcp-admin.php:265
-#: admin/class-mcp-admin.php:287
+#: admin/class-mcp-admin.php:158
+msgid "closed. Reload this tab to reopen it for 15 minutes."
+msgstr "닫혔습니다. 이 탭을 새로 고치면 15분 동안 다시 열립니다."
+
+#: admin/class-mcp-admin.php:246 admin/class-mcp-admin.php:266
+#: admin/class-mcp-admin.php:288
 msgid "Select an access level before saving."
 msgstr "저장하기 전에 액세스 수준을 선택하세요."
 
-#: admin/class-mcp-admin.php:249
+#: admin/class-mcp-admin.php:250
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API 키가 생성되었습니다. 지금 복사하세요 — 한 번만 표시됩니다."
 
-#: admin/class-mcp-admin.php:257
+#: admin/class-mcp-admin.php:258
 msgid "API key revoked."
 msgstr "API 키가 취소되었습니다."
 
-#: admin/class-mcp-admin.php:267
+#: admin/class-mcp-admin.php:268
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "키 범위가 업데이트되었습니다. 해당 키의 다음 요청부터 적용됩니다."
 
-#: admin/class-mcp-admin.php:269
+#: admin/class-mcp-admin.php:270
 msgid "Could not update key scope."
 msgstr "키 범위를 업데이트할 수 없습니다."
 
-#: admin/class-mcp-admin.php:278
+#: admin/class-mcp-admin.php:279
 msgid "Connection revoked."
 msgstr "연결이 취소되었습니다."
 
-#: admin/class-mcp-admin.php:289
+#: admin/class-mcp-admin.php:290
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "연결 범위가 업데이트되었습니다. 해당 연결의 다음 요청부터 적용됩니다."
 
-#: admin/class-mcp-admin.php:291
+#: admin/class-mcp-admin.php:292
 msgid "Could not update connection scope."
 msgstr "연결 범위를 업데이트할 수 없습니다."
 
-#: admin/class-mcp-admin.php:297
+#: admin/class-mcp-admin.php:298
 msgid "Desktop Connector enabled."
 msgstr "Desktop Connector가 활성화되었습니다."
 
-#: admin/class-mcp-admin.php:331
+#: admin/class-mcp-admin.php:332
 msgid "Settings saved."
 msgstr "설정이 저장되었습니다."
 
-#: admin/class-mcp-admin.php:338
+#: admin/class-mcp-admin.php:339
 msgid "Audit log cleared."
 msgstr "감사 로그를 지웠습니다."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:356
+#: admin/class-mcp-admin.php:357
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "변경 #%1$d을(를) 실행 취소했습니다.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:371
+#: admin/class-mcp-admin.php:372
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "배치 항목 %2$d개 중 %1$d개를 실행 취소했습니다."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:387
+#: admin/class-mcp-admin.php:388
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "체크포인트 #%1$d을(를) 생성했습니다(%2$s)."
 
 #. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
-#: admin/class-mcp-admin.php:399
+#: admin/class-mcp-admin.php:400
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: "
@@ -107,11 +111,11 @@ msgstr ""
 "체크포인트 #%1$d에서 데이터베이스를 복원했습니다. 복원 전 안전 체크포인트: "
 "#%2$d."
 
-#: admin/class-mcp-admin.php:410
+#: admin/class-mcp-admin.php:411
 msgid "Checkpoint deleted."
 msgstr "체크포인트를 삭제했습니다."
 
-#: admin/class-mcp-admin.php:493
+#: admin/class-mcp-admin.php:495
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -121,28 +125,28 @@ msgstr ""
 "은 AI 에이전트를 Model Context Protocol을 통해 이 WordPress 사이트에 연결하세"
 "요."
 
-#: admin/class-mcp-admin.php:499
+#: admin/class-mcp-admin.php:501
 msgid "Connection"
 msgstr "연결"
 
-#: admin/class-mcp-admin.php:500
+#: admin/class-mcp-admin.php:502
 msgid "Settings"
 msgstr "설정"
 
-#: admin/class-mcp-admin.php:501
+#: admin/class-mcp-admin.php:503
 msgid "Activity"
 msgstr "활동"
 
-#: admin/class-mcp-admin.php:502
+#: admin/class-mcp-admin.php:504
 msgid "Logs"
 msgstr "로그"
 
-#: admin/class-mcp-admin.php:503
+#: admin/class-mcp-admin.php:505
 msgid "About"
 msgstr "정보"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:530
+#: admin/class-mcp-admin.php:532
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -155,27 +159,27 @@ msgstr ""
 "로 만들어, Claude Code, Codex, Opencode 같은 AI 코딩 에이전트가 단일 인증 엔"
 "드포인트를 통해 사이트 전체를 읽고, 편집하고, 관리할 수 있게 합니다."
 
-#: admin/class-mcp-admin.php:544
+#: admin/class-mcp-admin.php:546
 msgid "Website"
 msgstr "웹사이트"
 
-#: admin/class-mcp-admin.php:545
+#: admin/class-mcp-admin.php:547
 msgid "Project home, guides, and news."
 msgstr "프로젝트 홈, 가이드 및 소식."
 
-#: admin/class-mcp-admin.php:551
+#: admin/class-mcp-admin.php:553
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:552
+#: admin/class-mcp-admin.php:554
 msgid "Source, issues & releases."
 msgstr "소스, 이슈 및 릴리스."
 
-#: admin/class-mcp-admin.php:558
+#: admin/class-mcp-admin.php:560
 msgid "Get help"
 msgstr "도움 받기"
 
-#: admin/class-mcp-admin.php:559
+#: admin/class-mcp-admin.php:561
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -183,11 +187,11 @@ msgstr ""
 "WordPress.org 지원 포럼에 질문하세요. 연결 진단 보고서를 붙여넣으면 더 빠르"
 "게 답변을 받을 수 있습니다."
 
-#: admin/class-mcp-admin.php:565 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:567 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "리뷰 남기기"
 
-#: admin/class-mcp-admin.php:566
+#: admin/class-mcp-admin.php:568
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -196,27 +200,27 @@ msgstr ""
 "자가 이 플러그인을 찾는 데 도움이 됩니다."
 
 #. translators: %s: plugin version number
-#: admin/class-mcp-admin.php:574
+#: admin/class-mcp-admin.php:576
 #, php-format
 msgid "v%s · GPL-2.0"
 msgstr "v%s · GPL-2.0"
 
-#: admin/class-mcp-admin.php:596
+#: admin/class-mcp-admin.php:598
 msgid "Which app do you want to connect?"
 msgstr "어떤 앱을 연결하시겠습니까?"
 
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:599
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
 msgstr ""
 "목록에서 AI 앱 또는 코딩 도구를 선택하면 단계별 설정 안내가 표시됩니다."
 
-#: admin/class-mcp-admin.php:623
+#: admin/class-mcp-admin.php:625
 msgid "Connection Doctor"
 msgstr "연결 진단"
 
-#: admin/class-mcp-admin.php:624
+#: admin/class-mcp-admin.php:626
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -224,45 +228,45 @@ msgstr ""
 "AI 클라이언트가 이 사이트에 연결할 수 있는지 테스트하고, 문제가 있으면 복사해"
 "서 붙여넣을 수 있는 진단 결과를 확인하세요."
 
-#: admin/class-mcp-admin.php:625
+#: admin/class-mcp-admin.php:627
 msgid "Run checks"
 msgstr "검사 실행"
 
-#: admin/class-mcp-admin.php:626
+#: admin/class-mcp-admin.php:628
 msgid "Copy report"
 msgstr "보고서 복사"
 
-#: admin/class-mcp-admin.php:627
+#: admin/class-mcp-admin.php:629
 msgid "Get help on WordPress.org"
 msgstr "WordPress.org에서 도움 받기"
 
-#: admin/class-mcp-admin.php:638
+#: admin/class-mcp-admin.php:640
 msgid "No terminal needed"
 msgstr "터미널 불필요"
 
-#: admin/class-mcp-admin.php:639
+#: admin/class-mcp-admin.php:641
 msgid "Terminal & IDE tools"
 msgstr "터미널 및 IDE 도구"
 
-#: admin/class-mcp-admin.php:643
+#: admin/class-mcp-admin.php:645
 msgid "AI clients"
 msgstr "AI 클라이언트"
 
-#: admin/class-mcp-admin.php:666
+#: admin/class-mcp-admin.php:668
 msgid "Needs public URL"
 msgstr "공개 URL 필요"
 
-#: admin/class-mcp-admin.php:668
+#: admin/class-mcp-admin.php:670
 msgid "Works locally"
 msgstr "로컬에서 작동"
 
-#: admin/class-mcp-admin.php:688
+#: admin/class-mcp-admin.php:690
 msgid ""
 "Site actually on a public HTTPS address? Use the cloud connector instead"
 msgstr ""
 "사이트가 실제로 공개 HTTPS 주소에 있나요? 대신 클라우드 커넥터를 사용하세요"
 
-#: admin/class-mcp-admin.php:721 admin/class-mcp-admin.php:828
+#: admin/class-mcp-admin.php:723 admin/class-mcp-admin.php:848
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. ChatGPT connects from OpenAI's cloud, so it cannot reach local, "
@@ -274,7 +278,7 @@ msgstr ""
 "는 접근할 수 없습니다. 대신 터미널 도구를 사용하거나 터널/스테이징 URL을 통"
 "해 연결하세요."
 
-#: admin/class-mcp-admin.php:722 admin/class-mcp-admin.php:829
+#: admin/class-mcp-admin.php:724 admin/class-mcp-admin.php:849
 msgid ""
 "<strong>Heads up:</strong> this site does not appear to be on a public HTTPS "
 "address. The Claude apps connect from Anthropic's cloud, so they cannot "
@@ -286,7 +290,7 @@ msgstr ""
 "트에는 접근할 수 없습니다. 대신 터미널 도구를 사용하거나 터널/스테이징 URL을 "
 "통해 연결하세요."
 
-#: admin/class-mcp-admin.php:724
+#: admin/class-mcp-admin.php:726
 msgid ""
 "This opens a secure sign-in so ChatGPT can connect without a terminal. No "
 "access is granted until you approve it in your browser."
@@ -294,7 +298,7 @@ msgstr ""
 "안전한 로그인이 열려 터미널 없이 ChatGPT를 연결할 수 있습니다. 브라우저에서 "
 "승인하기 전까지는 접근이 허용되지 않습니다."
 
-#: admin/class-mcp-admin.php:725
+#: admin/class-mcp-admin.php:727
 msgid ""
 "This opens a secure sign-in so the Claude apps can connect without a "
 "terminal. No access is granted until you approve it in your browser."
@@ -302,27 +306,27 @@ msgstr ""
 "안전한 로그인이 열려 터미널 없이 Claude 앱을 연결할 수 있습니다. 브라우저에"
 "서 승인하기 전까지는 접근이 허용되지 않습니다."
 
-#: admin/class-mcp-admin.php:727
+#: admin/class-mcp-admin.php:729
 msgid "You'll paste this into ChatGPT in the next step."
 msgstr "다음 단계에서 이것을 ChatGPT에 붙여넣습니다."
 
-#: admin/class-mcp-admin.php:728
+#: admin/class-mcp-admin.php:730
 msgid "You'll paste this into Claude in the next step."
 msgstr "다음 단계에서 이것을 Claude에 붙여넣습니다."
 
-#: admin/class-mcp-admin.php:730
+#: admin/class-mcp-admin.php:732
 msgid "Add it in ChatGPT"
 msgstr "ChatGPT에 추가"
 
-#: admin/class-mcp-admin.php:731
+#: admin/class-mcp-admin.php:733
 msgid "Add it in the Claude app"
 msgstr "Claude 앱에 추가"
 
-#: admin/class-mcp-admin.php:732
+#: admin/class-mcp-admin.php:734
 msgid "Add it on claude.ai"
 msgstr "claude.ai에서 추가"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:737
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
 "is asking for and click <strong>Approve</strong>. That is it — you are "
@@ -331,7 +335,7 @@ msgstr ""
 "ChatGPT가 <strong>내 사이트</strong>에서 로그인 페이지를 엽니다. 요청 내용을 "
 "확인하고 <strong>승인</strong>를 클릭하세요. 이것으로 연결이 완료됩니다."
 
-#: admin/class-mcp-admin.php:736
+#: admin/class-mcp-admin.php:738
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
 "asking for and click <strong>Approve</strong>. That is it — you are "
@@ -340,7 +344,7 @@ msgstr ""
 "Claude가 <strong>내 사이트</strong>에서 로그인 페이지를 엽니다. 요청 내용을 "
 "확인하고 <strong>승인</strong>를 클릭하세요. 이것으로 연결이 완료됩니다."
 
-#: admin/class-mcp-admin.php:738
+#: admin/class-mcp-admin.php:740
 msgid ""
 "Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
 "strong> (beta) enabled."
@@ -348,7 +352,7 @@ msgstr ""
 "사용자 지정 커넥터를 사용하려면 <strong>Developer mode</strong>(베타)가 활성"
 "화된 유료 ChatGPT 요금제가 필요합니다."
 
-#: admin/class-mcp-admin.php:739
+#: admin/class-mcp-admin.php:741
 msgid ""
 "Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
 "strong> plan."
@@ -356,36 +360,46 @@ msgstr ""
 "사용자 지정 커넥터를 사용하려면 Claude <strong>Pro, Max, Team 또는 "
 "Enterprise</strong> 요금제가 필요합니다."
 
-#: admin/class-mcp-admin.php:755
+#. translators: %s: countdown such as 14:59
+#: admin/class-mcp-admin.php:762
+#, php-format
+msgid ""
+"Safety lock: new AI apps can connect for the next %s. After that, come back "
+"to this tab to add another. Existing connections are not affected."
+msgstr ""
+"안전 잠금: 새 AI 앱은 앞으로 %s 동안 연결할 수 있습니다. 그 이후에 다른 앱을 "
+"추가하려면 이 탭으로 돌아오세요. 기존 연결에는 영향이 없습니다."
+
+#: admin/class-mcp-admin.php:775
 msgid "Turn on the Desktop Connector"
 msgstr "Desktop Connector 켜기"
 
-#: admin/class-mcp-admin.php:761
+#: admin/class-mcp-admin.php:781
 msgid "Enable Desktop Connector"
 msgstr "Desktop Connector 활성화"
 
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:792
 msgid "Copy your connection link"
 msgstr "연결 링크 복사"
 
-#: admin/class-mcp-admin.php:779 admin/class-mcp-admin.php:871
-#: admin/class-mcp-admin.php:919 admin/class-mcp-admin.php:962
-#: admin/class-mcp-admin.php:1004
+#: admin/class-mcp-admin.php:799 admin/class-mcp-admin.php:891
+#: admin/class-mcp-admin.php:939 admin/class-mcp-admin.php:982
+#: admin/class-mcp-admin.php:1024
 msgid "Copy"
 msgstr "복사"
 
-#: admin/class-mcp-admin.php:779
+#: admin/class-mcp-admin.php:799
 msgid "Copy connector URL"
 msgstr "커넥터 URL 복사"
 
-#: admin/class-mcp-admin.php:791
+#: admin/class-mcp-admin.php:811
 msgid ""
 "Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
 msgstr ""
 "<code>chatgpt.com</code>으로 이동(또는 ChatGPT 데스크톱 앱을 열기)하여 로그인"
 "합니다."
 
-#: admin/class-mcp-admin.php:792
+#: admin/class-mcp-admin.php:812
 msgid ""
 "Go to <code>Settings → Connectors → Advanced</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
@@ -393,11 +407,11 @@ msgstr ""
 "<code>Settings → Connectors → Advanced</code>로 이동하여 <strong>Developer "
 "mode</strong>를 켭니다(최초 1회)."
 
-#: admin/class-mcp-admin.php:793
+#: admin/class-mcp-admin.php:813
 msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
 msgstr "<code>Connectors</code>로 돌아가 <strong>Create</strong>를 클릭합니다."
 
-#: admin/class-mcp-admin.php:794
+#: admin/class-mcp-admin.php:814
 msgid ""
 "Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
 "Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
@@ -405,35 +419,35 @@ msgstr ""
 "1단계의 링크를 <strong>MCP server URL</strong>로 붙여넣고, Authentication을 "
 "<strong>OAuth</strong>로 설정한 다음 <strong>Create</strong>를 클릭합니다."
 
-#: admin/class-mcp-admin.php:797
+#: admin/class-mcp-admin.php:817
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
 msgstr "<strong>Claude</strong> 데스크톱 앱을 열고 로그인합니다."
 
-#: admin/class-mcp-admin.php:799
+#: admin/class-mcp-admin.php:819
 msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "브라우저에서 <code>claude.ai</code>로 이동하여 로그인합니다."
 
-#: admin/class-mcp-admin.php:801
+#: admin/class-mcp-admin.php:821
 msgid "Go to <code>Customize → Connections</code>."
 msgstr "<code>Customize → Connections</code>로 이동합니다."
 
-#: admin/class-mcp-admin.php:802
+#: admin/class-mcp-admin.php:822
 msgid "Click <strong>Add custom connector</strong>."
 msgstr "<strong>Add custom connector</strong>를 클릭합니다."
 
-#: admin/class-mcp-admin.php:803
+#: admin/class-mcp-admin.php:823
 msgid "Paste the link from step 1 and click <strong>Add</strong>."
 msgstr "1단계의 링크를 붙여넣고 <strong>Add</strong>를 클릭합니다."
 
-#: admin/class-mcp-admin.php:812
+#: admin/class-mcp-admin.php:832
 msgid "Approve access"
 msgstr "접근 승인"
 
-#: admin/class-mcp-admin.php:833
+#: admin/class-mcp-admin.php:853
 msgid "What works on a local site:"
 msgstr "로컬 사이트에서 작동하는 것:"
 
-#: admin/class-mcp-admin.php:835
+#: admin/class-mcp-admin.php:855
 msgid ""
 "<strong>Terminal tools</strong> (Claude Code, Codex, Cursor, Gemini CLI) — "
 "connect right now, no public URL needed. Pick one in the sidebar."
@@ -441,7 +455,7 @@ msgstr ""
 "<strong>터미널 도구</strong>(Claude Code, Codex, Cursor, Gemini CLI) — 공개 "
 "URL 없이 바로 연결됩니다. 사이드바에서 하나를 선택하세요."
 
-#: admin/class-mcp-admin.php:836
+#: admin/class-mcp-admin.php:856
 msgid ""
 "<strong>Claude Desktop</strong> — connects through a local bridge that runs "
 "on this computer. Pick it in the sidebar for instructions."
@@ -449,7 +463,7 @@ msgstr ""
 "<strong>Claude Desktop</strong> — 이 컴퓨터에서 실행되는 로컬 브리지를 통해 "
 "연결됩니다. 사이드바에서 선택하면 안내가 표시됩니다."
 
-#: admin/class-mcp-admin.php:837
+#: admin/class-mcp-admin.php:857
 msgid ""
 "<strong>claude.ai and ChatGPT</strong> — cloud-only: they need a public "
 "HTTPS address. A tunnel (e.g. ngrok or Cloudflare Tunnel) works temporarily, "
@@ -461,7 +475,7 @@ msgstr ""
 "는 개발 사이트 전체가 인터넷에 노출되며, 로그인이 작동하려면 WordPress 사이"
 "트 주소를 터널 URL로 설정해야 합니다."
 
-#: admin/class-mcp-admin.php:856
+#: admin/class-mcp-admin.php:876
 msgid ""
 "This site runs on your computer, so the cloud connector cannot reach it. "
 "Connect Claude Desktop through a <strong>local bridge</strong> instead: a "
@@ -473,11 +487,11 @@ msgstr ""
 "터에서 실행되는 작은 도우미가 Claude Desktop을 사이트로 전달합니다. 인터넷에"
 "는 아무것도 노출되지 않습니다."
 
-#: admin/class-mcp-admin.php:864
+#: admin/class-mcp-admin.php:884
 msgid "Add the bridge to Claude Desktop"
 msgstr "Claude Desktop에 브리지 추가"
 
-#: admin/class-mcp-admin.php:867
+#: admin/class-mcp-admin.php:887
 msgid ""
 "Add this to <code>claude_desktop_config.json</code> (create the file if it "
 "does not exist), then fully quit and restart the Claude app:"
@@ -485,12 +499,12 @@ msgstr ""
 "다음을 <code>claude_desktop_config.json</code>에 추가한 뒤(파일이 없으면 새"
 "로 만드세요) Claude 앱을 완전히 종료하고 다시 시작하세요:"
 
-#: admin/class-mcp-admin.php:871 admin/class-mcp-admin.php:919
-#: admin/class-mcp-admin.php:1004
+#: admin/class-mcp-admin.php:891 admin/class-mcp-admin.php:939
+#: admin/class-mcp-admin.php:1024
 msgid "Copy setup command"
 msgstr "설정 명령 복사"
 
-#: admin/class-mcp-admin.php:872
+#: admin/class-mcp-admin.php:892
 msgid ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code> — Windows: <code>%APPDATA%"
@@ -500,7 +514,7 @@ msgstr ""
 "claude_desktop_config.json</code> — Windows: <code>%APPDATA%"
 "\\Claude\\claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin.php:873
+#: admin/class-mcp-admin.php:893
 msgid ""
 "Requires Node.js on this computer — the bridge is the standard open-source "
 "<code>mcp-remote</code> package, started on demand via <code>npx</code>. It "
@@ -510,7 +524,7 @@ msgstr ""
 "remote</code>이며 필요할 때 <code>npx</code>로 실행됩니다. 연결은 사용자의 컴"
 "퓨터에서 이 사이트로만 이루어집니다."
 
-#: admin/class-mcp-admin.php:874
+#: admin/class-mcp-admin.php:894
 msgid ""
 "Your API key is stored in plain text in that file, so prefer a <strong>read-"
 "only</strong> key unless this connection needs to make changes — and revoke "
@@ -520,12 +534,12 @@ msgstr ""
 "다면 <strong>읽기 전용</strong> 키를 사용하고, 더 이상 사용하지 않으면 여기에"
 "서 키를 해지하세요."
 
-#: admin/class-mcp-admin.php:885 admin/class-mcp-admin.php:1047
+#: admin/class-mcp-admin.php:905 admin/class-mcp-admin.php:1067
 msgid "Check it worked"
 msgstr "작동 확인"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:890
+#: admin/class-mcp-admin.php:910
 #, php-format
 msgid ""
 "Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> "
@@ -536,11 +550,11 @@ msgstr ""
 "<code>%s</code>이(가) 표시되어야 합니다. 처음 시작할 때는 브리지를 다운로드하"
 "느라 잠시 시간이 걸릴 수 있습니다."
 
-#: admin/class-mcp-admin.php:913
+#: admin/class-mcp-admin.php:933
 msgid "Getting a certificate error?"
 msgstr "인증서 오류가 발생하나요?"
 
-#: admin/class-mcp-admin.php:915
+#: admin/class-mcp-admin.php:935
 msgid ""
 "Local sites usually use a self-signed certificate that AI tools reject. "
 "Since this site runs on this same computer, you can use the plain "
@@ -555,54 +569,54 @@ msgstr ""
 "<code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> 우회법은 피하세요. 해당 도구의 모"
 "든 연결에서 인증서 검사가 꺼집니다."
 
-#: admin/class-mcp-admin.php:954
+#: admin/class-mcp-admin.php:974
 msgid "Create an API key"
 msgstr "API 키 만들기"
 
-#: admin/class-mcp-admin.php:958
+#: admin/class-mcp-admin.php:978
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr "<strong>지금 키를 복사하세요</strong> — 보안상 다시 표시되지 않습니다."
 
-#: admin/class-mcp-admin.php:962
+#: admin/class-mcp-admin.php:982
 msgid "Copy API key"
 msgstr "API 키 복사"
 
-#: admin/class-mcp-admin.php:963
+#: admin/class-mcp-admin.php:983
 msgid "I've saved my key"
 msgstr "키를 저장했습니다"
 
-#: admin/class-mcp-admin.php:965
+#: admin/class-mcp-admin.php:985
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "나중에 알아볼 수 있도록 이름을 지정한 다음 생성하세요."
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin.php:970
+#: admin/class-mcp-admin.php:990
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "예: 내 노트북의 %s"
 
-#: admin/class-mcp-admin.php:973
+#: admin/class-mcp-admin.php:993
 msgid "Generate API key"
 msgstr "API 키 생성"
 
-#: admin/class-mcp-admin.php:973
+#: admin/class-mcp-admin.php:993
 msgid "Generate another key"
 msgstr "다른 키 생성"
 
-#: admin/class-mcp-admin.php:987
+#: admin/class-mcp-admin.php:1007
 msgid "Run this in your terminal:"
 msgstr "터미널에서 다음을 실행하세요:"
 
-#: admin/class-mcp-admin.php:988
+#: admin/class-mcp-admin.php:1008
 msgid "Run these in your terminal:"
 msgstr "터미널에서 다음 명령을 실행하세요:"
 
-#: admin/class-mcp-admin.php:989
+#: admin/class-mcp-admin.php:1009
 msgid "Add this to your <code>opencode.json</code>:"
 msgstr "이것을 <code>opencode.json</code>에 추가하세요:"
 
-#: admin/class-mcp-admin.php:990
+#: admin/class-mcp-admin.php:1010
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then reload Cursor:"
@@ -610,12 +624,12 @@ msgstr ""
 "이것을 <code>~/.cursor/mcp.json</code>에 추가하고(파일이 없으면 생성), Cursor"
 "를 다시 로드하세요:"
 
-#: admin/class-mcp-admin.php:997
+#: admin/class-mcp-admin.php:1017
 msgid "Add the server to your tool"
 msgstr "도구에 서버 추가"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:1032
+#: admin/class-mcp-admin.php:1052
 #, php-format
 msgid ""
 "Open a new Claude Code session and run <code>/mcp</code> — <code>%s</code> "
@@ -625,7 +639,7 @@ msgstr ""
 "(가) 연결됨으로 표시되어야 합니다."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:1034
+#: admin/class-mcp-admin.php:1054
 #, php-format
 msgid ""
 "Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
@@ -634,7 +648,7 @@ msgstr ""
 "되어야 합니다."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:1036
+#: admin/class-mcp-admin.php:1056
 #, php-format
 msgid ""
 "Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
@@ -644,7 +658,7 @@ msgstr ""
 "code>을(를) 사용할 수 있어야 합니다."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:1038
+#: admin/class-mcp-admin.php:1058
 #, php-format
 msgid ""
 "Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
@@ -654,7 +668,7 @@ msgstr ""
 "태 점과 함께 표시되어야 합니다."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin.php:1040
+#: admin/class-mcp-admin.php:1060
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
@@ -662,86 +676,86 @@ msgstr ""
 "<code>gemini mcp list</code>를 실행하세요 — <code>%s</code>이(가) 연결됨으로 "
 "표시되어야 합니다."
 
-#: admin/class-mcp-admin.php:1060
+#: admin/class-mcp-admin.php:1080
 msgid "Existing keys"
 msgstr "기존 키"
 
-#: admin/class-mcp-admin.php:1065 admin/class-mcp-admin.php:1654
+#: admin/class-mcp-admin.php:1085 admin/class-mcp-admin.php:1674
 msgid "Label"
 msgstr "레이블"
 
-#: admin/class-mcp-admin.php:1066
+#: admin/class-mcp-admin.php:1086
 msgid "Prefix"
 msgstr "접두사"
 
-#: admin/class-mcp-admin.php:1067 admin/class-mcp-admin.php:1653
+#: admin/class-mcp-admin.php:1087 admin/class-mcp-admin.php:1673
 msgid "Created"
 msgstr "생성일"
 
-#: admin/class-mcp-admin.php:1068 admin/class-mcp-admin.php:1138
+#: admin/class-mcp-admin.php:1088 admin/class-mcp-admin.php:1158
 msgid "Last Used"
 msgstr "마지막 사용"
 
-#: admin/class-mcp-admin.php:1069 admin/class-mcp-admin.php:1139
+#: admin/class-mcp-admin.php:1089 admin/class-mcp-admin.php:1159
 msgid "Scope"
 msgstr "범위"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
 #. translators: %s: human-readable time difference
-#: admin/class-mcp-admin.php:1082 admin/class-mcp-admin.php:1152
+#: admin/class-mcp-admin.php:1102 admin/class-mcp-admin.php:1172
 #, php-format
 msgid "%s ago"
 msgstr "%s 전"
 
-#: admin/class-mcp-admin.php:1084 admin/class-mcp-admin.php:1154
+#: admin/class-mcp-admin.php:1104 admin/class-mcp-admin.php:1174
 msgid "never"
 msgstr "없음"
 
-#: admin/class-mcp-admin.php:1089 admin/class-mcp-admin.php:1159
+#: admin/class-mcp-admin.php:1109 admin/class-mcp-admin.php:1179
 msgid "Edit"
 msgstr "편집"
 
-#: admin/class-mcp-admin.php:1096 admin/class-mcp-admin.php:1166
+#: admin/class-mcp-admin.php:1116 admin/class-mcp-admin.php:1186
 msgid "Revoke"
 msgstr "취소"
 
-#: admin/class-mcp-admin.php:1096
+#: admin/class-mcp-admin.php:1116
 msgid "Revoke this key? Any client using it will lose access."
 msgstr ""
 "이 키를 취소하시겠습니까? 이 키를 사용하는 모든 클라이언트가 접근 권한을 잃습"
 "니다."
 
-#: admin/class-mcp-admin.php:1112 admin/class-mcp-admin.php:1182
+#: admin/class-mcp-admin.php:1132 admin/class-mcp-admin.php:1202
 msgid "Save scope"
 msgstr "범위 저장"
 
-#: admin/class-mcp-admin.php:1130
+#: admin/class-mcp-admin.php:1150
 msgid "Connected apps"
 msgstr "연결된 앱"
 
-#: admin/class-mcp-admin.php:1135
+#: admin/class-mcp-admin.php:1155
 msgid "App"
 msgstr "앱"
 
-#: admin/class-mcp-admin.php:1136
+#: admin/class-mcp-admin.php:1156
 msgid "Authorized by"
 msgstr "승인자"
 
-#: admin/class-mcp-admin.php:1137
+#: admin/class-mcp-admin.php:1157
 msgid "Connected"
 msgstr "연결됨"
 
-#: admin/class-mcp-admin.php:1166
+#: admin/class-mcp-admin.php:1186
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "이 연결을 취소하시겠습니까? 앱이 즉시 접근 권한을 잃습니다."
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin.php:1216
+#: admin/class-mcp-admin.php:1236
 #, php-format
 msgid "Select all %s tools"
 msgstr "%s의 모든 도구 선택"
 
-#: admin/class-mcp-admin.php:1230
+#: admin/class-mcp-admin.php:1250
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -749,54 +763,54 @@ msgstr ""
 "참고: 읽기 전용 MCP 리소스(사이트 정보, 사용자 목록, 최근 게시물 등)는 도구 "
 "범위와 관계없이 모든 키 및 연결에서 항상 사용할 수 있습니다."
 
-#: admin/class-mcp-admin.php:1244 admin/class-mcp-admin.php:1257
-#: admin/class-mcp-admin.php:1268
+#: admin/class-mcp-admin.php:1264 admin/class-mcp-admin.php:1277
+#: admin/class-mcp-admin.php:1288
 msgid "Full access"
 msgstr "전체 액세스"
 
-#: admin/class-mcp-admin.php:1246 admin/class-mcp-admin.php:1261
+#: admin/class-mcp-admin.php:1266 admin/class-mcp-admin.php:1281
 msgid "Read-only"
 msgstr "읽기 전용"
 
-#: admin/class-mcp-admin.php:1248
+#: admin/class-mcp-admin.php:1268
 msgid "Custom…"
 msgstr "사용자 지정…"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin.php:1265
+#: admin/class-mcp-admin.php:1285
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "사용자 지정(%d개 도구)"
 
-#: admin/class-mcp-admin.php:1272
+#: admin/class-mcp-admin.php:1292
 msgid "Unknown (blocked)"
 msgstr "알 수 없음(차단됨)"
 
-#: admin/class-mcp-admin.php:1283
+#: admin/class-mcp-admin.php:1303
 msgid "General"
 msgstr "일반"
 
-#: admin/class-mcp-admin.php:1287
+#: admin/class-mcp-admin.php:1307
 msgid "MCP Server"
 msgstr "MCP 서버"
 
-#: admin/class-mcp-admin.php:1291
+#: admin/class-mcp-admin.php:1311
 msgid "Enabled"
 msgstr "활성화됨"
 
-#: admin/class-mcp-admin.php:1293
+#: admin/class-mcp-admin.php:1313
 msgid "When off, every MCP request is rejected."
 msgstr "꺼져 있으면 모든 MCP 요청이 거부됩니다."
 
-#: admin/class-mcp-admin.php:1297
+#: admin/class-mcp-admin.php:1317
 msgid "Safe Mode"
 msgstr "안전 모드"
 
-#: admin/class-mcp-admin.php:1301
+#: admin/class-mcp-admin.php:1321
 msgid "Require confirmation for destructive operations"
 msgstr "파괴적인 작업에 확인 요구"
 
-#: admin/class-mcp-admin.php:1305
+#: admin/class-mcp-admin.php:1325
 msgid ""
 "Tools marked as destructive (delete, drop, WP-CLI write commands, etc.) "
 "require <code>confirm: true</code> in the request."
@@ -804,15 +818,15 @@ msgstr ""
 "파괴적으로 표시된 도구(삭제, drop, WP-CLI 쓰기 명령 등)는 요청에 "
 "<code>confirm: true</code>가 필요합니다."
 
-#: admin/class-mcp-admin.php:1312
+#: admin/class-mcp-admin.php:1332
 msgid "Desktop Connector"
 msgstr "Desktop Connector"
 
-#: admin/class-mcp-admin.php:1316
+#: admin/class-mcp-admin.php:1336
 msgid "Allow connecting via Claude Desktop / web (OAuth)"
 msgstr "Claude Desktop / 웹을 통한 연결 허용(OAuth)"
 
-#: admin/class-mcp-admin.php:1320
+#: admin/class-mcp-admin.php:1340
 msgid ""
 "Turns on the one-click browser sign-in used by the &#8220;Claude "
 "Desktop&#8221; connection path. This exposes public OAuth discovery, "
@@ -825,19 +839,19 @@ msgstr ""
 "리자가 브라우저에서 승인하기 전까지는 토큰이 발급되지 않습니다. 터미널로만 연"
 "결하는 경우 꺼 두세요."
 
-#: admin/class-mcp-admin.php:1325
+#: admin/class-mcp-admin.php:1345
 msgid ""
 "Tip: run the Connection Doctor on the Connection tab to verify the connector "
 "end to end."
 msgstr ""
 "팁: 연결 탭에서 연결 진단을 실행해 커넥터를 처음부터 끝까지 확인하세요."
 
-#: admin/class-mcp-admin.php:1329
+#: admin/class-mcp-admin.php:1349
 msgid "Only allow connections from known AI apps (recommended)"
 msgstr "알려진 AI 앱의 연결만 허용 (권장)"
 
 #. translators: %s: comma-separated list of host names
-#: admin/class-mcp-admin.php:1334
+#: admin/class-mcp-admin.php:1354
 #, php-format
 msgid ""
 "Anyone can start a connection request, so the site only sends approval back "
@@ -847,11 +861,11 @@ msgstr ""
 "누구나 연결 요청을 시작할 수 있으므로, 이 사이트는 %s 및 명령줄 도구용 "
 "localhost로만 승인 결과를 보냅니다. 끄면 모든 https 주소를 허용합니다."
 
-#: admin/class-mcp-admin.php:1339
+#: admin/class-mcp-admin.php:1359
 msgid "Additional allowed hosts"
 msgstr "추가 허용 호스트"
 
-#: admin/class-mcp-admin.php:1342
+#: admin/class-mcp-admin.php:1362
 msgid ""
 "One host name per line, for tools such as n8n or a self-hosted client. "
 "Subdomains are included."
@@ -859,35 +873,35 @@ msgstr ""
 "한 줄에 호스트 이름 하나씩 입력하세요. n8n이나 자체 호스팅 클라이언트 같은 도"
 "구용입니다. 하위 도메인도 포함됩니다."
 
-#: admin/class-mcp-admin.php:1346
+#: admin/class-mcp-admin.php:1366
 msgid "Rate Limit"
 msgstr "요청 제한"
 
-#: admin/class-mcp-admin.php:1349
+#: admin/class-mcp-admin.php:1369
 msgid "requests per minute, per key"
 msgstr "키당 분당 요청 수"
 
-#: admin/class-mcp-admin.php:1353
+#: admin/class-mcp-admin.php:1373
 msgid "Request Logging"
 msgstr "요청 로깅"
 
-#: admin/class-mcp-admin.php:1357
+#: admin/class-mcp-admin.php:1377
 msgid "Log all tool calls to <code>debug.log</code>"
 msgstr "모든 도구 호출을 <code>debug.log</code>에 기록"
 
-#: admin/class-mcp-admin.php:1366
+#: admin/class-mcp-admin.php:1386
 msgid "Undo & Checkpoints"
 msgstr "실행 취소 및 체크포인트"
 
-#: admin/class-mcp-admin.php:1370
+#: admin/class-mcp-admin.php:1390
 msgid "Undo Journal"
 msgstr "실행 취소 저널"
 
-#: admin/class-mcp-admin.php:1374
+#: admin/class-mcp-admin.php:1394
 msgid "Undo journal — capture before-state of every mutating tool call"
 msgstr "실행 취소 저널 — 변경을 가하는 모든 도구 호출의 이전 상태를 기록"
 
-#: admin/class-mcp-admin.php:1376
+#: admin/class-mcp-admin.php:1396
 msgid ""
 "Lets changes made through MCP be undone from the Activity tab. Disabling "
 "stops new entries from being captured; existing history is kept until it "
@@ -896,31 +910,31 @@ msgstr ""
 "MCP를 통해 이루어진 변경을 활동 탭에서 실행 취소할 수 있게 합니다. 비활성화하"
 "면 새 항목 기록이 중지되지만, 기존 기록은 만료될 때까지 유지됩니다."
 
-#: admin/class-mcp-admin.php:1380
+#: admin/class-mcp-admin.php:1400
 msgid "Undo Retention"
 msgstr "실행 취소 보존"
 
-#: admin/class-mcp-admin.php:1383
+#: admin/class-mcp-admin.php:1403
 msgid "days to keep undo history"
 msgstr "실행 취소 기록 보존 일수"
 
-#: admin/class-mcp-admin.php:1387
+#: admin/class-mcp-admin.php:1407
 msgid "Checkpoint Limit"
 msgstr "체크포인트 한도"
 
-#: admin/class-mcp-admin.php:1390
+#: admin/class-mcp-admin.php:1410
 msgid "checkpoints to keep"
 msgstr "보존할 체크포인트 수"
 
-#: admin/class-mcp-admin.php:1394 admin/class-mcp-admin.php:1404
+#: admin/class-mcp-admin.php:1414 admin/class-mcp-admin.php:1424
 msgid "Auto-Checkpoint"
 msgstr "자동 체크포인트"
 
-#: admin/class-mcp-admin.php:1398
+#: admin/class-mcp-admin.php:1418
 msgid "Auto-checkpoint before mutating WP-CLI commands"
 msgstr "변경을 가하는 WP-CLI 명령 전에 자동으로 체크포인트 생성"
 
-#: admin/class-mcp-admin.php:1400
+#: admin/class-mcp-admin.php:1420
 msgid ""
 "Takes a full-database checkpoint before running a WP-CLI command that is not "
 "read-only, so it can be rolled back even if the command itself cannot be "
@@ -929,11 +943,11 @@ msgstr ""
 "읽기 전용이 아닌 WP-CLI 명령을 실행하기 전에 전체 데이터베이스 체크포인트를 "
 "생성하므로, 명령 자체를 실행 취소할 수 없더라도 롤백할 수 있습니다."
 
-#: admin/class-mcp-admin.php:1408
+#: admin/class-mcp-admin.php:1428
 msgid "Auto-checkpoint before plugin & theme updates"
 msgstr "플러그인 및 테마 업데이트 전 자동 체크포인트"
 
-#: admin/class-mcp-admin.php:1410
+#: admin/class-mcp-admin.php:1430
 msgid ""
 "Takes a full-database checkpoint before plugin or theme updates, so database "
 "migrations run by an update can be rolled back. The old files are separately "
@@ -943,19 +957,19 @@ msgstr ""
 "이트로 실행된 데이터베이스 마이그레이션을 롤백할 수 있습니다. 이전 파일은 실"
 "행 취소를 위해 업데이트마다 별도로 백업됩니다."
 
-#: admin/class-mcp-admin.php:1418
+#: admin/class-mcp-admin.php:1438
 msgid "WordPress Abilities API"
 msgstr "WordPress Abilities API"
 
-#: admin/class-mcp-admin.php:1423
+#: admin/class-mcp-admin.php:1443
 msgid "Expose Tools"
 msgstr "도구 공개"
 
-#: admin/class-mcp-admin.php:1427
+#: admin/class-mcp-admin.php:1447
 msgid "Expose tools as WordPress Abilities"
 msgstr "도구를 WordPress Abilities로 공개"
 
-#: admin/class-mcp-admin.php:1429
+#: admin/class-mcp-admin.php:1449
 msgid ""
 "Registers every allowed tool as a cowboy-mcp/* ability so WP-CLI, the REST "
 "API, MCP adapters and AI agents can call it — with Cowboy's safe mode, audit "
@@ -965,15 +979,15 @@ msgstr ""
 "터, AI 에이전트가 호출할 수 있게 합니다. Cowboy의 안전 모드, 감사 로그, 실행 "
 "취소가 그대로 적용됩니다."
 
-#: admin/class-mcp-admin.php:1433
+#: admin/class-mcp-admin.php:1453
 msgid "Use Abilities"
 msgstr "Abilities 사용"
 
-#: admin/class-mcp-admin.php:1437
+#: admin/class-mcp-admin.php:1457
 msgid "Use abilities from other plugins"
 msgstr "다른 플러그인의 abilities 사용"
 
-#: admin/class-mcp-admin.php:1439
+#: admin/class-mcp-admin.php:1459
 msgid ""
 "Shows abilities registered by other plugins as tools in the abilities "
 "category. They run their own permission checks and are not undoable."
@@ -981,23 +995,23 @@ msgstr ""
 "다른 플러그인이 등록한 abilities를 abilities 카테고리의 도구로 표시합니다. "
 "각 ability는 자체 권한 검사를 수행하며 실행 취소할 수 없습니다."
 
-#: admin/class-mcp-admin.php:1444
+#: admin/class-mcp-admin.php:1464
 msgid "WordPress Abilities API requires WordPress 6.9 or newer."
 msgstr "WordPress Abilities API는 WordPress 6.9 이상이 필요합니다."
 
-#: admin/class-mcp-admin.php:1450 admin/class-mcp-admin.php:1454
+#: admin/class-mcp-admin.php:1470 admin/class-mcp-admin.php:1474
 msgid "Power Mode"
 msgstr "파워 모드"
 
-#: admin/class-mcp-admin.php:1450
+#: admin/class-mcp-admin.php:1470
 msgid "advanced · off by default"
 msgstr "고급 · 기본값 꺼짐"
 
-#: admin/class-mcp-admin.php:1458
+#: admin/class-mcp-admin.php:1478
 msgid "Lift safety restrictions for advanced operations"
 msgstr "고급 작업을 위해 안전 제한 해제"
 
-#: admin/class-mcp-admin.php:1462
+#: admin/class-mcp-admin.php:1482
 msgid ""
 "<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, "
 "dangerous SQL, writing files anywhere, and requests to internal addresses. "
@@ -1011,17 +1025,17 @@ msgstr ""
 "직접 통제하는 잠긴 사이트에서만 활성화하세요. MCP API 키와 플러그인 자체 설정"
 "은 보호된 상태로 유지됩니다."
 
-#: admin/class-mcp-admin.php:1473
+#: admin/class-mcp-admin.php:1493
 msgid "Save Settings"
 msgstr "설정 저장"
 
-#: admin/class-mcp-admin.php:1483
+#: admin/class-mcp-admin.php:1503
 msgid ""
 "Audit log is not available. Please deactivate and reactivate the plugin."
 msgstr ""
 "감사 로그를 사용할 수 없습니다. 플러그인을 비활성화한 후 다시 활성화하세요."
 
-#: admin/class-mcp-admin.php:1507
+#: admin/class-mcp-admin.php:1527
 msgid ""
 "Structured log of all MCP tool calls, errors, and auth events. Auto-pruned "
 "after 30 days."
@@ -1029,133 +1043,133 @@ msgstr ""
 "모든 MCP 도구 호출, 오류 및 인증 이벤트의 구조화된 로그입니다. 30일 후 자동으"
 "로 정리됩니다."
 
-#: admin/class-mcp-admin.php:1514 admin/class-mcp-admin.php:1569
+#: admin/class-mcp-admin.php:1534 admin/class-mcp-admin.php:1589
 msgid "Event"
 msgstr "이벤트"
 
-#: admin/class-mcp-admin.php:1516
+#: admin/class-mcp-admin.php:1536
 msgid "All events"
 msgstr "모든 이벤트"
 
-#: admin/class-mcp-admin.php:1523 admin/class-mcp-admin.php:1570
-#: admin/class-mcp-admin.php:1692
+#: admin/class-mcp-admin.php:1543 admin/class-mcp-admin.php:1590
+#: admin/class-mcp-admin.php:1712
 msgid "Tool"
 msgstr "도구"
 
-#: admin/class-mcp-admin.php:1524
+#: admin/class-mcp-admin.php:1544
 msgid "e.g. wp_list_posts"
 msgstr "예: wp_list_posts"
 
-#: admin/class-mcp-admin.php:1527
+#: admin/class-mcp-admin.php:1547
 msgid "From"
 msgstr "시작"
 
-#: admin/class-mcp-admin.php:1531
+#: admin/class-mcp-admin.php:1551
 msgid "To"
 msgstr "종료"
 
-#: admin/class-mcp-admin.php:1535
+#: admin/class-mcp-admin.php:1555
 msgid "Per page"
 msgstr "페이지당"
 
-#: admin/class-mcp-admin.php:1542
+#: admin/class-mcp-admin.php:1562
 msgid "Filter"
 msgstr "필터"
 
-#: admin/class-mcp-admin.php:1544
+#: admin/class-mcp-admin.php:1564
 msgid "Filtered"
 msgstr "필터링됨"
 
-#: admin/class-mcp-admin.php:1544
+#: admin/class-mcp-admin.php:1564
 msgid "Reset"
 msgstr "재설정"
 
-#: admin/class-mcp-admin.php:1552
+#: admin/class-mcp-admin.php:1572
 msgid "Clear All Logs"
 msgstr "모든 로그 지우기"
 
-#: admin/class-mcp-admin.php:1552
+#: admin/class-mcp-admin.php:1572
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "모든 감사 로그 항목을 지우시겠습니까? 이 작업은 취소할 수 없습니다."
 
 #. translators: %s: total number of log entries
-#: admin/class-mcp-admin.php:1555
+#: admin/class-mcp-admin.php:1575
 #, php-format
 msgid "%s entries total"
 msgstr "총 %s개 항목"
 
-#: admin/class-mcp-admin.php:1561
+#: admin/class-mcp-admin.php:1581
 msgid "No log entries found."
 msgstr "로그 항목을 찾을 수 없습니다."
 
-#: admin/class-mcp-admin.php:1567
+#: admin/class-mcp-admin.php:1587
 msgid "Timestamp"
 msgstr "타임스탬프"
 
-#: admin/class-mcp-admin.php:1568 admin/class-mcp-admin.php:1693
+#: admin/class-mcp-admin.php:1588 admin/class-mcp-admin.php:1713
 msgid "Key"
 msgstr "키"
 
-#: admin/class-mcp-admin.php:1571 admin/class-mcp-admin.php:1694
+#: admin/class-mcp-admin.php:1591 admin/class-mcp-admin.php:1714
 msgid "Status"
 msgstr "상태"
 
-#: admin/class-mcp-admin.php:1572
+#: admin/class-mcp-admin.php:1592
 msgid "IP"
 msgstr "IP"
 
-#: admin/class-mcp-admin.php:1601
+#: admin/class-mcp-admin.php:1621
 msgid "Previous"
 msgstr "이전"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:1605
+#: admin/class-mcp-admin.php:1625
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "%2$d페이지 중 %1$d페이지"
 
-#: admin/class-mcp-admin.php:1608
+#: admin/class-mcp-admin.php:1628
 msgid "Next"
 msgstr "다음"
 
-#: admin/class-mcp-admin.php:1631
+#: admin/class-mcp-admin.php:1651
 msgid "Undo conflict:"
 msgstr "실행 취소 충돌:"
 
-#: admin/class-mcp-admin.php:1636
+#: admin/class-mcp-admin.php:1656
 msgid "Force undo anyway"
 msgstr "그래도 강제로 실행 취소"
 
-#: admin/class-mcp-admin.php:1645
+#: admin/class-mcp-admin.php:1665
 msgid "Database Checkpoints"
 msgstr "데이터베이스 체크포인트"
 
-#: admin/class-mcp-admin.php:1648
+#: admin/class-mcp-admin.php:1668
 msgid "Label (optional)"
 msgstr "레이블(선택 사항)"
 
-#: admin/class-mcp-admin.php:1649
+#: admin/class-mcp-admin.php:1669
 msgid "Create checkpoint now"
 msgstr "지금 체크포인트 생성"
 
-#: admin/class-mcp-admin.php:1653 admin/class-mcp-admin.php:1691
+#: admin/class-mcp-admin.php:1673 admin/class-mcp-admin.php:1711
 msgid "ID"
 msgstr "ID"
 
-#: admin/class-mcp-admin.php:1654
+#: admin/class-mcp-admin.php:1674
 msgid "Trigger"
 msgstr "트리거"
 
-#: admin/class-mcp-admin.php:1655
+#: admin/class-mcp-admin.php:1675
 msgid "Size"
 msgstr "크기"
 
-#: admin/class-mcp-admin.php:1659
+#: admin/class-mcp-admin.php:1679
 msgid "No checkpoints yet."
 msgstr "아직 체크포인트가 없습니다."
 
 #. translators: 1: checkpoint ID number, 2: checkpoint creation date/time
-#: admin/class-mcp-admin.php:1671
+#: admin/class-mcp-admin.php:1691
 #, php-format
 msgid ""
 "Restore the database to checkpoint #%1$s (%2$s)? EVERYTHING changed since "
@@ -1166,57 +1180,57 @@ msgstr ""
 "모든 것(MCP 외부에서 이루어진 변경 포함)이 사라집니다. 복원 전에 안전 체크포"
 "인트가 먼저 생성됩니다."
 
-#: admin/class-mcp-admin.php:1672
+#: admin/class-mcp-admin.php:1692
 msgid "Really sure? This rewrites every site table."
 msgstr "정말 확실합니까? 이 작업은 사이트의 모든 테이블을 덮어씁니다."
 
-#: admin/class-mcp-admin.php:1675
+#: admin/class-mcp-admin.php:1695
 msgid "Restore"
 msgstr "복원"
 
-#: admin/class-mcp-admin.php:1677
+#: admin/class-mcp-admin.php:1697
 msgid "Delete this checkpoint?"
 msgstr "이 체크포인트를 삭제하시겠습니까?"
 
-#: admin/class-mcp-admin.php:1680
+#: admin/class-mcp-admin.php:1700
 msgid "Delete"
 msgstr "삭제"
 
-#: admin/class-mcp-admin.php:1688
+#: admin/class-mcp-admin.php:1708
 msgid "Change Journal"
 msgstr "변경 저널"
 
-#: admin/class-mcp-admin.php:1691
+#: admin/class-mcp-admin.php:1711
 msgid "Time"
 msgstr "시간"
 
-#: admin/class-mcp-admin.php:1692
+#: admin/class-mcp-admin.php:1712
 msgid "Object"
 msgstr "객체"
 
-#: admin/class-mcp-admin.php:1693
+#: admin/class-mcp-admin.php:1713
 msgid "Action"
 msgstr "작업"
 
-#: admin/class-mcp-admin.php:1698
+#: admin/class-mcp-admin.php:1718
 msgid "No journaled changes yet."
 msgstr "아직 저널에 기록된 변경이 없습니다."
 
 #. translators: %s: change ID number
-#: admin/class-mcp-admin.php:1718
+#: admin/class-mcp-admin.php:1738
 #, php-format
 msgid "Undo change #%s?"
 msgstr "변경 #%s을(를) 실행 취소하시겠습니까?"
 
-#: admin/class-mcp-admin.php:1722
+#: admin/class-mcp-admin.php:1742
 msgid "Undo"
 msgstr "실행 취소"
 
-#: admin/class-mcp-admin.php:1725
+#: admin/class-mcp-admin.php:1745
 msgid "Undo ALL active changes in this batch (newest first)?"
 msgstr "이 배치의 활성 변경을 모두 실행 취소하시겠습니까(최신 항목부터)?"
 
-#: admin/class-mcp-admin.php:1728
+#: admin/class-mcp-admin.php:1748
 msgid "Undo batch"
 msgstr "배치 실행 취소"
 
@@ -1269,15 +1283,15 @@ msgstr "연결 진단 실행"
 msgid "Thanks!"
 msgstr "감사합니다!"
 
-#: includes/class-mcp-oauth.php:560
+#: includes/class-mcp-oauth.php:593
 msgid "Unknown client"
 msgstr "알 수 없는 클라이언트"
 
-#: includes/class-mcp-oauth.php:910
+#: includes/class-mcp-oauth.php:947
 msgid "The OAuth connector is not enabled on this site."
 msgstr "이 사이트에서는 OAuth 커넥터가 활성화되어 있지 않습니다."
 
-#: includes/class-mcp-oauth.php:934
+#: includes/class-mcp-oauth.php:971
 msgid ""
 "This site does not recognize this connection. This usually happens after the "
 "site's database was restored or copied from another site. Remove the "
@@ -1287,15 +1301,15 @@ msgstr ""
 "거나 다른 사이트에서 복사한 뒤에 발생합니다. AI 앱에서 커넥터를 제거하고 다"
 "시 추가한 다음 여기에서 승인하세요."
 
-#: includes/class-mcp-oauth.php:937
+#: includes/class-mcp-oauth.php:974
 msgid "Invalid redirect_uri for this client."
 msgstr "이 클라이언트의 redirect_uri가 유효하지 않습니다."
 
-#: includes/class-mcp-oauth.php:946
+#: includes/class-mcp-oauth.php:983
 msgid "You must be an administrator to authorize this connection."
 msgstr "이 연결을 승인하려면 관리자여야 합니다."
 
-#: includes/class-mcp-oauth.php:954
+#: includes/class-mcp-oauth.php:991
 msgid ""
 "This connection request is missing a required security parameter (PKCE "
 "S256). Start the connection again from your AI app."
@@ -1303,7 +1317,7 @@ msgstr ""
 "이 연결 요청에 필수 보안 매개변수(PKCE S256)가 없습니다. AI 앱에서 연결을 다"
 "시 시작하세요."
 
-#: includes/class-mcp-oauth.php:958
+#: includes/class-mcp-oauth.php:995
 msgid ""
 "This connection request is for a different address than this site's MCP "
 "endpoint. Check the server URL in your AI app."
@@ -1312,7 +1326,7 @@ msgstr ""
 "다. AI 앱의 서버 URL을 확인하세요."
 
 #. translators: %s: host name the app asked to be sent back to
-#: includes/class-mcp-oauth.php:967
+#: includes/class-mcp-oauth.php:1004
 #, php-format
 msgid ""
 "This connection would send you to %s, which is not an allowed destination on "
@@ -1323,30 +1337,30 @@ msgstr ""
 "을 신뢰한다면 관리자가 설정 > Cowboy MCP > Desktop Connector에서 호스트를 추"
 "가할 수 있습니다."
 
-#: includes/class-mcp-oauth.php:980
+#: includes/class-mcp-oauth.php:1017
 msgid "Security check failed. Please try again."
 msgstr "보안 검사에 실패했습니다. 다시 시도하세요."
 
-#: includes/class-mcp-oauth.php:1042
+#: includes/class-mcp-oauth.php:1079
 msgid "Connection error"
 msgstr "연결 오류"
 
-#: includes/class-mcp-oauth.php:1049
+#: includes/class-mcp-oauth.php:1086
 msgid "An application"
 msgstr "애플리케이션"
 
-#: includes/class-mcp-oauth.php:1081
+#: includes/class-mcp-oauth.php:1118
 msgid "Authorize connection"
 msgstr "연결 승인"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:1088
+#: includes/class-mcp-oauth.php:1125
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s이(가) 연결하려고 합니다"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:1092
+#: includes/class-mcp-oauth.php:1129
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -1356,18 +1370,18 @@ msgstr ""
 "로 작동합니다."
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:1097
+#: includes/class-mcp-oauth.php:1134
 #, php-format
 msgid "Authorizing as %s"
 msgstr "%s(으)로 승인 중"
 
 #. translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com
-#: includes/class-mcp-oauth.php:1102
+#: includes/class-mcp-oauth.php:1139
 #, php-format
 msgid "After you approve, you will be sent to %s"
 msgstr "승인하면 %s(으)로 이동합니다"
 
-#: includes/class-mcp-oauth.php:1104
+#: includes/class-mcp-oauth.php:1141
 msgid ""
 "The app name above is supplied by the app and is not verified. Approve only "
 "if you just started this connection yourself."
@@ -1375,7 +1389,7 @@ msgstr ""
 "위의 앱 이름은 앱이 직접 제공한 것으로 검증되지 않았습니다. 방금 직접 이 연결"
 "을 시작한 경우에만 승인하세요."
 
-#: includes/class-mcp-oauth.php:1106
+#: includes/class-mcp-oauth.php:1143
 msgid ""
 "This site has no stored record of this connection. That is normal after a "
 "database restore or a staging sync. If you did not just start this from your "
@@ -1385,34 +1399,34 @@ msgstr ""
 "테이징 동기화 후에는 정상입니다. 방금 AI 앱에서 직접 시작한 연결이 아니라면 "
 "'거부'를 선택하세요."
 
-#: includes/class-mcp-oauth.php:1118
+#: includes/class-mcp-oauth.php:1155
 msgid "Access level"
 msgstr "액세스 수준"
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:1124
+#: includes/class-mcp-oauth.php:1161
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr "현재 사용자 지정 범위 유지(%d개 도구)"
 
-#: includes/class-mcp-oauth.php:1130
+#: includes/class-mcp-oauth.php:1167
 msgid "Full access — read and manage the site"
 msgstr "전체 액세스 — 사이트를 읽고 관리"
 
-#: includes/class-mcp-oauth.php:1134
+#: includes/class-mcp-oauth.php:1171
 msgid "Read-only — inspect the site, make no changes"
 msgstr "읽기 전용 — 사이트를 확인만 하고 변경하지 않음"
 
-#: includes/class-mcp-oauth.php:1138
+#: includes/class-mcp-oauth.php:1175
 msgid "Deny"
 msgstr "거부"
 
-#: includes/class-mcp-oauth.php:1139
+#: includes/class-mcp-oauth.php:1176
 msgid "Approve"
 msgstr "승인"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:1144
+#: includes/class-mcp-oauth.php:1181
 #, php-format
 msgid "Redirects to: %s"
 msgstr "리디렉션 대상: %s"

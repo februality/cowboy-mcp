@@ -34,6 +34,14 @@ class Cowboy_MCP_OAuth {
      * via the cowboy_mcp_oauth_redirect_hosts filter; oauth_redirect_allowlist=false
      * restores the old any-host behaviour.
      */
+    /**
+     * Safety lock: registration only answers for 15 minutes after an administrator
+     * opened the Connection tab (where the endpoint URL is copied) or switched the
+     * connector on. Everything an existing connection uses (authorize, token,
+     * refresh, the MCP endpoint, recovery via signed ids) ignores the lock.
+     */
+    const REGISTRATION_WINDOW    = 900;
+    const REGISTRATION_TRANSIENT = 'cowboy_mcp_oauth_reg_open';
     const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'anthropic.com', 'vscode.dev' ];
     const LOOPBACK_HOSTS         = [ 'localhost', '127.0.0.1', '::1' ];
     const SIGNED_PREFIX = 'cmcp_client_s1_';
@@ -95,6 +103,31 @@ class Cowboy_MCP_OAuth {
             return false;
         }
         return true;
+    }
+
+    /* ── Registration window (safety lock) ─────────────────── */
+
+    /** Open (or extend) the registration window. Admin-context callers only. Returns the closing timestamp. */
+    public static function open_registration_window(): int {
+        $until = time() + self::REGISTRATION_WINDOW;
+        set_transient( self::REGISTRATION_TRANSIENT, $until, self::REGISTRATION_WINDOW );
+        return $until;
+    }
+
+    public static function registration_seconds_left(): int {
+        $until = (int) get_transient( self::REGISTRATION_TRANSIENT );
+        return max( 0, $until - time() );
+    }
+
+    public static function registration_open(): bool {
+        /**
+         * Filters whether Dynamic Client Registration currently answers. Return true
+         * to keep it always open (automated provisioning); the default is the
+         * 15-minute window after an administrator visits the Connection tab.
+         *
+         * @param bool $open
+         */
+        return (bool) apply_filters( 'cowboy_mcp_oauth_registration_open', self::registration_seconds_left() > 0 );
     }
 
     /* ── Redirect-host allowlist ───────────────────────────── */
@@ -715,6 +748,10 @@ class Cowboy_MCP_OAuth {
         $body = $request->get_json_params();
         if ( ! is_array( $body ) ) {
             $body = $request->get_params();
+        }
+
+        if ( ! self::registration_open() ) {
+            return self::rest_error( 'registration_closed', 'New app registration is closed on this site right now. An administrator opens it for 15 minutes by visiting Settings > Cowboy MCP > Connection in WordPress, then add the app again. Existing connections are not affected.', 403 );
         }
 
         $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );

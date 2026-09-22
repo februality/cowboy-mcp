@@ -155,6 +155,7 @@ class Cowboy_MCP_Admin {
             'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
             'dismissNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
+            'lockClosed'   => __( 'closed. Reload this tab to reopen it for 15 minutes.', 'cowboy-mcp' ),
         ] );
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
@@ -448,6 +449,7 @@ class Cowboy_MCP_Admin {
         if ( empty( $s['oauth_enabled'] ) ) {
             $s['oauth_enabled'] = true;
             update_option( 'cowboy_mcp_settings', $s );
+            Cowboy_MCP_OAuth::open_registration_window();
             add_settings_error( 'cowboy_mcp', 'oauth_on', $notice, 'success' );
         }
     }
@@ -742,6 +744,24 @@ class Cowboy_MCP_Admin {
             ?>
             <div class="notice notice-warning inline"><p><?php
                 echo wp_kses( $warning_text, [ 'strong' => [] ] );
+            ?></p></div>
+            <?php
+        endif;
+
+        if ( $oauth_on && current_user_can( 'manage_options' ) ) :
+            // Safety lock: an administrator on this tab is about to paste the URL into an
+            // AI app, so registration opens for 15 minutes. Nothing else is gated by it.
+            static $lock_until = 0;
+            if ( ! $lock_until ) {
+                $lock_until = Cowboy_MCP_OAuth::open_registration_window();
+            }
+            ?>
+            <div class="notice notice-info inline mcp-safety-lock"><p><?php
+                printf(
+                    /* translators: %s: countdown such as 14:59 */
+                    esc_html__( 'Safety lock: new AI apps can connect for the next %s. After that, come back to this tab to add another. Existing connections are not affected.', 'cowboy-mcp' ),
+                    '<strong data-mcp-lock-until="' . esc_attr( (string) $lock_until ) . '">15:00</strong>'
+                ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             ?></p></div>
             <?php
         endif;

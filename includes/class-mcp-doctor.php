@@ -163,6 +163,21 @@ class Cowboy_MCP_Doctor {
 			$out[] = self::result( 'oauth_prereqs', 'OAuth connector prerequisites', 'skip', 'Desktop Connector is disabled - connector checks skipped.' );
 		}
 
+		// registration_window (safety lock) - informational for CLI/MCP runs; the admin page opens it on load
+		if ( $oauth_on ) {
+			$left  = Cowboy_MCP_OAuth::registration_seconds_left();
+			$open  = Cowboy_MCP_OAuth::registration_open();
+			$out[] = self::result(
+				'registration_window',
+				'New-app registration window',
+				$open ? 'pass' : 'warn',
+				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) : 'Closed (safety lock). New AI apps cannot register until an administrator opens the Connection tab; existing connections keep working.',
+				[],
+				null,
+				$open ? null : 'Open Settings > Cowboy MCP > Connection in wp-admin, then add the app within 15 minutes.'
+			);
+		}
+
 		// rest_blockers
 		$known   = [
 			'better-wp-security/better-wp-security.php' => [ 'Solid Security', 'allow the cowboy-mcp/v1 REST namespace in its REST API settings' ],
