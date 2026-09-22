@@ -26,15 +26,6 @@ class Cowboy_MCP_OAuth {
     const MAX_REDIRECT_URI_LEN = 512;
     const REGISTER_RATE_LIMIT  = 20;  // per IP per minute; its own bucket, never the auth-failure one
     /**
-     * Hosts an OAuth client may send the browser back to. Registration is open to
-     * anyone, so without this an attacker registers "ChatGPT" with their own
-     * redirect_uri and phishes an administrator's Approve click into admin tokens.
-     * Subdomains match; loopback hosts may use plain http (CLI clients).
-     * Administrators extend the list in Settings (oauth_extra_redirect_hosts) or
-     * via the cowboy_mcp_oauth_redirect_hosts filter; oauth_redirect_allowlist=false
-     * restores the old any-host behaviour.
-     */
-    /**
      * Safety lock: registration only answers while an administrator has "New
      * connections" switched on (Connection tab button; auto-off after 30 minutes;
      * also switched on when the connector itself is enabled). Everything an existing
@@ -43,6 +34,15 @@ class Cowboy_MCP_OAuth {
      */
     const REGISTRATION_WINDOW    = 1800;
     const REGISTRATION_TRANSIENT = 'cowboy_mcp_oauth_reg_open';
+    /**
+     * Hosts an OAuth client may send the browser back to. Registration is open to
+     * anyone, so without this an attacker registers "ChatGPT" with their own
+     * redirect_uri and phishes an administrator's Approve click into admin tokens.
+     * Subdomains match; loopback hosts may use plain http (CLI clients).
+     * Administrators extend the list in Settings (oauth_extra_redirect_hosts) or
+     * via the cowboy_mcp_oauth_redirect_hosts filter; oauth_redirect_allowlist=false
+     * restores the old any-host behaviour.
+     */
     const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'anthropic.com', 'vscode.dev' ];
     const LOOPBACK_HOSTS         = [ 'localhost', '127.0.0.1', '::1' ];
     const SIGNED_PREFIX = 'cmcp_client_s1_';
