@@ -979,9 +979,32 @@ class Cowboy_MCP_OAuth {
 
         // Validate client + redirect_uri BEFORE trusting them for any redirect.
         // Verify only: this runs for unauthenticated visitors and must not write.
-        $client = self::resolve_client( $client_id );
+        $client   = self::resolve_client( $client_id );
+        $adopting = false;
         if ( null === $client ) {
-            self::authorize_fatal( __( 'This site does not recognize this connection. This usually happens after the site\'s database was restored or copied from another site. Remove the connector in your AI app, add it again, then approve it here.', 'cowboy-mcp' ) );
+            // Rescue: an id this site cannot verify (registered before 1.6.8, then lost to
+            // a database overwrite). It may be adopted on an administrator's Approve,
+            // under exactly the rules a new registration gets: only while "New
+            // connections" is enabled, only to an allowed destination, and only after
+            // the admin is logged in (checked below). Nothing is recorded before the
+            // Approve click. Registration is open to anyone, so this grants nothing new.
+            $adoptable = self::registration_open()
+                && (bool) apply_filters( 'cowboy_mcp_oauth_adopt_unknown_clients', true )
+                && $client_id !== '' && strlen( $client_id ) <= self::SIGNED_MAX_ID && preg_match( '/^[A-Za-z0-9._~-]+$/', $client_id )
+                && $redirect_uri !== '';
+            if ( ! $adoptable ) {
+                self::authorize_fatal( __( 'This site has no record of this app. That usually means the site\'s database was restored or copied from another site. To let the app connect again: under Settings > Cowboy MCP > Connection, pick the app and click "Enable for 30 minutes", then use Reconnect in the app and approve it here.', 'cowboy-mcp' ) );
+            }
+            $adopting = true;
+            $client   = [
+                'client_id'                  => $client_id,
+                'client_name'                => sprintf( 'App at %s', (string) wp_parse_url( $redirect_uri, PHP_URL_HOST ) ),
+                'redirect_uris'              => [ $redirect_uri ],
+                'created'                    => time(),
+                'last_used'                  => null,
+                'token_endpoint_auth_method' => 'none',
+                'adopted'                    => time(),
+            ];
         }
         if ( $redirect_uri === '' || ! in_array( $redirect_uri, $client['redirect_uris'], true ) ) {
             self::authorize_fatal( __( 'Invalid redirect_uri for this client.', 'cowboy-mcp' ) );
@@ -1031,6 +1054,19 @@ class Cowboy_MCP_OAuth {
             }
             if ( empty( $_POST['cowboy_mcp_oauth_approve'] ) ) {
                 self::authorize_redirect_error( $redirect_uri, $state, 'access_denied', 'The request was denied.' );
+            }
+            if ( $adopting ) {
+                // First and only write for an adopted id: clear any token that outlived its
+                // old row (it would come back unscoped), then record the client so the
+                // code exchange and later refreshes find it.
+                self::revoke_connection( $client_id );
+                $clients = get_option( self::CLIENTS_OPTION, [] );
+                if ( count( $clients ) >= self::MAX_CLIENTS ) {
+                    $clients = self::prune_unused_clients( $clients );
+                }
+                $clients[ $client_id ] = $client;
+                update_option( self::CLIENTS_OPTION, $clients, false );
+                Cowboy_MCP_Auth::log( 'oauth_client_adopted', [ 'redirect_host' => (string) wp_parse_url( $redirect_uri, PHP_URL_HOST ) ] );
             }
 
             $code = self::issue_authorization_code( [
@@ -1154,6 +1190,8 @@ class Cowboy_MCP_OAuth {
  <p class="muted note"><?php esc_html_e( 'The app name above is supplied by the app and is not verified. Approve only if you just started this connection yourself.', 'cowboy-mcp' ); ?></p>
  <?php if ( ! empty( $client['rehydrated'] ) ) : ?>
  <p class="muted note"><?php esc_html_e( 'This site has no stored record of this connection. That is normal after a database restore or a staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
+ <?php elseif ( ! empty( $client['adopted'] ) && empty( get_option( self::CLIENTS_OPTION, [] )[ $client['client_id'] ] ) ) : ?>
+ <p class="muted note"><?php esc_html_e( 'This site has no record of this app. Approving registers it here and sends you to the address above. That is expected after a database restore or a staging sync for a connection made before Cowboy MCP 1.6.8. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
  <?php endif; ?>
  <form method="post" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url above ?>">
     <?php wp_nonce_field( 'cowboy_mcp_oauth_consent' ); ?>
