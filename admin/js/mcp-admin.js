@@ -403,29 +403,33 @@ document.addEventListener('submit', function (e) {
 			}
 		}
 	});
-	/* ── Safety-lock countdown (Connection tab) ──────────── */
+	/* ── "New connections" countdown (Connection tab) ─────── */
 
 	( function() {
-		var nodes = document.querySelectorAll( '[data-mcp-lock-until]' );
-		if ( ! nodes.length ) {
+		var el = document.querySelector( '[data-mcp-lock-until]' );
+		if ( ! el ) {
 			return;
 		}
-		var skew = Math.floor( Date.now() / 1000 ) - parseInt( nodes[ 0 ].getAttribute( 'data-mcp-lock-until' ), 10 ) + 900;
+		var gate = el.closest( '.mcp-conn-gate' ),
+			skew = Math.floor( Date.now() / 1000 ) - ( parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - parseInt( el.textContent.split( ':' )[ 0 ], 10 ) * 60 - parseInt( el.textContent.split( ':' )[ 1 ], 10 ) );
 		function tick() {
-			var now = Math.floor( Date.now() / 1000 ) - skew, done = true;
-			Array.prototype.forEach.call( nodes, function( el ) {
-				var left = parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - now;
-				if ( left > 0 ) {
-					done = false;
-					el.textContent = Math.floor( left / 60 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 );
-				} else {
-					el.textContent = ( window.cowboyMcpAdmin && cowboyMcpAdmin.lockClosed ) || 'closed';
-				}
-			} );
-			if ( ! done ) {
+			var left = parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - ( Math.floor( Date.now() / 1000 ) - skew );
+			if ( left > 0 ) {
+				el.textContent = Math.floor( left / 60 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 );
 				setTimeout( tick, 1000 );
+				return;
+			}
+			// Expired: show the disabled state without a reload.
+			var l10n = window.cowboyMcpAdmin || {};
+			if ( gate ) {
+				gate.classList.remove( 'mcp-conn-gate--on' );
+				gate.classList.add( 'mcp-conn-gate--off' );
+				var label = gate.querySelector( '.mcp-conn-gate-label' ), timer = gate.querySelector( '.mcp-conn-gate-timer' ), btn = gate.querySelector( 'button[name="cowboy_mcp_toggle_connections"]' );
+				if ( label ) { label.textContent = l10n.gateOff || 'New connections: disabled'; }
+				if ( timer ) { timer.remove(); }
+				if ( btn ) { btn.value = 'enable'; btn.textContent = l10n.gateEnable || 'Enable for 30 minutes'; btn.classList.add( 'button-primary' ); }
 			}
 		}
-		tick();
+		setTimeout( tick, 1000 );
 	} )();
 })();

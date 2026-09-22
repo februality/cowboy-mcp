@@ -231,3 +231,14 @@
 	margin-left: 4px;
 }
 .mcp-scope-editor-row td { background: #f6f7f7; }
+
+/* ── "New connections" switch (registration safety lock) ── */
+.mcp-conn-gate { margin: 0 0 20px; border-left: 4px solid #d63638; }
+.mcp-conn-gate--on { border-left-color: #00a32a; }
+.mcp-conn-gate .inside { padding: 12px 16px; }
+.mcp-conn-gate-form { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.mcp-conn-gate-status { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+.mcp-conn-gate-dot { width: 12px; height: 12px; border-radius: 50%; background: #d63638; box-shadow: 0 0 0 3px rgba(214,54,56,.18); }
+.mcp-conn-gate--on .mcp-conn-gate-dot { background: #00a32a; box-shadow: 0 0 0 3px rgba(0,163,42,.18); }
+.mcp-conn-gate-timer { color: #50575e; font-variant-numeric: tabular-nums; }
+.mcp-conn-gate .description { margin: 8px 0 0; }

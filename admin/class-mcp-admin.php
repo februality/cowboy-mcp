@@ -155,7 +155,8 @@ class Cowboy_MCP_Admin {
             'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
             'dismissNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
-            'lockClosed'   => __( 'closed. Reload this tab to reopen it for 15 minutes.', 'cowboy-mcp' ),
+            'gateOff'      => __( 'New connections: disabled', 'cowboy-mcp' ),
+            'gateEnable'   => __( 'Enable for 30 minutes', 'cowboy-mcp' ),
         ] );
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
@@ -294,6 +295,14 @@ class Cowboy_MCP_Admin {
         }
 
         // Explicitly enable the Desktop Connector (fallback button on the desktop path).
+        if ( isset( $_POST['cowboy_mcp_toggle_connections'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_toggle_connections' ) ) {
+            if ( 'enable' === sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_toggle_connections'] ) ) ) {
+                Cowboy_MCP_OAuth::open_registration_window();
+            } else {
+                Cowboy_MCP_OAuth::close_registration_window();
+            }
+        }
+
         if ( isset( $_POST['cowboy_mcp_enable_oauth'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_enable_oauth' ) ) {
             self::enable_oauth_connector( __( 'Desktop Connector enabled.', 'cowboy-mcp' ) );
         }
@@ -584,9 +593,46 @@ class Cowboy_MCP_Admin {
 
     /* ── Connection tab: client sidebar + per-client panels ── */
 
+    /**
+     * "New connections" switch (safety lock): the only time the connector accepts a
+     * registration from a new AI app. Sits above the client picker as step one.
+     * Rendered only when the Desktop Connector is on - API keys never use it.
+     */
+    private static function render_connections_gate(): void {
+        $settings = get_option( 'cowboy_mcp_settings', [] );
+        if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || empty( $settings['enabled'] ) || empty( $settings['oauth_enabled'] ) ) {
+            return;
+        }
+        $left = Cowboy_MCP_OAuth::registration_seconds_left();
+        $on   = $left > 0;
+        ?>
+        <div class="postbox mcp-conn-gate <?php echo $on ? 'mcp-conn-gate--on' : 'mcp-conn-gate--off'; ?>">
+            <div class="inside">
+                <form method="post" class="mcp-conn-gate-form">
+                    <?php wp_nonce_field( 'cowboy_mcp_toggle_connections' ); ?>
+                    <span class="mcp-conn-gate-status"><span class="mcp-conn-gate-dot" aria-hidden="true"></span>
+                        <strong class="mcp-conn-gate-label"><?php echo $on ? esc_html__( 'New connections: enabled', 'cowboy-mcp' ) : esc_html__( 'New connections: disabled', 'cowboy-mcp' ); ?></strong>
+                        <?php if ( $on ) : ?>
+                            <span class="mcp-conn-gate-timer"><?php
+                                /* translators: %s: countdown such as 29:59 */
+                                printf( esc_html__( '%s left', 'cowboy-mcp' ), '<span data-mcp-lock-until="' . esc_attr( (string) ( time() + $left ) ) . '">' . esc_html( gmdate( 'i:s', $left ) ) . '</span>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                            ?></span>
+                        <?php endif; ?>
+                    </span>
+                    <button type="submit" name="cowboy_mcp_toggle_connections" value="<?php echo $on ? 'disable' : 'enable'; ?>" class="button <?php echo $on ? '' : 'button-primary'; ?>"><?php
+                        echo $on ? esc_html__( 'Disable now', 'cowboy-mcp' ) : esc_html__( 'Enable for 30 minutes', 'cowboy-mcp' );
+                    ?></button>
+                </form>
+                <p class="description"><?php esc_html_e( 'Step one when adding ChatGPT or a Claude app: enable this, then add the app. It switches itself off after 30 minutes. API keys do not use it, and connections that already exist keep working either way.', 'cowboy-mcp' ); ?></p>
+            </div>
+        </div>
+        <?php
+    }
+
     private static function render_connection_tab( array $keys, string $endpoint, $new_key, string $active_client ): void {
         $registry = self::client_registry();
         $is_local = self::site_looks_local();
+        self::render_connections_gate();
         ?>
         <div class="mcp-conn-layout">
             <?php self::render_client_sidebar( $registry, $active_client, $is_local ); ?>
@@ -744,24 +790,6 @@ class Cowboy_MCP_Admin {
             ?>
             <div class="notice notice-warning inline"><p><?php
                 echo wp_kses( $warning_text, [ 'strong' => [] ] );
-            ?></p></div>
-            <?php
-        endif;
-
-        if ( $oauth_on && current_user_can( 'manage_options' ) ) :
-            // Safety lock: an administrator on this tab is about to paste the URL into an
-            // AI app, so registration opens for 15 minutes. Nothing else is gated by it.
-            static $lock_until = 0;
-            if ( ! $lock_until ) {
-                $lock_until = Cowboy_MCP_OAuth::open_registration_window();
-            }
-            ?>
-            <div class="notice notice-info inline mcp-safety-lock"><p><?php
-                printf(
-                    /* translators: %s: countdown such as 14:59 */
-                    esc_html__( 'Safety lock: new AI apps can connect for the next %s. After that, come back to this tab to add another. Existing connections are not affected.', 'cowboy-mcp' ),
-                    '<strong data-mcp-lock-until="' . esc_attr( (string) $lock_until ) . '">15:00</strong>'
-                ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             ?></p></div>
             <?php
         endif;

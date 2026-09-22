@@ -163,18 +163,18 @@ class Cowboy_MCP_Doctor {
 			$out[] = self::result( 'oauth_prereqs', 'OAuth connector prerequisites', 'skip', 'Desktop Connector is disabled - connector checks skipped.' );
 		}
 
-		// registration_window (safety lock) - informational for CLI/MCP runs; the admin page opens it on load
+		// registration_window (safety lock) - the "New connections" switch on the Connection tab
 		if ( $oauth_on ) {
 			$left  = Cowboy_MCP_OAuth::registration_seconds_left();
 			$open  = Cowboy_MCP_OAuth::registration_open();
 			$out[] = self::result(
 				'registration_window',
-				'New-app registration window',
+				'New connections switch',
 				$open ? 'pass' : 'warn',
-				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) : 'Closed (safety lock). New AI apps cannot register until an administrator opens the Connection tab; existing connections keep working.',
+				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) : 'Disabled. New AI apps cannot register until an administrator clicks "Enable for 30 minutes" on the Connection tab; existing connections keep working.',
 				[],
 				null,
-				$open ? null : 'Open Settings > Cowboy MCP > Connection in wp-admin, then add the app within 15 minutes.'
+				$open ? null : 'Under Settings > Cowboy MCP > Connection click "Enable for 30 minutes" (New connections), then add the app.'
 			);
 		}
 
