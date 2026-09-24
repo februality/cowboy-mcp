@@ -1,5 +1,6 @@
 === Cowboy MCP - Free MCP Server with Undo for Claude & ChatGPT ===
 Contributors: februality
+Donate link: https://cowboymcp.com/tip
 Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
