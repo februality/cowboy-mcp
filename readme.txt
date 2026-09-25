@@ -9,7 +9,7 @@ Stable tag: 1.6.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Free WordPress MCP server (Model Context Protocol) for Claude, ChatGPT, Cursor & Claude Code. Run your whole site by chat, undo any change.
+Connect Claude, ChatGPT, Cursor & any AI agent to your site. Free, secure WordPress MCP server (Model Context Protocol). Undo any change.
 
 == Description ==
 
