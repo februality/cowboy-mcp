@@ -56,7 +56,13 @@ class Cowboy_MCP_Transport {
     /* ── POST handler (all JSON-RPC messages) ─────────────── */
 
     public static function handle_post( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-        $body = $request->get_json_params();
+        // Decode the raw body ourselves: plugins that hook rest_pre_dispatch for
+        // every route (The Events Calendar's custom-tables redirector) rewrite
+        // the request's "id" param, which is our JSON-RPC id.
+        $body = json_decode( (string) $request->get_body(), true );
+        if ( ! is_array( $body ) ) {
+            $body = $request->get_json_params();
+        }
 
         if ( empty( $body ) || ! isset( $body['jsonrpc'] ) ) {
             return new WP_Error( 'invalid_jsonrpc', 'Invalid JSON-RPC request.', [ 'status' => 400 ] );
