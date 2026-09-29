@@ -638,6 +638,18 @@ class Cowboy_MCP_Tools {
             }
         }
 
+        // Events writes: mirror the handlers' refusal rules and report the plan.
+        if ( in_array( $name, [ 'wp_events_update', 'wp_events_delete', 'wp_events_exclude_date' ], true ) ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_events_dry_run_plan' ) ) {
+                $plan            = cowboy_mcp_events_dry_run_plan( $name, $filtered_args );
+                $preview['plan'] = $plan;
+                if ( ! empty( $plan['would_fail'] ) ) {
+                    $preview['description'] = "Would be refused ({$plan['would_fail']}): {$plan['reason']}";
+                }
+            }
+        }
+
         return [
             'content' => [[ 'type' => 'text', 'text' => wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ]],
         ];

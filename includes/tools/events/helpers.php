@@ -918,3 +918,85 @@ function cowboy_mcp_events_recurrence_update( int $id, array $a, ?array $dates, 
 	$err = cowboy_mcp_events_ensure_series( $id );
 	return is_wp_error( $err ) ? cowboy_mcp_events_applied_error( $err, 'The recurrence (and its occurrences)' ) : null;
 }
+
+/**
+ * Dry-run plan for the event write tools. Mirrors the handlers' refusal rules
+ * and performs NO writes (no meta, ORM, checkpoint or resync calls).
+ */
+function cowboy_mcp_events_dry_run_plan( string $tool, array $a ): array {
+	$fail = static fn( WP_Error $e ): array => [ 'would_fail' => $e->get_error_code(), 'reason' => $e->get_error_message() ];
+	if ( $tool === 'wp_events_exclude_date' && ! Cowboy_MCP_Tools::events_pro_ready() ) {
+		return [ 'would_fail' => 'pro_unavailable', 'reason' => 'Needs Events Calendar Pro with custom tables active.' ];
+	}
+	$post = cowboy_mcp_events_get( (int) ( $a['event_id'] ?? 0 ), true );
+	if ( is_wp_error( $post ) ) {
+		return $fail( $post );
+	}
+	$current = cowboy_mcp_events_format( $post, true );
+
+	if ( $tool === 'wp_events_delete' ) {
+		if ( empty( $a['force'] ) ) {
+			if ( defined( 'EMPTY_TRASH_DAYS' ) && ! EMPTY_TRASH_DAYS ) {
+				return [ 'would_fail' => 'trash_disabled', 'reason' => "This site has the trash disabled (EMPTY_TRASH_DAYS is 0), so event {$post->ID} cannot be trashed; use force: true." ];
+			}
+			if ( $post->post_status === 'trash' ) {
+				return [ 'would_fail' => 'already_trashed', 'reason' => "Event {$post->ID} is already in the trash; use force: true to delete it permanently." ];
+			}
+			return [ 'mode' => 'trash', 'title' => $post->post_title, 'undoable' => true ];
+		}
+		return [ 'mode' => 'force', 'title' => $post->post_title, 'undoable' => false, 'note' => 'A database checkpoint is taken first; the delete is refused if it cannot be.' ];
+	}
+
+	if ( $tool === 'wp_events_update' ) {
+		$built = cowboy_mcp_events_build_args( $a, $post );
+		if ( is_wp_error( $built ) ) {
+			return $fail( $built );
+		}
+		$recurring = (bool) $current['is_recurring'];
+		$rule_set  = isset( $a['recurrence'] ) && trim( (string) $a['recurrence'] ) !== '';
+		if ( ( $recurring || $rule_set ) && Cowboy_MCP_Tools::events_pro_ready() && function_exists( 'cowboy_mcp_events_recurring_built' ) ) {
+			$built = cowboy_mcp_events_recurring_built( $built );
+			if ( is_wp_error( $built ) ) {
+				return $fail( $built );
+			}
+		}
+		$rp = cowboy_mcp_events_recurrence_plan( (int) $post->ID, $a, $built['dates'], $recurring );
+		if ( is_wp_error( $rp ) ) {
+			return $fail( $rp );
+		}
+		$changes = [];
+		foreach ( array_diff_key( $a, [ 'event_id' => 1, 'dry_run' => 1, 'confirm' => 1 ] ) as $k => $v ) {
+			$changes[ $k ] = [ 'from' => $current[ $k ] ?? null, 'to' => $v ];
+		}
+		return [ 'title' => $post->post_title, 'is_recurring' => $recurring, 'applies_to' => $recurring ? 'every date of the series' : 'this event', 'changes' => $changes ];
+	}
+
+	// wp_events_exclude_date.
+	$rec = get_post_meta( $post->ID, '_EventRecurrence', true );
+	if ( ! is_array( $rec ) || empty( $rec['rules'] ) || cowboy_mcp_events_rset( (int) $post->ID ) === null ) {
+		return [ 'would_fail' => 'not_recurring', 'reason' => "Event {$post->ID} is not a recurring event." ];
+	}
+	$date = trim( (string) ( $a['date'] ?? '' ) );
+	if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) || ! checkdate( (int) substr( $date, 5, 2 ), (int) substr( $date, 8, 2 ), (int) substr( $date, 0, 4 ) ) ) {
+		return [ 'would_fail' => 'invalid_date', 'reason' => 'date must be a valid YYYY-MM-DD.' ];
+	}
+	$action = (string) ( $a['action'] ?? '' );
+	$now    = $current['recurrence']['exclusions'] ?? [];
+	if ( $action === 'add' ) {
+		global $wpdb;
+		$table = cowboy_mcp_events_table( 'tec_occurrences' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$hit = $table ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND DATE(start_date) = %s", $post->ID, $date ) ) : 0;
+		if ( ! $hit ) {
+			return [ 'would_fail' => 'date_not_an_occurrence', 'reason' => "{$date} is not a date of event {$post->ID}." ];
+		}
+		return [ 'title' => $post->post_title, 'action' => 'add', 'date' => $date, 'exclusions_now' => $now, 'effect' => 'This occurrence would be cancelled (occurrence count drops by one).' ];
+	}
+	if ( $action === 'remove' ) {
+		if ( ! in_array( $date, cowboy_mcp_events_exclusion_dates( $rec ), true ) ) {
+			return [ 'would_fail' => 'exclusion_not_found', 'reason' => "{$date} is not an excluded date of event {$post->ID}." ];
+		}
+		return [ 'title' => $post->post_title, 'action' => 'remove', 'date' => $date, 'exclusions_now' => $now, 'effect' => 'The cancelled date would be restored.' ];
+	}
+	return [ 'would_fail' => 'invalid_params', 'reason' => 'action must be "add" or "remove".' ];
+}
