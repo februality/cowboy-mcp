@@ -30,7 +30,7 @@ $cowboy_mcp_events_fields = [
 	'start_date'         => [ 'type' => 'string', 'description' => 'Event-local "YYYY-MM-DD HH:MM[:SS]" (or "YYYY-MM-DD" with all_day), or ISO 8601 with offset' ],
 	'end_date'           => [ 'type' => 'string', 'description' => 'Same format as start_date; optional with all_day' ],
 	'all_day'            => [ 'type' => 'boolean' ],
-	'timezone'           => [ 'type' => 'string', 'description' => 'IANA name (Europe/Berlin) or UTC+2; default: site timezone' ],
+	'timezone'           => [ 'type' => 'string', 'description' => 'IANA name (Europe/Berlin) or a fixed offset (UTC+2 or +02:00, no DST); default: site timezone' ],
 	'venue_id'           => [ 'type' => 'integer', 'description' => 'Venue ID (0 clears)' ],
 	'organizer_ids'      => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ], 'description' => 'Organizer IDs ([] clears)' ],
 	'cost'               => [ 'type' => 'string', 'description' => 'e.g. "15" or "Free" ("" clears)' ],
@@ -201,11 +201,17 @@ $cowboy_mcp_events_handlers = [
 		if ( $built['dates'] === null ) {
 			return new WP_Error( 'invalid_params', 'start_date is required.' );
 		}
-		$orm = $built['orm'] + [ 'status' => 'draft' ];
 		$pro = cowboy_mcp_events_recurrence_create_args( $a, $built['dates'] );
 		if ( is_wp_error( $pro ) ) {
 			return $pro;
 		}
+		if ( isset( $pro['recurrence'] ) ) {
+			$built = cowboy_mcp_events_recurring_built( $built );
+			if ( is_wp_error( $built ) ) {
+				return $built;
+			}
+		}
+		$orm = $built['orm'] + [ 'status' => 'draft' ];
 		try {
 			$post = tribe_events()->set_args( $orm + $pro )->create();
 		} catch ( \Throwable $e ) {
@@ -235,6 +241,13 @@ $cowboy_mcp_events_handlers = [
 			return $built;
 		}
 		$recurring = cowboy_mcp_events_format( $post, false )['is_recurring'];
+		$rule_set  = isset( $a['recurrence'] ) && trim( (string) $a['recurrence'] ) !== '';
+		if ( ( $recurring || $rule_set ) && Cowboy_MCP_Tools::events_pro_ready() ) {
+			$built = cowboy_mcp_events_recurring_built( $built );
+			if ( is_wp_error( $built ) ) {
+				return $built;
+			}
+		}
 		// Validate the recurrence change (Pro) BEFORE the first write.
 		$plan = cowboy_mcp_events_recurrence_plan( (int) $post->ID, $a, $built['dates'], $recurring );
 		if ( is_wp_error( $plan ) ) {
@@ -250,7 +263,8 @@ $cowboy_mcp_events_handlers = [
 		if ( $orm ) {
 			$err = cowboy_mcp_events_orm_save( (int) $post->ID, $orm );
 			if ( is_wp_error( $err ) ) {
-				return $err;
+				// First write: nothing else ran, but TEC may have saved part of the fields before failing.
+				return new WP_Error( $err->get_error_code(), $err->get_error_message() . " No other change was made, but The Events Calendar may have saved some of the fields before it failed — check event {$post->ID} with wp_events_get (this partial change is not in the undo journal).", [ 'applied' => 'partial' ] );
 			}
 		}
 		foreach ( $built['clear_meta'] as $key ) {
@@ -264,7 +278,7 @@ $cowboy_mcp_events_handlers = [
 		if ( $built['clear_meta'] || $built['dates'] || array_key_exists( 'recurrence', $a ) ) {
 			$err = cowboy_mcp_events_resync( (int) $post->ID );
 			if ( is_wp_error( $err ) ) {
-				return $err;
+				return cowboy_mcp_events_applied_error( $err, "The update of event {$post->ID}" );
 			}
 		}
 		clean_post_cache( $post->ID );
@@ -439,30 +453,15 @@ if ( Cowboy_MCP_Tools::events_pro_ready() ) {
 			if ( ! in_array( $date, cowboy_mcp_events_exclusion_dates( $rec ), true ) ) {
 				return new WP_Error( 'exclusion_not_found', "{$date} is not an excluded date of event {$post->ID}." );
 			}
-			$rec['exclusions'] = array_values(
-				array_filter(
-					(array) $rec['exclusions'],
-					static function ( $ex ) use ( $date ) {
-						$found = false;
-						if ( is_array( $ex ) ) {
-							array_walk_recursive(
-								$ex,
-								static function ( $v ) use ( $date, &$found ) {
-									$found = $found || $v === $date;
-								}
-							);
-						}
-						return ! $found;
-					}
-				)
-			);
+			// Only the single-date exclusion for $date; EXRULEs (whose "end" may equal it) stay.
+			$rec['exclusions'] = array_values( array_filter( (array) $rec['exclusions'], static fn( $ex ) => cowboy_mcp_events_exclusion_date( $ex ) !== $date ) );
 			update_post_meta( $post->ID, '_EventRecurrence', $rec );
 		} else {
 			return new WP_Error( 'invalid_params', 'action must be "add" or "remove".' );
 		}
 		$err = cowboy_mcp_events_resync( (int) $post->ID );
 		if ( is_wp_error( $err ) ) {
-			return $err;
+			return cowboy_mcp_events_applied_error( $err, "The exclusion change for {$date}" );
 		}
 		clean_post_cache( $post->ID );
 		$out = cowboy_mcp_events_format( get_post( $post->ID ), true );

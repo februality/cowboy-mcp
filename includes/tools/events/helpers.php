@@ -75,37 +75,43 @@ function cowboy_mcp_events_get_linked( int $id, string $type ): WP_Post|WP_Error
 }
 
 /**
- * A bare "+02:00" offset (what wp_timezone_string() returns on sites set to a
- * manual UTC offset — the WordPress default "UTC+0" included) in TEC's own
- * "UTC+2" notation. Pro cannot build a recurrence set for a "+02:00" zone
- * (probed on 7.8.3: no rset, one occurrence), while TEC maps "UTC+2" to a
- * named zone. Anything else is returned unchanged.
+ * Timezone normalisation for fixed UTC offsets. A zero offset ("+00:00", "UTC+0",
+ * what wp_timezone_string() returns on a default install) becomes "UTC"; any other
+ * offset in TEC's "UTC+2" notation becomes a bare "+02:00". TEC's ORM would map
+ * "UTC+2" to a named zone with DST (Europe/Helsinki), so a July event's UTC time
+ * would be an hour off — a bare offset is stored verbatim and stays fixed.
+ * Named zones are returned unchanged.
  */
 function cowboy_mcp_events_tz_normalize( string $tz ): string {
-	if ( ! preg_match( '/^([+-])(\d{2}):?(\d{2})$/', trim( $tz ), $m ) ) {
+	$tz = trim( $tz );
+	if ( ! preg_match( '/^(?:UTC)?([+-])(\d{1,2})(?::?(\d{2}))?$/i', $tz, $m ) || ( stripos( $tz, 'UTC' ) !== 0 && strlen( $m[2] ) !== 2 ) ) {
+		return $tz;
+	}
+	$h  = (int) $m[2];
+	$mm = (int) ( $m[3] ?? 0 );
+	if ( $h === 0 && $mm === 0 ) {
+		return 'UTC';
+	}
+	return sprintf( '%s%02d:%02d', $m[1], $h, $mm );
+}
+
+/**
+ * The zone a RECURRING event is stored with. Pro 7.8.3 cannot build a recurrence
+ * set for a bare "+02:00" zone (no rset, one occurrence), but can for the
+ * DST-free "Etc/GMT-2" (note the inverted sign) — same fixed offset, so UTC math
+ * and the stored _EventTimezone stay consistent. Half-hour offsets have no Etc
+ * zone: the agent must pass a named zone. Anything else is returned unchanged.
+ */
+function cowboy_mcp_events_recurring_tz( string $tz ): string|WP_Error {
+	$tz = cowboy_mcp_events_tz_normalize( $tz );
+	if ( ! preg_match( '/^([+-])(\d{2}):(\d{2})$/', $tz, $m ) ) {
 		return $tz;
 	}
 	$h = (int) $m[2];
-	if ( $h === 0 && $m[3] === '00' ) {
-		return 'UTC';
+	if ( $m[3] !== '00' || $h > ( $m[1] === '+' ? 14 : 12 ) ) {
+		return new WP_Error( 'invalid_timezone', "Recurring events cannot use the fixed offset {$tz} (Events Calendar Pro needs a named timezone for it). Pass timezone as an IANA name, e.g. Asia/Kolkata." );
 	}
-	return 'UTC' . $m[1] . $h . ( $m[3] !== '00' ? ':' . $m[3] : '' );
-}
-
-/** The _EventTimezone value TEC's ORM would store for a validated timezone. */
-function cowboy_mcp_events_tz_store_name( string $tz ): string {
-	$tz = cowboy_mcp_events_tz_normalize( $tz );
-	if ( class_exists( 'Tribe__Timezones' ) && method_exists( 'Tribe__Timezones', 'build_timezone_object' ) ) {
-		try {
-			$name = Tribe__Timezones::build_timezone_object( $tz )->getName();
-			if ( is_string( $name ) && $name !== '' ) {
-				return $name;
-			}
-		} catch ( \Throwable $e ) {
-			unset( $e ); // keep the validated string
-		}
-	}
-	return $tz;
+	return 'Etc/GMT' . ( $m[1] === '+' ? '-' : '+' ) . $h;
 }
 
 /** Validate a timezone string (IANA, "UTC", "UTC+2", "UTC-5:30", "+02:00"); default site tz. */
@@ -329,15 +335,28 @@ function cowboy_mcp_events_format( WP_Post $post, bool $full ): array {
 	return $out;
 }
 
-/** Y-m-d strings found anywhere inside _EventRecurrence['exclusions']. */
+/**
+ * The Y-m-d of a single-date exclusion (Pro's EXDATE shape, as written by
+ * Updates\Events::add_date_exclusion_to_event(): custom.type "Date",
+ * custom.date.date "Y-m-d"), or null for any other exclusion — an EXRULE
+ * carries an "end" date that is NOT an excluded date.
+ */
+function cowboy_mcp_events_exclusion_date( mixed $ex ): ?string {
+	if ( ! is_array( $ex ) || ( $ex['custom']['type'] ?? '' ) !== 'Date' ) {
+		return null;
+	}
+	$d = $ex['custom']['date']['date'] ?? null;
+	return is_string( $d ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $d ) ? $d : null;
+}
+
+/** Dates excluded one by one (EXDATEs) in _EventRecurrence['exclusions']. */
 function cowboy_mcp_events_exclusion_dates( array $recurrence ): array {
 	$dates = [];
 	foreach ( (array) ( $recurrence['exclusions'] ?? [] ) as $ex ) {
-		array_walk_recursive( $ex, static function ( $v ) use ( &$dates ) {
-			if ( is_string( $v ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $v ) ) {
-				$dates[] = $v;
-			}
-		} );
+		$d = cowboy_mcp_events_exclusion_date( $ex );
+		if ( $d !== null ) {
+			$dates[] = $d;
+		}
 	}
 	$dates = array_values( array_unique( $dates ) );
 	sort( $dates );
@@ -624,23 +643,20 @@ function cowboy_mcp_events_apply_terms( int $id, array $terms ): void {
 }
 
 /**
- * Convert an agent RRULE string into TEC's _EventRecurrence array (Pro).
- * DTSTART/DTEND always come from the event's own dates, never from the string.
+ * Normalise an agent recurrence string into RFC 5545 lines: DTSTART/DTEND lines
+ * dropped (they always come from the event's own dates), "RRULE:" added to bare
+ * rule lines, FREQ checked (Pro's converter silently drops rules it cannot read).
  */
-function cowboy_mcp_events_rrule_to_recurrence( string $rrule, DateTimeImmutable $start, DateTimeImmutable $end ): array|WP_Error {
-	$class = '\TEC\Events_Pro\Custom_Tables\V1\Events\Recurrence';
-	if ( ! class_exists( $class ) || ! method_exists( $class, 'from_icalendar_string' ) || ! method_exists( $class, 'to_event_recurrence' ) ) {
-		return new WP_Error( 'tec_api_unavailable', 'Events Calendar Pro recurrence API is unavailable.' );
-	}
+function cowboy_mcp_events_rrule_lines( string $rrule ): string|WP_Error {
 	$lines = array_values( array_filter( array_map( 'trim', preg_split( '/\r?\n/', trim( $rrule ) ) ), static fn( $l ) => $l !== '' && ! preg_match( '/^(DTSTART|DTEND)\b/i', $l ) ) );
 	if ( ! $lines ) {
 		return new WP_Error( 'invalid_rrule', 'Invalid recurrence rule: it is empty. Use an RFC 5545 RRULE, e.g. RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=10.' );
 	}
 	foreach ( $lines as $n => $line ) {
 		if ( ! preg_match( '/^(RRULE|RDATE|EXDATE|EXRULE)[:;]/i', $line ) ) {
-			$lines[ $n ] = $line = 'RRULE:' . $line;
+			$line        = 'RRULE:' . $line;
+			$lines[ $n ] = $line;
 		}
-		// Validate RRULE parts ourselves: Pro's converter silently drops what it cannot read.
 		if ( preg_match( '/^(RRULE|EXRULE):(.*)$/i', $line, $m ) ) {
 			$parts = [];
 			foreach ( explode( ';', $m[2] ) as $kv ) {
@@ -652,7 +668,22 @@ function cowboy_mcp_events_rrule_to_recurrence( string $rrule, DateTimeImmutable
 			}
 		}
 	}
-	$rrule = implode( "\n", $lines );
+	return implode( "\n", $lines );
+}
+
+/**
+ * Convert an agent RRULE string into TEC's _EventRecurrence array (Pro).
+ * DTSTART/DTEND always come from the event's own dates, never from the string.
+ */
+function cowboy_mcp_events_rrule_to_recurrence( string $rrule, DateTimeImmutable $start, DateTimeImmutable $end ): array|WP_Error {
+	$class = '\TEC\Events_Pro\Custom_Tables\V1\Events\Recurrence';
+	if ( ! class_exists( $class ) || ! method_exists( $class, 'from_icalendar_string' ) || ! method_exists( $class, 'to_event_recurrence' ) ) {
+		return new WP_Error( 'tec_api_unavailable', 'Events Calendar Pro recurrence API is unavailable.' );
+	}
+	$rrule = cowboy_mcp_events_rrule_lines( $rrule );
+	if ( is_wp_error( $rrule ) ) {
+		return $rrule;
+	}
 	try {
 		$rec = $class::from_icalendar_string( $rrule, $start, $end );
 		$arr = $rec ? $rec->to_event_recurrence() : null;
@@ -663,6 +694,44 @@ function cowboy_mcp_events_rrule_to_recurrence( string $rrule, DateTimeImmutable
 		return new WP_Error( 'invalid_rrule', "Invalid recurrence rule '{$rrule}'. Use an RFC 5545 RRULE, e.g. RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=10." );
 	}
 	return $arr;
+}
+
+/** Whether Pro's series API (used by cowboy_mcp_events_ensure_series()) is callable. */
+function cowboy_mcp_events_series_api_available(): bool {
+	return function_exists( 'tribe' )
+		&& class_exists( '\TEC\Events_Pro\Custom_Tables\V1\Models\Series' ) && method_exists( '\TEC\Events_Pro\Custom_Tables\V1\Models\Series', 'vinsert' )
+		&& class_exists( '\TEC\Events_Pro\Custom_Tables\V1\Series\Relationship' ) && method_exists( '\TEC\Events_Pro\Custom_Tables\V1\Series\Relationship', 'with_event' )
+		&& class_exists( '\TEC\Events\Custom_Tables\V1\Models\Event' );
+}
+
+/**
+ * An error raised AFTER a write: the change is already in the database (and,
+ * because the tool call fails, not in the undo journal). The message says so
+ * and names the step that failed.
+ */
+function cowboy_mcp_events_applied_error( WP_Error $e, string $what ): WP_Error {
+	return new WP_Error( $e->get_error_code(), "{$what} was already saved, but {$e->get_error_message()} Check the event with wp_events_get; this partial change is not in the undo journal.", [ 'applied' => true ] );
+}
+
+/**
+ * Pro-ready dates for an event that is (or becomes) recurring: a fixed-offset
+ * zone is swapped for its DST-free Etc/GMT equivalent (see
+ * cowboy_mcp_events_recurring_tz()). The DateTimeImmutable values keep their
+ * zone — same offset, so local and UTC times are unchanged.
+ */
+function cowboy_mcp_events_recurring_built( array $built ): array|WP_Error {
+	if ( empty( $built['dates'] ) ) {
+		return $built;
+	}
+	$tz = cowboy_mcp_events_recurring_tz( (string) $built['dates']['tz'] );
+	if ( is_wp_error( $tz ) ) {
+		return $tz;
+	}
+	$built['dates']['tz'] = $tz;
+	if ( isset( $built['orm']['timezone'] ) ) {
+		$built['orm']['timezone'] = $tz;
+	}
+	return $built;
 }
 
 /**
@@ -676,7 +745,7 @@ function cowboy_mcp_events_ensure_series( int $event_id ): ?WP_Error {
 	$series_class = '\TEC\Events_Pro\Custom_Tables\V1\Models\Series';
 	$rel_class    = '\TEC\Events_Pro\Custom_Tables\V1\Series\Relationship';
 	$event_class  = '\TEC\Events\Custom_Tables\V1\Models\Event';
-	if ( ! function_exists( 'tribe' ) || ! class_exists( $series_class ) || ! method_exists( $series_class, 'vinsert' ) || ! class_exists( $rel_class ) || ! method_exists( $rel_class, 'with_event' ) || ! class_exists( $event_class ) ) {
+	if ( ! cowboy_mcp_events_series_api_available() ) { // callers check this before writing
 		return new WP_Error( 'tec_api_unavailable', 'Events Calendar Pro series API is unavailable.' );
 	}
 	try {
@@ -718,8 +787,12 @@ function cowboy_mcp_events_recurrence_create_args( array $a, ?array $dates = nul
 				return $rec;
 			}
 		}
-		$rrule = trim( (string) $a['recurrence'] );
-		$out['recurrence'] = preg_match( '/^(RRULE|RDATE|EXDATE|EXRULE|DTSTART)[:;]/i', $rrule ) ? $rrule : 'RRULE:' . $rrule;
+		// The same normalised lines the validation used (DTSTART stripped, RRULE: prefixed).
+		$lines = cowboy_mcp_events_rrule_lines( (string) $a['recurrence'] );
+		if ( is_wp_error( $lines ) ) {
+			return $lines;
+		}
+		$out['recurrence'] = $lines;
 	}
 	if ( $has_series ) {
 		if ( get_post_type( (int) $a['series_id'] ) !== 'tribe_event_series' ) {
@@ -761,10 +834,21 @@ function cowboy_mcp_events_recurrence_plan( int $id, array $a, ?array $dates, bo
 		if ( is_wp_error( $rec ) ) {
 			return $rec;
 		}
-		// A single event stored with a bare "+02:00" zone cannot recur (see
-		// cowboy_mcp_events_tz_normalize()): store TEC's equivalent name with the rule.
-		$stored = (string) get_post_meta( $id, '_EventTimezone', true );
-		$tz_fix = ( ! $dates && cowboy_mcp_events_tz_normalize( $stored ) !== $stored ) ? cowboy_mcp_events_tz_store_name( $stored ) : null;
+		if ( ! cowboy_mcp_events_series_api_available() ) {
+			return new WP_Error( 'tec_api_unavailable', 'Events Calendar Pro series API is unavailable.' );
+		}
+		// A stored fixed-offset zone ("+02:00") cannot recur: store its DST-free
+		// Etc/GMT twin with the rule (same offset, so the stored UTC times stay right).
+		// With new dates the caller already mapped the zone (cowboy_mcp_events_recurring_built()).
+		$tz_fix = null;
+		if ( ! $dates ) {
+			$stored = (string) get_post_meta( $id, '_EventTimezone', true );
+			$rtz    = $stored !== '' ? cowboy_mcp_events_recurring_tz( $stored ) : $stored;
+			if ( is_wp_error( $rtz ) ) {
+				return $rtz;
+			}
+			$tz_fix = $rtz !== $stored ? $rtz : null;
+		}
 		return [ 'recurrence' => $rec, 'tz' => $tz_fix ];
 	}
 	// Dates moved on a recurring event: re-stamp the stored rule set onto the new
@@ -772,6 +856,9 @@ function cowboy_mcp_events_recurrence_plan( int $id, array $a, ?array $dates, bo
 	// rule/exclusion from its EventStartDate/EventEndDate).
 	if ( ! is_array( $old ) || empty( $old['rules'] ) ) {
 		return new WP_Error( 'tec_api_unavailable', "Could not read the stored recurrence rules of event {$id}." );
+	}
+	if ( ! cowboy_mcp_events_series_api_available() ) {
+		return new WP_Error( 'tec_api_unavailable', 'Events Calendar Pro series API is unavailable.' );
 	}
 	$s = $start->format( 'Y-m-d H:i:s' );
 	$e = $end->format( 'Y-m-d H:i:s' );
@@ -807,7 +894,7 @@ function cowboy_mcp_events_recurrence_update( int $id, array $a, ?array $dates, 
 		update_post_meta( $id, '_EventStartDateUTC', $start->setTimezone( $utc )->format( 'Y-m-d H:i:s' ) );
 		update_post_meta( $id, '_EventEndDateUTC', $end->setTimezone( $utc )->format( 'Y-m-d H:i:s' ) );
 		update_post_meta( $id, '_EventDuration', (string) ( $end->getTimestamp() - $start->getTimestamp() ) );
-		update_post_meta( $id, '_EventTimezone', cowboy_mcp_events_tz_store_name( $dates['tz'] ) );
+		update_post_meta( $id, '_EventTimezone', $dates['tz'] ); // already Pro-ready (cowboy_mcp_events_recurring_built())
 		if ( metadata_exists( 'post', $id, '_EventTimezoneAbbr' ) ) {
 			update_post_meta( $id, '_EventTimezoneAbbr', $start->format( 'T' ) );
 		}
@@ -817,7 +904,8 @@ function cowboy_mcp_events_recurrence_update( int $id, array $a, ?array $dates, 
 	}
 	if ( $plan['recurrence'] === null ) {
 		delete_post_meta( $id, '_EventRecurrence' );
-		return cowboy_mcp_events_resync( $id );
+		$err = cowboy_mcp_events_resync( $id );
+		return is_wp_error( $err ) ? cowboy_mcp_events_applied_error( $err, 'The removal of the recurrence rule' ) : null;
 	}
 	if ( ! empty( $plan['tz'] ) ) {
 		update_post_meta( $id, '_EventTimezone', $plan['tz'] );
@@ -825,7 +913,8 @@ function cowboy_mcp_events_recurrence_update( int $id, array $a, ?array $dates, 
 	update_post_meta( $id, '_EventRecurrence', $plan['recurrence'] );
 	$err = cowboy_mcp_events_resync( $id );
 	if ( is_wp_error( $err ) ) {
-		return $err;
+		return cowboy_mcp_events_applied_error( $err, 'The recurrence' );
 	}
-	return cowboy_mcp_events_ensure_series( $id );
+	$err = cowboy_mcp_events_ensure_series( $id );
+	return is_wp_error( $err ) ? cowboy_mcp_events_applied_error( $err, 'The recurrence (and its occurrences)' ) : null;
 }
