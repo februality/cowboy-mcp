@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.8
+Stable tag: 1.6.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,13 +40,15 @@ Try it without installing anything: click **Live Preview** above to open a throw
 * **Fix things that break** - read error logs, test emails and HTTP requests, inspect hooks and REST routes, check transients and rewrite rules, and repair database tables. No SSH required.
 * **Do the developer stuff** - run WP-CLI commands, edit files in `wp-content`, and take site snapshots before big changes.
 * **Vibe code your site** - describe the theme tweak or feature you want; your agent writes the code, checks the error log, and fixes what it broke. With per-change undo and database checkpoints, vibe coding a live site stops being reckless.
-* **Keep SEO tidy** - read, write and audit Yoast SEO or Rank Math meta across the site with one vocabulary.
+* **Keep SEO tidy** - read, write and audit Yoast SEO, Rank Math, All in One SEO or SEOPress meta across the site with one vocabulary.
+* **Roll back a post** - list a post's revisions, see a git-style diff of what changed, and restore any revision (the restore itself is undoable).
+* **Run your events** - create and edit The Events Calendar events, venues and organizers; with Events Calendar Pro, manage recurring series and cancel single dates.
 * **Plug into the WordPress Abilities API** - every tool doubles as a `cowboy-mcp/*` ability, so WP-CLI (`wp ability run`), the REST API, the official MCP Adapter and WordPress's own AI tooling can call it - with safe mode, the audit log and undo still in front. Abilities other plugins register (WooCommerce, the AI plugin's core abilities, core) show up as tools for your agent automatically.
 * **Get more done, faster** - the server fronts its tools with a two-tool gateway (`cowboy_discover` + `cowboy_run`), so your agent stays sharp and accurate with a big toolset and picks the right action the first time.
 
 = Tool coverage =
 
-Up to 168 tools. The core set is always on; integrations light up automatically when their plugin is active.
+Up to 184 tools. The core set is always on; integrations light up automatically when their plugin is active.
 
 * **Content** - posts, pages and custom post types (5) · taxonomies (4) · comments (4) · media (4) · menus (6) · options (1)
 * **Gutenberg & Site Editor** - block tree read/edit with path addressing, block types, patterns, templates and template parts, global styles, navigations (15; 8 on classic themes)
@@ -56,7 +58,8 @@ Up to 168 tools. The core set is always on; integrations light up automatically 
 * **WooCommerce** - products and variations, orders and refunds, customers, coupons, tax and shipping settings, reports (40)
 * **Wordfence** - scans, blocks, firewall, live traffic, activity, settings (17)
 * **ACF** - field groups, fields, values, repeaters (9) · **Elementor** - templates, page content, global styles, widgets (7)
-* **SEO** - Yoast SEO and Rank Math meta read/write/audit (4) · **Cache** - WP Rocket, LiteSpeed Cache, W3 Total Cache (4) · **Forms** - WPForms, Gravity Forms, Contact Form 7 (1)
+* **Revisions** - list, diff and restore post revisions (3) · **Events** - The Events Calendar events, venues, organizers (11) plus Events Calendar Pro recurrence and occurrences (2)
+* **SEO** - Yoast SEO, Rank Math, All in One SEO and SEOPress meta read/write/audit (4) · **Cache** - WP Rocket, LiteSpeed Cache, W3 Total Cache (4) · **Forms** - WPForms, Gravity Forms, Contact Form 7 (1)
 
 Plus 17 read-only MCP resources (site info, recent posts, plugin list, the full tools catalog, and more), 4 resource templates, and 8 guided workflow prompts (site audit, troubleshooting, SEO optimization, security hardening, performance, content migration, bulk updates, WooCommerce setup).
 
@@ -137,7 +140,7 @@ Setup guides for every client, the full capability list, the security model and 
 
 Claude Code, Claude desktop and web apps (one-click sign-in), ChatGPT (Developer Mode connector), Cursor, Windsurf, Cline, Zed, VS Code, Codex CLI, Gemini CLI, Opencode, n8n and anything else that speaks MCP over Streamable HTTP.
 
-Integrations that light up automatically: WooCommerce, Gutenberg and the Site Editor, Yoast SEO, Rank Math, Advanced Custom Fields (ACF), Elementor, Wordfence, WP Rocket, LiteSpeed Cache, W3 Total Cache, WPForms, Gravity Forms and Contact Form 7.
+Integrations that light up automatically: WooCommerce, Gutenberg and the Site Editor, Yoast SEO, Rank Math, All in One SEO, SEOPress, The Events Calendar (and Events Calendar Pro), Advanced Custom Fields (ACF), Elementor, Wordfence, WP Rocket, LiteSpeed Cache, W3 Total Cache, WPForms, Gravity Forms and Contact Form 7.
 
 = External services =
 
@@ -221,7 +224,11 @@ Since 1.6.8 the OAuth connector only sends approval back to known AI apps (chatg
 
 = Claude or ChatGPT connects but says no tools are available =
 
-Cowboy MCP lists two gateway tools (`cowboy_discover` and `cowboy_run`) instead of dumping 168 schemas into your agent's context; the agent discovers the tools it needs on demand. Ask it to "discover tools for WooCommerce" or read the `wordpress://tools/catalog` resource. If even the two gateway tools are missing, the key's scope may be empty - check it on the Connection tab.
+Cowboy MCP lists two gateway tools (`cowboy_discover` and `cowboy_run`) instead of dumping 184 schemas into your agent's context; the agent discovers the tools it needs on demand. Ask it to "discover tools for WooCommerce" or read the `wordpress://tools/catalog` resource. If even the two gateway tools are missing, the key's scope may be empty - check it on the Connection tab.
+
+= Does it work with The Events Calendar? =
+
+Yes. When The Events Calendar is active, your agent can create, edit, trash and delete events, venues and organizers. With Events Calendar Pro it can also manage recurring events - edit a whole series or cancel a single date. Editing one occurrence on its own stays in wp-admin. Every change is undoable, and permanent deletes take a database checkpoint first.
 
 = Is it like Novamira? =
 
@@ -262,12 +269,11 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 == Changelog ==
 
-= 1.6.8 =
-* Fix: OAuth connectors (Claude, ChatGPT) recover after a staging sync or backup restore. Previously the AI app kept a registration the site no longer knew and landed on an "Unknown OAuth client" page; the only way out was removing and re-adding the connector. Recovery is now Reconnect and Approve.
-* Fix: connections made before 1.6.8 recover the same way. Existing connections and tokens are untouched.
-* New: a "New connections" button at the top of the Claude and ChatGPT panels on the Connection tab. Adding an app to the site needs it enabled; it switches itself off after 30 minutes. Existing connections never need it.
-* Improved: the OAuth consent and error pages say what will happen and what to do next.
-* Security: hardening of the OAuth connector's registration and consent flow. Working connections are unaffected. Apps that send you back to a host other than the known AI apps or localhost, such as a self-hosted n8n, can be allowed under Settings > Cowboy MCP > Desktop Connector.
+= 1.6.9 =
+* New: Revisions - list a post's revisions, see a git-style diff, restore one (undoable).
+* New: The Events Calendar - events, venues and organizers; recurring events with Events Calendar Pro (whole-series edits, cancel/restore single dates). Every change is undoable; permanent deletes take a database checkpoint first.
+* New: SEO tools now also work with All in One SEO and SEOPress (and report when several SEO plugins are active).
+* Fix: the MCP response id could be altered on sites running The Events Calendar.
 
 = Earlier versions =
 

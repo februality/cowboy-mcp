@@ -3,6 +3,12 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.6.9 =
+* New: Revisions - list a post's revisions, see a git-style diff, restore one (undoable).
+* New: The Events Calendar - events, venues and organizers; recurring events with Events Calendar Pro (whole-series edits, cancel/restore single dates). Every change is undoable; permanent deletes take a database checkpoint first.
+* New: SEO tools now also work with All in One SEO and SEOPress (and report when several SEO plugins are active).
+* Fix: the MCP response id could be altered on sites running The Events Calendar.
+
 = 1.6.8 =
 * Fix: OAuth connectors (Claude, ChatGPT) recover after a staging sync or backup restore. Previously the AI app kept a registration the site no longer knew and landed on an "Unknown OAuth client" page; the only way out was removing and re-adding the connector. Recovery is now Reconnect and Approve.
 * Fix: connections made before 1.6.8 recover the same way. Existing connections and tokens are untouched.

@@ -11,6 +11,8 @@ const COWBOY_MCP_REVISION_DIFF_CAP = 61440;
  */
 function cowboy_mcp_revision_values( WP_Post $source, WP_Post $parent ): array {
 	$values = [];
+	// Core exposes the revisioned field list only through this private helper (no public equivalent).
+	// phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
 	foreach ( array_keys( _wp_post_revision_fields( $parent ) ) as $field ) {
 		$values[ $field ] = (string) $source->$field;
 	}
