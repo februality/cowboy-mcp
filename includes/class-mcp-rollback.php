@@ -32,12 +32,14 @@ class Cowboy_MCP_Rollback {
 	public const TEC_TABLES = [ 'tec_events' => 'post_id', 'tec_occurrences' => 'post_id', 'tec_series_relationships' => 'event_post_id' ];
 
 	/**
-	 * Columns TEC rewrites on every re-sync — excluded from snapshots. Probed on
-	 * TEC 6.17.5.1 / Pro 7.8.3: a no-op Updates\Events::update() re-stamps only
-	 * tec_occurrences.updated_at; tec_events.updated_at is ON UPDATE
-	 * CURRENT_TIMESTAMP too, so any real edit (or our own restore) stamps it.
+	 * Columns TEC rewrites on every re-sync. Probed on TEC 6.17.5.1 / Pro 7.8.3:
+	 * a no-op Updates\Events::update() re-stamps tec_occurrences.updated_at
+	 * (tec_events.updated_at is ON UPDATE CURRENT_TIMESTAMP too) and, for a
+	 * recurring event, bumps tec_occurrences.sequence on every row (2 → 3).
+	 * They are captured under the snapshot's hash-ignored `_volatile` key and
+	 * written back verbatim, never compared.
 	 */
-	private const TEC_VOLATILE = [ 'updated_at' ];
+	private const TEC_VOLATILE = [ 'updated_at', 'sequence' ];
 
 	/**
 	 * Event post meta TEC/Pro rewrite on their own after a save (probed on TEC
@@ -243,7 +245,9 @@ class Cowboy_MCP_Rollback {
 
 			// Permanent event delete: TEC/Pro cascade through custom tables and
 			// series posts; the auto-checkpoint taken by the handler is the undo.
-			if ( $tool === 'wp_events_delete' && ! empty( $args['force'] ) ) {
+			// Trash disabled (EMPTY_TRASH_DAYS = 0): the handler refuses the non-force
+			// path, so journal it the same way (the refused call is discarded anyway).
+			if ( $tool === 'wp_events_delete' && ( ! empty( $args['force'] ) || ( defined( 'EMPTY_TRASH_DAYS' ) && ! EMPTY_TRASH_DAYS ) ) ) {
 				$handle = [
 					'tool' => $tool, 'type' => 'none', 'action' => 'delete',
 					'object_id' => (string) ( $args['event_id'] ?? '' ), 'object_label' => null, 'before' => null, 'rows' => [],
@@ -356,6 +360,9 @@ class Cowboy_MCP_Rollback {
 
 	public static function discard( ?array $capture ): void {
 		self::$pending = null;
+		// A checkpoint id set by a handler that then failed must not be attributed
+		// to a later not-undoable row (e.g. a wp_cli call in the same batch).
+		self::$last_checkpoint_id = null;
 	}
 
 	public static function commit( ?array $capture, mixed $result ): ?int {
@@ -592,12 +599,13 @@ class Cowboy_MCP_Rollback {
 				$volatile     = array_intersect_key( $post['meta'], array_flip( self::TEC_VOLATILE_META ) );
 				$post['meta'] = array_diff_key( $post['meta'], $volatile );
 				$tables       = [];
+				$vol_tables   = [];
 				if ( class_exists( 'Cowboy_MCP_Tools' ) && Cowboy_MCP_Tools::events_ct1_ready() ) {
-					$tables = self::tec_rows( (int) $id );
+					$tables = self::tec_rows( (int) $id, $vol_tables );
 				}
 				$series = array_values( array_unique( array_map( 'intval', array_column( $tables['tec_series_relationships'] ?? [], 'series_post_id' ) ) ) );
 				sort( $series );
-				return [ 'post' => $post, 'tables' => $tables, 'series' => $series, '_volatile' => [ 'meta' => $volatile ] ];
+				return [ 'post' => $post, 'tables' => $tables, 'series' => $series, '_volatile' => [ 'meta' => $volatile, 'tables' => $vol_tables ] ];
 			}
 
 			case 'acf_value':
@@ -1048,8 +1056,12 @@ class Cowboy_MCP_Rollback {
 		return true;
 	}
 
-	/** Current TEC custom-table rows for an event, volatile columns removed. */
-	private static function tec_rows( int $post_id ): array {
+	/**
+	 * Current TEC custom-table rows for an event, volatile columns removed; the
+	 * removed values land in $volatile[ table ][ row index ].
+	 */
+	private static function tec_rows( int $post_id, ?array &$volatile = null ): array {
+		$volatile = [];
 		global $wpdb;
 		$out = [];
 		foreach ( self::TEC_TABLES as $short => $col ) {
@@ -1060,8 +1072,10 @@ class Cowboy_MCP_Rollback {
 			}
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT * FROM `{$table}` WHERE `{$col}` = %d ORDER BY 1", $post_id ), ARRAY_A );
-			foreach ( $rows as &$row ) {
-				$row = array_diff_key( $row, array_flip( self::TEC_VOLATILE ) );
+			$volatile[ $short ] = [];
+			foreach ( $rows as $i => &$row ) {
+				$volatile[ $short ][ $i ] = array_intersect_key( $row, array_flip( self::TEC_VOLATILE ) );
+				$row                      = array_diff_key( $row, $volatile[ $short ][ $i ] );
 			}
 			unset( $row );
 			$out[ $short ] = $rows;
@@ -1069,8 +1083,8 @@ class Cowboy_MCP_Rollback {
 		return $out;
 	}
 
-	/** Replace an event's TEC rows with $tables verbatim (keeps occurrence ids). */
-	private static function tec_write_rows( int $post_id, array $tables ): ?WP_Error {
+	/** Replace an event's TEC rows with $tables (+ their captured volatile columns) verbatim (keeps occurrence ids). */
+	private static function tec_write_rows( int $post_id, array $tables, array $volatile = [] ): ?WP_Error {
 		global $wpdb;
 		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		foreach ( self::TEC_TABLES as $short => $col ) {
@@ -1083,7 +1097,8 @@ class Cowboy_MCP_Rollback {
 				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 				return new WP_Error( 'undo_failed', "Could not clear {$short} rows for event #{$post_id}: {$wpdb->last_error}" );
 			}
-			foreach ( $tables[ $short ] as $row ) {
+			foreach ( $tables[ $short ] as $i => $row ) {
+				$row += (array) ( $volatile[ $short ][ $i ] ?? [] );
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
 				if ( false === $wpdb->insert( $table, $row ) ) {
 					$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -1124,6 +1139,36 @@ class Cowboy_MCP_Rollback {
 		$ct1     = class_exists( 'Cowboy_MCP_Tools' ) && Cowboy_MCP_Tools::events_ct1_ready();
 		$current = $ct1 ? array_map( 'intval', array_column( self::tec_rows( $post_id )['tec_series_relationships'] ?? [], 'series_post_id' ) ) : [];
 
+		// Trash transitions go through core's trash API so its cascades run too:
+		// wp_untrash_post() fires untrashed_post (Pro untrashes the auto series it
+		// trashed with the event) and restores the post's comments; wp_trash_post()
+		// is the mirror for a redo of a trash-undo. restore_post() then writes the
+		// captured status/fields/meta over whatever those set.
+		$live          = get_post( $post_id );
+		$target_status = (string) ( $state['post']['post']['post_status'] ?? '' );
+		if ( $live instanceof WP_Post && $live->post_status === 'trash' && $target_status !== 'trash' ) {
+			// Core untrashes to "draft" by default (WP 5.6+) — for the event AND for
+			// the series Pro untrashes from its untrashed_post hook. Use the status
+			// each post had before it was trashed, as wp-admin's Undo link does.
+			// Own callback, not core's wp_untrash_post_set_previous_status: Pro's
+			// legacy Children_Events adds AND removes that exact callback inside
+			// untrashed_post, which would strip it before the series is untrashed.
+			$previous = static fn( $new_status, $id, $previous_status ) => $previous_status ?: $new_status;
+			add_filter( 'wp_untrash_post_status', $previous, 10, 3 );
+			try {
+				$untrashed = wp_untrash_post( $post_id );
+			} finally {
+				remove_filter( 'wp_untrash_post_status', $previous, 10 );
+			}
+			if ( ! $untrashed ) {
+				return new WP_Error( 'undo_failed', "Could not restore event #{$post_id} from the trash." );
+			}
+		} elseif ( $live instanceof WP_Post && $live->post_status !== 'trash' && $target_status === 'trash' && ( ! defined( 'EMPTY_TRASH_DAYS' ) || EMPTY_TRASH_DAYS ) ) {
+			if ( ! wp_trash_post( $post_id ) ) {
+				return new WP_Error( 'undo_failed', "Could not move event #{$post_id} to the trash." );
+			}
+		}
+
 		$restored = self::restore_post( $post_id, $state['post'] ); // clears every meta key, volatile ones included
 		if ( ! is_wp_error( $restored ) ) {
 			foreach ( (array) ( $state['_volatile']['meta'] ?? [] ) as $k => $values ) {
@@ -1135,20 +1180,26 @@ class Cowboy_MCP_Rollback {
 		if ( is_wp_error( $restored ) || ! $ct1 || empty( $state['tables'] ) ) {
 			return $restored;
 		}
-		$err = self::tec_write_rows( $post_id, $state['tables'] );
+		$partial = static fn( WP_Error $e, string $what ): WP_Error => new WP_Error(
+			'undo_failed',
+			"Partial undo of event #{$post_id}: the post, its meta and terms were restored, but {$what} " . $e->get_error_message()
+		);
+		$err = self::tec_write_rows( $post_id, $state['tables'], (array) ( $state['_volatile']['tables'] ?? [] ) );
 		if ( $err ) {
-			return $err;
+			return $partial( $err, 'its The Events Calendar table rows were NOT (rolled back):' );
 		}
 		if ( function_exists( 'cowboy_mcp_events_resync' ) ) {
 			$sync = cowboy_mcp_events_resync( $post_id );
 			if ( is_wp_error( $sync ) ) {
-				return $sync;
+				return $partial( $sync, 'after the captured The Events Calendar rows were written the re-sync failed:' );
 			}
 		}
-		if ( self::tec_rows( $post_id ) != $state['tables'] ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseNotEqual -- row arrays, key order irrelevant
-			$err = self::tec_write_rows( $post_id, $state['tables'] );
+		// Both sides come from the same SELECT * … ORDER BY 1 (ARRAY_A, volatile columns
+		// stripped the same way), so key order and string types match exactly.
+		if ( self::tec_rows( $post_id ) !== $state['tables'] ) {
+			$err = self::tec_write_rows( $post_id, $state['tables'], (array) ( $state['_volatile']['tables'] ?? [] ) );
 			if ( $err ) {
-				return $err;
+				return $partial( $err, 're-applying the captured The Events Calendar rows after the re-sync failed (rolled back to the re-synced rows):' );
 			}
 		}
 		global $wpdb;

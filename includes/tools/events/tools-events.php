@@ -270,6 +270,10 @@ $cowboy_mcp_events_handlers = [
 			return new WP_Error( 'forbidden', 'The authenticated user cannot delete this event.' );
 		}
 		if ( empty( $a['force'] ) ) {
+			// Trash disabled: core's wp_trash_post() would PERMANENTLY delete (no checkpoint).
+			if ( defined( 'EMPTY_TRASH_DAYS' ) && ! EMPTY_TRASH_DAYS ) {
+				return new WP_Error( 'trash_disabled', "This site has the trash disabled (EMPTY_TRASH_DAYS is 0), so event {$post->ID} cannot be trashed. Use force: true to delete it permanently; an automatic database checkpoint is taken first." );
+			}
 			if ( $post->post_status === 'trash' ) {
 				return new WP_Error( 'already_trashed', "Event {$post->ID} is already in the trash. Use force: true to delete it permanently." );
 			}
