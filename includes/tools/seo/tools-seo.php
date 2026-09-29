@@ -10,39 +10,145 @@ if ( ! Cowboy_MCP_Tools::domain_available( __FILE__ ) ) {
 }
 
 /* ================================================================
- *  Helpers
+ *  Provider detection — precedence Yoast > Rank Math > AIOSEO > SEOPress
  * ================================================================ */
 
-/**
- * Detect which SEO plugin is active.
- * Priority: Yoast SEO > Rank Math.
- */
-function cowboy_mcp_seo_get_provider(): ?array {
+/** Every active supported SEO plugin, in precedence order. */
+function cowboy_mcp_seo_active_providers(): array {
+    $out = [];
     if ( class_exists( 'WPSEO_Options' ) ) {
-        $version = defined( 'WPSEO_VERSION' ) ? WPSEO_VERSION : 'unknown';
-        return [ 'provider' => 'yoast', 'version' => $version ];
+        $out[] = [ 'provider' => 'yoast', 'version' => defined( 'WPSEO_VERSION' ) ? (string) WPSEO_VERSION : 'unknown' ];
     }
-
     if ( defined( 'RANK_MATH_VERSION' ) ) {
-        return [ 'provider' => 'rank-math', 'version' => RANK_MATH_VERSION ];
+        $out[] = [ 'provider' => 'rank-math', 'version' => (string) RANK_MATH_VERSION ];
     }
-
-    return null;
+    if ( defined( 'AIOSEO_VERSION' ) ) {
+        $out[] = [ 'provider' => 'aioseo', 'version' => (string) AIOSEO_VERSION ];
+    }
+    if ( defined( 'SEOPRESS_VERSION' ) ) {
+        $out[] = [ 'provider' => 'seopress', 'version' => (string) SEOPRESS_VERSION ];
+    }
+    return $out;
 }
 
+/** The provider Cowboy reads/writes (first by precedence), or null. */
+function cowboy_mcp_seo_get_provider(): ?array {
+    return cowboy_mcp_seo_active_providers()[0] ?? null;
+}
+
+/** Canonical field → value type ('text' | 'url' | 'bool'). */
+const COWBOY_MCP_SEO_FIELDS = [
+    'title' => 'text', 'description' => 'text', 'focus_keyword' => 'text',
+    'noindex' => 'bool', 'nofollow' => 'bool', 'canonical_url' => 'url',
+    'og_title' => 'text', 'og_description' => 'text', 'og_image' => 'url',
+    'twitter_title' => 'text', 'twitter_description' => 'text', 'twitter_image' => 'url',
+    'cornerstone' => 'bool',
+];
+
+require_once __DIR__ . '/adapters.php';
+
 /**
- * Canonical SEO field → provider meta key + encoding, for the active provider.
- *
- * Types: absent = plain text meta; 'url' = URL meta with optional attachment-id
- * 'companion' key; 'flag' = boolean stored as $def['on'] when set, row deleted
- * when cleared; 'rm_robots' = boolean token inside the single rank_math_robots
- * array. 'twitter_custom' marks Rank Math twitter fields that only render when
- * rank_math_twitter_use_facebook is 'off'.
+ * Meta-map adapter (Yoast, Rank Math, SEOPress). $map: canonical field →
+ * ['key' => meta key, 'type' => 'flag'|'rm_robots'|'url'|absent(text), 'on' => stored
+ * value for flags, 'token' => rank_math_robots token, 'companion' => attachment-id
+ * key, 'twitter_custom' => Rank Math use_facebook switch, 'extra_clear' => keys
+ * deleted whenever the field changes]. Fields missing from $map are unsupported.
  */
-function cowboy_mcp_seo_field_map(): array {
-    $provider = cowboy_mcp_seo_get_provider();
-    if ( ( $provider['provider'] ?? '' ) === 'yoast' ) {
-        return [
+function cowboy_mcp_seo_meta_adapter( string $slug, array $map, callable $scores, callable $refresh ): array {
+    $read = static function ( int $post_id ) use ( $map ): array {
+        $fields = [];
+        foreach ( COWBOY_MCP_SEO_FIELDS as $name => $vtype ) {
+            if ( ! isset( $map[ $name ] ) ) {
+                $fields[ $name ] = null; // unsupported by this provider
+                continue;
+            }
+            $def = $map[ $name ];
+            switch ( $def['type'] ?? 'text' ) {
+                case 'flag':
+                    $fields[ $name ] = get_post_meta( $post_id, $def['key'], true ) === $def['on'];
+                    break;
+                case 'rm_robots':
+                    $robots          = get_post_meta( $post_id, $def['key'], true );
+                    $fields[ $name ] = is_array( $robots ) && in_array( $def['token'], $robots, true );
+                    break;
+                default:
+                    $raw             = get_post_meta( $post_id, $def['key'], true );
+                    $fields[ $name ] = ( $raw === '' || $raw === false ) ? null : (string) $raw;
+            }
+        }
+        return $fields;
+    };
+
+    $write_one = static function ( int $post_id, string $field, string|bool $value ) use ( $map ): void {
+        $def  = $map[ $field ];
+        $type = $def['type'] ?? 'text';
+        foreach ( (array) ( $def['extra_clear'] ?? [] ) as $k ) {
+            delete_post_meta( $post_id, $k );
+        }
+        if ( $type === 'flag' ) {
+            if ( $value ) {
+                update_post_meta( $post_id, $def['key'], $def['on'] );
+            } else {
+                delete_post_meta( $post_id, $def['key'] );
+            }
+            return;
+        }
+        if ( $type === 'rm_robots' ) {
+            // One shared array — touch only our token, keep noarchive/nosnippet/etc.
+            $robots = get_post_meta( $post_id, $def['key'], true );
+            $robots = is_array( $robots ) ? array_values( array_diff( $robots, [ $def['token'] ] ) ) : [];
+            if ( $value ) {
+                $robots[] = $def['token'];
+            }
+            if ( $robots ) {
+                update_post_meta( $post_id, $def['key'], $robots );
+            } else {
+                delete_post_meta( $post_id, $def['key'] );
+            }
+            return;
+        }
+        if ( $value === '' ) {
+            delete_post_meta( $post_id, $def['key'] );
+            if ( ! empty( $def['companion'] ) ) {
+                delete_post_meta( $post_id, $def['companion'] );
+            }
+            return;
+        }
+        update_post_meta( $post_id, $def['key'], $value );
+        if ( ! empty( $def['companion'] ) ) {
+            // Keep the attachment-id companion in sync — a stale id outranks the URL.
+            $att_id = attachment_url_to_postid( (string) $value );
+            if ( $att_id ) {
+                update_post_meta( $post_id, $def['companion'], (string) $att_id );
+            } else {
+                delete_post_meta( $post_id, $def['companion'] );
+            }
+        }
+        if ( ! empty( $def['twitter_custom'] ) ) {
+            update_post_meta( $post_id, 'rank_math_twitter_use_facebook', 'off' );
+        }
+    };
+
+    return [
+        'provider'   => $slug,
+        'supports'   => array_keys( $map ),
+        'read'       => $read,
+        'write_many' => static function ( int $post_id, array $writes ) use ( $write_one ): array {
+            foreach ( $writes as $field => $value ) {
+                $write_one( $post_id, $field, $value );
+            }
+            return [];
+        },
+        'scores'     => $scores,
+        'refresh'    => $refresh,
+    ];
+}
+
+/** Adapter for the active provider, or null when none. */
+function cowboy_mcp_seo_adapter(): ?array {
+    $provider = cowboy_mcp_seo_get_provider()['provider'] ?? null;
+    return match ( $provider ) {
+        'yoast'     => cowboy_mcp_seo_meta_adapter( 'yoast', [
             'title'               => [ 'key' => '_yoast_wpseo_title' ],
             'description'         => [ 'key' => '_yoast_wpseo_metadesc' ],
             'focus_keyword'       => [ 'key' => '_yoast_wpseo_focuskw' ],
@@ -56,10 +162,8 @@ function cowboy_mcp_seo_field_map(): array {
             'twitter_description' => [ 'key' => '_yoast_wpseo_twitter-description' ],
             'twitter_image'       => [ 'key' => '_yoast_wpseo_twitter-image', 'type' => 'url', 'companion' => '_yoast_wpseo_twitter-image-id' ],
             'cornerstone'         => [ 'key' => '_yoast_wpseo_is_cornerstone', 'type' => 'flag', 'on' => '1' ],
-        ];
-    }
-    if ( ( $provider['provider'] ?? '' ) === 'rank-math' ) {
-        return [
+        ], 'cowboy_mcp_seo_yoast_scores', 'cowboy_mcp_seo_yoast_refresh' ),
+        'rank-math' => cowboy_mcp_seo_meta_adapter( 'rank-math', [
             'title'               => [ 'key' => 'rank_math_title' ],
             'description'         => [ 'key' => 'rank_math_description' ],
             'focus_keyword'       => [ 'key' => 'rank_math_focus_keyword' ],
@@ -73,116 +177,30 @@ function cowboy_mcp_seo_field_map(): array {
             'twitter_description' => [ 'key' => 'rank_math_twitter_description', 'twitter_custom' => true ],
             'twitter_image'       => [ 'key' => 'rank_math_twitter_image', 'type' => 'url', 'companion' => 'rank_math_twitter_image_id', 'twitter_custom' => true ],
             'cornerstone'         => [ 'key' => 'rank_math_pillar_content', 'type' => 'flag', 'on' => 'on' ],
-        ];
-    }
-    return [];
+        ], 'cowboy_mcp_seo_rank_math_scores', '__return_true' ),
+        'seopress'  => function_exists( 'cowboy_mcp_seo_seopress_adapter' ) ? cowboy_mcp_seo_seopress_adapter() : null,
+        'aioseo'    => function_exists( 'cowboy_mcp_seo_aioseo_adapter' ) ? cowboy_mcp_seo_aioseo_adapter() : null,
+        default     => null,
+    };
 }
 
-/** All canonical fields for a post: booleans always bool, text/url null when unset. */
-function cowboy_mcp_seo_read_fields( int $post_id ): array {
-    $fields = [];
-    foreach ( cowboy_mcp_seo_field_map() as $name => $def ) {
-        switch ( $def['type'] ?? 'text' ) {
-            case 'flag':
-                $fields[ $name ] = get_post_meta( $post_id, $def['key'], true ) === $def['on'];
-                break;
-            case 'rm_robots':
-                $robots          = get_post_meta( $post_id, $def['key'], true );
-                $fields[ $name ] = is_array( $robots ) && in_array( $def['token'], $robots, true );
-                break;
-            default:
-                $raw             = get_post_meta( $post_id, $def['key'], true );
-                $fields[ $name ] = ( $raw === '' || $raw === false ) ? null : (string) $raw;
-        }
-    }
-    return $fields;
+function cowboy_mcp_seo_yoast_scores( int $post_id ): array {
+    $seo  = get_post_meta( $post_id, '_yoast_wpseo_linkdex', true );
+    $read = get_post_meta( $post_id, '_yoast_wpseo_content_score', true );
+    return [ 'seo_score' => $seo === '' ? null : (int) $seo, 'readability_score' => $read === '' ? null : (int) $read ];
 }
 
-/** Provider-computed scores (read-only; Rank Math has no readability score). */
-function cowboy_mcp_seo_read_scores( int $post_id ): array {
-    $provider = cowboy_mcp_seo_get_provider();
-    if ( ( $provider['provider'] ?? '' ) === 'yoast' ) {
-        $seo  = get_post_meta( $post_id, '_yoast_wpseo_linkdex', true );
-        $read = get_post_meta( $post_id, '_yoast_wpseo_content_score', true );
-        return [
-            'seo_score'         => $seo === '' ? null : (int) $seo,
-            'readability_score' => $read === '' ? null : (int) $read,
-        ];
-    }
+function cowboy_mcp_seo_rank_math_scores( int $post_id ): array {
     $seo = get_post_meta( $post_id, 'rank_math_seo_score', true );
-    return [
-        'seo_score'         => $seo === '' ? null : (int) $seo,
-        'readability_score' => null,
-    ];
-}
-
-/**
- * Write one canonical field. $value is already validated: bool for flag/robots
- * fields, sanitized string for the rest ('' = clear the override so the
- * provider template resumes).
- */
-function cowboy_mcp_seo_write_field( int $post_id, string $field, string|bool $value ): void {
-    $def  = cowboy_mcp_seo_field_map()[ $field ];
-    $type = $def['type'] ?? 'text';
-
-    if ( $type === 'flag' ) {
-        if ( $value ) {
-            update_post_meta( $post_id, $def['key'], $def['on'] );
-        } else {
-            delete_post_meta( $post_id, $def['key'] );
-        }
-        return;
-    }
-
-    if ( $type === 'rm_robots' ) {
-        // One shared array — touch only our token, keep noarchive/nosnippet/etc.
-        $robots = get_post_meta( $post_id, $def['key'], true );
-        $robots = is_array( $robots ) ? array_values( array_diff( $robots, [ $def['token'] ] ) ) : [];
-        if ( $value ) {
-            $robots[] = $def['token'];
-        }
-        if ( $robots ) {
-            update_post_meta( $post_id, $def['key'], $robots );
-        } else {
-            delete_post_meta( $post_id, $def['key'] );
-        }
-        return;
-    }
-
-    // text / url
-    if ( $value === '' ) {
-        delete_post_meta( $post_id, $def['key'] );
-        if ( ! empty( $def['companion'] ) ) {
-            delete_post_meta( $post_id, $def['companion'] );
-        }
-        return;
-    }
-    update_post_meta( $post_id, $def['key'], $value );
-    if ( ! empty( $def['companion'] ) ) {
-        // Keep the attachment-id companion in sync — a stale id outranks the URL.
-        $att_id = attachment_url_to_postid( $value );
-        if ( $att_id ) {
-            update_post_meta( $post_id, $def['companion'], (string) $att_id );
-        } else {
-            delete_post_meta( $post_id, $def['companion'] );
-        }
-    }
-    if ( ! empty( $def['twitter_custom'] ) ) {
-        update_post_meta( $post_id, 'rank_math_twitter_use_facebook', 'off' );
-    }
+    return [ 'seo_score' => $seo === '' ? null : (int) $seo, 'readability_score' => null ];
 }
 
 /**
  * Yoast ≥14 serves frontend meta from its indexables table, rebuilt on post
- * save — not on direct postmeta writes. Rebuild it explicitly; Rank Math reads
- * postmeta at render time so there is nothing to refresh. Never fatal: a false
- * return surfaces as provider_cache_refreshed in the tool response.
+ * save — not on direct postmeta writes. Rebuild it explicitly. Never fatal: a
+ * false return surfaces as provider_cache_refreshed in the tool response.
  */
-function cowboy_mcp_seo_refresh_provider_cache( int $post_id ): bool {
-    $provider = cowboy_mcp_seo_get_provider();
-    if ( ( $provider['provider'] ?? '' ) !== 'yoast' ) {
-        return true;
-    }
+function cowboy_mcp_seo_yoast_refresh( int $post_id ): bool {
     if ( ! function_exists( 'YoastSEO' ) ) {
         return false;
     }
@@ -205,6 +223,18 @@ function cowboy_mcp_seo_refresh_provider_cache( int $post_id ): bool {
     } catch ( \Throwable $e ) {
         return false;
     }
+}
+
+/** Canonical fields for a post via the active adapter. */
+function cowboy_mcp_seo_read_fields( int $post_id ): array {
+    $adapter = cowboy_mcp_seo_adapter();
+    return $adapter ? ( $adapter['read'] )( $post_id ) : [];
+}
+
+/** Provider-computed scores via the active adapter. */
+function cowboy_mcp_seo_read_scores( int $post_id ): array {
+    $adapter = cowboy_mcp_seo_adapter();
+    return $adapter ? ( $adapter['scores'] )( $post_id ) : [ 'seo_score' => null, 'readability_score' => null ];
 }
 
 /**
@@ -248,7 +278,7 @@ function cowboy_mcp_seo_audit_issues( WP_Post $post, array $fields ): array {
 
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_seo_get_provider', '[SEO] Detect which SEO plugin is active (Yoast SEO or Rank Math) and its version.', [], [
+        Cowboy_MCP_Tools::tool( 'wp_seo_get_provider', '[SEO] Detect which SEO plugin is active (Yoast SEO, Rank Math, All in One SEO or SEOPress), its version, and whether several are active at once.', [], [
             'title'           => 'Get SEO Provider',
             'readOnlyHint'    => true,
             'destructiveHint' => false,
@@ -259,9 +289,12 @@ return [
             'properties' => [
                 'provider' => [ 'type' => 'string' ],
                 'version'  => [ 'type' => 'string' ],
+                'active_providers' => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
+                'conflict' => [ 'type' => 'boolean' ],
+                'warning'  => [ 'type' => 'string' ],
             ],
         ] ),
-        Cowboy_MCP_Tools::tool( 'wp_seo_get_meta', '[SEO] Read a post\'s SEO meta: title, description, focus keyword, robots, canonical URL, OpenGraph/Twitter overrides, cornerstone flag, plus provider scores. Unified across Yoast SEO and Rank Math (Yoast wins if both are active). Text fields are null when no per-post override is set.', [
+        Cowboy_MCP_Tools::tool( 'wp_seo_get_meta', '[SEO] Read a post\'s SEO meta: title, description, focus keyword, robots, canonical URL, OpenGraph/Twitter overrides, cornerstone flag, plus provider scores. Unified across Yoast SEO, Rank Math, All in One SEO and SEOPress (precedence Yoast > Rank Math > AIOSEO > SEOPress when several are active). Text fields are null when no per-post override is set.', [
             'post_id' => [ 'type' => 'integer', 'description' => 'Post ID', 'required' => true ],
         ], [
             'title'           => 'Get SEO Meta',
@@ -278,7 +311,7 @@ return [
                 'scores'   => [ 'type' => 'object' ],
             ],
         ] ),
-        Cowboy_MCP_Tools::tool( 'wp_seo_update_meta', '[SEO] Update a post\'s SEO meta. Only provided fields change. Empty string (text/URL fields) or false (booleans) clears the per-post override so the provider template resumes. Works with Yoast SEO and Rank Math; Rank Math focus_keyword accepts comma-separated multiple keywords. Undoable via wp_undo_change.', [
+        Cowboy_MCP_Tools::tool( 'wp_seo_update_meta', '[SEO] Update a post\'s SEO meta. Only provided fields change. Empty string (text/URL fields) or false (booleans) clears the per-post override so the provider template resumes. Works with Yoast SEO, Rank Math, All in One SEO and SEOPress; Rank Math focus_keyword accepts comma-separated multiple keywords. Undoable via wp_undo_change.', [
             'post_id'             => [ 'type' => 'integer', 'description' => 'Post ID', 'required' => true ],
             'title'               => [ 'type' => 'string',  'description' => 'SEO title override; provider template variables allowed ("" clears)' ],
             'description'         => [ 'type' => 'string',  'description' => 'Meta description ("" clears)' ],
@@ -292,7 +325,7 @@ return [
             'twitter_title'       => [ 'type' => 'string',  'description' => 'X/Twitter title override ("" clears)' ],
             'twitter_description' => [ 'type' => 'string',  'description' => 'X/Twitter description override ("" clears)' ],
             'twitter_image'       => [ 'type' => 'string',  'description' => 'X/Twitter image URL ("" clears)' ],
-            'cornerstone'         => [ 'type' => 'boolean', 'description' => 'Mark as cornerstone (Yoast) / pillar (Rank Math) content' ],
+            'cornerstone'         => [ 'type' => 'boolean', 'description' => 'Mark as cornerstone (Yoast) / pillar (Rank Math, AIOSEO) content; not available on SEOPress' ],
         ], [
             'title'           => 'Update SEO Meta',
             'readOnlyHint'    => false,
@@ -308,6 +341,9 @@ return [
                 'post_id'                  => [ 'type' => 'integer' ],
                 'fields'                   => [ 'type' => 'object' ],
                 'scores'                   => [ 'type' => 'object' ],
+                'unsupported_fields'       => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
+                'failed_fields'            => [ 'type' => 'object' ],
+                'warning'                  => [ 'type' => 'string' ],
             ],
         ] ),
         Cowboy_MCP_Tools::tool( 'wp_seo_audit', '[SEO] Audit posts for SEO issues: missing or badly sized meta descriptions, missing focus keywords, over-length custom titles, noindex on published posts. Paginated scan; the summary covers the scanned page only — iterate pages for a full-site audit.', [
@@ -337,8 +373,16 @@ return [
 
     'handlers' => [
         'wp_seo_get_provider' => function ( array $a ): array {
-            $provider = cowboy_mcp_seo_get_provider();
-            return $provider ?? [ 'provider' => 'none', 'version' => null ];
+            $active   = cowboy_mcp_seo_active_providers();
+            $provider = $active[0] ?? [ 'provider' => 'none', 'version' => null ];
+            $out      = $provider + [
+                'active_providers' => array_column( $active, 'provider' ),
+                'conflict'         => count( $active ) > 1,
+            ];
+            if ( $out['conflict'] ) {
+                $out['warning'] = 'Several SEO plugins are active (' . implode( ', ', $out['active_providers'] ) . '); Cowboy reads and writes ' . $provider['provider'] . ' only. Running more than one SEO plugin usually duplicates meta tags.';
+            }
+            return $out;
         },
         'wp_seo_get_meta' => function ( array $a ) {
             if ( ! current_user_can( 'edit_posts' ) ) {
@@ -348,8 +392,12 @@ return [
             if ( ! get_post( $post_id ) ) {
                 return new WP_Error( 'not_found', "Post {$post_id} not found." );
             }
+            $adapter = cowboy_mcp_seo_adapter();
+            if ( ! $adapter ) {
+                return new WP_Error( 'provider_api_unavailable', 'No supported SEO plugin API is available.' );
+            }
             return [
-                'provider' => cowboy_mcp_seo_get_provider()['provider'],
+                'provider' => $adapter['provider'],
                 'post_id'  => $post_id,
                 'fields'   => cowboy_mcp_seo_read_fields( $post_id ),
                 'scores'   => cowboy_mcp_seo_read_scores( $post_id ),
@@ -364,8 +412,11 @@ return [
                 return new WP_Error( 'forbidden', 'The authenticated user cannot edit this post.' );
             }
 
-            $map      = cowboy_mcp_seo_field_map();
-            $provided = array_intersect_key( $a, $map );
+            $adapter = cowboy_mcp_seo_adapter();
+            if ( ! $adapter ) {
+                return new WP_Error( 'provider_api_unavailable', 'No supported SEO plugin API is available.' );
+            }
+            $provided = array_intersect_key( $a, COWBOY_MCP_SEO_FIELDS );
             if ( ! $provided ) {
                 return new WP_Error( 'invalid_params', 'Provide at least one SEO field to update.' );
             }
@@ -375,10 +426,10 @@ return [
             // real changes behind.
             $writes = [];
             foreach ( $provided as $field => $value ) {
-                $type = $map[ $field ]['type'] ?? 'text';
-                if ( $type === 'flag' || $type === 'rm_robots' ) {
+                $vtype = COWBOY_MCP_SEO_FIELDS[ $field ];
+                if ( $vtype === 'bool' ) {
                     $writes[ $field ] = (bool) $value;
-                } elseif ( $type === 'url' ) {
+                } elseif ( $vtype === 'url' ) {
                     $value = trim( (string) $value );
                     if ( $value !== '' ) {
                         $value = esc_url_raw( $value );
@@ -397,18 +448,29 @@ return [
                 }
             }
 
-            foreach ( $writes as $field => $value ) {
-                cowboy_mcp_seo_write_field( $post_id, $field, $value );
-            }
+            $unsupported = array_values( array_diff( array_keys( $writes ), $adapter['supports'] ) );
+            $writes      = array_diff_key( $writes, array_flip( $unsupported ) );
+            $failed      = $writes ? ( $adapter['write_many'] )( $post_id, $writes ) : [];
 
-            return [
-                'updated'                  => true,
-                'provider_cache_refreshed' => cowboy_mcp_seo_refresh_provider_cache( $post_id ),
-                'provider'                 => cowboy_mcp_seo_get_provider()['provider'],
+            $out = [
+                'updated'                  => (bool) $writes && ! $failed,
+                'provider_cache_refreshed' => (bool) ( $adapter['refresh'] )( $post_id ),
+                'provider'                 => $adapter['provider'],
                 'post_id'                  => $post_id,
-                'fields'                   => cowboy_mcp_seo_read_fields( $post_id ),
-                'scores'                   => cowboy_mcp_seo_read_scores( $post_id ),
+                'fields'                   => ( $adapter['read'] )( $post_id ),
+                'scores'                   => ( $adapter['scores'] )( $post_id ),
             ];
+            if ( $unsupported ) {
+                $out['unsupported_fields'] = $unsupported;
+                $out['warning']            = $adapter['provider'] . ' has no per-post setting for: ' . implode( ', ', $unsupported ) . '.';
+            }
+            if ( $failed ) {
+                $out['failed_fields'] = $failed;
+            }
+            if ( ! $writes && $unsupported ) {
+                return new WP_Error( 'unsupported_field', $out['warning'] );
+            }
+            return $out;
         },
         'wp_seo_audit' => function ( array $a ) {
             if ( ! current_user_can( 'edit_posts' ) ) {

@@ -1036,7 +1036,7 @@ class Cowboy_MCP_Tools {
             'woocommerce/reports.php'       => class_exists( 'WooCommerce' ) && function_exists( 'wc_get_orders' ),
             'woocommerce/customers.php'     => class_exists( 'WooCommerce' ) && class_exists( 'WC_Customer' ),
             'woocommerce/coupons.php'       => class_exists( 'WooCommerce' ) && class_exists( 'WC_Coupon' ),
-            'seo/tools-seo.php'             => class_exists( 'WPSEO_Options' ) || defined( 'RANK_MATH_VERSION' ),
+            'seo/tools-seo.php'             => class_exists( 'WPSEO_Options' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'AIOSEO_VERSION' ) || defined( 'SEOPRESS_VERSION' ),
             'forms/tools-forms.php'         => function_exists( 'wpforms' ) || class_exists( 'GFAPI' ) || class_exists( 'WPCF7_ContactForm' ),
             'elementor/tools-elementor.php' => (bool) did_action( 'elementor/loaded' ) || class_exists( '\Elementor\Plugin' ),
             'wordfence/tools-wordfence.php' => class_exists( 'wordfence' ),
