@@ -79,6 +79,7 @@ class Cowboy_MCP_Rollback {
 		'wp_events_create'           => [ 'type' => 'tec_event', 'action' => 'create', 'result_id' => 'id' ],
 		'wp_events_update'           => [ 'type' => 'tec_event', 'action' => 'update', 'id_arg' => 'event_id' ],
 		'wp_events_delete'           => [ 'type' => 'tec_event', 'action' => 'delete', 'id_arg' => 'event_id' ],
+		'wp_events_exclude_date'     => [ 'type' => 'tec_event', 'action' => 'update', 'id_arg' => 'event_id' ],
 		'wp_edit_blocks'          => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_save_template'        => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_reset_template'       => [ 'type' => 'post', 'action' => 'delete', 'dynamic' => true ],

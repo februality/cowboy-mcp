@@ -44,6 +44,11 @@ $cowboy_mcp_events_fields = [
 	'tags'               => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'description' => 'Tag names (replaces the set)' ],
 	'image_id'           => [ 'type' => 'integer', 'description' => 'Featured image attachment ID (0 clears)' ],
 ];
+$cowboy_mcp_events_create_extra = [];
+if ( Cowboy_MCP_Tools::events_pro_ready() ) {
+	$cowboy_mcp_events_fields['recurrence']      = [ 'type' => 'string', 'description' => 'Events Calendar Pro: RFC 5545 rule, e.g. RRULE:FREQ=WEEKLY;BYDAY=TU;COUNT=8 ("" on update makes the event a single event). DTSTART comes from start_date. On update the new rule replaces the old one for the whole series.' ];
+	$cowboy_mcp_events_create_extra['series_id'] = [ 'type' => 'integer', 'description' => 'Events Calendar Pro: existing series to add the event to (create only). Without it a recurring event gets its own auto-generated series.' ];
+}
 
 $cowboy_mcp_events_tools = [
 	Cowboy_MCP_Tools::tool( 'wp_events_list', '[Events] List The Events Calendar events overlapping a date window (default: from now on). A recurring event appears once with is_recurring, series_id and next_occurrence — use wp_events_list_occurrences for its dates. Dates are site-local unless they carry an offset.', [
@@ -66,7 +71,7 @@ $cowboy_mcp_events_tools = [
 	Cowboy_MCP_Tools::tool(
 		'wp_events_create',
 		'[Events] Create an event (default status draft). Requires title, start_date and end_date (or all_day). Undoable.',
-		array_merge( $cowboy_mcp_events_fields, [ 'title' => [ 'type' => 'string', 'required' => true ], 'start_date' => $cowboy_mcp_events_fields['start_date'] + [ 'required' => true ] ] ),
+		array_merge( $cowboy_mcp_events_fields, $cowboy_mcp_events_create_extra, [ 'title' => [ 'type' => 'string', 'required' => true ], 'start_date' => $cowboy_mcp_events_fields['start_date'] + [ 'required' => true ] ] ),
 		[ 'title' => 'Create Event' ] + $cowboy_mcp_events_write,
 		[ 'type' => 'object' ]
 	),
@@ -197,7 +202,7 @@ $cowboy_mcp_events_handlers = [
 			return new WP_Error( 'invalid_params', 'start_date is required.' );
 		}
 		$orm = $built['orm'] + [ 'status' => 'draft' ];
-		$pro = cowboy_mcp_events_recurrence_create_args( $a );
+		$pro = cowboy_mcp_events_recurrence_create_args( $a, $built['dates'] );
 		if ( is_wp_error( $pro ) ) {
 			return $pro;
 		}
@@ -230,7 +235,12 @@ $cowboy_mcp_events_handlers = [
 			return $built;
 		}
 		$recurring = cowboy_mcp_events_format( $post, false )['is_recurring'];
-		$orm       = $built['orm'];
+		// Validate the recurrence change (Pro) BEFORE the first write.
+		$plan = cowboy_mcp_events_recurrence_plan( (int) $post->ID, $a, $built['dates'], $recurring );
+		if ( is_wp_error( $plan ) ) {
+			return $plan;
+		}
+		$orm = $built['orm'];
 		if ( $recurring && $built['dates'] ) {
 			// Never through the ORM for a recurring event (it re-parents the series).
 			foreach ( [ 'start_date', 'end_date', 'timezone', 'all_day' ] as $k ) {
@@ -247,11 +257,11 @@ $cowboy_mcp_events_handlers = [
 			delete_post_meta( $post->ID, $key );
 		}
 		cowboy_mcp_events_apply_terms( (int) $post->ID, $built['terms'] );
-		$err = cowboy_mcp_events_recurrence_update( (int) $post->ID, $a, $built['dates'], $recurring );
+		$err = cowboy_mcp_events_recurrence_update( (int) $post->ID, $a, $built['dates'], $recurring, $plan );
 		if ( is_wp_error( $err ) ) {
 			return $err;
 		}
-		if ( $built['clear_meta'] || $built['dates'] ) {
+		if ( $built['clear_meta'] || $built['dates'] || array_key_exists( 'recurrence', $a ) ) {
 			$err = cowboy_mcp_events_resync( (int) $post->ID );
 			if ( is_wp_error( $err ) ) {
 				return $err;
@@ -324,5 +334,140 @@ $cowboy_mcp_events_handlers = [
 		return is_wp_error( $p ) ? $p : cowboy_mcp_events_format_organizer( $p );
 	},
 ];
+
+if ( Cowboy_MCP_Tools::events_pro_ready() ) {
+	$cowboy_mcp_events_tools[] = Cowboy_MCP_Tools::tool( 'wp_events_list_occurrences', '[Events] Events Calendar Pro: list the dates of a recurring event or of every event in a series. occurrence_id values are provisional (they change over time) — use them for reading only.', [
+		'event_id'  => [ 'type' => 'integer', 'description' => 'Recurring event ID (or the ID of any of its occurrences)' ],
+		'series_id' => [ 'type' => 'integer', 'description' => 'Series ID (alternative to event_id)' ],
+		'from'      => [ 'type' => 'string', 'description' => 'Only dates ending on/after this (site-local, or ISO 8601 with offset)' ],
+		'to'        => [ 'type' => 'string', 'description' => 'Only dates starting on/before this. A date-only value (YYYY-MM-DD) includes that whole day.' ],
+		'page'      => [ 'type' => 'integer', 'default' => 1, 'minimum' => 1 ],
+		'per_page'  => [ 'type' => 'integer', 'default' => 50, 'minimum' => 1, 'maximum' => 200 ],
+	], [ 'title' => 'List Occurrences' ] + $cowboy_mcp_events_ro, [ 'type' => 'object' ] );
+	$cowboy_mcp_events_tools[] = Cowboy_MCP_Tools::tool( 'wp_events_exclude_date', '[Events] Events Calendar Pro: cancel (add) or restore (remove) one date of a recurring event. Undoable.', [
+		'event_id' => [ 'type' => 'integer', 'description' => 'Recurring event ID (not an occurrence ID)', 'required' => true ],
+		'date'     => [ 'type' => 'string', 'description' => 'YYYY-MM-DD (event-local)', 'required' => true ],
+		'action'   => [ 'type' => 'string', 'enum' => [ 'add', 'remove' ], 'description' => 'add = cancel that date, remove = restore it', 'required' => true ],
+	], [ 'title' => 'Exclude Event Date' ] + $cowboy_mcp_events_write, [ 'type' => 'object' ] );
+
+	$cowboy_mcp_events_handlers['wp_events_list_occurrences'] = function ( array $a ) {
+		if ( ! Cowboy_MCP_Tools::events_pro_ready() ) {
+			return new WP_Error( 'pro_unavailable', 'Needs Events Calendar Pro with custom tables active.' );
+		}
+		if ( ! empty( $a['event_id'] ) ) {
+			$post = cowboy_mcp_events_get( (int) $a['event_id'], false );
+			if ( is_wp_error( $post ) ) {
+				return $post;
+			}
+			$ids = [ (int) $post->ID ];
+		} elseif ( ! empty( $a['series_id'] ) ) {
+			if ( get_post_type( (int) $a['series_id'] ) !== 'tribe_event_series' ) {
+				return new WP_Error( 'not_found', 'Series ' . (int) $a['series_id'] . ' not found.' );
+			}
+			global $wpdb;
+			$table = cowboy_mcp_events_table( 'tec_series_relationships' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$ids = $table ? array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT event_post_id FROM {$table} WHERE series_post_id = %d", (int) $a['series_id'] ) ) ) : [];
+		} else {
+			return new WP_Error( 'invalid_params', 'Provide event_id or series_id.' );
+		}
+		$tz   = wp_timezone_string();
+		$utc  = new DateTimeZone( 'UTC' );
+		$from = isset( $a['from'] ) ? cowboy_mcp_events_parse_date( (string) $a['from'], $tz ) : null;
+		$to   = isset( $a['to'] ) ? cowboy_mcp_events_parse_date( (string) $a['to'], $tz ) : null;
+		foreach ( [ $from, $to ] as $d ) {
+			if ( is_wp_error( $d ) ) {
+				return $d;
+			}
+		}
+		if ( $to && preg_match( '/^\d{4}-\d{2}-\d{2}$/', trim( (string) $a['to'] ) ) ) {
+			$to = $to->setTime( 23, 59, 59 ); // date-only end = the whole day
+		}
+		$per   = min( max( (int) ( $a['per_page'] ?? 50 ), 1 ), 200 );
+		$page  = max( (int) ( $a['page'] ?? 1 ), 1 );
+		$rows  = [];
+		$total = 0;
+		foreach ( $ids as $eid ) {
+			$got    = cowboy_mcp_events_occurrences( $eid, $from ? $from->setTimezone( $utc )->format( 'Y-m-d H:i:s' ) : null, $to ? $to->setTimezone( $utc )->format( 'Y-m-d H:i:s' ) : null, 100000, 0 );
+			$total += $got['total'];
+			foreach ( $got['rows'] as $r ) {
+				$rows[] = $r + [ 'event_id' => $eid ];
+			}
+		}
+		usort( $rows, static fn( $x, $y ) => strcmp( $x['start'], $y['start'] ) );
+		return [ 'total' => $total, 'page' => $page, 'per_page' => $per, 'occurrences' => array_slice( $rows, ( $page - 1 ) * $per, $per ), 'note' => 'start/end are event-local. occurrence_id values are provisional and read-only.' ];
+	};
+
+	$cowboy_mcp_events_handlers['wp_events_exclude_date'] = function ( array $a ) {
+		if ( ! Cowboy_MCP_Tools::events_pro_ready() ) {
+			return new WP_Error( 'pro_unavailable', 'Needs Events Calendar Pro with custom tables active.' );
+		}
+		$post = cowboy_mcp_events_get( (int) $a['event_id'], true );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+			return new WP_Error( 'forbidden', 'The authenticated user cannot edit this event.' );
+		}
+		$rec = get_post_meta( $post->ID, '_EventRecurrence', true );
+		if ( ! is_array( $rec ) || empty( $rec['rules'] ) || cowboy_mcp_events_rset( (int) $post->ID ) === null ) {
+			return new WP_Error( 'not_recurring', "Event {$post->ID} is not a recurring event." );
+		}
+		$date = trim( (string) $a['date'] );
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) || ! checkdate( (int) substr( $date, 5, 2 ), (int) substr( $date, 8, 2 ), (int) substr( $date, 0, 4 ) ) ) {
+			return new WP_Error( 'invalid_date', 'date must be a valid YYYY-MM-DD.' );
+		}
+		$action = (string) ( $a['action'] ?? '' );
+		if ( $action === 'add' ) {
+			global $wpdb;
+			$table = cowboy_mcp_events_table( 'tec_occurrences' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$hit = $table ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND DATE(start_date) = %s", $post->ID, $date ) ) : 0;
+			if ( ! $hit ) {
+				return new WP_Error( 'date_not_an_occurrence', "{$date} is not a date of event {$post->ID} (see wp_events_list_occurrences)." );
+			}
+			$class = '\TEC\Events_Pro\Custom_Tables\V1\Updates\Events';
+			if ( ! function_exists( 'tribe' ) || ! class_exists( $class ) || ! method_exists( $class, 'add_date_exclusion_to_event' ) ) {
+				return new WP_Error( 'tec_api_unavailable', 'Events Calendar Pro exclusion API is unavailable.' );
+			}
+			try {
+				tribe( $class )->add_date_exclusion_to_event( (int) $post->ID, $date );
+			} catch ( \Throwable $e ) {
+				return new WP_Error( 'tec_api_unavailable', 'Could not add the exclusion: ' . $e->getMessage() );
+			}
+		} elseif ( $action === 'remove' ) {
+			if ( ! in_array( $date, cowboy_mcp_events_exclusion_dates( $rec ), true ) ) {
+				return new WP_Error( 'exclusion_not_found', "{$date} is not an excluded date of event {$post->ID}." );
+			}
+			$rec['exclusions'] = array_values(
+				array_filter(
+					(array) $rec['exclusions'],
+					static function ( $ex ) use ( $date ) {
+						$found = false;
+						if ( is_array( $ex ) ) {
+							array_walk_recursive(
+								$ex,
+								static function ( $v ) use ( $date, &$found ) {
+									$found = $found || $v === $date;
+								}
+							);
+						}
+						return ! $found;
+					}
+				)
+			);
+			update_post_meta( $post->ID, '_EventRecurrence', $rec );
+		} else {
+			return new WP_Error( 'invalid_params', 'action must be "add" or "remove".' );
+		}
+		$err = cowboy_mcp_events_resync( (int) $post->ID );
+		if ( is_wp_error( $err ) ) {
+			return $err;
+		}
+		clean_post_cache( $post->ID );
+		$out = cowboy_mcp_events_format( get_post( $post->ID ), true );
+		return [ 'id' => (int) $post->ID, 'action' => $action, 'date' => $date, 'exclusions' => $out['recurrence']['exclusions'] ?? [], 'occurrence_count' => $out['recurrence']['occurrence_count'] ?? null ];
+	};
+}
 
 return [ 'tools' => $cowboy_mcp_events_tools, 'handlers' => $cowboy_mcp_events_handlers ];
