@@ -47,7 +47,7 @@ class Cowboy_MCP_Rollback {
 		'wp_restore_revision'   => [ 'type' => 'post', 'action' => 'update', 'parent_of_arg' => 'revision_id' ],
 		'wp_elementor_update_template'      => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'template_id' ],
 		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
-		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
+		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id', 'seo_dynamic' => true ],
 		'wp_edit_blocks'          => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_save_template'        => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_reset_template'       => [ 'type' => 'post', 'action' => 'delete', 'dynamic' => true ],
@@ -210,6 +210,17 @@ class Cowboy_MCP_Rollback {
 				];
 				self::$pending = $handle;
 				return $handle;
+			}
+
+			// AIOSEO keeps per-post SEO in its own table, not postmeta: switch to
+			// a row snapshot when it is the provider wp_seo_update_meta will write.
+			if ( ! empty( $strategy['seo_dynamic'] ) ) {
+				if ( class_exists( 'Cowboy_MCP_Tools' ) ) {
+					Cowboy_MCP_Tools::boot_domains();
+				}
+				if ( function_exists( 'cowboy_mcp_seo_get_provider' ) && ( cowboy_mcp_seo_get_provider()['provider'] ?? '' ) === 'aioseo' ) {
+					$strategy['type'] = 'seo_row';
+				}
 			}
 
 			// Gutenberg targets may not exist yet (template override /
@@ -457,6 +468,7 @@ class Cowboy_MCP_Rollback {
 	private static function object_label( string $type, ?string $id, ?array $state, array $args ): ?string {
 		return match ( $type ) {
 			'option'    => $id,
+			'seo_row' => ( $id !== null ? ( get_the_title( (int) $id ) ?: "post #{$id}" ) : 'post' ) . ' (AIOSEO)',
 			'post', 'media' => $state['post']['post_title'] ?? ( $id !== null ? "post #{$id}" : null ),
 			'acf_value' => 'ACF ' . str_replace( '@', ' on ', (string) $id ),
 			'term'    => $state['term']['name'] ?? $id,
@@ -490,6 +502,24 @@ class Cowboy_MCP_Rollback {
 					return null;
 				}
 				return [ 'value' => $v ];
+
+			case 'seo_row': {
+				if ( ! get_post( (int) $id ) ) {
+					return null;
+				}
+				global $wpdb;
+				$table = $wpdb->prefix . 'aioseo_posts';
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$row  = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE post_id = %d", (int) $id ), ARRAY_A );
+				$meta = [];
+				foreach ( get_post_meta( (int) $id ) as $k => $v ) {
+					if ( str_starts_with( (string) $k, '_aioseo_' ) ) {
+						$meta[ $k ] = $v;
+					}
+				}
+				ksort( $meta );
+				return [ 'row' => is_array( $row ) ? $row : null, 'meta' => $meta ];
+			}
 
 			case 'post':
 			case 'media':
@@ -714,6 +744,9 @@ class Cowboy_MCP_Rollback {
 			case 'db_rows':
 				return self::restore_db_rows( $state );
 
+			case 'seo_row':
+				return self::restore_seo_row( (int) $id, $state );
+
 			case 'post':
 				return self::restore_post( (int) $id, $state );
 
@@ -886,6 +919,31 @@ class Cowboy_MCP_Rollback {
 			}
 		}
 		return new WP_Error( 'undo_unsupported', "No restore handler for object type '{$type}'." );
+	}
+
+	/** Put the AIOSEO row (or its absence) and the _aioseo_* postmeta mirror back exactly. */
+	private static function restore_seo_row( int $post_id, ?array $state ): bool|WP_Error {
+		global $wpdb;
+		$table = $wpdb->prefix . 'aioseo_posts';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->delete( $table, [ 'post_id' => $post_id ], [ '%d' ] );
+		if ( ! empty( $state['row'] ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			if ( false === $wpdb->insert( $table, $state['row'] ) ) {
+				return new WP_Error( 'undo_failed', "Could not restore the AIOSEO row for post #{$post_id}: {$wpdb->last_error}" );
+			}
+		}
+		foreach ( array_keys( get_post_meta( $post_id ) ) as $k ) {
+			if ( str_starts_with( (string) $k, '_aioseo_' ) ) {
+				delete_post_meta( $post_id, $k );
+			}
+		}
+		foreach ( (array) ( $state['meta'] ?? [] ) as $k => $values ) {
+			foreach ( (array) $values as $v ) {
+				add_post_meta( $post_id, $k, wp_slash( maybe_unserialize( $v ) ) );
+			}
+		}
+		return true;
 	}
 
 	/** Restore (or recreate with original ID) a post + meta + terms. Null state = delete. */
