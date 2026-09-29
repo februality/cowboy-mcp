@@ -301,3 +301,98 @@ function cowboy_mcp_events_exclusion_dates( array $recurrence ): array {
 	sort( $dates );
 	return $dates;
 }
+
+/** Linked-post event count (venue or organizer) — real events, not occurrences. */
+function cowboy_mcp_events_linked_count( int $id, string $meta_key ): int {
+	$q = new WP_Query( [ 'post_type' => 'tribe_events', 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids', 'tec_events_ignore' => true, 'tribe_suppress_query_filters' => true, 'meta_query' => [ [ 'key' => $meta_key, 'value' => $id ] ] ] ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+	return (int) $q->found_posts;
+}
+
+const COWBOY_MCP_EVENTS_VENUE_META = [
+	'address' => '_VenueAddress', 'city' => '_VenueCity', 'state' => '_VenueState', 'province' => '_VenueProvince',
+	'zip' => '_VenueZip', 'country' => '_VenueCountry', 'phone' => '_VenuePhone', 'website' => '_VenueURL', 'show_map' => '_VenueShowMap',
+];
+const COWBOY_MCP_EVENTS_ORGANIZER_META = [ 'phone' => '_OrganizerPhone', 'website' => '_OrganizerWebsite', 'email' => '_OrganizerEmail' ];
+
+function cowboy_mcp_events_format_venue( WP_Post $p ): array {
+	$out = [ 'id' => (int) $p->ID, 'title' => $p->post_title, 'status' => $p->post_status ];
+	foreach ( COWBOY_MCP_EVENTS_VENUE_META as $field => $key ) {
+		$out[ $field ] = (string) get_post_meta( $p->ID, $key, true );
+	}
+	$out['show_map']    = in_array( $out['show_map'], [ '1', 'true', 'yes' ], true );
+	$out['event_count'] = cowboy_mcp_events_linked_count( (int) $p->ID, '_EventVenueID' );
+	return $out;
+}
+
+function cowboy_mcp_events_format_organizer( WP_Post $p ): array {
+	$out = [ 'id' => (int) $p->ID, 'title' => $p->post_title, 'status' => $p->post_status ];
+	foreach ( COWBOY_MCP_EVENTS_ORGANIZER_META as $field => $key ) {
+		$out[ $field ] = (string) get_post_meta( $p->ID, $key, true );
+	}
+	$out['event_count'] = cowboy_mcp_events_linked_count( (int) $p->ID, '_EventOrganizerID' );
+	return $out;
+}
+
+/**
+ * Create/update a venue or organizer through TEC's ORM (keeps TEC's own
+ * sanitising and hooks). $kind: 'venue' | 'organizer'.
+ */
+function cowboy_mcp_events_save_linked( string $kind, array $a, ?int $id ): WP_Post|WP_Error {
+	$repo_fn = $kind === 'venue' ? 'tribe_venues' : 'tribe_organizers';
+	$fields  = $kind === 'venue' ? COWBOY_MCP_EVENTS_VENUE_META : COWBOY_MCP_EVENTS_ORGANIZER_META;
+	if ( ! function_exists( $repo_fn ) ) {
+		return new WP_Error( 'tec_api_unavailable', "The Events Calendar {$kind} API ({$repo_fn}) is unavailable." );
+	}
+	$args = [];
+	if ( isset( $a['title'] ) ) {
+		$args['title'] = sanitize_text_field( $a['title'] );
+	}
+	if ( isset( $a['status'] ) ) {
+		$args['status'] = sanitize_key( $a['status'] );
+	}
+	foreach ( array_keys( $fields ) as $field ) {
+		if ( ! array_key_exists( $field, $a ) ) {
+			continue;
+		}
+		$args[ $field ] = match ( $field ) {
+			'email'    => sanitize_email( (string) $a[ $field ] ),
+			'website'  => esc_url_raw( (string) $a[ $field ] ),
+			'show_map' => (bool) $a[ $field ],
+			default    => sanitize_text_field( (string) $a[ $field ] ),
+		};
+	}
+	try {
+		if ( $id === null ) {
+			$args += [ 'status' => 'publish' ];
+			$post = $repo_fn()->set_args( $args )->create();
+		} else {
+			$repo_fn()->where( 'id', $id )->set_args( $args )->save();
+			$post = get_post( $id );
+		}
+	} catch ( \Throwable $e ) {
+		return new WP_Error( 'tec_api_unavailable', "The Events Calendar rejected the {$kind}: " . $e->getMessage() );
+	}
+	if ( ! $post instanceof WP_Post ) {
+		return new WP_Error( 'save_failed', "The Events Calendar did not save the {$kind} (a title is required)." );
+	}
+	// ORM drops falsy values; make explicit clears stick.
+	foreach ( $fields as $field => $key ) {
+		if ( array_key_exists( $field, $a ) && ( $a[ $field ] === '' || $a[ $field ] === false ) ) {
+			delete_post_meta( $post->ID, $key );
+		}
+	}
+	return get_post( $post->ID );
+}
+
+function cowboy_mcp_events_list_linked( string $type, callable $format, array $a ): array {
+	$q = new WP_Query( [
+		'post_type'      => $type,
+		'post_status'    => [ 'publish', 'draft', 'private' ],
+		's'              => sanitize_text_field( (string) ( $a['search'] ?? '' ) ),
+		'posts_per_page' => min( max( (int) ( $a['per_page'] ?? 20 ), 1 ), 100 ),
+		'paged'          => max( (int) ( $a['page'] ?? 1 ), 1 ),
+		'orderby'        => 'title',
+		'order'          => 'ASC',
+	] );
+	return [ 'items' => array_map( $format, $q->posts ), 'total' => (int) $q->found_posts ];
+}

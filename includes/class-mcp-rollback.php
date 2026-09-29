@@ -48,6 +48,10 @@ class Cowboy_MCP_Rollback {
 		'wp_elementor_update_template'      => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'template_id' ],
 		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
 		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id', 'seo_dynamic' => true ],
+		'wp_events_create_venue'     => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'id' ],
+		'wp_events_update_venue'     => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'venue_id' ],
+		'wp_events_create_organizer' => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'id' ],
+		'wp_events_update_organizer' => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'organizer_id' ],
 		'wp_edit_blocks'          => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_save_template'        => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_reset_template'       => [ 'type' => 'post', 'action' => 'delete', 'dynamic' => true ],

@@ -9,6 +9,18 @@ require_once __DIR__ . '/helpers.php';
 
 // Shared schema/annotation arrays live here, above every tool definition.
 $cowboy_mcp_events_ro = [ 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ];
+$cowboy_mcp_events_write = [ 'readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => false, 'openWorldHint' => false ];
+$cowboy_mcp_events_venue_props = [
+	'address' => [ 'type' => 'string' ], 'city' => [ 'type' => 'string' ], 'state' => [ 'type' => 'string', 'description' => 'US state' ],
+	'province' => [ 'type' => 'string', 'description' => 'Province/region outside the US' ], 'zip' => [ 'type' => 'string' ],
+	'country' => [ 'type' => 'string' ], 'phone' => [ 'type' => 'string' ], 'website' => [ 'type' => 'string' ],
+	'show_map' => [ 'type' => 'boolean' ], 'status' => [ 'type' => 'string', 'description' => 'publish (default) or draft' ],
+];
+$cowboy_mcp_events_org_props = [
+	'phone' => [ 'type' => 'string' ], 'website' => [ 'type' => 'string' ], 'email' => [ 'type' => 'string' ],
+	'status' => [ 'type' => 'string', 'description' => 'publish (default) or draft' ],
+];
+$cowboy_mcp_events_list_props = [ 'search' => [ 'type' => 'string' ], 'page' => [ 'type' => 'integer', 'default' => 1, 'minimum' => 1 ], 'per_page' => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ] ];
 
 $cowboy_mcp_events_tools = [
 	Cowboy_MCP_Tools::tool( 'wp_events_list', '[Events] List The Events Calendar events overlapping a date window (default: from now on). A recurring event appears once with is_recurring, series_id and next_occurrence — use wp_events_list_occurrences for its dates. Dates are site-local unless they carry an offset.', [
@@ -28,6 +40,12 @@ $cowboy_mcp_events_tools = [
 	Cowboy_MCP_Tools::tool( 'wp_events_get', '[Events] Get one event: dates, timezone, venue, organizers, cost, categories, tags, image; for recurring events (Events Calendar Pro) the recurrence rule (RFC 5545), exclusions and occurrence count. Accepts an occurrence ID and reports the real event_id.', [
 		'event_id' => [ 'type' => 'integer', 'description' => 'Event ID (or an occurrence ID)', 'required' => true ],
 	], [ 'title' => 'Get Event' ] + $cowboy_mcp_events_ro, [ 'type' => 'object' ] ),
+	Cowboy_MCP_Tools::tool( 'wp_events_list_venues', '[Events] List venues with address and number of events. Delete a venue with wp_delete_post (trash, undoable).', $cowboy_mcp_events_list_props, [ 'title' => 'List Venues' ] + $cowboy_mcp_events_ro ),
+	Cowboy_MCP_Tools::tool( 'wp_events_create_venue', '[Events] Create a venue. Undoable.', [ 'title' => [ 'type' => 'string', 'required' => true ] ] + $cowboy_mcp_events_venue_props, [ 'title' => 'Create Venue' ] + $cowboy_mcp_events_write ),
+	Cowboy_MCP_Tools::tool( 'wp_events_update_venue', '[Events] Update a venue; only provided fields change ("" clears). Undoable.', [ 'venue_id' => [ 'type' => 'integer', 'required' => true ], 'title' => [ 'type' => 'string' ] ] + $cowboy_mcp_events_venue_props, [ 'title' => 'Update Venue' ] + $cowboy_mcp_events_write ),
+	Cowboy_MCP_Tools::tool( 'wp_events_list_organizers', '[Events] List organizers with contact details and number of events. Delete with wp_delete_post.', $cowboy_mcp_events_list_props, [ 'title' => 'List Organizers' ] + $cowboy_mcp_events_ro ),
+	Cowboy_MCP_Tools::tool( 'wp_events_create_organizer', '[Events] Create an organizer. Undoable.', [ 'title' => [ 'type' => 'string', 'required' => true ] ] + $cowboy_mcp_events_org_props, [ 'title' => 'Create Organizer' ] + $cowboy_mcp_events_write ),
+	Cowboy_MCP_Tools::tool( 'wp_events_update_organizer', '[Events] Update an organizer; only provided fields change ("" clears). Undoable.', [ 'organizer_id' => [ 'type' => 'integer', 'required' => true ], 'title' => [ 'type' => 'string' ] ] + $cowboy_mcp_events_org_props, [ 'title' => 'Update Organizer' ] + $cowboy_mcp_events_write ),
 ];
 
 $cowboy_mcp_events_handlers = [
@@ -117,6 +135,32 @@ $cowboy_mcp_events_handlers = [
 			$out['requested_occurrence_id'] = (int) $a['event_id'];
 		}
 		return $out;
+	},
+	'wp_events_list_venues'      => fn( array $a ) => cowboy_mcp_events_list_linked( 'tribe_venue', 'cowboy_mcp_events_format_venue', $a ),
+	'wp_events_list_organizers'  => fn( array $a ) => cowboy_mcp_events_list_linked( 'tribe_organizer', 'cowboy_mcp_events_format_organizer', $a ),
+	'wp_events_create_venue'     => function ( array $a ) {
+		$p = cowboy_mcp_events_save_linked( 'venue', $a, null );
+		return is_wp_error( $p ) ? $p : cowboy_mcp_events_format_venue( $p );
+	},
+	'wp_events_update_venue'     => function ( array $a ) {
+		$p = cowboy_mcp_events_get_linked( (int) $a['venue_id'], 'tribe_venue' );
+		if ( is_wp_error( $p ) ) {
+			return $p;
+		}
+		$p = cowboy_mcp_events_save_linked( 'venue', $a, (int) $p->ID );
+		return is_wp_error( $p ) ? $p : cowboy_mcp_events_format_venue( $p );
+	},
+	'wp_events_create_organizer' => function ( array $a ) {
+		$p = cowboy_mcp_events_save_linked( 'organizer', $a, null );
+		return is_wp_error( $p ) ? $p : cowboy_mcp_events_format_organizer( $p );
+	},
+	'wp_events_update_organizer' => function ( array $a ) {
+		$p = cowboy_mcp_events_get_linked( (int) $a['organizer_id'], 'tribe_organizer' );
+		if ( is_wp_error( $p ) ) {
+			return $p;
+		}
+		$p = cowboy_mcp_events_save_linked( 'organizer', $a, (int) $p->ID );
+		return is_wp_error( $p ) ? $p : cowboy_mcp_events_format_organizer( $p );
 	},
 ];
 
