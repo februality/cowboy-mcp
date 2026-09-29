@@ -52,6 +52,12 @@ $cowboy_mcp_events_handlers = [
 			'paged'          => $page,
 			'meta_query'     => [], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'tax_query'      => [], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+			// TEC's own opt-outs. Without them the custom-tables query monitor rewrites a
+			// tribe_events query to one row per OCCURRENCE (Pro: a 3-date series = 3 rows with
+			// provisional ids, found_posts 3), and the legacy query layer adds its own date
+			// clauses. The window and ordering are computed here: one row per real event.
+			'tec_events_ignore'            => true,
+			'tribe_suppress_query_filters' => true,
 		];
 		$occ_table = cowboy_mcp_events_table( 'tec_occurrences' );
 		if ( $occ_table ) {
