@@ -273,7 +273,6 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 * New: Revisions - list a post's revisions, see a git-style diff, restore one (undoable).
 * New: The Events Calendar - events, venues and organizers; recurring events with Events Calendar Pro (whole-series edits, cancel/restore single dates). Changes are undoable; permanent deletes take a database checkpoint first.
 * New: SEO tools now also work with All in One SEO and SEOPress (and report when several SEO plugins are active).
-* Fix: the MCP response id could be altered on sites running The Events Calendar.
 
 = Earlier versions =
 
