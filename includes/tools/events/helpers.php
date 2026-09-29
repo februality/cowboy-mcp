@@ -224,6 +224,14 @@ function cowboy_mcp_events_resync( int $post_id ): ?WP_Error {
 	return null;
 }
 
+/**
+ * TEC boolean meta: the ORM stores "1" (e.g. _EventAllDay), the classic
+ * editor "yes" — both mean on; absent/""/"0"/"no" mean off.
+ */
+function cowboy_mcp_events_meta_truthy( mixed $v ): bool {
+	return in_array( strtolower( trim( (string) $v ) ), [ '1', 'yes', 'true', 'on' ], true );
+}
+
 /** Response shape for an event. */
 function cowboy_mcp_events_format( WP_Post $post, bool $full ): array {
 	$id   = (int) $post->ID;
@@ -240,7 +248,7 @@ function cowboy_mcp_events_format( WP_Post $post, bool $full ): array {
 		'status'        => $post->post_status,
 		'start'         => [ 'local' => $meta( '_EventStartDate' ), 'utc' => $meta( '_EventStartDateUTC' ), 'timezone' => $tz ],
 		'end'           => [ 'local' => $meta( '_EventEndDate' ), 'utc' => $meta( '_EventEndDateUTC' ), 'timezone' => $tz ],
-		'all_day'       => $meta( '_EventAllDay' ) === 'yes',
+		'all_day'       => cowboy_mcp_events_meta_truthy( $meta( '_EventAllDay' ) ),
 		'venue'         => $vid ? [ 'id' => $vid, 'title' => get_the_title( $vid ) ] : null,
 		'organizer_ids' => $oids,
 		'cost'          => $meta( '_EventCost' ),
@@ -267,8 +275,8 @@ function cowboy_mcp_events_format( WP_Post $post, bool $full ): array {
 		'currency_symbol'    => $meta( '_EventCurrencySymbol' ),
 		'currency_position'  => $meta( '_EventCurrencyPosition' ),
 		'url'                => $meta( '_EventURL' ),
-		'show_map'           => in_array( $meta( '_EventShowMap' ), [ '1', 'yes', 'true' ], true ),
-		'hide_from_upcoming' => $meta( '_EventHideFromUpcoming' ) === 'yes',
+		'show_map'           => cowboy_mcp_events_meta_truthy( $meta( '_EventShowMap' ) ),
+		'hide_from_upcoming' => cowboy_mcp_events_meta_truthy( $meta( '_EventHideFromUpcoming' ) ),
 		'categories'         => $terms( 'tribe_events_cat' ),
 		'tags'               => $terms( 'post_tag' ),
 		'image_id'           => (int) get_post_thumbnail_id( $id ) ?: null,
@@ -395,4 +403,200 @@ function cowboy_mcp_events_list_linked( string $type, callable $format, array $a
 		'order'          => 'ASC',
 	] );
 	return [ 'items' => array_map( $format, $q->posts ), 'total' => (int) $q->found_posts ];
+}
+
+/**
+ * Validate agent args and build TEC ORM args. Only keys present in $a are
+ * touched. Falsy flags are returned in clear_meta because the ORM drops them.
+ */
+function cowboy_mcp_events_build_args( array $a, ?WP_Post $existing ): array|WP_Error {
+	$orm   = [];
+	$clear = [];
+	foreach ( [ 'title' => 'sanitize_text_field', 'excerpt' => 'sanitize_textarea_field' ] as $k => $fn ) {
+		if ( isset( $a[ $k ] ) ) {
+			$orm[ $k ] = $fn( (string) $a[ $k ] );
+		}
+	}
+	if ( isset( $a['content'] ) ) {
+		$orm['content'] = wp_kses_post( (string) $a['content'] );
+	}
+	if ( isset( $a['status'] ) ) {
+		$status = sanitize_key( $a['status'] );
+		if ( ! in_array( $status, [ 'publish', 'draft', 'pending', 'private', 'future' ], true ) ) {
+			return new WP_Error( 'invalid_params', "status must be one of publish, draft, pending, private, future (got '{$status}'). Use wp_events_delete to trash an event." );
+		}
+		$orm['status'] = $status;
+	}
+	foreach ( [ 'cost' => '_EventCost', 'currency_symbol' => '_EventCurrencySymbol', 'url' => '_EventURL' ] as $k => $meta ) {
+		if ( ! array_key_exists( $k, $a ) ) {
+			continue;
+		}
+		$v = $k === 'url' ? esc_url_raw( (string) $a[ $k ] ) : sanitize_text_field( (string) $a[ $k ] );
+		if ( $v === '' ) {
+			$clear[] = $meta;
+		} else {
+			$orm[ $k ] = $v;
+		}
+	}
+	if ( isset( $a['currency_position'] ) ) {
+		if ( ! in_array( $a['currency_position'], [ 'prefix', 'postfix' ], true ) ) {
+			return new WP_Error( 'invalid_params', 'currency_position must be "prefix" or "postfix".' );
+		}
+		$orm['currency_position'] = $a['currency_position'];
+	}
+	foreach ( [ 'featured' => '_tribe_featured', 'show_map' => '_EventShowMap', 'hide_from_upcoming' => '_EventHideFromUpcoming' ] as $k => $meta ) {
+		if ( array_key_exists( $k, $a ) ) {
+			if ( $a[ $k ] ) {
+				$orm[ $k ] = true;
+			} else {
+				$clear[] = $meta;
+			}
+		}
+	}
+	if ( array_key_exists( 'venue_id', $a ) ) {
+		if ( empty( $a['venue_id'] ) ) {
+			$clear[] = '_EventVenueID';
+		} else {
+			$v = cowboy_mcp_events_get_linked( (int) $a['venue_id'], 'tribe_venue' );
+			if ( is_wp_error( $v ) ) {
+				return $v;
+			}
+			$orm['venue'] = (int) $v->ID;
+		}
+	}
+	if ( array_key_exists( 'organizer_ids', $a ) ) {
+		$ids = [];
+		foreach ( (array) $a['organizer_ids'] as $oid ) {
+			$o = cowboy_mcp_events_get_linked( (int) $oid, 'tribe_organizer' );
+			if ( is_wp_error( $o ) ) {
+				return $o;
+			}
+			$ids[] = (int) $o->ID;
+		}
+		if ( $ids ) {
+			$orm['organizer'] = array_values( array_unique( $ids ) );
+		} else {
+			$clear[] = '_EventOrganizerID';
+		}
+	}
+	if ( array_key_exists( 'image_id', $a ) ) {
+		if ( empty( $a['image_id'] ) ) {
+			$clear[] = '_thumbnail_id';
+		} elseif ( get_post_type( (int) $a['image_id'] ) !== 'attachment' ) {
+			return new WP_Error( 'invalid_params', 'image_id ' . (int) $a['image_id'] . ' is not a media attachment.' );
+		} else {
+			$orm['image'] = (int) $a['image_id'];
+		}
+	}
+
+	// Terms (applied after save, never auto-created).
+	$terms = [ 'tribe_events_cat' => null, 'post_tag' => null ];
+	if ( array_key_exists( 'categories', $a ) ) {
+		$terms['tribe_events_cat'] = [];
+		foreach ( (array) $a['categories'] as $c ) {
+			$term = is_numeric( $c ) ? get_term( (int) $c, 'tribe_events_cat' ) : get_term_by( 'slug', sanitize_title( (string) $c ), 'tribe_events_cat' );
+			if ( ! $term || is_wp_error( $term ) ) {
+				$label = sanitize_text_field( (string) $c );
+				return new WP_Error( 'invalid_params', "Unknown event category '{$label}'. Create it first with wp_create_term (taxonomy tribe_events_cat)." );
+			}
+			$terms['tribe_events_cat'][] = (int) $term->term_id;
+		}
+	}
+	if ( array_key_exists( 'tags', $a ) ) {
+		$terms['post_tag'] = array_map( 'sanitize_text_field', (array) $a['tags'] );
+	}
+
+	// Dates: resolved against existing values so partial updates stay consistent.
+	$dates     = null;
+	$date_keys = [ 'start_date', 'end_date', 'all_day', 'timezone' ];
+	if ( array_intersect( $date_keys, array_keys( $a ) ) ) {
+		$old_tz = $existing ? ( (string) get_post_meta( $existing->ID, '_EventTimezone', true ) ?: wp_timezone_string() ) : null;
+		$tz     = cowboy_mcp_events_tz( $a['timezone'] ?? $old_tz );
+		if ( is_wp_error( $tz ) ) {
+			return $tz;
+		}
+		$all_day = array_key_exists( 'all_day', $a ) ? (bool) $a['all_day'] : ( $existing && cowboy_mcp_events_meta_truthy( get_post_meta( $existing->ID, '_EventAllDay', true ) ) );
+		$raw_s   = $a['start_date'] ?? ( $existing ? (string) get_post_meta( $existing->ID, '_EventStartDate', true ) : null );
+		if ( $raw_s === null || $raw_s === '' ) {
+			return new WP_Error( 'invalid_params', 'start_date is required.' );
+		}
+		$start = cowboy_mcp_events_parse_date( (string) $raw_s, $tz );
+		if ( is_wp_error( $start ) ) {
+			return $start;
+		}
+		$raw_e = $a['end_date'] ?? ( $existing ? (string) get_post_meta( $existing->ID, '_EventEndDate', true ) : null );
+		if ( ( $raw_e === null || $raw_e === '' ) && ! $all_day ) {
+			return new WP_Error( 'invalid_params', 'end_date is required unless all_day is true.' );
+		}
+		$end = ( $raw_e === null || $raw_e === '' ) ? $start : cowboy_mcp_events_parse_date( (string) $raw_e, $tz );
+		if ( is_wp_error( $end ) ) {
+			return $end;
+		}
+		if ( $all_day ) {
+			$start = $start->setTime( 0, 0, 0 );
+			$end   = $end->setTime( 23, 59, 59 );
+		}
+		if ( $end < $start ) {
+			return new WP_Error( 'end_before_start', 'end_date is before start_date.' );
+		}
+		$dates             = [ 'start' => $start, 'end' => $end, 'tz' => $tz, 'all_day' => $all_day ];
+		$orm['start_date'] = $start->format( 'Y-m-d H:i:s' );
+		$orm['end_date']   = $end->format( 'Y-m-d H:i:s' );
+		$orm['timezone']   = $tz;
+		if ( $all_day ) {
+			$orm['all_day'] = true;
+		} else {
+			$clear[] = '_EventAllDay';
+		}
+	}
+	return [ 'orm' => $orm, 'clear_meta' => array_values( array_unique( $clear ) ), 'terms' => $terms, 'dates' => $dates ];
+}
+
+/**
+ * Save ORM args onto ONE real event post. tribe_events()->where( 'id', … ) is
+ * unusable here: under Pro it resolves through the occurrence query, so save()
+ * targets the PROVISIONAL occurrence id — meta lands (Pro redirects it) but post
+ * fields such as the title silently do not. The repository's own
+ * get_query_for_posts() + set_query() pins the target to the real post.
+ */
+function cowboy_mcp_events_orm_save( int $id, array $orm ): ?WP_Error {
+	try {
+		$repo = tribe_events();
+		if ( method_exists( $repo, 'get_query_for_posts' ) && method_exists( $repo, 'set_query' ) ) {
+			$query          = $repo->get_query_for_posts( [ $id ] );
+			$query->request = '/* cowboy-mcp: fixed target */'; // marks the query as already run: get_ids() reads ->posts
+			$repo->set_query( $query );
+		} else {
+			$repo = $repo->where( 'id', $id );
+		}
+		$saved = $repo->set_args( $orm )->save();
+	} catch ( \Throwable $e ) {
+		return new WP_Error( 'tec_api_unavailable', 'The Events Calendar rejected the update: ' . $e->getMessage() );
+	}
+	if ( ! is_array( $saved ) || empty( $saved[ $id ] ) || is_wp_error( $saved[ $id ] ) ) {
+		return new WP_Error( 'save_failed', "The Events Calendar did not save event {$id}." );
+	}
+	return null;
+}
+
+/** Replace an event's category/tag sets (null = leave that taxonomy alone). */
+function cowboy_mcp_events_apply_terms( int $id, array $terms ): void {
+	if ( $terms['tribe_events_cat'] !== null ) {
+		wp_set_object_terms( $id, $terms['tribe_events_cat'], 'tribe_events_cat' );
+	}
+	if ( $terms['post_tag'] !== null ) {
+		wp_set_post_tags( $id, $terms['post_tag'] );
+	}
+}
+
+/** Recurrence args for create (Pro). Replaced in the recurring-events task. */
+function cowboy_mcp_events_recurrence_create_args( array $a ): array|WP_Error {
+	unset( $a );
+	return [];
+}
+
+/** Recurrence handling for update (Pro). Replaced in the recurring-events task. */
+function cowboy_mcp_events_recurrence_update( int $id, array $a, ?array $dates, bool $recurring ): ?WP_Error {
+	unset( $id, $a, $dates, $recurring );
+	return null;
 }

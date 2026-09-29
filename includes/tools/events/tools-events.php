@@ -21,6 +21,29 @@ $cowboy_mcp_events_org_props = [
 	'status' => [ 'type' => 'string', 'description' => 'publish (default) or draft' ],
 ];
 $cowboy_mcp_events_list_props = [ 'search' => [ 'type' => 'string' ], 'page' => [ 'type' => 'integer', 'default' => 1, 'minimum' => 1 ], 'per_page' => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ] ];
+// Event fields shared by create/update (Pro-only fields are merged in before the definitions).
+$cowboy_mcp_events_fields = [
+	'title'              => [ 'type' => 'string' ],
+	'content'            => [ 'type' => 'string', 'description' => 'Event description (HTML allowed, filtered like post content)' ],
+	'excerpt'            => [ 'type' => 'string' ],
+	'status'             => [ 'type' => 'string', 'description' => 'publish, draft (default on create), pending, private, future' ],
+	'start_date'         => [ 'type' => 'string', 'description' => 'Event-local "YYYY-MM-DD HH:MM[:SS]" (or "YYYY-MM-DD" with all_day), or ISO 8601 with offset' ],
+	'end_date'           => [ 'type' => 'string', 'description' => 'Same format as start_date; optional with all_day' ],
+	'all_day'            => [ 'type' => 'boolean' ],
+	'timezone'           => [ 'type' => 'string', 'description' => 'IANA name (Europe/Berlin) or UTC+2; default: site timezone' ],
+	'venue_id'           => [ 'type' => 'integer', 'description' => 'Venue ID (0 clears)' ],
+	'organizer_ids'      => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ], 'description' => 'Organizer IDs ([] clears)' ],
+	'cost'               => [ 'type' => 'string', 'description' => 'e.g. "15" or "Free" ("" clears)' ],
+	'currency_symbol'    => [ 'type' => 'string' ],
+	'currency_position'  => [ 'type' => 'string', 'enum' => [ 'prefix', 'postfix' ] ],
+	'url'                => [ 'type' => 'string', 'description' => 'Event website' ],
+	'featured'           => [ 'type' => 'boolean' ],
+	'show_map'           => [ 'type' => 'boolean' ],
+	'hide_from_upcoming' => [ 'type' => 'boolean' ],
+	'categories'         => [ 'type' => 'array', 'items' => [ 'type' => [ 'string', 'integer' ] ], 'description' => 'Existing event category IDs or slugs (replaces the set)' ],
+	'tags'               => [ 'type' => 'array', 'items' => [ 'type' => 'string' ], 'description' => 'Tag names (replaces the set)' ],
+	'image_id'           => [ 'type' => 'integer', 'description' => 'Featured image attachment ID (0 clears)' ],
+];
 
 $cowboy_mcp_events_tools = [
 	Cowboy_MCP_Tools::tool( 'wp_events_list', '[Events] List The Events Calendar events overlapping a date window (default: from now on). A recurring event appears once with is_recurring, series_id and next_occurrence — use wp_events_list_occurrences for its dates. Dates are site-local unless they carry an offset.', [
@@ -40,6 +63,30 @@ $cowboy_mcp_events_tools = [
 	Cowboy_MCP_Tools::tool( 'wp_events_get', '[Events] Get one event: dates, timezone, venue, organizers, cost, categories, tags, image; for recurring events (Events Calendar Pro) the recurrence rule (RFC 5545), exclusions and occurrence count. Accepts an occurrence ID and reports the real event_id.', [
 		'event_id' => [ 'type' => 'integer', 'description' => 'Event ID (or an occurrence ID)', 'required' => true ],
 	], [ 'title' => 'Get Event' ] + $cowboy_mcp_events_ro, [ 'type' => 'object' ] ),
+	Cowboy_MCP_Tools::tool(
+		'wp_events_create',
+		'[Events] Create an event (default status draft). Requires title, start_date and end_date (or all_day). Undoable.',
+		array_merge( $cowboy_mcp_events_fields, [ 'title' => [ 'type' => 'string', 'required' => true ], 'start_date' => $cowboy_mcp_events_fields['start_date'] + [ 'required' => true ] ] ),
+		[ 'title' => 'Create Event' ] + $cowboy_mcp_events_write,
+		[ 'type' => 'object' ]
+	),
+	Cowboy_MCP_Tools::tool(
+		'wp_events_update',
+		'[Events] Update an event; only provided fields change. On a recurring event the change applies to every date of the series (single-occurrence and "this and following" edits are wp-admin only). Undoable.',
+		[ 'event_id' => [ 'type' => 'integer', 'required' => true ] ] + $cowboy_mcp_events_fields,
+		[ 'title' => 'Update Event' ] + $cowboy_mcp_events_write,
+		[ 'type' => 'object' ]
+	),
+	Cowboy_MCP_Tools::tool(
+		'wp_events_delete',
+		'[Events] Trash an event (undoable). force: true deletes permanently after taking an automatic database checkpoint (restore it with wp_restore_checkpoint); refused if the checkpoint cannot be created.',
+		[
+			'event_id' => [ 'type' => 'integer', 'required' => true ],
+			'force'    => [ 'type' => 'boolean', 'description' => 'Delete permanently instead of trashing (default false)', 'default' => false ],
+		],
+		[ 'title' => 'Delete Event', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => true, 'openWorldHint' => false ],
+		[ 'type' => 'object' ]
+	),
 	Cowboy_MCP_Tools::tool( 'wp_events_list_venues', '[Events] List venues with address and number of events. Delete a venue with wp_delete_post (trash, undoable).', $cowboy_mcp_events_list_props, [ 'title' => 'List Venues' ] + $cowboy_mcp_events_ro ),
 	Cowboy_MCP_Tools::tool( 'wp_events_create_venue', '[Events] Create a venue. Undoable.', [ 'title' => [ 'type' => 'string', 'required' => true ] ] + $cowboy_mcp_events_venue_props, [ 'title' => 'Create Venue' ] + $cowboy_mcp_events_write ),
 	Cowboy_MCP_Tools::tool( 'wp_events_update_venue', '[Events] Update a venue; only provided fields change ("" clears). Undoable.', [ 'venue_id' => [ 'type' => 'integer', 'required' => true ], 'title' => [ 'type' => 'string' ] ] + $cowboy_mcp_events_venue_props, [ 'title' => 'Update Venue' ] + $cowboy_mcp_events_write ),
@@ -136,7 +183,117 @@ $cowboy_mcp_events_handlers = [
 		}
 		return $out;
 	},
-	'wp_events_list_venues'      => fn( array $a ) => cowboy_mcp_events_list_linked( 'tribe_venue', 'cowboy_mcp_events_format_venue', $a ),
+
+	'wp_events_create' => function ( array $a ) {
+		if ( ! function_exists( 'tribe_events' ) ) {
+			return new WP_Error( 'tec_api_unavailable', 'The Events Calendar ORM (tribe_events) is unavailable.' );
+		}
+		// Validate first so a malformed start_date reports the format, not a missing end.
+		$built = cowboy_mcp_events_build_args( $a, null );
+		if ( is_wp_error( $built ) ) {
+			return $built;
+		}
+		if ( $built['dates'] === null ) {
+			return new WP_Error( 'invalid_params', 'start_date is required.' );
+		}
+		$orm = $built['orm'] + [ 'status' => 'draft' ];
+		$pro = cowboy_mcp_events_recurrence_create_args( $a );
+		if ( is_wp_error( $pro ) ) {
+			return $pro;
+		}
+		try {
+			$post = tribe_events()->set_args( $orm + $pro )->create();
+		} catch ( \Throwable $e ) {
+			return new WP_Error( 'tec_api_unavailable', 'The Events Calendar rejected the event: ' . $e->getMessage() );
+		}
+		if ( ! $post instanceof WP_Post ) {
+			return new WP_Error( 'save_failed', 'The Events Calendar did not create the event (check title and dates).' );
+		}
+		cowboy_mcp_events_apply_terms( (int) $post->ID, $built['terms'] );
+		clean_post_cache( $post->ID );
+		return cowboy_mcp_events_format( get_post( $post->ID ), true );
+	},
+
+	'wp_events_update' => function ( array $a ) {
+		if ( ! function_exists( 'tribe_events' ) ) {
+			return new WP_Error( 'tec_api_unavailable', 'The Events Calendar ORM (tribe_events) is unavailable.' );
+		}
+		$post = cowboy_mcp_events_get( (int) $a['event_id'], true );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+			return new WP_Error( 'forbidden', 'The authenticated user cannot edit this event.' );
+		}
+		$built = cowboy_mcp_events_build_args( $a, $post );
+		if ( is_wp_error( $built ) ) {
+			return $built;
+		}
+		$recurring = cowboy_mcp_events_format( $post, false )['is_recurring'];
+		$orm       = $built['orm'];
+		if ( $recurring && $built['dates'] ) {
+			// Never through the ORM for a recurring event (it re-parents the series).
+			foreach ( [ 'start_date', 'end_date', 'timezone', 'all_day' ] as $k ) {
+				unset( $orm[ $k ] );
+			}
+		}
+		if ( $orm ) {
+			$err = cowboy_mcp_events_orm_save( (int) $post->ID, $orm );
+			if ( is_wp_error( $err ) ) {
+				return $err;
+			}
+		}
+		foreach ( $built['clear_meta'] as $key ) {
+			delete_post_meta( $post->ID, $key );
+		}
+		cowboy_mcp_events_apply_terms( (int) $post->ID, $built['terms'] );
+		$err = cowboy_mcp_events_recurrence_update( (int) $post->ID, $a, $built['dates'], $recurring );
+		if ( is_wp_error( $err ) ) {
+			return $err;
+		}
+		if ( $built['clear_meta'] || $built['dates'] ) {
+			$err = cowboy_mcp_events_resync( (int) $post->ID );
+			if ( is_wp_error( $err ) ) {
+				return $err;
+			}
+		}
+		clean_post_cache( $post->ID );
+		return cowboy_mcp_events_format( get_post( $post->ID ), true );
+	},
+
+	'wp_events_delete' => function ( array $a ) {
+		$post = cowboy_mcp_events_get( (int) $a['event_id'], true );
+		if ( is_wp_error( $post ) ) {
+			return $post;
+		}
+		if ( ! current_user_can( 'delete_post', $post->ID ) ) {
+			return new WP_Error( 'forbidden', 'The authenticated user cannot delete this event.' );
+		}
+		if ( empty( $a['force'] ) ) {
+			if ( $post->post_status === 'trash' ) {
+				return new WP_Error( 'already_trashed', "Event {$post->ID} is already in the trash. Use force: true to delete it permanently." );
+			}
+			// Explicit trash: wp_delete_post() without force PERMANENTLY deletes CPTs.
+			if ( ! wp_trash_post( $post->ID ) ) {
+				return new WP_Error( 'delete_failed', "Could not trash event {$post->ID}." );
+			}
+			return [ 'deleted' => true, 'mode' => 'trash', 'id' => (int) $post->ID, 'checkpoint_id' => null ];
+		}
+		// Fail closed: the checkpoint is the only way back (the journal entry is type none).
+		$cp = Cowboy_MCP_Checkpoint::create( 'Before permanent delete of event #' . $post->ID, 'auto_event_delete' );
+		if ( is_wp_error( $cp ) || empty( $cp['checkpoint_id'] ) ) {
+			$why = is_wp_error( $cp ) ? $cp->get_error_message() : 'no checkpoint id returned';
+			return new WP_Error( 'checkpoint_failed', "Refusing to permanently delete event {$post->ID}: the safety checkpoint could not be created ({$why}). Trash it instead (force: false)." );
+		}
+		Cowboy_MCP_Rollback::$last_checkpoint_id = (int) $cp['checkpoint_id'];
+		if ( ! wp_delete_post( $post->ID, true ) ) {
+			Cowboy_MCP_Rollback::$last_checkpoint_id = null; // capture is discarded on error; do not leak into a later journal row
+			return new WP_Error( 'delete_failed', "Could not delete event {$post->ID}. Checkpoint #{$cp['checkpoint_id']} was taken before the attempt." );
+		}
+		return [ 'deleted' => true, 'mode' => 'force', 'id' => (int) $post->ID, 'checkpoint_id' => (int) $cp['checkpoint_id'] ];
+	},
+
+	'wp_events_list_venues'    => fn( array $a ) => cowboy_mcp_events_list_linked( 'tribe_venue', 'cowboy_mcp_events_format_venue', $a ),
 	'wp_events_list_organizers'  => fn( array $a ) => cowboy_mcp_events_list_linked( 'tribe_organizer', 'cowboy_mcp_events_format_organizer', $a ),
 	'wp_events_create_venue'     => function ( array $a ) {
 		$p = cowboy_mcp_events_save_linked( 'venue', $a, null );

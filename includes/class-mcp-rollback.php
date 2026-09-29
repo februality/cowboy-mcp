@@ -28,6 +28,28 @@ class Cowboy_MCP_Rollback {
 	/** @var int|null Checkpoint id set by Cowboy_MCP_Checkpoint::maybe_auto_checkpoint. */
 	public static ?int $last_checkpoint_id = null;
 
+	/** TEC custom tables captured with an event: table => column holding the event post id. */
+	public const TEC_TABLES = [ 'tec_events' => 'post_id', 'tec_occurrences' => 'post_id', 'tec_series_relationships' => 'event_post_id' ];
+
+	/**
+	 * Columns TEC rewrites on every re-sync — excluded from snapshots. Probed on
+	 * TEC 6.17.5.1 / Pro 7.8.3: a no-op Updates\Events::update() re-stamps only
+	 * tec_occurrences.updated_at; tec_events.updated_at is ON UPDATE
+	 * CURRENT_TIMESTAMP too, so any real edit (or our own restore) stamps it.
+	 */
+	private const TEC_VOLATILE = [ 'updated_at' ];
+
+	/**
+	 * Event post meta TEC/Pro rewrite on their own after a save (probed on TEC
+	 * 6.17.5.1 / Pro 7.8.3): Pro's shutdown re-sync stores the "N occurrences
+	 * created/updated" admin-notice payload in _EventOccurrencesCount, and TEC's
+	 * modified-fields tracker stamps _tribe_modified_fields on every meta write.
+	 * Neither is event data: both are captured under the snapshot's `_volatile`
+	 * key, which state_hash() ignores (no false undo_conflict), and are put back
+	 * verbatim on restore.
+	 */
+	private const TEC_VOLATILE_META = [ '_tribe_modified_fields', '_EventOccurrencesCount' ];
+
 	/** @var array|null Current capture handle (between begin() and commit()/discard()). */
 	private static ?array $pending = null;
 
@@ -52,6 +74,9 @@ class Cowboy_MCP_Rollback {
 		'wp_events_update_venue'     => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'venue_id' ],
 		'wp_events_create_organizer' => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'id' ],
 		'wp_events_update_organizer' => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'organizer_id' ],
+		'wp_events_create'           => [ 'type' => 'tec_event', 'action' => 'create', 'result_id' => 'id' ],
+		'wp_events_update'           => [ 'type' => 'tec_event', 'action' => 'update', 'id_arg' => 'event_id' ],
+		'wp_events_delete'           => [ 'type' => 'tec_event', 'action' => 'delete', 'id_arg' => 'event_id' ],
 		'wp_edit_blocks'          => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_save_template'        => [ 'type' => 'post', 'action' => 'update', 'dynamic' => true ],
 		'wp_reset_template'       => [ 'type' => 'post', 'action' => 'delete', 'dynamic' => true ],
@@ -216,6 +241,18 @@ class Cowboy_MCP_Rollback {
 				return $handle;
 			}
 
+			// Permanent event delete: TEC/Pro cascade through custom tables and
+			// series posts; the auto-checkpoint taken by the handler is the undo.
+			if ( $tool === 'wp_events_delete' && ! empty( $args['force'] ) ) {
+				$handle = [
+					'tool' => $tool, 'type' => 'none', 'action' => 'delete',
+					'object_id' => (string) ( $args['event_id'] ?? '' ), 'object_label' => null, 'before' => null, 'rows' => [],
+					'reason' => 'Permanent event deletes are not journaled row-for-row.',
+				];
+				self::$pending = $handle;
+				return $handle;
+			}
+
 			// AIOSEO keeps per-post SEO in its own table, not postmeta: switch to
 			// a row snapshot when it is the provider wp_seo_update_meta will write.
 			if ( ! empty( $strategy['seo_dynamic'] ) ) {
@@ -333,8 +370,11 @@ class Cowboy_MCP_Rollback {
 				$reason = $capture['reason'] ?? 'No capture strategy.';
 				// Consumes the id set by wp_cli's auto-checkpoint earlier in THIS call;
 				// relies on the system.php invariant that commit() always runs for wp_cli.
-				if ( $capture['tool'] === 'wp_cli' && self::$last_checkpoint_id !== null ) {
-					$reason .= ' Checkpoint #' . self::$last_checkpoint_id . ' was taken before this command.';
+				// wp_events_delete (force) sets it right before deleting, same invariant.
+				if ( in_array( $capture['tool'], [ 'wp_cli', 'wp_events_delete' ], true ) && self::$last_checkpoint_id !== null ) {
+					$reason .= $capture['tool'] === 'wp_events_delete'
+						? ' Restore checkpoint #' . self::$last_checkpoint_id . ' (wp_restore_checkpoint) to bring it back.'
+						: ' Checkpoint #' . self::$last_checkpoint_id . ' was taken before this command.';
 					self::$last_checkpoint_id = null;
 				}
 				return self::insert_row( [
@@ -485,6 +525,7 @@ class Cowboy_MCP_Rollback {
 			'wc_object' => ucfirst( str_replace( ':', ' #', (string) $id ) ),
 			'wf_config' => 'Wordfence settings (' . substr( (string) $id, strlen( 'wfconfig:' ) ) . ')',
 			'wf_block'  => $id !== null ? "Wordfence block #{$id}" : null,
+			'tec_event' => $state['post']['post']['post_title'] ?? ( $id !== null ? "event #{$id}" : 'event' ),
 			default     => $id,
 		};
 	}
@@ -542,6 +583,22 @@ class Cowboy_MCP_Rollback {
 					}
 				}
 				return [ 'post' => $post, 'meta' => $meta, 'terms' => $terms ];
+
+			case 'tec_event': {
+				$post = self::snapshot( 'post', $id );
+				if ( $post === null ) {
+					return null;
+				}
+				$volatile     = array_intersect_key( $post['meta'], array_flip( self::TEC_VOLATILE_META ) );
+				$post['meta'] = array_diff_key( $post['meta'], $volatile );
+				$tables       = [];
+				if ( class_exists( 'Cowboy_MCP_Tools' ) && Cowboy_MCP_Tools::events_ct1_ready() ) {
+					$tables = self::tec_rows( (int) $id );
+				}
+				$series = array_values( array_unique( array_map( 'intval', array_column( $tables['tec_series_relationships'] ?? [], 'series_post_id' ) ) ) );
+				sort( $series );
+				return [ 'post' => $post, 'tables' => $tables, 'series' => $series, '_volatile' => [ 'meta' => $volatile ] ];
+			}
 
 			case 'acf_value':
 				if ( ! function_exists( 'get_field' ) ) {
@@ -753,6 +810,9 @@ class Cowboy_MCP_Rollback {
 
 			case 'post':
 				return self::restore_post( (int) $id, $state );
+
+			case 'tec_event':
+				return self::restore_tec_event( (int) $id, $state );
 
 			case 'acf_value':
 				if ( ! function_exists( 'update_field' ) ) {
@@ -985,6 +1045,121 @@ class Cowboy_MCP_Rollback {
 			wp_set_object_terms( $live_id, $state['terms'][ $tax ] ?? [], $tax );
 		}
 		clean_post_cache( $live_id );
+		return true;
+	}
+
+	/** Current TEC custom-table rows for an event, volatile columns removed. */
+	private static function tec_rows( int $post_id ): array {
+		global $wpdb;
+		$out = [];
+		foreach ( self::TEC_TABLES as $short => $col ) {
+			$table = $wpdb->prefix . $short;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) !== $table ) {
+				continue;
+			}
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT * FROM `{$table}` WHERE `{$col}` = %d ORDER BY 1", $post_id ), ARRAY_A );
+			foreach ( $rows as &$row ) {
+				$row = array_diff_key( $row, array_flip( self::TEC_VOLATILE ) );
+			}
+			unset( $row );
+			$out[ $short ] = $rows;
+		}
+		return $out;
+	}
+
+	/** Replace an event's TEC rows with $tables verbatim (keeps occurrence ids). */
+	private static function tec_write_rows( int $post_id, array $tables ): ?WP_Error {
+		global $wpdb;
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		foreach ( self::TEC_TABLES as $short => $col ) {
+			if ( ! array_key_exists( $short, $tables ) ) {
+				continue;
+			}
+			$table = $wpdb->prefix . $short;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			if ( false === $wpdb->delete( $table, [ $col => $post_id ], [ '%d' ] ) ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				return new WP_Error( 'undo_failed', "Could not clear {$short} rows for event #{$post_id}: {$wpdb->last_error}" );
+			}
+			foreach ( $tables[ $short ] as $row ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				if ( false === $wpdb->insert( $table, $row ) ) {
+					$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+					return new WP_Error( 'undo_failed', "Could not restore {$short} rows for event #{$post_id}: {$wpdb->last_error}" );
+				}
+			}
+		}
+		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return null;
+	}
+
+	/**
+	 * Undo for The Events Calendar events: post + meta + terms, then the event's
+	 * custom-table rows verbatim, then a TEC re-sync (captured rows win if the
+	 * re-sync re-keys them), then drop series created since that are now empty.
+	 */
+	private static function restore_tec_event( int $post_id, ?array $state ): bool|WP_Error {
+		// TEC's modified-fields tracker rewrites _tribe_modified_fields on every meta
+		// add/delete: left on, restoring meta stamps fresh timestamps over the captured
+		// value (and adds a second row next to it). The captured value is the truth.
+		add_filter( 'tribe_tracker_enabled', '__return_false', PHP_INT_MAX ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- TEC's hook.
+		add_filter( 'tribe_tracker_enabled_for_terms', '__return_false', PHP_INT_MAX ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- TEC's hook.
+		try {
+			return self::restore_tec_event_inner( $post_id, $state );
+		} finally {
+			remove_filter( 'tribe_tracker_enabled', '__return_false', PHP_INT_MAX );
+			remove_filter( 'tribe_tracker_enabled_for_terms', '__return_false', PHP_INT_MAX );
+		}
+	}
+
+	private static function restore_tec_event_inner( int $post_id, ?array $state ): bool|WP_Error {
+		if ( $state === null ) {
+			if ( get_post( $post_id ) && ! wp_delete_post( $post_id, true ) ) { // TEC/Pro cascade: rows + sole-member auto series
+				return new WP_Error( 'undo_failed', "Could not delete event #{$post_id}." );
+			}
+			return true;
+		}
+		$ct1     = class_exists( 'Cowboy_MCP_Tools' ) && Cowboy_MCP_Tools::events_ct1_ready();
+		$current = $ct1 ? array_map( 'intval', array_column( self::tec_rows( $post_id )['tec_series_relationships'] ?? [], 'series_post_id' ) ) : [];
+
+		$restored = self::restore_post( $post_id, $state['post'] ); // clears every meta key, volatile ones included
+		if ( ! is_wp_error( $restored ) ) {
+			foreach ( (array) ( $state['_volatile']['meta'] ?? [] ) as $k => $values ) {
+				foreach ( (array) $values as $v ) {
+					add_post_meta( $post_id, $k, wp_slash( maybe_unserialize( $v ) ) );
+				}
+			}
+		}
+		if ( is_wp_error( $restored ) || ! $ct1 || empty( $state['tables'] ) ) {
+			return $restored;
+		}
+		$err = self::tec_write_rows( $post_id, $state['tables'] );
+		if ( $err ) {
+			return $err;
+		}
+		if ( function_exists( 'cowboy_mcp_events_resync' ) ) {
+			$sync = cowboy_mcp_events_resync( $post_id );
+			if ( is_wp_error( $sync ) ) {
+				return $sync;
+			}
+		}
+		if ( self::tec_rows( $post_id ) != $state['tables'] ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseNotEqual -- row arrays, key order irrelevant
+			$err = self::tec_write_rows( $post_id, $state['tables'] );
+			if ( $err ) {
+				return $err;
+			}
+		}
+		global $wpdb;
+		$rel = $wpdb->prefix . 'tec_series_relationships';
+		foreach ( array_diff( $current, (array) ( $state['series'] ?? [] ) ) as $sid ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$members = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$rel}` WHERE series_post_id = %d", $sid ) );
+			if ( $members === 0 && get_post_type( $sid ) === 'tribe_event_series' ) {
+				wp_delete_post( $sid, true );
+			}
+		}
 		return true;
 	}
 
@@ -1676,6 +1851,9 @@ class Cowboy_MCP_Rollback {
 		if ( $state === null ) {
 			return self::ABSENT_HASH;
 		}
+		// `_volatile`: captured and restored, but rewritten by third-party code on
+		// its own (e.g. TEC's shutdown re-sync) — never evidence of a later edit.
+		unset( $state['_volatile'] );
 		return hash( 'sha256', (string) wp_json_encode( self::canonical( $state ) ) );
 	}
 
