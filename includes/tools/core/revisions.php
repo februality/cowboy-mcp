@@ -16,6 +16,9 @@ function cowboy_mcp_revision_values( WP_Post $source, WP_Post $parent ): array {
 	}
 	if ( function_exists( 'wp_post_revision_meta_keys' ) ) {
 		foreach ( wp_post_revision_meta_keys( $parent->post_type ) as $key ) {
+			if ( isset( $values[ $key ] ) ) {
+				continue; // Already a plain revision field (e.g. footnotes on 6.x+).
+			}
 			$v = get_post_meta( $source->ID, $key, true );
 			$values[ 'meta:' . $key ] = is_scalar( $v ) ? (string) $v : (string) wp_json_encode( $v );
 		}
@@ -156,7 +159,7 @@ return [
 					continue;
 				}
 				if ( strlen( $diff ) > COWBOY_MCP_REVISION_DIFF_CAP ) {
-					$diff        = substr( $diff, 0, COWBOY_MCP_REVISION_DIFF_CAP );
+					$diff        = mb_strcut( $diff, 0, COWBOY_MCP_REVISION_DIFF_CAP, 'UTF-8' );
 					$truncated[] = $key;
 				}
 				$fields[ $key ] = $diff;
