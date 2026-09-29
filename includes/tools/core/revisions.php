@@ -49,6 +49,36 @@ function cowboy_mcp_revision_unified_diff( string $old, string $new ): string {
 	return (string) ( new Cowboy_MCP_Unified_Diff_Renderer() )->render( $diff );
 }
 
+/**
+ * First $cap bytes of $s without splitting a UTF-8 character. mb_strcut() when
+ * mbstring is loaded (WordPress has no polyfill for it); otherwise a byte cut
+ * with any trailing partial multi-byte sequence dropped.
+ */
+function cowboy_mcp_revision_cut( string $s, int $cap ): string {
+	if ( strlen( $s ) <= $cap ) {
+		return $s;
+	}
+	if ( function_exists( 'mb_strcut' ) ) {
+		return mb_strcut( $s, 0, $cap, 'UTF-8' );
+	}
+	$cut = substr( $s, 0, $cap );
+	// Walk back over continuation bytes (10xxxxxx) to the lead byte of the last character.
+	$i = strlen( $cut ) - 1;
+	$n = 0;
+	while ( $i >= 0 && $n < 3 && ( ord( $cut[ $i ] ) & 0xC0 ) === 0x80 ) {
+		--$i;
+		++$n;
+	}
+	if ( $i >= 0 ) {
+		$lead = ord( $cut[ $i ] );
+		$need = $lead >= 0xF0 ? 4 : ( $lead >= 0xE0 ? 3 : ( $lead >= 0xC0 ? 2 : 1 ) );
+		if ( $need > $n + 1 ) {
+			$cut = substr( $cut, 0, $i ); // the last character is incomplete
+		}
+	}
+	return $cut;
+}
+
 /** Revision + parent, or a WP_Error explaining why not. */
 function cowboy_mcp_revision_resolve( int $revision_id ): array|WP_Error {
 	$revision = wp_get_post_revision( $revision_id );
@@ -212,7 +242,7 @@ return [
 					continue;
 				}
 				if ( strlen( $diff ) > COWBOY_MCP_REVISION_DIFF_CAP ) {
-					$diff        = mb_strcut( $diff, 0, COWBOY_MCP_REVISION_DIFF_CAP, 'UTF-8' );
+					$diff        = cowboy_mcp_revision_cut( $diff, COWBOY_MCP_REVISION_DIFF_CAP );
 					$truncated[] = $key;
 				}
 				$fields[ $key ] = $diff;

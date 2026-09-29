@@ -84,7 +84,7 @@ $cowboy_mcp_events_tools = [
 	),
 	Cowboy_MCP_Tools::tool(
 		'wp_events_delete',
-		'[Events] Trash an event (undoable). force: true deletes permanently after taking an automatic database checkpoint (restore it with wp_restore_checkpoint); refused if the checkpoint cannot be created.',
+		'[Events] Trash an event (undoable). force: true deletes permanently and cannot be undone per event: an automatic database checkpoint is taken first (refused if it cannot be), but wp_restore_checkpoint rolls back the ENTIRE database to that moment, losing every later change on the site (e.g. new orders), and only the most recent checkpoints are kept (checkpoint_max setting, default 5) — older ones are pruned.',
 		[
 			'event_id' => [ 'type' => 'integer', 'required' => true ],
 			'force'    => [ 'type' => 'boolean', 'description' => 'Delete permanently instead of trashing (default false)', 'default' => false ],
@@ -236,11 +236,15 @@ $cowboy_mcp_events_handlers = [
 		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
 			return new WP_Error( 'forbidden', 'The authenticated user cannot edit this event.' );
 		}
+		$recurring = cowboy_mcp_events_has_rules( (int) $post->ID );
+		$refusal   = cowboy_mcp_events_recurrence_refusal( (int) $post->ID, $a, $recurring );
+		if ( $refusal ) {
+			return $refusal;
+		}
 		$built = cowboy_mcp_events_build_args( $a, $post );
 		if ( is_wp_error( $built ) ) {
 			return $built;
 		}
-		$recurring = cowboy_mcp_events_format( $post, false )['is_recurring'];
 		$rule_set  = isset( $a['recurrence'] ) && trim( (string) $a['recurrence'] ) !== '';
 		if ( ( $recurring || $rule_set ) && Cowboy_MCP_Tools::events_pro_ready() ) {
 			$built = cowboy_mcp_events_recurring_built( $built );
@@ -318,7 +322,13 @@ $cowboy_mcp_events_handlers = [
 			Cowboy_MCP_Rollback::$last_checkpoint_id = null; // capture is discarded on error; do not leak into a later journal row
 			return new WP_Error( 'delete_failed', "Could not delete event {$post->ID}. Checkpoint #{$cp['checkpoint_id']} was taken before the attempt." );
 		}
-		return [ 'deleted' => true, 'mode' => 'force', 'id' => (int) $post->ID, 'checkpoint_id' => (int) $cp['checkpoint_id'] ];
+		return [
+			'deleted'       => true,
+			'mode'          => 'force',
+			'id'            => (int) $post->ID,
+			'checkpoint_id' => (int) $cp['checkpoint_id'],
+			'note'          => cowboy_mcp_events_checkpoint_note( (int) $cp['checkpoint_id'] ),
+		];
 	},
 
 	'wp_events_list_venues'    => fn( array $a ) => cowboy_mcp_events_list_linked( 'tribe_venue', 'cowboy_mcp_events_format_venue', $a ),

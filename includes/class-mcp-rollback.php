@@ -381,7 +381,7 @@ class Cowboy_MCP_Rollback {
 				// wp_events_delete (force) sets it right before deleting, same invariant.
 				if ( in_array( $capture['tool'], [ 'wp_cli', 'wp_events_delete' ], true ) && self::$last_checkpoint_id !== null ) {
 					$reason .= $capture['tool'] === 'wp_events_delete'
-						? ' Restore checkpoint #' . self::$last_checkpoint_id . ' (wp_restore_checkpoint) to bring it back.'
+						? ' Safety checkpoint #' . self::$last_checkpoint_id . ' was taken before the delete, but wp_restore_checkpoint restores the ENTIRE database to that moment (every later change on the site, e.g. new orders, is lost), and only the ' . max( 1, (int) ( Cowboy_MCP_Tools::get_settings()['checkpoint_max'] ?? 5 ) ) . ' most recent checkpoints are kept.'
 						: ' Checkpoint #' . self::$last_checkpoint_id . ' was taken before this command.';
 					self::$last_checkpoint_id = null;
 				}
@@ -998,14 +998,22 @@ class Cowboy_MCP_Rollback {
 	private static function restore_seo_row( int $post_id, ?array $state ): bool|WP_Error {
 		global $wpdb;
 		$table = $wpdb->prefix . 'aioseo_posts';
+		// Delete + insert as one unit: a failed insert must not leave the post with no row.
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$wpdb->delete( $table, [ 'post_id' => $post_id ], [ '%d' ] );
+		if ( false === $wpdb->delete( $table, [ 'post_id' => $post_id ], [ '%d' ] ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			return new WP_Error( 'undo_failed', "Could not clear the AIOSEO row for post #{$post_id}; nothing was changed: {$wpdb->last_error}" );
+		}
 		if ( ! empty( $state['row'] ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
 			if ( false === $wpdb->insert( $table, $state['row'] ) ) {
-				return new WP_Error( 'undo_failed', "Could not restore the AIOSEO row for post #{$post_id}: {$wpdb->last_error}" );
+				$error = $wpdb->last_error;
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				return new WP_Error( 'undo_failed', "Could not restore the AIOSEO row for post #{$post_id}; the current row was kept and nothing was changed: {$error}" );
 			}
 		}
+		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		foreach ( array_keys( get_post_meta( $post_id ) ) as $k ) {
 			if ( str_starts_with( (string) $k, '_aioseo_' ) ) {
 				delete_post_meta( $post_id, $k );

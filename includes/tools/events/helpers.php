@@ -77,9 +77,9 @@ function cowboy_mcp_events_get_linked( int $id, string $type ): WP_Post|WP_Error
 /**
  * Timezone normalisation for fixed UTC offsets. A zero offset ("+00:00", "UTC+0",
  * what wp_timezone_string() returns on a default install) becomes "UTC"; any other
- * offset in TEC's "UTC+2" notation becomes a bare "+02:00". TEC's ORM would map
- * "UTC+2" to a named zone with DST (Europe/Helsinki), so a July event's UTC time
- * would be an hour off — a bare offset is stored verbatim and stays fixed.
+ * offset in TEC's "UTC+2" notation becomes a bare "+02:00" (TEC's ORM would map
+ * "UTC+2" to a named zone with DST, e.g. Europe/Helsinki, so a July event's UTC
+ * time would be an hour off). Storage goes through cowboy_mcp_events_fixed_tz().
  * Named zones are returned unchanged.
  */
 function cowboy_mcp_events_tz_normalize( string $tz ): string {
@@ -96,29 +96,47 @@ function cowboy_mcp_events_tz_normalize( string $tz ): string {
 }
 
 /**
- * The zone a RECURRING event is stored with. Pro 7.8.3 cannot build a recurrence
- * set for a bare "+02:00" zone (no rset, one occurrence), but can for the
- * DST-free "Etc/GMT-2" (note the inverted sign) — same fixed offset, so UTC math
- * and the stored _EventTimezone stay consistent. Half-hour offsets have no Etc
- * zone: the agent must pass a named zone. Anything else is returned unchanged.
+ * The zone an event is stored with for a fixed UTC offset. A whole-hour offset
+ * becomes its DST-free "Etc/GMT-2" twin (note the inverted sign): same fixed
+ * offset, so UTC math is unchanged, but a real tz database zone — a bare
+ * "+02:00" has no transitions, so TEC's iCal export warns and writes a
+ * VTIMEZONE without a STANDARD component, and Pro 7.8.3 cannot build a
+ * recurrence set for it. :30/:45 offsets have no Etc zone and stay bare; zero
+ * is "UTC"; named zones are returned unchanged.
  */
-function cowboy_mcp_events_recurring_tz( string $tz ): string|WP_Error {
+function cowboy_mcp_events_fixed_tz( string $tz ): string {
 	$tz = cowboy_mcp_events_tz_normalize( $tz );
-	if ( ! preg_match( '/^([+-])(\d{2}):(\d{2})$/', $tz, $m ) ) {
+	if ( ! preg_match( '/^([+-])(\d{2}):00$/', $tz, $m ) ) {
 		return $tz;
 	}
 	$h = (int) $m[2];
-	if ( $m[3] !== '00' || $h > ( $m[1] === '+' ? 14 : 12 ) ) {
-		return new WP_Error( 'invalid_timezone', "Recurring events cannot use the fixed offset {$tz} (Events Calendar Pro needs a named timezone for it). Pass timezone as an IANA name, e.g. Asia/Kolkata." );
+	if ( $h > ( $m[1] === '+' ? 14 : 12 ) ) {
+		return $tz;
 	}
 	return 'Etc/GMT' . ( $m[1] === '+' ? '-' : '+' ) . $h;
 }
 
-/** Validate a timezone string (IANA, "UTC", "UTC+2", "UTC-5:30", "+02:00"); default site tz. */
+/**
+ * The zone a RECURRING event is stored with (see cowboy_mcp_events_fixed_tz()).
+ * A fixed offset with no Etc zone (half-hour offsets) cannot recur: the agent
+ * must pass a named zone. Anything else is returned unchanged.
+ */
+function cowboy_mcp_events_recurring_tz( string $tz ): string|WP_Error {
+	$tz = cowboy_mcp_events_fixed_tz( $tz );
+	if ( preg_match( '/^[+-]\d{2}:\d{2}$/', $tz ) ) {
+		return new WP_Error( 'invalid_timezone', "Recurring events cannot use the fixed offset {$tz} (Events Calendar Pro needs a named timezone for it). Pass timezone as an IANA name, e.g. Asia/Kolkata." );
+	}
+	return $tz;
+}
+
+/**
+ * Validate a timezone string (IANA, "UTC", "UTC+2", "UTC-5:30", "+02:00"); default
+ * site tz. Whole-hour offsets come back as Etc/GMT∓N (cowboy_mcp_events_fixed_tz()).
+ */
 function cowboy_mcp_events_tz( ?string $tz ): string|WP_Error {
-	$tz = cowboy_mcp_events_tz_normalize( trim( (string) $tz ) );
+	$tz = cowboy_mcp_events_fixed_tz( trim( (string) $tz ) );
 	if ( $tz === '' ) {
-		return cowboy_mcp_events_tz_normalize( wp_timezone_string() );
+		return cowboy_mcp_events_fixed_tz( wp_timezone_string() );
 	}
 	$probe = $tz;
 	if ( preg_match( '/^UTC([+-])(\d{1,2})(?::?(\d{2}))?$/i', $tz, $m ) ) {
@@ -272,6 +290,35 @@ function cowboy_mcp_events_meta_truthy( mixed $v ): bool {
 	return in_array( strtolower( trim( (string) $v ) ), [ '1', 'yes', 'true', 'on' ], true );
 }
 
+/**
+ * Whether the event recurs: Pro is ready and _EventRecurrence carries rules.
+ * Deliberately independent of tec_events.rset (Pro adds that column lazily) —
+ * a recurring event must never take the single-event ORM date path.
+ */
+function cowboy_mcp_events_has_rules( int $id ): bool {
+	if ( ! Cowboy_MCP_Tools::events_pro_ready() ) {
+		return false;
+	}
+	$rec = get_post_meta( $id, '_EventRecurrence', true );
+	return is_array( $rec ) && ! empty( $rec['rules'] );
+}
+
+/**
+ * Refusal for a date/recurrence change on a recurring event Pro cannot rebuild
+ * yet (no recurrence set in tec_events.rset — e.g. the column is missing until
+ * Pro's daily schema init runs). null = the change may proceed.
+ */
+function cowboy_mcp_events_recurrence_refusal( int $id, array $a, bool $recurring ): ?WP_Error {
+	if ( ! $recurring ) {
+		return null;
+	}
+	$touches = array_intersect( [ 'start_date', 'end_date', 'all_day', 'timezone', 'recurrence' ], array_keys( $a ) );
+	if ( ! $touches || cowboy_mcp_events_rset( $id ) !== null ) {
+		return null;
+	}
+	return new WP_Error( 'recurrence_unavailable', "Event {$id} is recurring, but Events Calendar Pro has no recurrence set for it yet (its custom-table schema may not be initialised), so its dates and recurrence cannot be changed safely here. Nothing was changed. Other fields can still be updated; edit the dates in wp-admin, or retry after Events Calendar Pro has finished setting up." );
+}
+
 /** Response shape for an event. */
 function cowboy_mcp_events_format( WP_Post $post, bool $full ): array {
 	$id   = (int) $post->ID;
@@ -280,7 +327,7 @@ function cowboy_mcp_events_format( WP_Post $post, bool $full ): array {
 	$vid  = (int) $meta( '_EventVenueID' );
 	$oids = array_values( array_filter( array_map( 'intval', (array) get_post_meta( $id, '_EventOrganizerID' ) ) ) );
 	$sids = cowboy_mcp_events_series_ids( $id );
-	$recurring = Cowboy_MCP_Tools::events_pro_ready() && get_post_meta( $id, '_EventRecurrence', true ) !== '' && cowboy_mcp_events_rset( $id ) !== null;
+	$recurring = cowboy_mcp_events_has_rules( $id );
 
 	$out = [
 		'id'            => $id,
@@ -632,6 +679,16 @@ function cowboy_mcp_events_orm_save( int $id, array $orm ): ?WP_Error {
 	return null;
 }
 
+/**
+ * What restoring the safety checkpoint of a permanent event delete really does:
+ * it is a whole-database rollback, and old checkpoints are pruned.
+ */
+function cowboy_mcp_events_checkpoint_note( ?int $checkpoint_id ): string {
+	$max = max( 1, (int) ( Cowboy_MCP_Tools::get_settings()['checkpoint_max'] ?? 5 ) );
+	$cp  = $checkpoint_id ? "checkpoint #{$checkpoint_id}" : 'the checkpoint';
+	return "The event is permanently deleted; there is no per-event undo. wp_restore_checkpoint with {$cp} restores the ENTIRE database to the moment before the delete — every later change on the site (new orders, posts, comments, settings) is lost. Only the {$max} most recent checkpoints are kept; older ones are pruned automatically, so this one will eventually disappear.";
+}
+
 /** Replace an event's category/tag sets (null = leave that taxonomy alone). */
 function cowboy_mcp_events_apply_terms( int $id, array $terms ): void {
 	if ( $terms['tribe_events_cat'] !== null ) {
@@ -944,15 +1001,19 @@ function cowboy_mcp_events_dry_run_plan( string $tool, array $a ): array {
 			}
 			return [ 'mode' => 'trash', 'title' => $post->post_title, 'undoable' => true ];
 		}
-		return [ 'mode' => 'force', 'title' => $post->post_title, 'undoable' => false, 'note' => 'A database checkpoint is taken first; the delete is refused if it cannot be.' ];
+		return [ 'mode' => 'force', 'title' => $post->post_title, 'undoable' => false, 'note' => 'A database checkpoint is taken first; the delete is refused if it cannot be. ' . cowboy_mcp_events_checkpoint_note( null ) ];
 	}
 
 	if ( $tool === 'wp_events_update' ) {
+		$recurring = (bool) $current['is_recurring'];
+		$refusal   = cowboy_mcp_events_recurrence_refusal( (int) $post->ID, $a, $recurring );
+		if ( $refusal ) {
+			return $fail( $refusal );
+		}
 		$built = cowboy_mcp_events_build_args( $a, $post );
 		if ( is_wp_error( $built ) ) {
 			return $fail( $built );
 		}
-		$recurring = (bool) $current['is_recurring'];
 		$rule_set  = isset( $a['recurrence'] ) && trim( (string) $a['recurrence'] ) !== '';
 		if ( ( $recurring || $rule_set ) && Cowboy_MCP_Tools::events_pro_ready() && function_exists( 'cowboy_mcp_events_recurring_built' ) ) {
 			$built = cowboy_mcp_events_recurring_built( $built );
