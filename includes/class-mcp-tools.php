@@ -622,6 +622,18 @@ class Cowboy_MCP_Tools {
             }
         }
 
+        // wp_restore_revision: which fields would change, or why it would be refused.
+        if ( $name === 'wp_restore_revision' ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_revision_plan' ) ) {
+                $plan            = cowboy_mcp_revision_plan( (int) ( $filtered_args['revision_id'] ?? 0 ) );
+                $preview['plan'] = $plan;
+                if ( ! empty( $plan['would_fail'] ) ) {
+                    $preview['description'] = "Would be refused ({$plan['would_fail']}): {$plan['reason']}";
+                }
+            }
+        }
+
         return [
             'content' => [[ 'type' => 'text', 'text' => wp_json_encode( $preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ]],
         ];

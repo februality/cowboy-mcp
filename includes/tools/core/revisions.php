@@ -66,6 +66,41 @@ function cowboy_mcp_revision_check_post( WP_Post $post ): ?WP_Error {
 	return null;
 }
 
+/** Why a restore must be refused, or null. */
+function cowboy_mcp_revision_restore_refusal( WP_Post $rev, WP_Post $parent ): ?WP_Error {
+	$err = cowboy_mcp_revision_check_post( $parent );
+	if ( $err ) {
+		return $err;
+	}
+	if ( $parent->post_status === 'trash' ) {
+		return new WP_Error( 'parent_trashed', "Post {$parent->ID} is in the trash; untrash it before restoring a revision." );
+	}
+	if ( wp_is_post_autosave( $rev ) && (int) $rev->post_author !== get_current_user_id() ) {
+		return new WP_Error( 'autosave_other_user', "Revision {$rev->ID} is another user's autosave; restoring it would publish their unsaved draft." );
+	}
+	return null;
+}
+
+/** Dry-run plan for wp_restore_revision (called from generate_dry_run_preview). */
+function cowboy_mcp_revision_plan( int $revision_id ): array {
+	$res = cowboy_mcp_revision_resolve( $revision_id );
+	if ( is_wp_error( $res ) ) {
+		return [ 'would_fail' => $res->get_error_code(), 'reason' => $res->get_error_message() ];
+	}
+	$refusal = cowboy_mcp_revision_restore_refusal( $res['revision'], $res['parent'] );
+	if ( $refusal ) {
+		return [ 'would_fail' => $refusal->get_error_code(), 'reason' => $refusal->get_error_message() ];
+	}
+	$old = cowboy_mcp_revision_values( $res['revision'], $res['parent'] );
+	$cur = cowboy_mcp_revision_values( $res['parent'], $res['parent'] );
+	return [
+		'post_id'        => (int) $res['parent']->ID,
+		'revision_id'    => $revision_id,
+		'changed_fields' => array_keys( array_diff_assoc( $old, $cur ) ),
+		'undoable'       => true,
+	];
+}
+
 return [
 	'tools' => [
 		Cowboy_MCP_Tools::tool( 'wp_list_revisions', '[Content] List a post\'s revisions (newest first, autosaves included and flagged) with which fields differ from the current post. Use wp_get_revision_diff to see the changes and wp_restore_revision to roll back.', [
@@ -94,6 +129,17 @@ return [
 				'identical'   => [ 'type' => 'boolean' ],
 				'fields'      => [ 'type' => 'object' ],
 				'truncated'   => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
+			],
+		] ),
+		Cowboy_MCP_Tools::tool( 'wp_restore_revision', '[Content] Restore a post to one of its revisions (title, content, excerpt and revisioned meta such as footnotes). The current state is kept as a revision, and the restore is undoable via wp_undo_change.', [
+			'revision_id' => [ 'type' => 'integer', 'description' => 'Revision ID to restore (from wp_list_revisions)', 'required' => true ],
+		], [ 'title' => 'Restore Revision', 'readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => false, 'openWorldHint' => false ], [
+			'type'       => 'object',
+			'properties' => [
+				'post_id'         => [ 'type' => 'integer' ],
+				'restored_from'   => [ 'type' => 'integer' ],
+				'new_revision_id' => [ 'type' => [ 'integer', 'null' ] ],
+				'title'           => [ 'type' => 'string' ],
 			],
 		] ),
 	],
@@ -171,6 +217,28 @@ return [
 				'identical'   => $fields === [],
 				'fields'      => $fields,
 				'truncated'   => $truncated,
+			];
+		},
+		'wp_restore_revision' => function ( array $a ) {
+			$res = cowboy_mcp_revision_resolve( (int) $a['revision_id'] );
+			if ( is_wp_error( $res ) ) {
+				return $res;
+			}
+			[ 'revision' => $rev, 'parent' => $parent ] = $res;
+			$refusal = cowboy_mcp_revision_restore_refusal( $rev, $parent );
+			if ( $refusal ) {
+				return $refusal;
+			}
+			$restored = wp_restore_post_revision( $rev->ID );
+			if ( ! $restored || is_wp_error( $restored ) ) {
+				return new WP_Error( 'restore_failed', "Could not restore revision {$rev->ID}." );
+			}
+			$latest = array_key_first( wp_get_post_revisions( $parent->ID, [ 'posts_per_page' => 1, 'check_enabled' => false ] ) );
+			return [
+				'post_id'         => (int) $parent->ID,
+				'restored_from'   => (int) $rev->ID,
+				'new_revision_id' => $latest ? (int) $latest : null,
+				'title'           => get_post( $parent->ID )->post_title,
 			];
 		},
 	],

@@ -44,6 +44,7 @@ class Cowboy_MCP_Rollback {
 		'wp_create_post'        => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'ID' ],
 		'wp_update_post'        => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
 		'wp_delete_post'        => [ 'type' => 'post', 'action' => 'delete', 'id_arg' => 'post_id' ],
+		'wp_restore_revision'   => [ 'type' => 'post', 'action' => 'update', 'parent_of_arg' => 'revision_id' ],
 		'wp_elementor_update_template'      => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'template_id' ],
 		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
 		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
@@ -439,6 +440,11 @@ class Cowboy_MCP_Rollback {
 			}
 			sort( $keys );
 			return 'wfconfig:' . implode( ',', $keys );
+		}
+		// Target is the parent of the post named by an argument (revisions).
+		if ( isset( $strategy['parent_of_arg'] ) ) {
+			$parent = wp_get_post_parent_id( (int) ( $args[ $strategy['parent_of_arg'] ] ?? 0 ) );
+			return $parent ? (string) $parent : null;
 		}
 		$arg = $strategy['id_arg'] ?? null;
 		if ( $arg !== null && isset( $args[ $arg ] ) && $args[ $arg ] !== '' ) {
