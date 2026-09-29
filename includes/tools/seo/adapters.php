@@ -125,19 +125,34 @@ function cowboy_mcp_seo_aioseo_adapter(): array {
 			$noindex  = array_key_exists( 'noindex', $writes ) ? (bool) $writes['noindex'] : $current['noindex'];
 			$nofollow = array_key_exists( 'nofollow', $writes ) ? (bool) $writes['nofollow'] : $current['nofollow'];
 			$other    = false;
-			foreach ( $row as $col => $v ) {
-				if ( str_starts_with( $col, 'robots_' ) && ! in_array( $col, [ 'robots_default', 'robots_noindex', 'robots_nofollow' ], true ) && ! empty( $v ) && is_numeric( $v ) ) {
-					$other = true; // noarchive/nosnippet/… set per post — keep custom robots
+			foreach ( [ 'robots_noarchive', 'robots_nosnippet', 'robots_noimageindex', 'robots_noodp', 'robots_notranslate' ] as $col ) {
+				if ( ! empty( $row[ $col ] ) ) {
+					$other = true; // per-post directives beyond index/follow — keep custom robots
 				}
+			}
+			foreach ( [ 'robots_max_snippet', 'robots_max_videopreview' ] as $col ) {
+				if ( (int) ( $row[ $col ] ?? 0 ) > 0 ) { // -1 is AIOSEO's "no limit" default
+					$other = true;
+				}
+			}
+			$img = (string) ( $row['robots_max_imagepreview'] ?? '' );
+			if ( $img !== '' && $img !== 'large' ) {
+				$other = true;
 			}
 			$data['default']  = ! ( $noindex || $nofollow || $other );
 			$data['noindex']  = $noindex;
 			$data['nofollow'] = $nofollow;
 		}
 		try {
-			$model::savePost( $post_id, $data );
+			$result = $model::savePost( $post_id, $data );
 		} catch ( \Throwable $e ) {
 			return array_fill_keys( array_keys( $writes ), 'AIOSEO rejected the update: ' . $e->getMessage() );
+		}
+		if ( is_string( $result ) && $result !== '' ) {
+			return array_fill_keys( array_keys( $writes ), 'AIOSEO could not save: ' . $result );
+		}
+		if ( $result === false ) { // savePost() returns false only for empty data (nothing was written)
+			return array_fill_keys( array_keys( $writes ), 'AIOSEO could not save: nothing to write.' );
 		}
 		return [];
 	};
