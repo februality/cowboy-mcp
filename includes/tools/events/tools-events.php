@@ -11,9 +11,9 @@ require_once __DIR__ . '/helpers.php';
 $cowboy_mcp_events_ro = [ 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ];
 
 $cowboy_mcp_events_tools = [
-	Cowboy_MCP_Tools::tool( 'wp_events_list', '[Events] List The Events Calendar events overlapping a date window (default: from now on). A recurring event appears once with is_recurring, series_id and next_occurrence — use wp_events_list_occurrences for its dates. Dates are event-local unless they carry an offset.', [
+	Cowboy_MCP_Tools::tool( 'wp_events_list', '[Events] List The Events Calendar events overlapping a date window (default: from now on). A recurring event appears once with is_recurring, series_id and next_occurrence — use wp_events_list_occurrences for its dates. Dates are site-local unless they carry an offset.', [
 		'from'         => [ 'type' => 'string', 'description' => 'Window start (default now). Events ending on/after this are included.' ],
-		'to'           => [ 'type' => 'string', 'description' => 'Window end. Events starting on/before this are included.' ],
+		'to'           => [ 'type' => 'string', 'description' => 'Window end. Events starting on/before this are included. A date-only value (YYYY-MM-DD) includes that whole day.' ],
 		'status'       => [ 'type' => 'string', 'description' => 'Post status: publish (default), draft, pending, private, future, any' ],
 		'category'     => [ 'type' => 'string', 'description' => 'Event category slug or ID' ],
 		'venue_id'     => [ 'type' => 'integer', 'description' => 'Only events at this venue' ],
@@ -43,6 +43,9 @@ $cowboy_mcp_events_handlers = [
 		}
 		if ( is_wp_error( $to ) ) {
 			return $to;
+		}
+		if ( $to && preg_match( '/^\d{4}-\d{2}-\d{2}$/', trim( (string) $a['to'] ) ) ) {
+			$to = $to->setTime( 23, 59, 59 ); // date-only end = the whole day, not its first second
 		}
 		$utc  = new DateTimeZone( 'UTC' );
 		$args = [

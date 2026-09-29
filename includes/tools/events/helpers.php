@@ -7,16 +7,30 @@ defined( 'ABSPATH' ) || exit;
  * surface as tec_api_unavailable, never a fatal.
  */
 
-/** Full table name for a TEC custom table when it exists, else null. */
+/**
+ * Full table name for a TEC custom table, or null. The CT1 tables count only
+ * while CT1 is LIVE (Cowboy_MCP_Tools::events_ct1_ready()): TEC creates them
+ * during a migration preview/in-progress and leaves them behind when CT1 is
+ * disabled, while TEC itself keeps reading and writing post meta — using the
+ * tables then would silently miss or misdate events. Readiness is re-checked on
+ * every call (cheap, no queries); only a positive existence check is cached, so
+ * a table created later in the request is still found.
+ */
 function cowboy_mcp_events_table( string $short ): ?string {
-	static $cache = [];
-	if ( ! array_key_exists( $short, $cache ) ) {
+	static $exists = [];
+	if ( in_array( $short, [ 'tec_events', 'tec_occurrences', 'tec_series_relationships' ], true ) && ! Cowboy_MCP_Tools::events_ct1_ready() ) {
+		return null;
+	}
+	if ( ! isset( $exists[ $short ] ) ) {
 		global $wpdb;
 		$name = $wpdb->prefix . $short;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$cache[ $short ] = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $name ) ) ) === $name ? $name : null;
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $name ) ) ) !== $name ) {
+			return null;
+		}
+		$exists[ $short ] = $name;
 	}
-	return $cache[ $short ];
+	return $exists[ $short ];
 }
 
 /** Normalise a (possibly provisional occurrence) id to the real event post id. */
@@ -120,13 +134,13 @@ function cowboy_mcp_events_series_ids( int $post_id ): array {
 
 /** RFC 5545 recurrence set stored by TEC for the event (DTSTART/RRULE/EXDATE lines), or null. */
 function cowboy_mcp_events_rset( int $post_id ): ?string {
-	static $has_column = null;
+	static $has_column = false; // only a positive result is cached (Pro may add the column later)
 	$table = cowboy_mcp_events_table( 'tec_events' );
 	if ( ! $table ) {
 		return null;
 	}
 	global $wpdb;
-	if ( null === $has_column ) {
+	if ( ! $has_column ) {
 		// Pro adds `rset` to TEC's table lazily (its activation init, once a day) — absent until then.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$has_column = (bool) $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'rset'" );
