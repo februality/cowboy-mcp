@@ -11,9 +11,14 @@ const COWBOY_MCP_REVISION_DIFF_CAP = 61440;
  */
 function cowboy_mcp_revision_values( WP_Post $source, WP_Post $parent ): array {
 	$values = [];
-	// Core exposes the revisioned field list only through this private helper (no public equivalent).
-	// phpcs:ignore Generic.PHP.ForbiddenFunctions.Found
-	foreach ( array_keys( _wp_post_revision_fields( $parent ) ) as $field ) {
+	// Same field list core builds for revisions: the defaults run through its public
+	// filter (which is how core adds "footnotes"); only the keys matter here.
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core hook, applied deliberately.
+	$fields = apply_filters( '_wp_post_revision_fields', [ 'post_title' => 'Title', 'post_content' => 'Content', 'post_excerpt' => 'Excerpt' ], $parent->to_array() );
+	foreach ( [ 'ID', 'post_name', 'post_parent', 'post_date', 'post_date_gmt', 'post_status', 'post_type', 'comment_count', 'post_author' ] as $protect ) {
+		unset( $fields[ $protect ] );
+	}
+	foreach ( array_keys( $fields ) as $field ) {
 		$values[ $field ] = (string) $source->$field;
 	}
 	if ( function_exists( 'wp_post_revision_meta_keys' ) ) {

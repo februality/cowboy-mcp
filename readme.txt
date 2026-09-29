@@ -228,7 +228,7 @@ Cowboy MCP lists two gateway tools (`cowboy_discover` and `cowboy_run`) instead 
 
 = Does it work with The Events Calendar? =
 
-Yes. When The Events Calendar is active, your agent can create, edit, trash and delete events, venues and organizers. With Events Calendar Pro it can also manage recurring events - edit a whole series or cancel a single date. Editing one occurrence on its own stays in wp-admin. Every change is undoable, and permanent deletes take a database checkpoint first.
+Yes. When The Events Calendar is active, your agent can create and edit events, venues and organizers, and trash or delete events (venues and organizers are removed with the standard delete-post tool). With Events Calendar Pro it can also manage recurring events - edit a whole series or cancel a single date. Editing one occurrence on its own stays in wp-admin. Changes are undoable, and permanent deletes take a database checkpoint first.
 
 = Is it like Novamira? =
 
@@ -271,7 +271,7 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 = 1.6.9 =
 * New: Revisions - list a post's revisions, see a git-style diff, restore one (undoable).
-* New: The Events Calendar - events, venues and organizers; recurring events with Events Calendar Pro (whole-series edits, cancel/restore single dates). Every change is undoable; permanent deletes take a database checkpoint first.
+* New: The Events Calendar - events, venues and organizers; recurring events with Events Calendar Pro (whole-series edits, cancel/restore single dates). Changes are undoable; permanent deletes take a database checkpoint first.
 * New: SEO tools now also work with All in One SEO and SEOPress (and report when several SEO plugins are active).
 * Fix: the MCP response id could be altered on sites running The Events Calendar.
 
