@@ -321,6 +321,7 @@ function cowboy_mcp_beaver_save_layout( int $post_id, array $nodes, ?array $layo
         if ( $layout_settings !== null ) {
             $settings = (object) array_merge( (array) $settings, $layout_settings );
         }
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Beaver Builder's own save hook, fired so BB add-ons see the write.
         do_action( 'fl_builder_before_save_layout', $post_id, true, cowboy_mcp_beaver_import_nodes( $nodes ), $settings );
         // Draft first, then publish what BB stored, exactly like the editor:
         // BB's own before-update filter stamps a version on new modules only
@@ -343,6 +344,7 @@ function cowboy_mcp_beaver_save_layout( int $post_id, array $nodes, ?array $layo
         } catch ( \Throwable $e ) {
             $warnings[] = 'post_content_not_refreshed: ' . $e->getMessage();
         }
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Beaver Builder's own save hook, fired so BB add-ons see the write.
         do_action( 'fl_builder_after_save_layout', $post_id, true, cowboy_mcp_beaver_import_nodes( $nodes ), $settings );
     } finally {
         FLBuilderModel::reset_post_id();
