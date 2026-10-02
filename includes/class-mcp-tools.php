@@ -633,6 +633,12 @@ class Cowboy_MCP_Tools {
                 }
             }
         }
+        if ( $name === 'wp_beaver_update_settings' ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_beaver_settings_check' ) ) {
+                $preview['plan'] = cowboy_mcp_beaver_settings_check( $filtered_args['settings'] ?? null, ! empty( $filtered_args['allow_unfiltered_html'] ) );
+            }
+        }
         // wp_save_template: say which branch would run (update / materialize / create).
         if ( $name === 'wp_save_template' ) {
             self::boot_domains();

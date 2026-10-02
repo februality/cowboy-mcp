@@ -382,6 +382,40 @@ function cowboy_mcp_beaver_layout_plan( array $args ): array {
     return $plan;
 }
 
+/**
+ * Validate a partial global-settings object against BB's 'global' form.
+ *
+ * @return array{errors: string[], changed: string[]}
+ */
+function cowboy_mcp_beaver_settings_check( $settings, bool $allow ): array {
+    if ( ! cowboy_mcp_beaver_is_object_like( $settings ) || $settings === [] ) {
+        return [ 'errors' => [ 'settings must be a non-empty object of Beaver Builder global setting names → values (see wp_beaver_get_settings).' ], 'changed' => [] ];
+    }
+    $known   = (array) FLBuilderModel::get_settings_form_defaults( 'global' );
+    unset( $known['color_scheme'] ); // per-user editor preference, not a site setting
+    $current = (array) FLBuilderModel::get_global_settings( false );
+    $errors  = [];
+    $changed = [];
+    foreach ( $settings as $k => $v ) {
+        if ( ! array_key_exists( $k, $known ) ) {
+            $errors[] = "unknown_setting: '{$k}' is not a Beaver Builder global setting.";
+            continue;
+        }
+        if ( ! $allow && in_array( $k, [ 'css', 'js' ], true ) && (string) $v !== '' ) {
+            $errors[] = "'{$k}' renders unfiltered on every page. Pass allow_unfiltered_html: true to permit it.";
+            continue;
+        }
+        if ( ! $allow && cowboy_mcp_beaver_unsafe_match( $v ) !== null ) {
+            $errors[] = "'{$k}' contains script/iframe/inline-handler/javascript: content. Pass allow_unfiltered_html: true to permit it.";
+            continue;
+        }
+        if ( wp_json_encode( $current[ $k ] ?? null ) !== wp_json_encode( $v ) ) {
+            $changed[] = (string) $k;
+        }
+    }
+    return [ 'errors' => $errors, 'changed' => $changed ];
+}
+
 /* ================================================================
  *  Tool definitions & handlers
  * ================================================================ */
@@ -425,6 +459,19 @@ return [
             'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit the html module, script/iframe/inline-handler/javascript: content and layout CSS/JS. Default false; these render verbatim on the front end and can introduce stored XSS.', 'default' => false ],
         ], [
             'title'           => 'Update Beaver Builder Layout',
+            'readOnlyHint'    => false,
+            'destructiveHint' => false,
+            'idempotentHint'  => true,
+            'openWorldHint'   => false,
+        ] ),
+
+        Cowboy_MCP_Tools::tool( 'wp_beaver_get_settings', '[Beaver Builder] Get Beaver Builder\'s site-wide settings (row/column widths and spacing, responsive breakpoints, global CSS/JS).', [], [ 'title' => 'Get Beaver Builder Settings' ] + $cowboy_mcp_beaver_ro ),
+
+        Cowboy_MCP_Tools::tool( 'wp_beaver_update_settings', '[Beaver Builder] Update Beaver Builder\'s site-wide settings (partial merge; undoable). Clears every Beaver Builder page\'s CSS/JS cache.', [
+            'settings' => [ 'type' => 'object', 'description' => 'Setting names → new values; names as returned by wp_beaver_get_settings', 'required' => true ],
+            'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit the global css/js settings and script-like content. Default false.', 'default' => false ],
+        ], [
+            'title'           => 'Update Beaver Builder Settings',
             'readOnlyHint'    => false,
             'destructiveHint' => false,
             'idempotentHint'  => true,
@@ -600,6 +647,25 @@ return [
                 'converted' => $converted,
                 'warnings'  => $warnings,
             ];
+        },
+
+        'wp_beaver_get_settings' => function ( array $a ): array|WP_Error {
+            $s = (array) FLBuilderModel::get_global_settings( false );
+            unset( $s['color_scheme'] );
+            return [ 'settings' => (object) $s ];
+        },
+
+        'wp_beaver_update_settings' => function ( array $a ): array|WP_Error {
+            if ( ! current_user_can( 'delete_others_posts' ) ) {
+                return new WP_Error( 'forbidden', 'Saving Beaver Builder settings requires the delete_others_posts capability.' ); // BB itself wp_die()s
+            }
+            $check = cowboy_mcp_beaver_settings_check( $a['settings'] ?? null, ! empty( $a['allow_unfiltered_html'] ) );
+            if ( $check['errors'] ) {
+                $code = str_starts_with( $check['errors'][0], 'unknown_setting' ) ? 'unknown_setting' : 'unfiltered_html_blocked';
+                return new WP_Error( $code, "Settings not saved (nothing was written):\n" . implode( "\n", $check['errors'] ) );
+            }
+            FLBuilderModel::save_global_settings( (array) $a['settings'] );
+            return [ 'changed' => $check['changed'], 'cache_cleared' => true ];
         },
     ],
 ];
