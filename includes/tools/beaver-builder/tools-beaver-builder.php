@@ -135,14 +135,29 @@ function cowboy_mcp_beaver_summarize( array $nodes ): array {
     return json_decode( (string) wp_json_encode( $root ), true );
 }
 
-/** First unsafe fragment (script/iframe tag, inline handler, javascript: URL) in any nested string. */
-function cowboy_mcp_beaver_unsafe_match( $value ): ?string {
+/**
+ * First unsafe fragment in any nested string, or null: a script/iframe/object/embed
+ * tag, an inline event handler (`<svg/onload=`, `<a onclick=`), or a javascript: URL
+ * in an attribute (entity- and whitespace-obfuscated forms included) or as the whole
+ * value of a link/url/href/src setting. Plain prose ("JavaScript: The Good Parts") passes.
+ */
+function cowboy_mcp_beaver_unsafe_match( $value, string $key = '' ): ?string {
     if ( is_string( $value ) ) {
-        return preg_match( '/<\s*script\b|<\s*iframe\b|<[^>]*\son[a-z]+\s*=|javascript\s*:/i', $value, $m ) ? $m[0] : null;
+        if ( preg_match( '/<\s*(?:script|iframe|object|embed)\b|<[^>]*[\s\/"\']on[a-z]+\s*=/i', $value, $m ) ) {
+            return $m[0];
+        }
+        $flat = (string) preg_replace( '/[\x00-\x20]+/', '', html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+        if ( preg_match( '/(?:href|src|action|formaction|xlink:href)=["\']?javascript:/i', $flat ) ) {
+            return 'javascript:';
+        }
+        if ( preg_match( '/(?:link|url|href|src)$/i', $key ) && stripos( $flat, 'javascript:' ) === 0 ) {
+            return 'javascript:';
+        }
+        return null;
     }
     if ( is_array( $value ) || is_object( $value ) ) {
-        foreach ( (array) $value as $v ) {
-            $hit = cowboy_mcp_beaver_unsafe_match( $v );
+        foreach ( (array) $value as $k => $v ) {
+            $hit = cowboy_mcp_beaver_unsafe_match( $v, is_string( $k ) ? $k : $key );
             if ( $hit !== null ) {
                 return $hit;
             }
@@ -152,11 +167,12 @@ function cowboy_mcp_beaver_unsafe_match( $value ): ?string {
 }
 
 /**
- * Validate an agent-supplied flat node list. Nothing is written by this function.
+ * Validate the structure of an agent-supplied flat node list (the unfiltered-content
+ * gate is cowboy_mcp_beaver_gate(), which only looks at what changed). Writes nothing.
  *
  * @return array{errors: string[], warnings: string[]}
  */
-function cowboy_mcp_beaver_validate_nodes( $nodes, bool $allow_unfiltered ): array {
+function cowboy_mcp_beaver_validate_nodes( $nodes ): array {
     $errors   = [];
     $warnings = [];
     if ( ! cowboy_mcp_beaver_is_list( $nodes ) || $nodes === [] ) {
@@ -233,18 +249,10 @@ function cowboy_mcp_beaver_validate_nodes( $nodes, bool $allow_unfiltered ): arr
                 $errors[] = "node '{$id}': settings.type '" . ( is_scalar( $slug ) ? $slug : '' ) . "' is not a registered module (see wp_beaver_list_modules).";
             } elseif ( ! in_array( $slug, $enabled, true ) ) {
                 $warnings[] = "node '{$id}': module '{$slug}' is disabled in Beaver Builder settings and will not render.";
-            } elseif ( $slug === 'html' && ! $allow_unfiltered ) {
-                $errors[] = "node '{$id}': the html module writes raw HTML. Pass allow_unfiltered_html: true to permit it.";
             }
         }
         if ( array_key_exists( 'position', $n ) && ( ! is_int( $n['position'] ) || $n['position'] < 0 ) ) {
             $errors[] = "node '{$id}': 'position' must be a non-negative integer.";
-        }
-        if ( ! $allow_unfiltered ) {
-            $hit = cowboy_mcp_beaver_unsafe_match( $settings );
-            if ( $hit !== null ) {
-                $errors[] = "node '{$id}': settings contain '{$hit}' (script, iframe, inline event handler or javascript: URL). Pass allow_unfiltered_html: true to permit it.";
-            }
         }
     }
     // Cycles (e.g. column-group under a column under that same column-group).
@@ -263,29 +271,217 @@ function cowboy_mcp_beaver_validate_nodes( $nodes, bool $allow_unfiltered ): arr
     return [ 'errors' => array_values( array_unique( $errors ) ), 'warnings' => $warnings ];
 }
 
-/**
- * Validated list → BB layout data (id => stdClass). Builds fresh objects on
- * every call: BB's slash_settings() mutates nodes in place, so one array must
- * never be handed to two update_layout_data() calls.
- */
-function cowboy_mcp_beaver_import_nodes( array $nodes ): array {
-    $data      = [];
-    $positions = [];
-    foreach ( $nodes as $n ) {
-        $o = json_decode( (string) wp_json_encode( $n ) );
-        unset( $o->global, $o->dynamic, $o->moduleType ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-        $o->parent = ( isset( $o->parent ) && $o->parent !== '' ) ? (string) $o->parent : null;
-        if ( ! isset( $o->settings ) || ! is_object( $o->settings ) ) {
-            $o->settings = new stdClass(); // {} decodes to [] in the args array
+/** Order-insensitive JSON of a value, for change detection (stdClass and assoc arrays compare equal). */
+function cowboy_mcp_beaver_canon( $value ): string {
+    $norm = function ( $v ) use ( &$norm ) {
+        if ( is_array( $v ) ) {
+            if ( ! cowboy_mcp_beaver_is_list( $v ) ) {
+                ksort( $v );
+            }
+            return array_map( $norm, $v );
         }
-        $key = $o->parent ?? '';
-        if ( ! isset( $o->position ) ) {
-            $o->position = $positions[ $key ] ?? 0;
-        }
-        $positions[ $key ]         = max( $positions[ $key ] ?? 0, (int) $o->position + 1 );
-        $data[ (string) $o->node ] = $o;
+        return $v;
+    };
+    return (string) wp_json_encode( $norm( json_decode( (string) wp_json_encode( $value ), true ) ) );
+}
+
+/** Read a key from an array or object container. */
+function cowboy_mcp_beaver_get( $container, $key ) {
+    if ( is_array( $container ) ) {
+        return $container[ $key ] ?? null;
     }
-    return $data;
+    return is_object( $container ) && isset( $container->$key ) ? $container->$key : null;
+}
+
+/**
+ * Validated agent list → BB layout data (id => stdClass), diffed against the stored
+ * layout. Unchanged setting values keep the stored PHP value (BB stores most nested
+ * settings — typography, border, animation… — as arrays and modules test is_array());
+ * changed values are taken in the editor's shape (JSON objects as associative arrays,
+ * only `settings` and `dynamic_fields` as objects). With $process, every new or
+ * changed node also runs BB's own save processing (Task: final review C2/I2):
+ * modules → defaults + process_module_settings() (module update() hooks) +
+ * sanitize_settings(); rows → defaults + process_row_settings() + sanitize;
+ * columns → sanitize only (process_col_settings() resizes siblings through the
+ * editor draft). Must run inside set_post_id() when $process is true.
+ *
+ * @return array{data: array, changes: array<string, string[]|null>} changes: node id →
+ *               changed setting keys, or null for a new node (or a node whose type changed).
+ */
+function cowboy_mcp_beaver_build_layout( array $nodes, array $stored, bool $process ): array {
+    $data      = [];
+    $changes   = [];
+    $positions = [];
+    $reserved  = [ 'node', 'type', 'parent', 'position', 'settings', 'global', 'dynamic', 'moduleType' ];
+    foreach ( $nodes as $n ) {
+        $id         = (string) $n['node'];
+        $old        = isset( $stored[ $id ] ) && is_object( $stored[ $id ] ) ? $stored[ $id ] : null;
+        $o          = new stdClass();
+        $o->node    = $id;
+        $o->type    = (string) $n['type'];
+        $o->parent  = ( isset( $n['parent'] ) && $n['parent'] !== '' ) ? (string) $n['parent'] : null;
+        $slot       = $o->parent ?? '';
+        $o->position = isset( $n['position'] ) ? (int) $n['position'] : ( $positions[ $slot ] ?? 0 );
+        $positions[ $slot ] = max( $positions[ $slot ] ?? 0, $o->position + 1 );
+        foreach ( $n as $k => $v ) {
+            if ( ! in_array( $k, $reserved, true ) ) {
+                $o->$k = $v; // version, template_* …
+            }
+        }
+        $agent        = cowboy_mcp_beaver_is_object_like( $n['settings'] ?? null ) ? $n['settings'] : [];
+        $old_settings = ( $old && $old->type === $o->type && isset( $old->settings ) && is_object( $old->settings )
+            && cowboy_mcp_beaver_get( $old->settings, 'type' ) === ( $agent['type'] ?? cowboy_mcp_beaver_get( $old->settings, 'type' ) ) ) ? $old->settings : null;
+        $settings = new stdClass();
+        $changed  = [];
+        foreach ( $agent as $k => $v ) {
+            if ( $old_settings && property_exists( $old_settings, $k ) && cowboy_mcp_beaver_canon( $old_settings->$k ) === cowboy_mcp_beaver_canon( $v ) ) {
+                $settings->$k = $old_settings->$k;
+            } else {
+                $settings->$k = $v;
+                $changed[]    = (string) $k;
+            }
+        }
+        if ( isset( $settings->dynamic_fields ) && is_array( $settings->dynamic_fields ) ) {
+            $settings->dynamic_fields = (object) $settings->dynamic_fields;
+        }
+        $removed = $old_settings ? array_diff( array_keys( get_object_vars( $old_settings ) ), array_map( 'strval', array_keys( $agent ) ) ) : [];
+        $o->settings = $settings;
+        if ( $old_settings === null ) {
+            $changes[ $id ] = null;
+        } elseif ( $changed || $removed ) {
+            $changes[ $id ] = $changed;
+        }
+        if ( $process && array_key_exists( $id, $changes ) ) {
+            $o->settings = cowboy_mcp_beaver_process_settings( $o, $old_settings );
+        }
+        $data[ $id ] = $o;
+    }
+    return [ 'data' => $data, 'changes' => $changes ];
+}
+
+/** BB's own per-node save processing for a new/changed node (see build_layout). */
+function cowboy_mcp_beaver_process_settings( stdClass $node, ?stdClass $old_settings ): stdClass {
+    $s = $node->settings;
+    if ( $node->type === 'module' && isset( $s->type ) && FLBuilderModel::is_module_registered( (string) $s->type ) ) {
+        $s     = (object) array_merge( (array) FLBuilderModel::get_module_defaults( (string) $s->type ), (array) $s );
+        $probe = clone $node;
+        $probe->settings = $old_settings ?? $s; // process_module_settings() runs delete() on the old instance
+        $s     = FLBuilderModel::process_module_settings( $probe, $s );
+        $s     = FLBuilderModel::sanitize_settings( $s, (string) $s->type, 'module' );
+    } elseif ( $node->type === 'row' ) {
+        $s = (object) array_merge( (array) FLBuilderModel::get_settings_form_defaults( 'row' ), (array) $s );
+        $s = FLBuilderModel::process_row_settings( $node, $s );
+        $s = FLBuilderModel::sanitize_settings( $s, 'row', 'general' );
+    } elseif ( $node->type === 'column' ) {
+        $s = FLBuilderModel::sanitize_settings( $s, 'col', 'general' );
+    }
+    return $s;
+}
+
+/** BB's JavaScript code fields for a module type: top-level names and repeater → sub-field names. */
+function cowboy_mcp_beaver_js_code_fields( string $module_type ): array {
+    $plan = [ 'top' => [], 'repeaters' => [] ];
+    if ( ! FLBuilderModel::is_module_registered( $module_type ) ) {
+        return $plan;
+    }
+    $is_js = fn( $f ) => isset( $f['type'], $f['editor'] ) && $f['type'] === 'code' && $f['editor'] === 'javascript';
+    foreach ( FLBuilderModel::get_settings_form_fields( $module_type, 'module' ) as $name => $field ) {
+        if ( $is_js( $field ) ) {
+            $plan['top'][] = (string) $name;
+        } elseif ( isset( $field['type'], $field['form'] ) && $field['type'] === 'form' ) {
+            $subs = [];
+            foreach ( FLBuilderModel::get_settings_form_fields( $field['form'], 'general' ) as $sub => $sub_field ) {
+                if ( $is_js( $sub_field ) ) {
+                    $subs[] = (string) $sub;
+                }
+            }
+            if ( $subs ) {
+                $plan['repeaters'][ (string) $name ] = $subs;
+            }
+        }
+    }
+    return $plan;
+}
+
+/**
+ * Unfiltered-content gate over what the agent CHANGED (unchanged human content —
+ * an existing html module, a rich-text onclick — never blocks an edit).
+ *
+ * @param array $built  cowboy_mcp_beaver_build_layout( …, false ) result.
+ * @return string[] Errors (empty = allowed).
+ */
+function cowboy_mcp_beaver_gate( array $built, array $stored ): array {
+    $errors = [];
+    $flag   = 'Pass allow_unfiltered_html: true to permit it.';
+    foreach ( $built['changes'] as $id => $keys ) {
+        $node = $built['data'][ $id ];
+        $s    = $node->settings;
+        $old  = isset( $stored[ $id ]->settings ) ? $stored[ $id ]->settings : null;
+        $keys = $keys ?? array_map( 'strval', array_keys( get_object_vars( $s ) ) );
+        $type = $node->type === 'module' ? (string) ( $s->type ?? '' ) : '';
+        if ( $type === 'html' && ( $old === null || in_array( 'html', $keys, true ) || in_array( 'type', $keys, true ) ) ) {
+            $errors[] = "node '{$id}': the html module writes raw HTML. {$flag}";
+        }
+        $js = cowboy_mcp_beaver_js_code_fields( $type );
+        foreach ( $keys as $k ) {
+            $v = $s->$k ?? null;
+            if ( ( in_array( $k, [ 'bb_js_code', 'bb_css_code' ], true ) || in_array( $k, $js['top'], true ) ) && is_string( $v ) && trim( $v ) !== '' ) {
+                $errors[] = "node '{$id}': '{$k}' is custom code that runs unfiltered on the front end. {$flag}";
+                continue;
+            }
+            if ( isset( $js['repeaters'][ $k ] ) && ( is_array( $v ) || is_object( $v ) ) ) {
+                $old_items = $old ? cowboy_mcp_beaver_get( $old, $k ) : null;
+                foreach ( $v as $i => $item ) {
+                    foreach ( $js['repeaters'][ $k ] as $sub ) {
+                        $nv = cowboy_mcp_beaver_get( $item, $sub );
+                        if ( is_string( $nv ) && trim( $nv ) !== '' && cowboy_mcp_beaver_canon( $nv ) !== cowboy_mcp_beaver_canon( cowboy_mcp_beaver_get( cowboy_mcp_beaver_get( $old_items, $i ), $sub ) ) ) {
+                            $errors[] = "node '{$id}': {$k}[{$i}].{$sub} is custom JavaScript that runs on the front end. {$flag}";
+                        }
+                    }
+                }
+            }
+            $hit = cowboy_mcp_beaver_unsafe_match( $v, $k );
+            if ( $hit !== null ) {
+                $errors[] = "node '{$id}': setting '{$k}' contains '{$hit}' (script/iframe tag, inline event handler or javascript: URL). {$flag}";
+            }
+        }
+    }
+    return $errors;
+}
+
+/**
+ * Everything update_layout decides before writing — shared by the handler and the
+ * dry-run plan so both refuse exactly the same input.
+ *
+ * @return array{errors: string[], warnings: string[], built: array, stored: array, layout_settings: ?array}
+ */
+function cowboy_mcp_beaver_check_update( int $post_id, array $a ): array {
+    $v      = cowboy_mcp_beaver_validate_nodes( $a['nodes'] ?? null );
+    $out    = [ 'errors' => $v['errors'], 'warnings' => $v['warnings'], 'built' => [ 'data' => [], 'changes' => [] ], 'stored' => [], 'layout_settings' => null ];
+    if ( $v['errors'] ) {
+        return $out;
+    }
+    $allow  = ! empty( $a['allow_unfiltered_html'] );
+    $stored = FLBuilderModel::get_layout_data( 'published', $post_id );
+    $built  = cowboy_mcp_beaver_build_layout( $a['nodes'], $stored, false );
+    $layout_settings = null;
+    $current         = FLBuilderModel::get_layout_settings( 'published', $post_id );
+    foreach ( [ 'layout_css' => 'css', 'layout_js' => 'js' ] as $arg => $key ) {
+        if ( array_key_exists( $arg, $a ) ) {
+            $layout_settings         = $layout_settings ?? [];
+            $layout_settings[ $key ] = (string) $a[ $arg ];
+            if ( ! $allow && trim( $layout_settings[ $key ] ) !== '' && $layout_settings[ $key ] !== (string) ( $current->$key ?? '' ) ) {
+                $out['errors'][] = "{$arg} renders unfiltered on the front end. Pass allow_unfiltered_html: true to permit it.";
+            }
+        }
+    }
+    if ( ! $allow ) {
+        $out['errors'] = array_merge( $out['errors'], cowboy_mcp_beaver_gate( $built, $stored ) );
+    }
+    $out['built']           = $built;
+    $out['stored']          = $stored;
+    $out['layout_settings'] = $layout_settings;
+    return $out;
 }
 
 /** The post a layout write targets, or why it cannot be written. */
@@ -305,9 +501,11 @@ function cowboy_mcp_beaver_target_post( int $post_id ): WP_Post|WP_Error {
 
 /**
  * Publish a validated node list to a post the way BB's editor Publish does,
- * without editor state: explicit post id, published + draft written (no stale
+ * without editor state: explicit post id, draft then published written (no stale
  * draft), builder flag, asset cache cleared, post_content re-rendered,
- * before/after-save actions fired for BB add-ons and BB's revision hook.
+ * before/after-save actions fired for BB add-ons and BB's revision hook. Any
+ * exception after the first write restores the captured BB meta and post_content
+ * before it propagates (the dispatcher discards the journal entry on exceptions).
  *
  * @param array      $nodes           Validated agent node list.
  * @param array|null $layout_settings ['css' => …, 'js' => …] subset, or null to keep.
@@ -315,26 +513,37 @@ function cowboy_mcp_beaver_target_post( int $post_id ): WP_Post|WP_Error {
  */
 function cowboy_mcp_beaver_save_layout( int $post_id, array $nodes, ?array $layout_settings ): array {
     $warnings = [];
+    $keys     = [ '_fl_builder_data', '_fl_builder_draft', '_fl_builder_data_settings', '_fl_builder_draft_settings', '_fl_builder_enabled' ];
+    $before   = [];
+    foreach ( $keys as $k ) {
+        $before[ $k ] = metadata_exists( 'post', $post_id, $k ) ? get_post_meta( $post_id, $k, true ) : null;
+    }
+    $content_before = (string) get_post_field( 'post_content', $post_id, 'raw' );
     FLBuilderModel::set_post_id( $post_id );
     try {
+        $built = cowboy_mcp_beaver_build_layout( $nodes, FLBuilderModel::get_layout_data( 'published', $post_id ), true );
+        $data  = $built['data'];
+        // Fresh objects per write: BB's slash_settings() mutates nodes in place.
+        $copy     = fn() => unserialize( serialize( $data ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- deep copy of trusted in-memory objects
         $settings = FLBuilderModel::get_layout_settings( 'published', $post_id );
         if ( $layout_settings !== null ) {
             $settings = (object) array_merge( (array) $settings, $layout_settings );
         }
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Beaver Builder's own save hook, fired so BB add-ons see the write.
-        do_action( 'fl_builder_before_save_layout', $post_id, true, cowboy_mcp_beaver_import_nodes( $nodes ), $settings );
+        do_action( 'fl_builder_before_save_layout', $post_id, true, $copy(), $settings );
         // Draft first, then publish what BB stored, exactly like the editor:
         // BB's own before-update filter stamps a version on new modules only
         // on draft saves, and an unversioned module renders as legacy v1.
-        FLBuilderModel::update_layout_data( cowboy_mcp_beaver_import_nodes( $nodes ), 'draft', $post_id );
-        $published = unserialize( serialize( FLBuilderModel::get_layout_data( 'draft', $post_id ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- deep copy of trusted in-memory objects
-        FLBuilderModel::update_layout_data( $published, 'published', $post_id );
+        // get_post_meta() unserializes from the raw meta cache = a fresh copy.
+        FLBuilderModel::update_layout_data( $copy(), 'draft', $post_id );
+        FLBuilderModel::update_layout_data( (array) get_post_meta( $post_id, '_fl_builder_draft', true ), 'published', $post_id );
         if ( $layout_settings !== null ) {
             FLBuilderModel::update_layout_settings( $layout_settings, 'published', $post_id );
             FLBuilderModel::update_layout_settings( $layout_settings, 'draft', $post_id );
         }
         update_post_meta( $post_id, '_fl_builder_enabled', true );
         FLBuilderModel::delete_all_asset_cache( $post_id );
+        $level = ob_get_level();
         try {
             $html   = (string) FLBuilder::render_editor_content();
             $result = wp_update_post( wp_slash( [ 'ID' => $post_id, 'post_content' => $html ] ), true );
@@ -342,45 +551,58 @@ function cowboy_mcp_beaver_save_layout( int $post_id, array $nodes, ?array $layo
                 $warnings[] = 'post_content_not_refreshed: ' . $result->get_error_message();
             }
         } catch ( \Throwable $e ) {
+            while ( ob_get_level() > $level ) {
+                ob_end_clean(); // render_editor_content() opens its own buffer
+            }
             $warnings[] = 'post_content_not_refreshed: ' . $e->getMessage();
         }
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Beaver Builder's own save hook, fired so BB add-ons see the write.
-        do_action( 'fl_builder_after_save_layout', $post_id, true, cowboy_mcp_beaver_import_nodes( $nodes ), $settings );
+        do_action( 'fl_builder_after_save_layout', $post_id, true, $copy(), $settings );
+    } catch ( \Throwable $e ) {
+        foreach ( $before as $k => $v ) {
+            if ( $v === null ) {
+                delete_post_meta( $post_id, $k );
+            } else {
+                update_post_meta( $post_id, $k, FLBuilderModel::slash_settings( $v ) ); // update_post_meta() unslashes through objects
+            }
+        }
+        if ( (string) get_post_field( 'post_content', $post_id, 'raw' ) !== $content_before ) {
+            wp_update_post( wp_slash( [ 'ID' => $post_id, 'post_content' => $content_before ] ) );
+        }
+        FLBuilderModel::delete_all_asset_cache( $post_id );
+        throw $e;
     } finally {
         FLBuilderModel::reset_post_id();
     }
     return $warnings;
 }
 
-/** Dry-run plan for wp_beaver_update_layout: validation + node diff, nothing written. */
+/** Dry-run plan for wp_beaver_update_layout: the handler's own checks + node diff, nothing written. */
 function cowboy_mcp_beaver_layout_plan( array $args ): array {
     $post_id = (int) ( $args['post_id'] ?? 0 );
     $post    = cowboy_mcp_beaver_target_post( $post_id );
     if ( is_wp_error( $post ) ) {
         return [ 'valid' => false, 'errors' => [ $post->get_error_code() . ': ' . $post->get_error_message() ] ];
     }
-    $allow = ! empty( $args['allow_unfiltered_html'] );
-    $v     = cowboy_mcp_beaver_validate_nodes( $args['nodes'] ?? null, $allow );
-    if ( ! $allow && ( ! empty( $args['layout_css'] ) || ! empty( $args['layout_js'] ) ) ) {
-        $v['errors'][] = 'layout_css/layout_js render unfiltered on the front end. Pass allow_unfiltered_html: true to permit them.';
-    }
-    $plan = [ 'valid' => ! $v['errors'], 'errors' => $v['errors'], 'warnings' => $v['warnings'], 'would_convert' => ! cowboy_mcp_beaver_is_enabled( $post_id ) ];
-    if ( $v['errors'] ) {
+    $c    = cowboy_mcp_beaver_check_update( $post_id, $args );
+    $plan = [ 'valid' => ! $c['errors'], 'errors' => $c['errors'], 'warnings' => $c['warnings'], 'would_convert' => ! cowboy_mcp_beaver_is_enabled( $post_id ) ];
+    if ( $c['errors'] ) {
         return $plan;
     }
-    $old = [];
-    foreach ( cowboy_mcp_beaver_export_nodes( FLBuilderModel::get_layout_data( 'published', $post_id ) ) as $n ) {
-        $old[ (string) $n->node ] = wp_json_encode( $n );
+    $added = $changed = [];
+    foreach ( $c['built']['data'] as $id => $node ) {
+        $old = $c['stored'][ $id ] ?? null;
+        if ( ! $old ) {
+            $added[] = (string) $id;
+        } elseif ( array_key_exists( $id, $c['built']['changes'] ) || (string) ( $old->parent ?? '' ) !== (string) ( $node->parent ?? '' ) || (int) ( $old->position ?? 0 ) !== (int) $node->position ) {
+            $changed[] = (string) $id;
+        }
     }
-    $new = [];
-    foreach ( cowboy_mcp_beaver_export_nodes( cowboy_mcp_beaver_import_nodes( $args['nodes'] ) ) as $n ) {
-        $new[ (string) $n->node ] = wp_json_encode( $n );
-    }
-    $plan['added']   = array_values( array_map( 'strval', array_keys( array_diff_key( $new, $old ) ) ) );
-    $plan['removed'] = array_values( array_map( 'strval', array_keys( array_diff_key( $old, $new ) ) ) );
-    $plan['changed'] = array_values( array_map( 'strval', array_keys( array_filter( array_intersect_key( $new, $old ), fn( $j, $id ) => $old[ $id ] !== $j, ARRAY_FILTER_USE_BOTH ) ) ) );
-    $plan['node_count']           = count( $new );
-    $plan['draft_would_be_lost']  = cowboy_mcp_beaver_draft_differs( $post_id );
+    $plan['added']               = $added;
+    $plan['removed']             = array_values( array_map( 'strval', array_keys( array_diff_key( $c['stored'], $c['built']['data'] ) ) ) );
+    $plan['changed']             = $changed;
+    $plan['node_count']          = count( $c['built']['data'] );
+    $plan['draft_would_be_lost'] = cowboy_mcp_beaver_draft_differs( $post_id );
     return $plan;
 }
 
@@ -407,7 +629,7 @@ function cowboy_mcp_beaver_settings_check( $settings, bool $allow ): array {
             $errors[] = "'{$k}' renders unfiltered on every page. Pass allow_unfiltered_html: true to permit it.";
             continue;
         }
-        if ( ! $allow && cowboy_mcp_beaver_unsafe_match( $v ) !== null ) {
+        if ( ! $allow && cowboy_mcp_beaver_unsafe_match( $v, (string) $k ) !== null ) {
             $errors[] = "'{$k}' contains script/iframe/inline-handler/javascript: content. Pass allow_unfiltered_html: true to permit it.";
             continue;
         }
@@ -608,32 +830,24 @@ return [
             if ( is_wp_error( $post ) ) {
                 return $post;
             }
-            $allow = ! empty( $a['allow_unfiltered_html'] );
-            $v     = cowboy_mcp_beaver_validate_nodes( $a['nodes'] ?? null, $allow );
-            $layout_settings = null;
-            foreach ( [ 'layout_css' => 'css', 'layout_js' => 'js' ] as $arg => $key ) {
-                if ( array_key_exists( $arg, $a ) ) {
-                    $layout_settings         = $layout_settings ?? [];
-                    $layout_settings[ $key ] = (string) $a[ $arg ];
-                }
-            }
-            if ( ! $allow && $layout_settings !== null && implode( '', $layout_settings ) !== '' ) {
-                $v['errors'][] = 'layout_css/layout_js render unfiltered on the front end. Pass allow_unfiltered_html: true to permit them.';
-            }
+            $v = cowboy_mcp_beaver_check_update( $post_id, $a );
             if ( $v['errors'] ) {
-                $msg = implode( "\n", array_slice( $v['errors'], 0, 20 ) );
+                $msg = implode( "
+", array_slice( $v['errors'], 0, 20 ) );
                 if ( count( $v['errors'] ) > 20 ) {
-                    $msg .= "\n… and " . ( count( $v['errors'] ) - 20 ) . ' more.';
+                    $msg .= "
+… and " . ( count( $v['errors'] ) - 20 ) . ' more.';
                 }
                 $code = str_contains( $msg, 'allow_unfiltered_html' ) ? 'unfiltered_html_blocked' : 'invalid_layout';
-                return new WP_Error( $code, "Layout not saved (nothing was written):\n" . $msg );
+                return new WP_Error( $code, "Layout not saved (nothing was written):
+" . $msg );
             }
             $warnings  = $v['warnings'];
             $converted = ! cowboy_mcp_beaver_is_enabled( $post_id );
             if ( cowboy_mcp_beaver_draft_differs( $post_id ) ) {
                 $warnings[] = 'draft_overwritten: an unpublished Beaver Builder editor draft existed and was replaced by this layout (undo restores it).';
             }
-            $warnings = array_merge( $warnings, cowboy_mcp_beaver_save_layout( $post_id, $a['nodes'], $layout_settings ) );
+            $warnings = array_merge( $warnings, cowboy_mcp_beaver_save_layout( $post_id, $a['nodes'], $v['layout_settings'] ) );
             $counts   = [ 'row' => 0, 'column' => 0, 'module' => 0 ];
             foreach ( $a['nodes'] as $n ) {
                 if ( isset( $counts[ $n['type'] ] ) ) {
