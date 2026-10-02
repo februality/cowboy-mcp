@@ -622,6 +622,17 @@ class Cowboy_MCP_Tools {
                 $preview['plan'] = cowboy_mcp_gutenberg_dry_run_plan( $filtered_args );
             }
         }
+        // wp_beaver_update_layout: validate and diff against the live layout.
+        if ( $name === 'wp_beaver_update_layout' ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_beaver_layout_plan' ) ) {
+                $plan            = cowboy_mcp_beaver_layout_plan( $filtered_args );
+                $preview['plan'] = $plan;
+                if ( empty( $plan['valid'] ) ) {
+                    $preview['description'] = 'Would be refused: ' . implode( ' | ', array_slice( (array) ( $plan['errors'] ?? [] ), 0, 3 ) );
+                }
+            }
+        }
         // wp_save_template: say which branch would run (update / materialize / create).
         if ( $name === 'wp_save_template' ) {
             self::boot_domains();
