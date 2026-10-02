@@ -13,7 +13,7 @@ class Cowboy_MCP_Tools {
     /** Tool name prefixes, ordered from most-specific to least-specific. */
     private const TOOL_PREFIXES = [
         'wp_woo_', 'wp_acf_', 'wp_seo_',
-        'wp_forms_', 'wp_cache_', 'wp_elementor_', 'wp_wordfence_', 'wp_events_', 'cowboy_mcp_', 'wp_',
+        'wp_forms_', 'wp_cache_', 'wp_elementor_', 'wp_beaver_', 'wp_wordfence_', 'wp_events_', 'cowboy_mcp_', 'wp_',
     ];
 
     /** Domain files to load from includes/tools/. */
@@ -47,6 +47,7 @@ class Cowboy_MCP_Tools {
         'forms/tools-forms.php',
         'cache/tools-cache.php',
         'elementor/tools-elementor.php',
+        'beaver-builder/tools-beaver-builder.php',
         'wordfence/tools-wordfence.php',
         'events/tools-events.php',
     ];
@@ -69,6 +70,7 @@ class Cowboy_MCP_Tools {
         'seo/tools-seo.php',
         'forms/tools-forms.php',
         'elementor/tools-elementor.php',
+        'beaver-builder/tools-beaver-builder.php',
         'wordfence/tools-wordfence.php',
         'events/tools-events.php',
     ];
@@ -104,6 +106,7 @@ class Cowboy_MCP_Tools {
         'forms/tools-forms.php'             => 'forms',
         'cache/tools-cache.php'             => 'cache',
         'elementor/tools-elementor.php'     => 'elementor',
+        'beaver-builder/tools-beaver-builder.php' => 'beaver-builder',
         'wordfence/tools-wordfence.php'     => 'wordfence',
         'events/tools-events.php'           => 'events',
         'abilities/tools-abilities.php'     => 'abilities',   // loaded in phase 2, not in DOMAIN_FILES
@@ -133,6 +136,7 @@ class Cowboy_MCP_Tools {
         'forms'          => 'form provider detection',
         'cache'          => 'provider detect, flush, preload, settings',
         'elementor'      => 'templates, page content, global styles, widgets',
+        'beaver-builder' => 'Beaver Builder page layouts (read, replace with undo), module catalog and settings schemas, site-wide builder settings',
         'wordfence'      => 'scan, blocks, firewall, live traffic, activity, settings',
         'events'         => 'The Events Calendar: events, venues, organizers; recurring series and occurrences with Events Calendar Pro',
         'abilities'      => 'abilities registered by other plugins through the WordPress Abilities API (WooCommerce, the AI plugin\'s core abilities, core...) - each runs its own permission check; not undoable',
@@ -1055,6 +1059,7 @@ class Cowboy_MCP_Tools {
             'seo/tools-seo.php'             => class_exists( 'WPSEO_Options' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'AIOSEO_VERSION' ) || defined( 'SEOPRESS_VERSION' ),
             'forms/tools-forms.php'         => function_exists( 'wpforms' ) || class_exists( 'GFAPI' ) || class_exists( 'WPCF7_ContactForm' ),
             'elementor/tools-elementor.php' => (bool) did_action( 'elementor/loaded' ) || class_exists( '\Elementor\Plugin' ),
+            'beaver-builder/tools-beaver-builder.php' => class_exists( 'FLBuilderModel' ) && class_exists( 'FLBuilder' ),
             'wordfence/tools-wordfence.php' => class_exists( 'wordfence' ),
             'events/tools-events.php'       => class_exists( 'Tribe__Events__Main' ) && function_exists( 'tribe_events' ),
             default                         => true,

@@ -341,6 +341,7 @@ class Cowboy_MCP_Abilities {
             'wp_seo_'       => 'SEO: ',
             'wp_wordfence_' => 'Wordfence: ',
             'wp_elementor_' => 'Elementor: ',
+            'wp_beaver_'    => 'Beaver Builder: ',
             'wp_cache_'     => 'Cache: ',
             'wp_forms_'     => 'Forms: ',
             'cowboy_mcp_'   => 'Cowboy: ',
