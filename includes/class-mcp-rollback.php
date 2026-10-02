@@ -807,9 +807,10 @@ class Cowboy_MCP_Rollback {
 			case 'option':
 				if ( $state === null ) {
 					delete_option( $id );
-					return true;
+				} else {
+					update_option( $id, $state['value'] ); // false = value unchanged; still success
 				}
-				update_option( $id, $state['value'] ); // false = value unchanged; still success
+				self::refresh_builder_cache( 'option', $id );
 				return true;
 
 			case 'db_rows':
@@ -819,7 +820,9 @@ class Cowboy_MCP_Rollback {
 				return self::restore_seo_row( (int) $id, $state );
 
 			case 'post':
-				return self::restore_post( (int) $id, $state );
+				$r = self::restore_post( (int) $id, $state );
+				self::refresh_builder_cache( 'post', $id );
+				return $r;
 
 			case 'tec_event':
 				return self::restore_tec_event( (int) $id, $state );
@@ -1029,6 +1032,41 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/** Restore (or recreate with original ID) a post + meta + terms. Null state = delete. */
+	/**
+	 * wp_slash() that also reaches object properties. add_post_meta() unslashes
+	 * through objects (map_deep), but wp_slash() leaves objects untouched, so
+	 * stdClass meta (e.g. Beaver Builder layouts) would lose every backslash.
+	 */
+	private static function slash_deep( $value ) {
+		if ( is_object( $value ) ) {
+			$value = clone $value;
+			foreach ( get_object_vars( $value ) as $k => $v ) {
+				$value->$k = self::slash_deep( $v );
+			}
+			return $value;
+		}
+		if ( is_array( $value ) ) {
+			return array_map( [ __CLASS__, 'slash_deep' ], $value );
+		}
+		return is_string( $value ) ? addslashes( $value ) : $value;
+	}
+
+	/**
+	 * Beaver Builder serves cached per-post CSS/JS; after restoring its layout
+	 * meta or global settings the cache must go or the old styles keep showing.
+	 * delete_all_asset_cache() on a non-BB post only globs and unlinks nothing.
+	 */
+	private static function refresh_builder_cache( string $type, string $id ): void {
+		if ( ! class_exists( 'FLBuilderModel' ) ) {
+			return;
+		}
+		if ( $type === 'option' && $id === '_fl_builder_settings' && method_exists( 'FLBuilderModel', 'delete_asset_cache_for_all_posts' ) ) {
+			FLBuilderModel::delete_asset_cache_for_all_posts();
+		} elseif ( $type === 'post' && method_exists( 'FLBuilderModel', 'delete_all_asset_cache' ) ) {
+			FLBuilderModel::delete_all_asset_cache( (int) $id );
+		}
+	}
+
 	private static function restore_post( int $post_id, ?array $state ): bool|WP_Error {
 		if ( $state === null ) {
 			$deleted = wp_delete_post( $post_id, true );
@@ -1054,7 +1092,7 @@ class Cowboy_MCP_Rollback {
 		}
 		foreach ( $state['meta'] as $k => $values ) {
 			foreach ( (array) $values as $v ) {
-				add_post_meta( $live_id, $k, wp_slash( maybe_unserialize( $v ) ) );
+				add_post_meta( $live_id, $k, self::slash_deep( maybe_unserialize( $v ) ) );
 			}
 		}
 
