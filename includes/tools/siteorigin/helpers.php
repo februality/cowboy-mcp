@@ -970,3 +970,83 @@ function cowboy_mcp_siteorigin_append( array $current, array $src ): array {
     }
     return $out;
 }
+
+/** Page Builder settings fields, flattened: field_id => field + section. */
+function cowboy_mcp_siteorigin_settings_fields(): array {
+    SiteOrigin_Panels_Settings::single();   // registers the defaults/fields filters (wp-admin-only by default)
+    $out = [];
+    foreach ( (array) apply_filters( 'siteorigin_panels_settings_fields', [] ) as $sid => $section ) {
+        foreach ( (array) ( $section['fields'] ?? [] ) as $fid => $f ) {
+            if ( is_array( $f ) ) {
+                $out[ (string) $fid ] = $f + [ 'section' => (string) $sid ];
+            }
+        }
+    }
+    return $out;
+}
+
+/** Validate a partial settings update with SiteOrigin's per-type sanitizing (save_settings() semantics). */
+function cowboy_mcp_siteorigin_settings_check( $settings ): array {
+    if ( ! cowboy_mcp_siteorigin_is_object_like( $settings ) || $settings === [] ) {
+        return [ 'errors' => [ 'invalid_args: settings must be a non-empty object' ], 'changed' => [], 'values' => [] ];
+    }
+    $fields  = cowboy_mcp_siteorigin_settings_fields();
+    $current = (array) SiteOrigin_Panels_Settings::single()->get();
+    $errors  = [];
+    $values  = [];
+    $changed = [];
+    foreach ( $settings as $k => $v ) {
+        $k = (string) $k;
+        if ( ! isset( $fields[ $k ] ) ) {
+            $errors[] = "unknown_setting: {$k}";
+            continue;
+        }
+        $f    = $fields[ $k ];
+        $opts = is_array( $f['options'] ?? null ) ? array_map( 'strval', array_keys( $f['options'] ) ) : [];
+        switch ( (string) ( $f['type'] ?? '' ) ) {
+            case 'text':
+                $nv = sanitize_text_field( (string) $v );
+                break;
+            case 'number':
+            case 'float':
+                if ( ! is_numeric( $v ) ) {
+                    $errors[] = "invalid_setting_value: {$k} must be a number";
+                    continue 2;
+                }
+                $nv = $f['type'] === 'number' ? (int) $v : (float) $v;
+                break;
+            case 'html':
+                $nv = force_balance_tags( wp_kses_post( (string) $v ) );
+                break;
+            case 'checkbox':
+                $nv = rest_sanitize_boolean( $v );
+                break;
+            case 'select':
+                if ( ! in_array( (string) $v, $opts, true ) ) {
+                    $errors[] = "invalid_setting_value: {$k} must be one of " . implode( ', ', $opts );
+                    continue 2;
+                }
+                $nv = (string) $v;
+                break;
+            case 'select_multi':
+                if ( ! cowboy_mcp_siteorigin_is_list( $v ) || array_diff( array_map( 'strval', $v ), $opts ) ) {
+                    $errors[] = "invalid_setting_value: {$k} must be a list of " . implode( ', ', $opts );
+                    continue 2;
+                }
+                $nv = array_values( array_map( 'strval', $v ) );
+                break;
+            default:
+                $errors[] = "unsupported_setting: {$k} (field type " . (string) ( $f['type'] ?? '?' ) . ' cannot be set through this tool)';
+                continue 2;
+        }
+        if ( $k === 'mobile-width' && $nv < 320 ) {
+            $errors[] = 'invalid_setting_value: mobile-width must be >= 320';
+            continue;
+        }
+        $values[ $k ] = $nv;
+        if ( ( $current[ $k ] ?? null ) !== $nv ) {
+            $changed[ $k ] = [ 'from' => $current[ $k ] ?? null, 'to' => $nv ];
+        }
+    }
+    return [ 'errors' => $errors, 'changed' => $changed, 'values' => $values ];
+}

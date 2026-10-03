@@ -55,6 +55,12 @@ $cowboy_mcp_so_tools = [
     ], [ 'title' => 'Get SiteOrigin Style Fields' ] + $cowboy_mcp_so_ro ),
 
     Cowboy_MCP_Tools::tool( 'wp_siteorigin_list_prebuilt_layouts', '[SiteOrigin] List prebuilt layouts registered on this site (by the theme or plugins via SiteOrigin\'s prebuilt-layouts filter). Apply one with wp_siteorigin_apply_prebuilt_layout layout_id, or copy any post\'s layout with source_post_id. The remote SiteOrigin layout directory is not used.', [], [ 'title' => 'List SiteOrigin Prebuilt Layouts' ] + $cowboy_mcp_so_ro ),
+
+    Cowboy_MCP_Tools::tool( 'wp_siteorigin_get_settings', '[SiteOrigin] Get Page Builder\'s site-wide settings (merged over defaults) and the settable fields (id, section, type, label, options).', [], [ 'title' => 'Get SiteOrigin Settings' ] + $cowboy_mcp_so_ro ),
+
+    Cowboy_MCP_Tools::tool( 'wp_siteorigin_update_settings', '[SiteOrigin] Update Page Builder\'s site-wide settings (partial merge; undoable). Keys and allowed values come from wp_siteorigin_get_settings fields; unknown keys are refused.', [
+        'settings' => [ 'type' => 'object', 'description' => 'Setting id → new value', 'required' => true ],
+    ], [ 'title' => 'Update SiteOrigin Settings' ] + $cowboy_mcp_so_rw ),
 ];
 
 $cowboy_mcp_so_handlers = [
@@ -223,6 +229,31 @@ $cowboy_mcp_so_handlers = [
             ];
         }
         return [ 'count' => count( $rows ), 'layouts' => $rows ];
+    },
+
+    'wp_siteorigin_get_settings' => function ( array $a ): array|WP_Error {
+        $fields = [];
+        foreach ( cowboy_mcp_siteorigin_settings_fields() as $id => $f ) {
+            $row = [ 'id' => $id, 'section' => $f['section'], 'type' => (string) ( $f['type'] ?? '' ), 'label' => wp_strip_all_tags( (string) ( $f['label'] ?? $id ) ) ];
+            if ( is_array( $f['options'] ?? null ) ) {
+                $row['options'] = array_map( 'strval', array_keys( $f['options'] ) );
+            }
+            $fields[] = $row;
+        }
+        return [ 'settings' => (object) SiteOrigin_Panels_Settings::single()->get(), 'fields' => $fields ];
+    },
+
+    'wp_siteorigin_update_settings' => function ( array $a ): array|WP_Error {
+        $check = cowboy_mcp_siteorigin_settings_check( $a['settings'] ?? null );
+        if ( $check['errors'] ) {
+            return new WP_Error( 'invalid_settings', implode( ' | ', $check['errors'] ) );
+        }
+        $stored = get_option( 'siteorigin_panels_settings', [] );
+        $merged = array_merge( is_array( $stored ) ? $stored : [], $check['values'] );
+        update_option( 'siteorigin_panels_settings', $merged );
+        do_action( 'siteorigin_panels_save_settings', $merged );
+        SiteOrigin_Panels_Settings::single()->clear_cache();
+        return [ 'changed' => $check['changed'] ];
     },
 ];
 

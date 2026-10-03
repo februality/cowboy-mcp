@@ -654,6 +654,13 @@ class Cowboy_MCP_Tools {
                 }
             }
         }
+        if ( $name === 'wp_siteorigin_update_settings' ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_siteorigin_settings_check' ) ) {
+                $check           = cowboy_mcp_siteorigin_settings_check( $filtered_args['settings'] ?? null );
+                $preview['plan'] = [ 'valid' => ! $check['errors'], 'errors' => $check['errors'], 'changed' => $check['changed'] ];
+            }
+        }
         // wp_save_template: say which branch would run (update / materialize / create).
         if ( $name === 'wp_save_template' ) {
             self::boot_domains();

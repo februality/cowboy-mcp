@@ -76,6 +76,7 @@ class Cowboy_MCP_Rollback {
 		'wp_siteorigin_update_layout'          => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
 		'wp_siteorigin_edit_layout'            => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
 		'wp_siteorigin_apply_prebuilt_layout'  => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
+		'wp_siteorigin_update_settings'        => [ 'type' => 'option', 'action' => 'update', 'static_id' => 'siteorigin_panels_settings' ],
 		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id', 'seo_dynamic' => true ],
 		'wp_events_create_venue'     => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'id' ],
 		'wp_events_update_venue'     => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'venue_id' ],
@@ -815,6 +816,7 @@ class Cowboy_MCP_Rollback {
 					update_option( $id, $state['value'] ); // false = value unchanged; still success
 				}
 				self::refresh_builder_cache( 'option', $id );
+				self::refresh_siteorigin_cache( $id );
 				return true;
 
 			case 'db_rows':
@@ -1068,6 +1070,16 @@ class Cowboy_MCP_Rollback {
 			FLBuilderModel::delete_asset_cache_for_all_posts();
 		} elseif ( $type === 'post' && method_exists( 'FLBuilderModel', 'delete_all_asset_cache' ) ) {
 			FLBuilderModel::delete_all_asset_cache( (int) $id );
+		}
+	}
+
+	/** SiteOrigin caches its settings and active-widget list per request/object cache; drop them after an option restore. */
+	private static function refresh_siteorigin_cache( string $id ): void {
+		if ( $id === 'siteorigin_panels_settings' && class_exists( 'SiteOrigin_Panels_Settings' ) ) {
+			SiteOrigin_Panels_Settings::single()->clear_cache();
+		} elseif ( $id === 'siteorigin_widgets_active' ) {
+			wp_cache_delete( 'active_widgets', 'siteorigin_widgets' );
+			delete_transient( 'siteorigin_panels_widgets' );
 		}
 	}
 
