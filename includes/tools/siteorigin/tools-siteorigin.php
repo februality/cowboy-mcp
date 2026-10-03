@@ -40,6 +40,19 @@ $cowboy_mcp_so_tools = [
         'block_index' => [ 'type' => 'integer', 'description' => 'Only this Layout Block (0-based among the post\'s Layout Blocks)' ],
         'summarize'   => [ 'type' => 'boolean', 'description' => 'Return the nested overview instead of raw panels_data', 'default' => false ],
     ], [ 'title' => 'Get SiteOrigin Layout' ] + $cowboy_mcp_so_ro ),
+
+    Cowboy_MCP_Tools::tool( 'wp_siteorigin_list_widgets', '[SiteOrigin] List widget classes usable in Page Builder layouts (panels_info.class). Includes core and third-party WP_Widget classes and Widgets Bundle widgets. include_inactive=true also lists switched-off Widgets Bundle widgets (active:false) — activate them with wp_siteorigin_set_widgets_active before using them.', [
+        'include_inactive' => [ 'type' => 'boolean', 'description' => 'Also list inactive Widgets Bundle widgets', 'default' => false ],
+    ], [ 'title' => 'List SiteOrigin Widgets' ] + $cowboy_mcp_so_ro ),
+
+    Cowboy_MCP_Tools::tool( 'wp_siteorigin_get_widget_schema', '[SiteOrigin] Get the settings schema for a widget class. Widgets Bundle widgets return a JSON Schema of their instance keys (keys not in the schema are removed by the widget on save) plus companion_keys. Core/third-party WP_Widget classes have no machine-readable form: schema is null — copy the keys of an existing instance from wp_siteorigin_get_layout.', [
+        'class' => [ 'type' => 'string', 'description' => 'Widget PHP class (from wp_siteorigin_list_widgets)', 'required' => true ],
+    ], [ 'title' => 'Get SiteOrigin Widget Schema' ] + $cowboy_mcp_so_ro ),
+
+    Cowboy_MCP_Tools::tool( 'wp_siteorigin_get_style_fields', '[SiteOrigin] List the style fields available for rows, cells or widgets (row grids[].style, grid_cells[].style, widget panels_info.style). Toggle fields are stored flat as {toggle}_{sub}. Unknown style keys are dropped by Page Builder on save.', [
+        'level'   => [ 'type' => 'string', 'description' => 'row, cell or widget', 'enum' => [ 'row', 'cell', 'widget' ], 'required' => true ],
+        'post_id' => [ 'type' => 'integer', 'description' => 'Optional post context (some add-ons vary fields per post)' ],
+    ], [ 'title' => 'Get SiteOrigin Style Fields' ] + $cowboy_mcp_so_ro ),
 ];
 
 $cowboy_mcp_so_handlers = [
@@ -116,6 +129,80 @@ $cowboy_mcp_so_handlers = [
             unset( $l );
         }
         return [ 'post_id' => $post_id, 'source' => $read['source'], 'layouts' => $layouts ];
+    },
+
+    'wp_siteorigin_list_widgets' => function ( array $a ): array|WP_Error {
+        global $wp_widget_factory;
+        $rows   = [];
+        $seen   = [];
+        $is_sow = class_exists( 'SiteOrigin_Widget' );
+        foreach ( (array) ( $wp_widget_factory->widgets ?? [] ) as $w ) {
+            if ( ! $w instanceof WP_Widget ) {
+                continue;
+            }
+            $opts                       = (array) $w->widget_options;
+            $seen[ get_class( $w ) ]    = true;
+            $rows[]                     = [
+                'class'       => get_class( $w ),
+                'id_base'     => (string) $w->id_base,
+                'title'       => wp_strip_all_tags( (string) $w->name ),
+                'description' => wp_strip_all_tags( (string) ( $opts['description'] ?? '' ) ),
+                'groups'      => array_values( (array) ( $opts['panels_groups'] ?? [] ) ),
+                'bundle'      => $is_sow && $w instanceof SiteOrigin_Widget,
+                'active'      => true,
+            ];
+        }
+        if ( ! empty( $a['include_inactive'] ) ) {
+            foreach ( cowboy_mcp_siteorigin_bundle_widgets() as $b ) {
+                if ( $b['active'] || ( $b['class'] && isset( $seen[ $b['class'] ] ) ) ) {
+                    continue;
+                }
+                $rows[] = [ 'id' => $b['id'], 'class' => $b['class'], 'id_base' => $b['id_base'], 'title' => $b['name'], 'description' => $b['description'], 'groups' => [], 'bundle' => true, 'active' => false ];
+            }
+        }
+        usort( $rows, static fn( $x, $y ) => strcmp( (string) $x['class'], (string) $y['class'] ) );
+        return [ 'count' => count( $rows ), 'widgets' => $rows ];
+    },
+
+    'wp_siteorigin_get_widget_schema' => function ( array $a ): array|WP_Error {
+        $class = ltrim( (string) ( $a['class'] ?? '' ), '\\' );
+        $w     = cowboy_mcp_siteorigin_widget_object( $class );
+        if ( ! $w ) {
+            return cowboy_mcp_siteorigin_class_error( $class );
+        }
+        if ( class_exists( 'SiteOrigin_Widget' ) && $w instanceof SiteOrigin_Widget ) {
+            $form = (array) $w->form_options();
+            if ( class_exists( 'SiteOrigin_Widgets_Widget_Describer' ) ) {
+                $schema = SiteOrigin_Widgets_Widget_Describer::single()->get_schema( $w );
+                $source = 'describer';
+            } else {
+                $schema = cowboy_mcp_siteorigin_flatten_form( $form );
+                $source = 'form_options';
+            }
+            return [
+                'class'          => $class,
+                'id_base'        => (string) $w->id_base,
+                'source'         => $source,
+                'schema'         => $schema,
+                'companion_keys' => cowboy_mcp_siteorigin_companion_keys( $form ),
+                'note'           => 'Instance keys not in the schema are removed by the widget on save.',
+            ];
+        }
+        return [
+            'class'   => $class,
+            'id_base' => (string) $w->id_base,
+            'schema'  => null,
+            'note'    => 'No machine-readable form for this widget; instance keys are widget-specific — inspect an existing instance with wp_siteorigin_get_layout.',
+        ];
+    },
+
+    'wp_siteorigin_get_style_fields' => function ( array $a ): array|WP_Error {
+        $level = (string) ( $a['level'] ?? '' );
+        if ( ! in_array( $level, [ 'row', 'cell', 'widget' ], true ) ) {
+            return new WP_Error( 'invalid_level', 'invalid_level: level must be row, cell or widget.' );
+        }
+        $fields = cowboy_mcp_siteorigin_style_fields( $level, (int) ( $a['post_id'] ?? 0 ) );
+        return [ 'level' => $level, 'count' => count( $fields ), 'fields' => $fields ];
     },
 ];
 

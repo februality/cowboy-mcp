@@ -213,3 +213,153 @@ function cowboy_mcp_siteorigin_summarize( array $pd ): array {
     }
     return [ 'rows' => $out, 'missing_widget_ids' => $missing ];
 }
+
+/** The registered widget object for a PHP class name, or null. */
+function cowboy_mcp_siteorigin_widget_object( string $class ): ?WP_Widget {
+    global $wp_widget_factory;
+    $class = ltrim( $class, '\\' );
+    if ( $class === '' || ! isset( $wp_widget_factory ) || ! is_array( $wp_widget_factory->widgets ?? null ) ) {
+        return null;
+    }
+    if ( ( $wp_widget_factory->widgets[ $class ] ?? null ) instanceof WP_Widget ) {
+        return $wp_widget_factory->widgets[ $class ];
+    }
+    foreach ( $wp_widget_factory->widgets as $w ) {
+        if ( $w instanceof WP_Widget && get_class( $w ) === $class ) {
+            return $w;
+        }
+    }
+    return null;
+}
+
+/**
+ * Widgets Bundle widgets (active and inactive) keyed by folder id. The class name of an
+ * inactive widget is read from its own siteorigin_widget_register() call — the file is
+ * never included, so nothing activates.
+ */
+function cowboy_mcp_siteorigin_bundle_widgets( bool $refresh = false ): array {
+    static $cache = null;
+    if ( $cache !== null && ! $refresh ) {
+        return $cache;
+    }
+    $cache = [];
+    if ( ! class_exists( 'SiteOrigin_Widgets_Bundle' ) ) {
+        return $cache;
+    }
+    wp_cache_delete( 'active_widgets', 'siteorigin_widgets' );
+    foreach ( (array) SiteOrigin_Widgets_Bundle::single()->get_widgets_list() as $w ) {
+        $id      = (string) ( $w['ID'] ?? '' );   // the list is keyed by file path; ID is the folder id
+        if ( $id === '' ) {
+            continue;
+        }
+        $class   = null;
+        $id_base = null;
+        $file    = (string) ( $w['File'] ?? '' );
+        if ( $file !== '' && is_readable( $file ) ) {
+            $src = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+            if ( preg_match( '/siteorigin_widget_register\(\s*[\'"]([^\'"]+)[\'"]\s*,\s*__FILE__\s*,\s*[\'"]([^\'"]+)[\'"]/', $src, $m ) ) {
+                $id_base = $m[1];
+                $class   = ltrim( $m[2], '\\' );
+            }
+        }
+        $cache[ (string) $id ] = [
+            'id'          => (string) $id,
+            'name'        => wp_strip_all_tags( (string) ( $w['Name'] ?? $id ) ),
+            'description' => wp_strip_all_tags( (string) ( $w['Description'] ?? '' ) ),
+            'active'      => ! empty( $w['Active'] ),
+            'class'       => $class,
+            'id_base'     => $id_base,
+        ];
+    }
+    return $cache;
+}
+
+/** 'active' (registered now) | 'inactive_bundle' (a Widgets Bundle widget switched off) | 'unknown'. */
+function cowboy_mcp_siteorigin_class_status( string $class ): string {
+    $class = ltrim( $class, '\\' );
+    if ( cowboy_mcp_siteorigin_widget_object( $class ) ) {
+        return 'active';
+    }
+    foreach ( cowboy_mcp_siteorigin_bundle_widgets() as $w ) {
+        if ( $w['class'] === $class && ! $w['active'] ) {
+            return 'inactive_bundle';
+        }
+    }
+    return 'unknown';
+}
+
+/** WP_Error for a class that is not 'active'. */
+function cowboy_mcp_siteorigin_class_error( string $class, string $where = '' ): WP_Error {
+    $prefix = $where !== '' ? "{$where}: " : '';
+    if ( cowboy_mcp_siteorigin_class_status( $class ) === 'inactive_bundle' ) {
+        return new WP_Error( 'widget_inactive', "{$prefix}widget_inactive: '{$class}' is an inactive Widgets Bundle widget — activate it with wp_siteorigin_set_widgets_active first." );
+    }
+    return new WP_Error( 'unknown_widget', "{$prefix}unknown_widget: '{$class}' is not a registered widget class (see wp_siteorigin_list_widgets)." );
+}
+
+/** Fallback schema when the bundle's Widget Describer (1.75.0+) is absent: flatten form_options(). */
+function cowboy_mcp_siteorigin_flatten_form( array $fields ): array {
+    $out = [];
+    foreach ( $fields as $name => $f ) {
+        if ( ! is_array( $f ) || in_array( $f['type'] ?? '', [ 'html', 'error', 'presets', 'builder' ], true ) ) {
+            continue;
+        }
+        $item = [ 'type' => (string) ( $f['type'] ?? 'text' ), 'label' => wp_strip_all_tags( (string) ( $f['label'] ?? $name ) ) ];
+        foreach ( [ 'default', 'options', 'description', 'min', 'max', 'units', 'multiple' ] as $k ) {
+            if ( array_key_exists( $k, $f ) ) {
+                $item[ $k ] = $f[ $k ];
+            }
+        }
+        if ( is_array( $f['fields'] ?? null ) ) {
+            $item['fields'] = cowboy_mcp_siteorigin_flatten_form( $f['fields'] );
+        }
+        $out[ (string) $name ] = $item;
+    }
+    return $out;
+}
+
+/** Instance keys the bundle keeps but the Describer omits: toggle on/off state and tinymce editor mode. */
+function cowboy_mcp_siteorigin_companion_keys( array $fields, string $path = '' ): array {
+    $out = [];
+    foreach ( $fields as $name => $f ) {
+        if ( ! is_array( $f ) ) {
+            continue;
+        }
+        $p    = $path === '' ? (string) $name : "{$path}.{$name}";
+        $type = (string) ( $f['type'] ?? '' );
+        if ( $type === 'tinymce' ) {
+            $out[] = [ 'key' => ( $path === '' ? '' : "{$path}." ) . "{$name}_selected_editor", 'values' => [ 'tinymce', 'html' ] ];
+        }
+        if ( $type === 'toggle' ) {
+            $out[] = [ 'key' => "{$p}.so_field_container_state", 'values' => [ 'open', 'closed' ] ];
+        }
+        if ( is_array( $f['fields'] ?? null ) && $type !== 'repeater' ) {
+            $out = array_merge( $out, cowboy_mcp_siteorigin_companion_keys( $f['fields'], $p ) );
+        }
+    }
+    return $out;
+}
+
+/** Registered style fields for row|cell|widget, mirroring SiteOrigin_Panels_Styles_Admin::render_styles_fields(). */
+function cowboy_mcp_siteorigin_style_fields( string $level, int $post_id ): array {
+    $fields = apply_filters( 'siteorigin_panels_' . $level . '_style_fields', [], $post_id, [] );
+    $fields = apply_filters( 'siteorigin_panels_general_style_fields', $fields, $post_id, [] );
+    $out    = [];
+    foreach ( (array) $fields as $name => $f ) {
+        if ( ! is_array( $f ) ) {
+            continue;
+        }
+        $item = [ 'name' => (string) $name, 'type' => (string) ( $f['type'] ?? 'text' ), 'label' => wp_strip_all_tags( (string) ( $f['name'] ?? $f['label'] ?? $name ) ), 'group' => (string) ( $f['group'] ?? '' ) ];
+        foreach ( [ 'options', 'default', 'description', 'multiple', 'alpha' ] as $k ) {
+            if ( array_key_exists( $k, $f ) ) {
+                $item[ $k ] = $k === 'description' ? wp_strip_all_tags( (string) $f[ $k ] ) : $f[ $k ];
+            }
+        }
+        if ( is_array( $f['fields'] ?? null ) ) {
+            $item['sub_fields']  = array_keys( $f['fields'] );
+            $item['stored_as'] = array_map( static fn( $sub ) => "{$name}_{$sub}", array_keys( $f['fields'] ) );
+        }
+        $out[] = $item;
+    }
+    return $out;
+}
