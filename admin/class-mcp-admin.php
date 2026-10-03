@@ -780,11 +780,11 @@ class Cowboy_MCP_Admin {
             default     => __( 'Add it on claude.ai', 'cowboy-mcp' ),
         };
         $approve_text = $is_chatgpt
-            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. That is it — you are connected.', 'cowboy-mcp' )
-            : __( 'Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. That is it — you are connected.', 'cowboy-mcp' );
+            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. To use it, open the <strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> and select your site.', 'cowboy-mcp' )
+            : __( 'Claude opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>. To use it, click <strong>+</strong> in a chat, open <strong>Connectors</strong> and make sure your site is switched on.', 'cowboy-mcp' );
         $plan_note    = $is_chatgpt
-            ? __( 'Custom connectors require a paid ChatGPT plan with <strong>Developer mode</strong> (beta) enabled.', 'cowboy-mcp' )
-            : __( 'Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</strong> plan.', 'cowboy-mcp' );
+            ? __( 'Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> plan, on the web. On Business and Enterprise workspaces an admin has to allow Developer mode first.', 'cowboy-mcp' )
+            : __( 'Custom connectors work on every Claude plan (Free is limited to one). On Team and Enterprise, an organization owner adds the connector first under <strong>Organization settings → Connectors</strong>; members then click <strong>Connect</strong>.', 'cowboy-mcp' );
 
         if ( $show_warning && ! $reachable ) :
             ?>
@@ -840,19 +840,19 @@ class Cowboy_MCP_Admin {
             <div class="mcp-step-body">
                 <ol class="mcp-substeps">
                     <?php if ( $is_chatgpt ) : ?>
-                        <li><?php echo wp_kses( __( 'Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Go to <code>Settings → Connectors → Advanced</code> and turn on <strong>Developer mode</strong> (one-time).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Back in <code>Connectors</code>, click <strong>Create</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Paste the link from step 1 as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work on the web only).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>Settings → Security and login</code> and turn on <strong>Developer mode</strong> (one-time).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Create MCP App</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Give it a name, paste the link from step 1 as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong>, and create it.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     <?php else : ?>
                         <?php if ( $is_desktop ) : ?>
                             <li><?php echo wp_kses( __( 'Open the <strong>Claude</strong> desktop app and sign in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                         <?php else : ?>
                             <li><?php echo wp_kses( __( 'Go to <code>claude.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
                         <?php endif; ?>
-                        <li><?php echo wp_kses( __( 'Go to <code>Customize → Connections</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Click <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Paste the link from step 1 and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>Customize → Connectors</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Give it a name, paste the link from step 1, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     <?php endif; ?>
                 </ol>
             </div>
@@ -1037,9 +1037,9 @@ class Cowboy_MCP_Admin {
         $intro   = match ( $slug ) {
             'claude-code',
             'gemini-cli' => esc_html__( 'Run this in your terminal:', 'cowboy-mcp' ),
-            'codex'      => esc_html__( 'Run these in your terminal:', 'cowboy-mcp' ),
-            'opencode'   => wp_kses( __( 'Add this to your <code>opencode.json</code>:', 'cowboy-mcp' ), [ 'code' => [] ] ),
-            'cursor'     => wp_kses( __( 'Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not exist), then reload Cursor:', 'cowboy-mcp' ), [ 'code' => [] ] ),
+            'codex'      => wp_kses( __( 'Run these in your terminal. Codex reads the key each time it starts, so also add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</code>):', 'cowboy-mcp' ), [ 'code' => [] ] ),
+            'opencode'   => wp_kses( __( 'Add this to <code>~/.config/opencode/opencode.json</code> (or a project <code>opencode.json</code>), then restart Opencode:', 'cowboy-mcp' ), [ 'code' => [] ] ),
+            'cursor'     => wp_kses( __( 'Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not exist), then restart Cursor:', 'cowboy-mcp' ), [ 'code' => [] ] ),
             default      => '',
         };
         ?>
@@ -1069,9 +1069,9 @@ class Cowboy_MCP_Admin {
         return match ( $slug ) {
             'claude-code' => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
             'codex'       => 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'codex mcp add ' . $domain . ' --url ' . $endpoint . ' --bearer-token-env-var COWBOY_MCP_API_KEY',
-            'opencode'    => "{\n  \"mcp\": {\n    \"{$domain}\": {\n      \"type\": \"remote\",\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
+            'opencode'    => "{\n  \"mcp\": {\n    \"{$domain}\": {\n      \"type\": \"remote\",\n      \"url\": \"{$endpoint}\",\n      \"oauth\": false,\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
             'cursor'      => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
-            'gemini-cli'  => 'gemini mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
+            'gemini-cli'  => 'gemini mcp add --scope user --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
             default       => '',
         };
     }
@@ -1083,11 +1083,11 @@ class Cowboy_MCP_Admin {
             /* translators: %s: the MCP server name shown in the client. */
             'claude-code' => sprintf( __( 'Open a new Claude Code session and run <code>/mcp</code> — <code>%s</code> should be listed as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
-            'codex'       => sprintf( __( 'Run <code>codex mcp list</code> — <code>%s</code> should appear in the list.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            'codex'       => sprintf( __( 'Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed with its tools.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
-            'opencode'    => sprintf( __( 'Restart Opencode and ask it to list its MCP servers — <code>%s</code> should be available.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            'opencode'    => sprintf( __( 'Run <code>opencode mcp list</code> — <code>%s</code> should be listed as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
-            'cursor'      => sprintf( __( 'Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with a green status dot.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            'cursor'      => sprintf( __( 'Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should be listed and enabled. Errors show under <code>Output → MCP Logs</code>.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
             'gemini-cli'  => sprintf( __( 'Run <code>gemini mcp list</code> — <code>%s</code> should show as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
             default       => '',

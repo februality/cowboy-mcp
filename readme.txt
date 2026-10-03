@@ -91,7 +91,7 @@ ChatGPT connects with the same one-click sign-in. You need ChatGPT on the web wi
 
 = Connect Cursor, VS Code and GitHub Copilot, Windsurf, Cline and Zed =
 
-Add one block to your editor's MCP config (for Cursor, `~/.cursor/mcp.json`):
+Add one block to your editor's MCP config (for Cursor, `~/.cursor/mcp.json`), then restart the editor:
 
     {
       "mcpServers": {
@@ -102,20 +102,22 @@ Add one block to your editor's MCP config (for Cursor, `~/.cursor/mcp.json`):
       }
     }
 
-In VS Code, add the same URL and header as an HTTP server in `.vscode/mcp.json` (under `servers` rather than `mcpServers`) and GitHub Copilot's agent mode can use it. Any client that speaks Streamable HTTP with a Bearer header works the same way.
+The same block works in Windsurf (now Devin Desktop, `~/.config/devin/mcp_config.json`). Cline needs `"type": "streamableHttp"` added to the server entry. In VS Code, put it in `.vscode/mcp.json` under `servers` (not `mcpServers`) with `"type": "http"`, and GitHub Copilot's agent mode can use it. Zed takes the same `url` and `headers` under `context_servers` in its settings. Any client that speaks Streamable HTTP with a Bearer header works the same way.
 
 = Connect Codex CLI =
 
     export COWBOY_MCP_API_KEY="YOUR_API_KEY"
     codex mcp add your-site --url https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --bearer-token-env-var COWBOY_MCP_API_KEY
 
+Codex reads the key every time it starts, so add the `export` line to your shell profile (e.g. `~/.zshrc`) as well.
+
 = Connect Gemini CLI =
 
-    gemini mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"
+    gemini mcp add --scope user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"
 
 = n8n, Opencode and other MCP clients =
 
-Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0). Point any MCP client - n8n, Opencode, LibreChat, your own agent - at `/wp-json/cowboy-mcp/v1/endpoint` with an `Authorization: Bearer` header.
+Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0). Point any MCP client - n8n, Opencode, LibreChat, your own agent - at `/wp-json/cowboy-mcp/v1/endpoint` with an `Authorization: Bearer` header. In Opencode, also set `"oauth": false` on the server so it uses the key instead of starting a sign-in.
 
 = Local development sites =
 

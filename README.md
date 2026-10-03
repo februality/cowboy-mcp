@@ -84,7 +84,7 @@ claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mc
 }
 ```
 
-**Cursor / Windsurf / Cline / Zed / VS Code** (e.g. `~/.cursor/mcp.json`)
+**Cursor / Windsurf (Devin Desktop)** (`~/.cursor/mcp.json`, `~/.config/devin/mcp_config.json`)
 
 ```json
 {
@@ -97,7 +97,9 @@ claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mc
 }
 ```
 
-**Codex CLI**
+Cline: add `"type": "streamableHttp"` to the entry. VS Code (`.vscode/mcp.json`): use `servers` instead of `mcpServers` and add `"type": "http"`. Zed: put the same `url` + `headers` under `context_servers` in its settings.
+
+**Codex CLI** — Codex reads the key each time it starts, so add the `export` to your shell profile too.
 
 ```bash
 export COWBOY_MCP_API_KEY="YOUR_API_KEY"
@@ -107,11 +109,11 @@ codex mcp add your-site --url https://yoursite.com/wp-json/cowboy-mcp/v1/endpoin
 **Gemini CLI**
 
 ```bash
-gemini mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
+gemini mcp add --scope user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
   --header "Authorization: Bearer YOUR_API_KEY"
 ```
 
-Any client that speaks Streamable HTTP with a Bearer header works the same way (n8n, Opencode, LibreChat, your own agent). Step-by-step guides per client: [cowboymcp.com](https://cowboymcp.com/guides).
+Any client that speaks Streamable HTTP with a Bearer header works the same way (n8n, Opencode, LibreChat, your own agent). Opencode: set `"oauth": false` on the remote server so it uses the key. Step-by-step guides per client: [cowboymcp.com](https://cowboymcp.com/guides).
 
 **Quick smoke test with curl**
 

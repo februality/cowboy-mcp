@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 23:50-0700\n"
+"POT-Creation-Date: 2026-10-02 21:33-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -357,36 +357,48 @@ msgstr "claude.ai에서 추가"
 #: admin/class-mcp-admin.php:783
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
-"is asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"is asking for and click <strong>Approve</strong>. To use it, open the "
+"<strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> "
+"and select your site."
 msgstr ""
 "ChatGPT가 <strong>내 사이트</strong>에서 로그인 페이지를 엽니다. 요청 내용을 "
-"확인하고 <strong>승인</strong>를 클릭하세요. 이것으로 연결이 완료됩니다."
+"확인하고 <strong>승인</strong>을 클릭하세요. 사용하려면 채팅에서 <strong>+</"
+"strong> 메뉴를 열고 <strong>Developer mode</strong>를 선택한 다음 사이트를 선"
+"택하세요."
 
 #: admin/class-mcp-admin.php:784
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
-"asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"asking for and click <strong>Approve</strong>. To use it, click <strong>+</"
+"strong> in a chat, open <strong>Connectors</strong> and make sure your site "
+"is switched on."
 msgstr ""
 "Claude가 <strong>내 사이트</strong>에서 로그인 페이지를 엽니다. 요청 내용을 "
-"확인하고 <strong>승인</strong>를 클릭하세요. 이것으로 연결이 완료됩니다."
+"확인하고 <strong>승인</strong>을 클릭하세요. 사용하려면 채팅에서 <strong>+</"
+"strong>를 클릭하고 <strong>Connectors</strong>를 열어 사이트가 켜져 있는지 확"
+"인하세요."
 
 #: admin/class-mcp-admin.php:786
 msgid ""
-"Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
-"strong> (beta) enabled."
+"Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
+"plan, on the web. On Business and Enterprise workspaces an admin has to "
+"allow Developer mode first."
 msgstr ""
-"사용자 지정 커넥터를 사용하려면 <strong>Developer mode</strong>(베타)가 활성"
-"화된 유료 ChatGPT 요금제가 필요합니다."
+"ChatGPT <strong>Plus, Pro, Business, Enterprise 또는 Edu</strong> 요금제가 필"
+"요하며 웹에서만 사용할 수 있습니다. Business 및 Enterprise 워크스페이스에서"
+"는 관리자가 먼저 Developer mode를 허용해야 합니다."
 
 #: admin/class-mcp-admin.php:787
 msgid ""
-"Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
-"strong> plan."
+"Custom connectors work on every Claude plan (Free is limited to one). On "
+"Team and Enterprise, an organization owner adds the connector first under "
+"<strong>Organization settings → Connectors</strong>; members then click "
+"<strong>Connect</strong>."
 msgstr ""
-"사용자 지정 커넥터를 사용하려면 Claude <strong>Pro, Max, Team 또는 "
-"Enterprise</strong> 요금제가 필요합니다."
+"사용자 지정 커넥터는 모든 Claude 요금제에서 사용할 수 있습니다(Free는 1개로 "
+"제한). Team 및 Enterprise에서는 조직 소유자가 먼저 <strong>Organization "
+"settings → Connectors</strong>에서 커넥터를 추가하고, 구성원은 그다음 "
+"<strong>Connect</strong>를 클릭합니다."
 
 #: admin/class-mcp-admin.php:807
 msgid "Turn on the Desktop Connector"
@@ -412,30 +424,35 @@ msgstr "커넥터 URL 복사"
 
 #: admin/class-mcp-admin.php:843
 msgid ""
-"Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
+"Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work on "
+"the web only)."
 msgstr ""
-"<code>chatgpt.com</code>으로 이동(또는 ChatGPT 데스크톱 앱을 열기)하여 로그인"
-"합니다."
+"브라우저에서 <code>chatgpt.com</code>에 접속해 로그인하세요(MCP 앱은 웹에서"
+"만 작동합니다)."
 
 #: admin/class-mcp-admin.php:844
 msgid ""
-"Go to <code>Settings → Connectors → Advanced</code> and turn on "
+"Go to <code>Settings → Security and login</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
 msgstr ""
-"<code>Settings → Connectors → Advanced</code>로 이동하여 <strong>Developer "
-"mode</strong>를 켭니다(최초 1회)."
+"<code>Settings → Security and login</code>으로 이동해 <strong>Developer "
+"mode</strong>를 켜세요(최초 1회)."
 
 #: admin/class-mcp-admin.php:845
-msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
-msgstr "<code>Connectors</code>로 돌아가 <strong>Create</strong>를 클릭합니다."
+msgid ""
+"Go to <code>Plugins</code>, click <strong>+</strong> and choose "
+"<strong>Create MCP App</strong>."
+msgstr ""
+"<code>Plugins</code>로 이동해 <strong>+</strong>를 클릭하고 <strong>Create "
+"MCP App</strong>을 선택하세요."
 
 #: admin/class-mcp-admin.php:846
 msgid ""
-"Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
-"Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
+"Give it a name, paste the link from step 1 as the <strong>MCP server URL</"
+"strong>, set Authentication to <strong>OAuth</strong>, and create it."
 msgstr ""
-"1단계의 링크를 <strong>MCP server URL</strong>로 붙여넣고, Authentication을 "
-"<strong>OAuth</strong>로 설정한 다음 <strong>Create</strong>를 클릭합니다."
+"이름을 지정하고 1단계의 링크를 <strong>MCP server URL</strong>에 붙여넣은 다"
+"음, 인증을 <strong>OAuth</strong>로 설정하고 생성하세요."
 
 #: admin/class-mcp-admin.php:849
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
@@ -446,16 +463,25 @@ msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "브라우저에서 <code>claude.ai</code>로 이동하여 로그인합니다."
 
 #: admin/class-mcp-admin.php:853
-msgid "Go to <code>Customize → Connections</code>."
-msgstr "<code>Customize → Connections</code>로 이동합니다."
+msgid "Go to <code>Customize → Connectors</code>."
+msgstr "<code>Customize → Connectors</code>로 이동하세요."
 
 #: admin/class-mcp-admin.php:854
-msgid "Click <strong>Add custom connector</strong>."
-msgstr "<strong>Add custom connector</strong>를 클릭합니다."
+msgid ""
+"Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
+msgstr ""
+"<strong>+ Add</strong>를 클릭한 다음 <strong>Add custom connector</strong>를 "
+"클릭하세요."
 
 #: admin/class-mcp-admin.php:855
-msgid "Paste the link from step 1 and click <strong>Add</strong>."
-msgstr "1단계의 링크를 붙여넣고 <strong>Add</strong>를 클릭합니다."
+msgid ""
+"Give it a name, paste the link from step 1, click <strong>Continue</strong> "
+"and then <strong>Add</strong>. If Claude asks which OAuth client to use, "
+"choose <strong>Register automatically</strong>."
+msgstr ""
+"이름을 지정하고 1단계의 링크를 붙여넣은 다음 <strong>Continue</strong>, 이어"
+"서 <strong>Add</strong>를 클릭하세요. 사용할 OAuth 클라이언트를 묻는 경우 "
+"<strong>Register automatically</strong>를 선택하세요."
 
 #: admin/class-mcp-admin.php:864
 msgid "Approve access"
@@ -627,20 +653,29 @@ msgid "Run this in your terminal:"
 msgstr "터미널에서 다음을 실행하세요:"
 
 #: admin/class-mcp-admin.php:1040
-msgid "Run these in your terminal:"
-msgstr "터미널에서 다음 명령을 실행하세요:"
+msgid ""
+"Run these in your terminal. Codex reads the key each time it starts, so also "
+"add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
+"code>):"
+msgstr ""
+"터미널에서 다음 명령을 실행하세요. Codex는 시작할 때마다 키를 읽으므로 "
+"<code>export</code> 줄을 셸 프로필(예: <code>~/.zshrc</code>)에도 추가하세요:"
 
 #: admin/class-mcp-admin.php:1041
-msgid "Add this to your <code>opencode.json</code>:"
-msgstr "이것을 <code>opencode.json</code>에 추가하세요:"
+msgid ""
+"Add this to <code>~/.config/opencode/opencode.json</code> (or a project "
+"<code>opencode.json</code>), then restart Opencode:"
+msgstr ""
+"이것을 <code>~/.config/opencode/opencode.json</code>(또는 프로젝트의 "
+"<code>opencode.json</code>)에 추가한 다음 Opencode를 다시 시작하세요:"
 
 #: admin/class-mcp-admin.php:1042
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
-"exist), then reload Cursor:"
+"exist), then restart Cursor:"
 msgstr ""
 "이것을 <code>~/.cursor/mcp.json</code>에 추가하고(파일이 없으면 생성), Cursor"
-"를 다시 로드하세요:"
+"를 다시 시작하세요:"
 
 #: admin/class-mcp-admin.php:1049
 msgid "Add the server to your tool"
@@ -660,30 +695,32 @@ msgstr ""
 #: admin/class-mcp-admin.php:1086
 #, php-format
 msgid ""
-"Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
+"Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
+"with its tools."
 msgstr ""
-"<code>codex mcp list</code>를 실행하세요 — <code>%s</code>이(가) 목록에 표시"
-"되어야 합니다."
+"Codex를 시작하고 <code>/mcp</code>를 실행하세요 — <code>%s</code>이(가) 도구"
+"와 함께 표시되어야 합니다."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1088
 #, php-format
 msgid ""
-"Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
-"be available."
+"Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
+"connected."
 msgstr ""
-"Opencode를 다시 시작하고 MCP 서버 목록을 표시하도록 요청하세요 — <code>%s</"
-"code>을(를) 사용할 수 있어야 합니다."
+"<code>opencode mcp list</code>를 실행하세요 — <code>%s</code>이(가) 연결됨으"
+"로 표시되어야 합니다."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1090
 #, php-format
 msgid ""
-"Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
-"a green status dot."
+"Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
+"be listed and enabled. Errors show under <code>Output → MCP Logs</code>."
 msgstr ""
-"<code>Cursor Settings → MCP</code>를 여세요 — <code>%s</code>이(가) 녹색 상"
-"태 점과 함께 표시되어야 합니다."
+"Cursor 사이드바에서 <code>Customize</code>를 여세요 — <code>%s</code>이(가) "
+"목록에 있고 활성화되어 있어야 합니다. 오류는 <code>Output → MCP Logs</code>"
+"에 표시됩니다."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1092

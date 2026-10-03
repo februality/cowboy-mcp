@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 23:50-0700\n"
+"POT-Creation-Date: 2026-10-02 21:33-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Spanish\n"
@@ -369,38 +369,49 @@ msgstr "Añádalo en claude.ai"
 #: admin/class-mcp-admin.php:783
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
-"is asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"is asking for and click <strong>Approve</strong>. To use it, open the "
+"<strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> "
+"and select your site."
 msgstr ""
 "ChatGPT abre una página de inicio de sesión en <strong>su sitio</strong>. "
-"Revise lo que solicita y haga clic en <strong>Aprobar</strong>. Eso es todo "
-"— ya está conectado."
+"Revise lo que solicita y haga clic en <strong>Aprobar</strong>. Para usarlo, "
+"abra el menú <strong>+</strong> en un chat, elija <strong>Developer mode</"
+"strong> y seleccione su sitio."
 
 #: admin/class-mcp-admin.php:784
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
-"asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"asking for and click <strong>Approve</strong>. To use it, click <strong>+</"
+"strong> in a chat, open <strong>Connectors</strong> and make sure your site "
+"is switched on."
 msgstr ""
 "Claude abre una página de inicio de sesión en <strong>su sitio</strong>. "
-"Revise lo que solicita y haga clic en <strong>Aprobar</strong>. Eso es todo "
-"— ya está conectado."
+"Revise lo que solicita y haga clic en <strong>Aprobar</strong>. Para usarlo, "
+"haga clic en <strong>+</strong> en un chat, abra <strong>Connectors</strong> "
+"y compruebe que su sitio está activado."
 
 #: admin/class-mcp-admin.php:786
 msgid ""
-"Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
-"strong> (beta) enabled."
+"Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
+"plan, on the web. On Business and Enterprise workspaces an admin has to "
+"allow Developer mode first."
 msgstr ""
-"Los conectores personalizados requieren un plan de pago de ChatGPT con el "
-"<strong>Developer mode</strong> (beta) activado."
+"Requiere un plan de ChatGPT <strong>Plus, Pro, Business, Enterprise o Edu</"
+"strong>, en la web. En los espacios de trabajo Business y Enterprise, un "
+"administrador debe permitir antes Developer mode."
 
 #: admin/class-mcp-admin.php:787
 msgid ""
-"Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
-"strong> plan."
+"Custom connectors work on every Claude plan (Free is limited to one). On "
+"Team and Enterprise, an organization owner adds the connector first under "
+"<strong>Organization settings → Connectors</strong>; members then click "
+"<strong>Connect</strong>."
 msgstr ""
-"Los conectores personalizados requieren un plan Claude <strong>Pro, Max, "
-"Team o Enterprise</strong>."
+"Los conectores personalizados funcionan en todos los planes de Claude (Free "
+"está limitado a uno). En Team y Enterprise, un propietario de la "
+"organización añade primero el conector en <strong>Organization settings → "
+"Connectors</strong>; después, los miembros hacen clic en <strong>Connect</"
+"strong>."
 
 #: admin/class-mcp-admin.php:807
 msgid "Turn on the Desktop Connector"
@@ -426,32 +437,35 @@ msgstr "Copiar URL del conector"
 
 #: admin/class-mcp-admin.php:843
 msgid ""
-"Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
+"Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work on "
+"the web only)."
 msgstr ""
-"Vaya a <code>chatgpt.com</code> (o abra la aplicación de escritorio de "
-"ChatGPT) e inicie sesión."
+"Vaya a <code>chatgpt.com</code> en su navegador e inicie sesión (las apps "
+"MCP solo funcionan en la web)."
 
 #: admin/class-mcp-admin.php:844
 msgid ""
-"Go to <code>Settings → Connectors → Advanced</code> and turn on "
+"Go to <code>Settings → Security and login</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
 msgstr ""
-"Vaya a <code>Settings → Connectors → Advanced</code> y active el "
-"<strong>Developer mode</strong> (una sola vez)."
+"Vaya a <code>Settings → Security and login</code> y active <strong>Developer "
+"mode</strong> (una sola vez)."
 
 #: admin/class-mcp-admin.php:845
-msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
+msgid ""
+"Go to <code>Plugins</code>, click <strong>+</strong> and choose "
+"<strong>Create MCP App</strong>."
 msgstr ""
-"De nuevo en <code>Connectors</code>, haga clic en <strong>Create</strong>."
+"Vaya a <code>Plugins</code>, haga clic en <strong>+</strong> y elija "
+"<strong>Create MCP App</strong>."
 
 #: admin/class-mcp-admin.php:846
 msgid ""
-"Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
-"Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
+"Give it a name, paste the link from step 1 as the <strong>MCP server URL</"
+"strong>, set Authentication to <strong>OAuth</strong>, and create it."
 msgstr ""
-"Pegue el enlace del paso 1 como <strong>MCP server URL</strong>, configure "
-"Authentication en <strong>OAuth</strong> y haga clic en <strong>Create</"
-"strong>."
+"Asígnele un nombre, pegue el enlace del paso 1 como <strong>MCP server URL</"
+"strong>, establezca la autenticación en <strong>OAuth</strong> y créela."
 
 #: admin/class-mcp-admin.php:849
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
@@ -463,16 +477,26 @@ msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "Vaya a <code>claude.ai</code> en su navegador e inicie sesión."
 
 #: admin/class-mcp-admin.php:853
-msgid "Go to <code>Customize → Connections</code>."
-msgstr "Vaya a <code>Customize → Connections</code>."
+msgid "Go to <code>Customize → Connectors</code>."
+msgstr "Vaya a <code>Customize → Connectors</code>."
 
 #: admin/class-mcp-admin.php:854
-msgid "Click <strong>Add custom connector</strong>."
-msgstr "Haga clic en <strong>Add custom connector</strong>."
+msgid ""
+"Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
+msgstr ""
+"Haga clic en <strong>+ Add</strong> y, a continuación, en <strong>Add custom "
+"connector</strong>."
 
 #: admin/class-mcp-admin.php:855
-msgid "Paste the link from step 1 and click <strong>Add</strong>."
-msgstr "Pegue el enlace del paso 1 y haga clic en <strong>Add</strong>."
+msgid ""
+"Give it a name, paste the link from step 1, click <strong>Continue</strong> "
+"and then <strong>Add</strong>. If Claude asks which OAuth client to use, "
+"choose <strong>Register automatically</strong>."
+msgstr ""
+"Asígnele un nombre, pegue el enlace del paso 1 y haga clic en "
+"<strong>Continue</strong> y luego en <strong>Add</strong>. Si Claude "
+"pregunta qué cliente OAuth usar, elija <strong>Register automatically</"
+"strong>."
 
 #: admin/class-mcp-admin.php:864
 msgid "Approve access"
@@ -653,20 +677,31 @@ msgid "Run this in your terminal:"
 msgstr "Ejecute esto en su terminal:"
 
 #: admin/class-mcp-admin.php:1040
-msgid "Run these in your terminal:"
-msgstr "Ejecute estos comandos en su terminal:"
+msgid ""
+"Run these in your terminal. Codex reads the key each time it starts, so also "
+"add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
+"code>):"
+msgstr ""
+"Ejecute estos comandos en su terminal. Codex lee la clave cada vez que se "
+"inicia, así que añada también la línea <code>export</code> al perfil de su "
+"shell (p. ej., <code>~/.zshrc</code>):"
 
 #: admin/class-mcp-admin.php:1041
-msgid "Add this to your <code>opencode.json</code>:"
-msgstr "Añada esto a su <code>opencode.json</code>:"
+msgid ""
+"Add this to <code>~/.config/opencode/opencode.json</code> (or a project "
+"<code>opencode.json</code>), then restart Opencode:"
+msgstr ""
+"Añada esto a <code>~/.config/opencode/opencode.json</code> (o al "
+"<code>opencode.json</code> de un proyecto) y, a continuación, reinicie "
+"Opencode:"
 
 #: admin/class-mcp-admin.php:1042
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
-"exist), then reload Cursor:"
+"exist), then restart Cursor:"
 msgstr ""
 "Añada esto a <code>~/.cursor/mcp.json</code> (cree el archivo si no existe) "
-"y, a continuación, vuelva a cargar Cursor:"
+"y, a continuación, reinicie Cursor:"
 
 #: admin/class-mcp-admin.php:1049
 msgid "Add the server to your tool"
@@ -686,30 +721,32 @@ msgstr ""
 #: admin/class-mcp-admin.php:1086
 #, php-format
 msgid ""
-"Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
+"Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
+"with its tools."
 msgstr ""
-"Ejecute <code>codex mcp list</code> — <code>%s</code> debería aparecer en la "
-"lista."
+"Inicie Codex y ejecute <code>/mcp</code> — <code>%s</code> debería aparecer "
+"junto con sus herramientas."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1088
 #, php-format
 msgid ""
-"Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
-"be available."
+"Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
+"connected."
 msgstr ""
-"Reinicie Opencode y pídale que enumere sus servidores MCP — <code>%s</code> "
-"debería estar disponible."
+"Ejecute <code>opencode mcp list</code> — <code>%s</code> debería aparecer "
+"como conectado."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1090
 #, php-format
 msgid ""
-"Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
-"a green status dot."
+"Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
+"be listed and enabled. Errors show under <code>Output → MCP Logs</code>."
 msgstr ""
-"Abra <code>Cursor Settings → MCP</code> — <code>%s</code> debería aparecer "
-"con un indicador de estado verde."
+"Abra <code>Customize</code> en la barra lateral de Cursor — <code>%s</code> "
+"debería aparecer en la lista y estar activado. Los errores se muestran en "
+"<code>Output → MCP Logs</code>."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1092

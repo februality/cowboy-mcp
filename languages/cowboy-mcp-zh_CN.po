@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 23:50-0700\n"
+"POT-Creation-Date: 2026-10-02 21:33-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -343,36 +343,45 @@ msgstr "在 claude.ai 上添加"
 #: admin/class-mcp-admin.php:783
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
-"is asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"is asking for and click <strong>Approve</strong>. To use it, open the "
+"<strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> "
+"and select your site."
 msgstr ""
 "ChatGPT 会在<strong>您的站点</strong>上打开一个登录页面。请查看它请求的内容，"
-"然后点击 <strong>批准</strong>。就这样——您已连接。"
+"然后点击 <strong>批准</strong>。使用时，在聊天中打开 <strong>+</strong> 菜"
+"单，选择 <strong>Developer mode</strong> 并选中您的站点。"
 
 #: admin/class-mcp-admin.php:784
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
-"asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"asking for and click <strong>Approve</strong>. To use it, click <strong>+</"
+"strong> in a chat, open <strong>Connectors</strong> and make sure your site "
+"is switched on."
 msgstr ""
 "Claude 会在<strong>您的站点</strong>上打开一个登录页面。请查看它请求的内容，"
-"然后点击 <strong>批准</strong>。就这样——您已连接。"
+"然后点击 <strong>批准</strong>。使用时，在聊天中点击 <strong>+</strong>，打"
+"开 <strong>Connectors</strong>，确认您的站点已开启。"
 
 #: admin/class-mcp-admin.php:786
 msgid ""
-"Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
-"strong> (beta) enabled."
+"Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
+"plan, on the web. On Business and Enterprise workspaces an admin has to "
+"allow Developer mode first."
 msgstr ""
-"自定义连接器需要启用了 <strong>Developer mode</strong>（测试版）的付费 "
-"ChatGPT 套餐。"
+"需要 ChatGPT <strong>Plus、Pro、Business、Enterprise 或 Edu</strong> 方案，且"
+"仅限网页版。在 Business 和 Enterprise 工作区中，需要管理员先允许 Developer "
+"mode。"
 
 #: admin/class-mcp-admin.php:787
 msgid ""
-"Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
-"strong> plan."
+"Custom connectors work on every Claude plan (Free is limited to one). On "
+"Team and Enterprise, an organization owner adds the connector first under "
+"<strong>Organization settings → Connectors</strong>; members then click "
+"<strong>Connect</strong>."
 msgstr ""
-"自定义连接器需要 Claude 的 <strong>Pro、Max、Team 或 Enterprise</strong> 套"
-"餐。"
+"所有 Claude 方案均可使用自定义连接器（Free 方案限一个）。在 Team 和 "
+"Enterprise 中，需由组织所有者先在 <strong>Organization settings → "
+"Connectors</strong> 中添加连接器，成员随后点击 <strong>Connect</strong>。"
 
 #: admin/class-mcp-admin.php:807
 msgid "Turn on the Desktop Connector"
@@ -398,28 +407,34 @@ msgstr "复制连接器 URL"
 
 #: admin/class-mcp-admin.php:843
 msgid ""
-"Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
-msgstr "前往 <code>chatgpt.com</code>（或打开 ChatGPT 桌面应用）并登录。"
+"Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work on "
+"the web only)."
+msgstr ""
+"在浏览器中打开 <code>chatgpt.com</code> 并登录（MCP 应用仅支持网页版）。"
 
 #: admin/class-mcp-admin.php:844
 msgid ""
-"Go to <code>Settings → Connectors → Advanced</code> and turn on "
+"Go to <code>Settings → Security and login</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
 msgstr ""
-"前往 <code>Settings → Connectors → Advanced</code>，开启 <strong>Developer "
-"mode</strong>（一次性）。"
+"前往 <code>Settings → Security and login</code>，开启 <strong>Developer "
+"mode</strong>（仅需一次）。"
 
 #: admin/class-mcp-admin.php:845
-msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
-msgstr "返回 <code>Connectors</code>，点击 <strong>Create</strong>。"
+msgid ""
+"Go to <code>Plugins</code>, click <strong>+</strong> and choose "
+"<strong>Create MCP App</strong>."
+msgstr ""
+"前往 <code>Plugins</code>，点击 <strong>+</strong> 并选择 <strong>Create MCP "
+"App</strong>。"
 
 #: admin/class-mcp-admin.php:846
 msgid ""
-"Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
-"Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
+"Give it a name, paste the link from step 1 as the <strong>MCP server URL</"
+"strong>, set Authentication to <strong>OAuth</strong>, and create it."
 msgstr ""
-"将第 1 步的链接粘贴为 <strong>MCP server URL</strong>，将 Authentication 设置"
-"为 <strong>OAuth</strong>，然后点击 <strong>Create</strong>。"
+"填写名称，将第 1 步中的链接粘贴为 <strong>MCP server URL</strong>，将身份验证"
+"设为 <strong>OAuth</strong>，然后创建。"
 
 #: admin/class-mcp-admin.php:849
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
@@ -430,16 +445,24 @@ msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "在浏览器中前往 <code>claude.ai</code> 并登录。"
 
 #: admin/class-mcp-admin.php:853
-msgid "Go to <code>Customize → Connections</code>."
-msgstr "前往 <code>Customize → Connections</code>。"
+msgid "Go to <code>Customize → Connectors</code>."
+msgstr "前往 <code>Customize → Connectors</code>。"
 
 #: admin/class-mcp-admin.php:854
-msgid "Click <strong>Add custom connector</strong>."
-msgstr "点击 <strong>Add custom connector</strong>。"
+msgid ""
+"Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
+msgstr ""
+"点击 <strong>+ Add</strong>，然后点击 <strong>Add custom connector</strong>。"
 
 #: admin/class-mcp-admin.php:855
-msgid "Paste the link from step 1 and click <strong>Add</strong>."
-msgstr "粘贴第 1 步的链接，然后点击 <strong>Add</strong>。"
+msgid ""
+"Give it a name, paste the link from step 1, click <strong>Continue</strong> "
+"and then <strong>Add</strong>. If Claude asks which OAuth client to use, "
+"choose <strong>Register automatically</strong>."
+msgstr ""
+"填写名称，粘贴第 1 步中的链接，点击 <strong>Continue</strong>，然后点击 "
+"<strong>Add</strong>。如果 Claude 询问使用哪个 OAuth 客户端，请选择 "
+"<strong>Register automatically</strong>。"
 
 #: admin/class-mcp-admin.php:864
 msgid "Approve access"
@@ -605,20 +628,29 @@ msgid "Run this in your terminal:"
 msgstr "在终端中运行此命令："
 
 #: admin/class-mcp-admin.php:1040
-msgid "Run these in your terminal:"
-msgstr "在终端中运行以下命令："
+msgid ""
+"Run these in your terminal. Codex reads the key each time it starts, so also "
+"add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
+"code>):"
+msgstr ""
+"在终端中运行以下命令。Codex 每次启动时都会读取密钥，因此还需将 <code>export</"
+"code> 这一行添加到 shell 配置文件中（例如 <code>~/.zshrc</code>）："
 
 #: admin/class-mcp-admin.php:1041
-msgid "Add this to your <code>opencode.json</code>:"
-msgstr "将此添加到您的 <code>opencode.json</code>："
+msgid ""
+"Add this to <code>~/.config/opencode/opencode.json</code> (or a project "
+"<code>opencode.json</code>), then restart Opencode:"
+msgstr ""
+"将此添加到 <code>~/.config/opencode/opencode.json</code>（或项目中的 "
+"<code>opencode.json</code>），然后重启 Opencode："
 
 #: admin/class-mcp-admin.php:1042
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
-"exist), then reload Cursor:"
+"exist), then restart Cursor:"
 msgstr ""
-"将此添加到 <code>~/.cursor/mcp.json</code>（如果文件不存在则创建），然后重新"
-"加载 Cursor："
+"将此添加到 <code>~/.cursor/mcp.json</code>（如果文件不存在则创建），然后重启 "
+"Cursor："
 
 #: admin/class-mcp-admin.php:1049
 msgid "Add the server to your tool"
@@ -638,26 +670,28 @@ msgstr ""
 #: admin/class-mcp-admin.php:1086
 #, php-format
 msgid ""
-"Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
-msgstr "运行 <code>codex mcp list</code>——<code>%s</code> 应出现在列表中。"
+"Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
+"with its tools."
+msgstr ""
+"启动 Codex 并运行 <code>/mcp</code>——<code>%s</code> 应连同其工具一起列出。"
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1088
 #, php-format
 msgid ""
-"Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
-"be available."
-msgstr "重启 Opencode 并让它列出其 MCP 服务器——<code>%s</code> 应可用。"
+"Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
+"connected."
+msgstr "运行 <code>opencode mcp list</code>——<code>%s</code> 应显示为已连接。"
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1090
 #, php-format
 msgid ""
-"Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
-"a green status dot."
+"Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
+"be listed and enabled. Errors show under <code>Output → MCP Logs</code>."
 msgstr ""
-"打开 <code>Cursor Settings → MCP</code>——<code>%s</code> 应出现并带有绿色状态"
-"圆点。"
+"在 Cursor 侧边栏中打开 <code>Customize</code>——<code>%s</code> 应已列出并启"
+"用。错误信息显示在 <code>Output → MCP Logs</code> 中。"
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1092

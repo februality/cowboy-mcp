@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-09-21 23:50-0700\n"
+"POT-Creation-Date: 2026-10-02 21:33-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Indonesian\n"
@@ -368,37 +368,48 @@ msgstr "Tambahkan di claude.ai"
 #: admin/class-mcp-admin.php:783
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what it "
-"is asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"is asking for and click <strong>Approve</strong>. To use it, open the "
+"<strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> "
+"and select your site."
 msgstr ""
 "ChatGPT membuka halaman masuk di <strong>situs Anda</strong>. Tinjau apa "
-"yang dimintanya dan klik <strong>Setujui</strong>. Selesai — Anda sudah "
-"terhubung."
+"yang dimintanya dan klik <strong>Setujui</strong>. Untuk menggunakannya, "
+"buka menu <strong>+</strong> di obrolan, pilih <strong>Developer mode</"
+"strong>, lalu pilih situs Anda."
 
 #: admin/class-mcp-admin.php:784
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Review what it is "
-"asking for and click <strong>Approve</strong>. That is it — you are "
-"connected."
+"asking for and click <strong>Approve</strong>. To use it, click <strong>+</"
+"strong> in a chat, open <strong>Connectors</strong> and make sure your site "
+"is switched on."
 msgstr ""
 "Claude membuka halaman masuk di <strong>situs Anda</strong>. Tinjau apa yang "
-"dimintanya dan klik <strong>Setujui</strong>. Selesai — Anda sudah terhubung."
+"dimintanya dan klik <strong>Setujui</strong>. Untuk menggunakannya, klik "
+"<strong>+</strong> di obrolan, buka <strong>Connectors</strong>, dan "
+"pastikan situs Anda aktif."
 
 #: admin/class-mcp-admin.php:786
 msgid ""
-"Custom connectors require a paid ChatGPT plan with <strong>Developer mode</"
-"strong> (beta) enabled."
+"Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
+"plan, on the web. On Business and Enterprise workspaces an admin has to "
+"allow Developer mode first."
 msgstr ""
-"Konektor khusus memerlukan paket ChatGPT berbayar dengan <strong>Developer "
-"mode</strong> (beta) yang diaktifkan."
+"Memerlukan paket ChatGPT <strong>Plus, Pro, Business, Enterprise, atau Edu</"
+"strong>, di web. Di workspace Business dan Enterprise, admin harus "
+"mengizinkan Developer mode terlebih dahulu."
 
 #: admin/class-mcp-admin.php:787
 msgid ""
-"Custom connectors require a Claude <strong>Pro, Max, Team, or Enterprise</"
-"strong> plan."
+"Custom connectors work on every Claude plan (Free is limited to one). On "
+"Team and Enterprise, an organization owner adds the connector first under "
+"<strong>Organization settings → Connectors</strong>; members then click "
+"<strong>Connect</strong>."
 msgstr ""
-"Konektor khusus memerlukan paket Claude <strong>Pro, Max, Team, atau "
-"Enterprise</strong>."
+"Konektor kustom tersedia di semua paket Claude (Free dibatasi satu). Di Team "
+"dan Enterprise, pemilik organisasi menambahkan konektor terlebih dahulu di "
+"<strong>Organization settings → Connectors</strong>; anggota kemudian "
+"mengklik <strong>Connect</strong>."
 
 #: admin/class-mcp-admin.php:807
 msgid "Turn on the Desktop Connector"
@@ -424,30 +435,36 @@ msgstr "Salin URL konektor"
 
 #: admin/class-mcp-admin.php:843
 msgid ""
-"Go to <code>chatgpt.com</code> (or open the ChatGPT desktop app) and sign in."
+"Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work on "
+"the web only)."
 msgstr ""
-"Buka <code>chatgpt.com</code> (atau buka aplikasi desktop ChatGPT) dan masuk."
+"Buka <code>chatgpt.com</code> di browser Anda dan masuk (aplikasi MCP hanya "
+"berfungsi di web)."
 
 #: admin/class-mcp-admin.php:844
 msgid ""
-"Go to <code>Settings → Connectors → Advanced</code> and turn on "
+"Go to <code>Settings → Security and login</code> and turn on "
 "<strong>Developer mode</strong> (one-time)."
 msgstr ""
-"Buka <code>Settings → Connectors → Advanced</code> dan nyalakan "
+"Buka <code>Settings → Security and login</code> dan aktifkan "
 "<strong>Developer mode</strong> (sekali saja)."
 
 #: admin/class-mcp-admin.php:845
-msgid "Back in <code>Connectors</code>, click <strong>Create</strong>."
-msgstr "Kembali di <code>Connectors</code>, klik <strong>Create</strong>."
+msgid ""
+"Go to <code>Plugins</code>, click <strong>+</strong> and choose "
+"<strong>Create MCP App</strong>."
+msgstr ""
+"Buka <code>Plugins</code>, klik <strong>+</strong>, lalu pilih "
+"<strong>Create MCP App</strong>."
 
 #: admin/class-mcp-admin.php:846
 msgid ""
-"Paste the link from step 1 as the <strong>MCP server URL</strong>, set "
-"Authentication to <strong>OAuth</strong>, and click <strong>Create</strong>."
+"Give it a name, paste the link from step 1 as the <strong>MCP server URL</"
+"strong>, set Authentication to <strong>OAuth</strong>, and create it."
 msgstr ""
-"Tempelkan tautan dari langkah 1 sebagai <strong>MCP server URL</strong>, "
-"atur Authentication ke <strong>OAuth</strong>, lalu klik <strong>Create</"
-"strong>."
+"Beri nama, tempel tautan dari langkah 1 sebagai <strong>MCP server URL</"
+"strong>, atur Authentication ke <strong>OAuth</strong>, lalu buat "
+"aplikasinya."
 
 #: admin/class-mcp-admin.php:849
 msgid "Open the <strong>Claude</strong> desktop app and sign in."
@@ -458,16 +475,24 @@ msgid "Go to <code>claude.ai</code> in your browser and sign in."
 msgstr "Buka <code>claude.ai</code> di browser Anda dan masuk."
 
 #: admin/class-mcp-admin.php:853
-msgid "Go to <code>Customize → Connections</code>."
-msgstr "Buka <code>Customize → Connections</code>."
+msgid "Go to <code>Customize → Connectors</code>."
+msgstr "Buka <code>Customize → Connectors</code>."
 
 #: admin/class-mcp-admin.php:854
-msgid "Click <strong>Add custom connector</strong>."
-msgstr "Klik <strong>Add custom connector</strong>."
+msgid ""
+"Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
+msgstr ""
+"Klik <strong>+ Add</strong>, lalu <strong>Add custom connector</strong>."
 
 #: admin/class-mcp-admin.php:855
-msgid "Paste the link from step 1 and click <strong>Add</strong>."
-msgstr "Tempelkan tautan dari langkah 1 lalu klik <strong>Add</strong>."
+msgid ""
+"Give it a name, paste the link from step 1, click <strong>Continue</strong> "
+"and then <strong>Add</strong>. If Claude asks which OAuth client to use, "
+"choose <strong>Register automatically</strong>."
+msgstr ""
+"Beri nama, tempel tautan dari langkah 1, klik <strong>Continue</strong>, "
+"lalu <strong>Add</strong>. Jika Claude menanyakan klien OAuth mana yang "
+"digunakan, pilih <strong>Register automatically</strong>."
 
 #: admin/class-mcp-admin.php:864
 msgid "Approve access"
@@ -644,20 +669,30 @@ msgid "Run this in your terminal:"
 msgstr "Jalankan ini di terminal Anda:"
 
 #: admin/class-mcp-admin.php:1040
-msgid "Run these in your terminal:"
-msgstr "Jalankan perintah berikut di terminal Anda:"
+msgid ""
+"Run these in your terminal. Codex reads the key each time it starts, so also "
+"add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
+"code>):"
+msgstr ""
+"Jalankan perintah berikut di terminal Anda. Codex membaca kunci setiap kali "
+"dimulai, jadi tambahkan juga baris <code>export</code> ke profil shell Anda "
+"(mis. <code>~/.zshrc</code>):"
 
 #: admin/class-mcp-admin.php:1041
-msgid "Add this to your <code>opencode.json</code>:"
-msgstr "Tambahkan ini ke <code>opencode.json</code> Anda:"
+msgid ""
+"Add this to <code>~/.config/opencode/opencode.json</code> (or a project "
+"<code>opencode.json</code>), then restart Opencode:"
+msgstr ""
+"Tambahkan ini ke <code>~/.config/opencode/opencode.json</code> (atau "
+"<code>opencode.json</code> proyek), lalu mulai ulang Opencode:"
 
 #: admin/class-mcp-admin.php:1042
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
-"exist), then reload Cursor:"
+"exist), then restart Cursor:"
 msgstr ""
 "Tambahkan ini ke <code>~/.cursor/mcp.json</code> (buat file tersebut jika "
-"belum ada), lalu muat ulang Cursor:"
+"belum ada), lalu mulai ulang Cursor:"
 
 #: admin/class-mcp-admin.php:1049
 msgid "Add the server to your tool"
@@ -677,30 +712,31 @@ msgstr ""
 #: admin/class-mcp-admin.php:1086
 #, php-format
 msgid ""
-"Run <code>codex mcp list</code> — <code>%s</code> should appear in the list."
+"Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
+"with its tools."
 msgstr ""
-"Jalankan <code>codex mcp list</code> — <code>%s</code> akan muncul dalam "
-"daftar."
+"Jalankan Codex dan ketik <code>/mcp</code> — <code>%s</code> akan tercantum "
+"beserta alat-alatnya."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1088
 #, php-format
 msgid ""
-"Restart Opencode and ask it to list its MCP servers — <code>%s</code> should "
-"be available."
+"Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
+"connected."
 msgstr ""
-"Mulai ulang Opencode dan minta untuk menampilkan daftar server MCP-nya — "
-"<code>%s</code> akan tersedia."
+"Jalankan <code>opencode mcp list</code> — <code>%s</code> akan tercantum "
+"sebagai terhubung."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1090
 #, php-format
 msgid ""
-"Open <code>Cursor Settings → MCP</code> — <code>%s</code> should appear with "
-"a green status dot."
+"Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
+"be listed and enabled. Errors show under <code>Output → MCP Logs</code>."
 msgstr ""
-"Buka <code>Cursor Settings → MCP</code> — <code>%s</code> akan muncul dengan "
-"titik status hijau."
+"Buka <code>Customize</code> di bilah sisi Cursor — <code>%s</code> akan "
+"tercantum dan aktif. Galat ditampilkan di <code>Output → MCP Logs</code>."
 
 #. translators: %s: the MCP server name shown in the client.
 #: admin/class-mcp-admin.php:1092
