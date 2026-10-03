@@ -13,7 +13,7 @@ class Cowboy_MCP_Tools {
     /** Tool name prefixes, ordered from most-specific to least-specific. */
     private const TOOL_PREFIXES = [
         'wp_woo_', 'wp_acf_', 'wp_seo_',
-        'wp_forms_', 'wp_cache_', 'wp_elementor_', 'wp_beaver_', 'wp_wordfence_', 'wp_events_', 'cowboy_mcp_', 'wp_',
+        'wp_forms_', 'wp_cache_', 'wp_elementor_', 'wp_beaver_', 'wp_siteorigin_', 'wp_wordfence_', 'wp_events_', 'cowboy_mcp_', 'wp_',
     ];
 
     /** Domain files to load from includes/tools/. */
@@ -48,6 +48,7 @@ class Cowboy_MCP_Tools {
         'cache/tools-cache.php',
         'elementor/tools-elementor.php',
         'beaver-builder/tools-beaver-builder.php',
+        'siteorigin/tools-siteorigin.php',
         'wordfence/tools-wordfence.php',
         'events/tools-events.php',
     ];
@@ -71,6 +72,7 @@ class Cowboy_MCP_Tools {
         'forms/tools-forms.php',
         'elementor/tools-elementor.php',
         'beaver-builder/tools-beaver-builder.php',
+        'siteorigin/tools-siteorigin.php',
         'wordfence/tools-wordfence.php',
         'events/tools-events.php',
     ];
@@ -107,6 +109,7 @@ class Cowboy_MCP_Tools {
         'cache/tools-cache.php'             => 'cache',
         'elementor/tools-elementor.php'     => 'elementor',
         'beaver-builder/tools-beaver-builder.php' => 'beaver-builder',
+        'siteorigin/tools-siteorigin.php'     => 'siteorigin',
         'wordfence/tools-wordfence.php'     => 'wordfence',
         'events/tools-events.php'           => 'events',
         'abilities/tools-abilities.php'     => 'abilities',   // loaded in phase 2, not in DOMAIN_FILES
@@ -137,6 +140,7 @@ class Cowboy_MCP_Tools {
         'cache'          => 'provider detect, flush, preload, settings',
         'elementor'      => 'templates, page content, global styles, widgets',
         'beaver-builder' => 'Beaver Builder page layouts (read, replace with undo), module catalog and settings schemas, site-wide builder settings',
+        'siteorigin'     => 'SiteOrigin Page Builder layouts (read, replace, addressed row/widget edits, prebuilt layouts — all undoable), widget catalog and schemas, style fields, builder settings, Widgets Bundle activation',
         'wordfence'      => 'scan, blocks, firewall, live traffic, activity, settings',
         'events'         => 'The Events Calendar: events, venues, organizers; recurring series and occurrences with Events Calendar Pro',
         'abilities'      => 'abilities registered by other plugins through the WordPress Abilities API (WooCommerce, the AI plugin\'s core abilities, core...) - each runs its own permission check; not undoable',
@@ -1077,10 +1081,38 @@ class Cowboy_MCP_Tools {
             'forms/tools-forms.php'         => function_exists( 'wpforms' ) || class_exists( 'GFAPI' ) || class_exists( 'WPCF7_ContactForm' ),
             'elementor/tools-elementor.php' => (bool) did_action( 'elementor/loaded' ) || class_exists( '\Elementor\Plugin' ),
             'beaver-builder/tools-beaver-builder.php' => class_exists( 'FLBuilderModel' ) && class_exists( 'FLBuilder' ),
+            'siteorigin/tools-siteorigin.php' => class_exists( 'SiteOrigin_Panels' ),
             'wordfence/tools-wordfence.php' => class_exists( 'wordfence' ),
             'events/tools-events.php'       => class_exists( 'Tribe__Events__Main' ) && function_exists( 'tribe_events' ),
             default                         => true,
         };
+    }
+
+    /** Abilities a built-in domain replaces with undoable tools; skipped by the inbound bridge while that domain is available. */
+    private const SUPERSEDED_ABILITIES = [
+        'siteorigin/tools-siteorigin.php' => [ 'siteorigin-panels/layout-get', 'siteorigin-panels/layout-update' ],
+    ];
+
+    /** @return string[] Ability names the inbound bridge must not wrap on this request. */
+    public static function superseded_abilities(): array {
+        $out = [];
+        foreach ( self::SUPERSEDED_ABILITIES as $file => $names ) {
+            if ( self::domain_available( $file ) ) {
+                $out = array_merge( $out, $names );
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * SiteOrigin sub-features that decide which wp_siteorigin_* tools register:
+     * seam = Page Builder >= 2.36.0 layout writer; bundle = Widgets Bundle active.
+     */
+    public static function siteorigin_features(): array {
+        return [
+            'seam'   => class_exists( 'SiteOrigin_Panels_Abilities' ) && method_exists( 'SiteOrigin_Panels_Abilities', 'layout_update' ),
+            'bundle' => class_exists( 'SiteOrigin_Widgets_Bundle' ),
+        ];
     }
 
     /** TEC custom tables (CT1) active and migrated — occurrence/series tables are live. */
@@ -1131,6 +1163,7 @@ class Cowboy_MCP_Tools {
             wp_is_block_theme(),
             $guards,
             self::events_pro_ready(),
+            self::siteorigin_features(),
         ] ) );
     }
 

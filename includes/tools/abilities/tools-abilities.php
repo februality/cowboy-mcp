@@ -62,6 +62,8 @@ $cowboy_mcp_ability_tools      = [];
 $cowboy_mcp_ability_handlers   = [];
 $cowboy_mcp_ability_collisions = [];
 
+$cowboy_mcp_superseded = Cowboy_MCP_Tools::superseded_abilities();
+
 foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
     if ( ! is_object( $cowboy_mcp_ability ) || ! method_exists( $cowboy_mcp_ability, 'get_name' ) ) {
         continue;
@@ -70,6 +72,10 @@ foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
     $cowboy_mcp_ns   = explode( '/', $cowboy_mcp_name, 2 )[0];
     // Our own abilities would loop; mcp-adapter's execute-ability would bypass scope.
     if ( in_array( $cowboy_mcp_ns, [ 'cowboy-mcp', 'mcp-adapter' ], true ) ) {
+        continue;
+    }
+    // A built-in domain covers this ability with undoable tools (e.g. SiteOrigin layouts).
+    if ( in_array( $cowboy_mcp_name, $cowboy_mcp_superseded, true ) ) {
         continue;
     }
     $cowboy_mcp_meta = (array) $cowboy_mcp_ability->get_meta();
