@@ -213,6 +213,12 @@ if ( $cowboy_mcp_so_features['seam'] ) {
         'block_index' => [ 'type' => 'integer', 'description' => 'Target this Layout Block (0-based, from wp_siteorigin_get_layout). Required when the post has several.' ],
     ], [ 'title' => 'Update SiteOrigin Layout' ] + $cowboy_mcp_so_rw );
     $cowboy_mcp_so_handlers['wp_siteorigin_update_layout'] = static fn( array $a ): array|WP_Error => cowboy_mcp_siteorigin_write_layout( 'wp_siteorigin_update_layout', $a );
+    $cowboy_mcp_so_tools[] = Cowboy_MCP_Tools::tool( 'wp_siteorigin_edit_layout', '[SiteOrigin] Edit a Page Builder layout with addressed operations (undoable, all-or-nothing). Addresses refer to the layout BEFORE this call (get them from wp_siteorigin_get_layout summarize=true): rows by 0-based row, cells by row+cell, widgets by widget_id. Ops: add_row {position?, cells (weights, default [1]), style?}; update_row {row, style? (merged), weights? (one per cell)}; move_row {row, to}; delete_row {row}; add_widget {row, cell, position?, class, instance, style?} (returns the new widget_id); update_widget {widget_id, instance? (shallow merge, null deletes a key), style? (merged)}; move_widget {widget_id, row, cell, position?}; delete_widget {widget_id}. Order of effect: updates, widget moves/adds/deletes, then row moves/adds/deletes; positions index the list at that point. Conflicting ops (e.g. update + delete of one widget, ops inside a deleted row) fail with op_conflict. Unsafe HTML is stripped as in wp_siteorigin_update_layout.', [
+        'post_id'     => [ 'type' => 'integer', 'description' => 'Post/page ID', 'required' => true ],
+        'ops'         => [ 'type' => 'array', 'description' => '1-50 operation objects, each with an op field', 'items' => [ 'type' => 'object' ], 'required' => true ],
+        'block_index' => [ 'type' => 'integer', 'description' => 'Target this Layout Block (0-based). Required when the post has several.' ],
+    ], [ 'title' => 'Edit SiteOrigin Layout' ] + array_merge( $cowboy_mcp_so_rw, [ 'idempotentHint' => false ] ) );
+    $cowboy_mcp_so_handlers['wp_siteorigin_edit_layout'] = static fn( array $a ): array|WP_Error => cowboy_mcp_siteorigin_write_layout( 'wp_siteorigin_edit_layout', $a );
 }
 
 return [ 'tools' => $cowboy_mcp_so_tools, 'handlers' => $cowboy_mcp_so_handlers ];

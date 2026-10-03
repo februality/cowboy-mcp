@@ -526,6 +526,14 @@ function cowboy_mcp_siteorigin_build( string $tool, array $a ): array|WP_Error {
                 return new WP_Error( 'invalid_structure', 'invalid_structure: panels_data must be an object with widgets, grids and grid_cells lists.' );
             }
             break;
+        case 'wp_siteorigin_edit_layout':
+            $r = cowboy_mcp_siteorigin_apply_ops( $current, $a['ops'] ?? null );
+            if ( is_wp_error( $r ) ) {
+                return $r;
+            }
+            $input      = $r['panels_data'];
+            $op_results = $r['results'];
+            break;
         default:
             return new WP_Error( 'invalid_tool', "invalid_tool: {$tool} is not a SiteOrigin layout writer." );
     }
@@ -643,4 +651,237 @@ function cowboy_mcp_siteorigin_write_layout( string $tool, array $a ): array|WP_
         $out['op_results'] = $b['op_results'];
     }
     return $out;
+}
+
+/**
+ * Apply addressed ops with snapshot addressing: every row/cell/widget address refers to
+ * the layout before the call. Validation and conflicts are checked for all ops first
+ * (nothing applied on error); then updates, then widget moves/adds/deletes, then rows.
+ * Positions (add_widget/move_widget position, add_row position, move_row to) are indexes
+ * in the list as it stands when that op runs, clamped to the end.
+ */
+function cowboy_mcp_siteorigin_apply_ops( array $current, $ops ): array|WP_Error {
+    if ( ! cowboy_mcp_siteorigin_is_list( $ops ) || count( $ops ) < 1 || count( $ops ) > 50 ) {
+        return new WP_Error( 'invalid_ops', 'invalid_ops: ops must be a list of 1-50 operations.' );
+    }
+    $base = $current ?: [ 'widgets' => [], 'grids' => [], 'grid_cells' => [] ];
+    [ $rows, $errs ] = cowboy_mcp_siteorigin_to_model( $base );
+    if ( $rows === null ) {
+        return new WP_Error( 'invalid_structure', 'invalid_structure: the stored layout is malformed: ' . implode( '; ', $errs ) );
+    }
+    $where = [];
+    foreach ( $rows as $r => $row ) {
+        foreach ( $row['cells'] as $c => $cell ) {
+            foreach ( $cell['widgets'] as $k => $w ) {
+                $id = (string) ( $w['panels_info']['widget_id'] ?? '' );
+                if ( $id !== '' ) {
+                    $where[ $id ] = [ $r, $c, $k ];
+                }
+            }
+        }
+    }
+    $nrows   = count( $rows );
+    $row_ok  = static fn( $r ) => is_int( $r ) && $r >= 0 && $r < $nrows;
+    $cell_ok = static fn( $r, $c ) => $row_ok( $r ) && is_int( $c ) && isset( $rows[ $r ]['cells'][ $c ] );
+    $num_ok  = static fn( $v ) => is_numeric( $v ) && (float) $v > 0;
+    $known   = [ 'add_row', 'update_row', 'move_row', 'delete_row', 'add_widget', 'update_widget', 'move_widget', 'delete_widget' ];
+    $errors  = [];
+    $del_rows = [];
+    $touch_r  = [];
+    $touch_w  = [];
+
+    // Pass 1 — shape + addresses.
+    foreach ( $ops as $i => $op ) {
+        $t = is_array( $op ) ? (string) ( $op['op'] ?? '' ) : '';
+        if ( ! in_array( $t, $known, true ) ) {
+            $errors[] = "ops[{$i}]: unknown op '{$t}'";
+            continue;
+        }
+        switch ( $t ) {
+            case 'update_row':
+            case 'move_row':
+            case 'delete_row':
+                $r = $op['row'] ?? null;
+                if ( ! $row_ok( $r ) ) {
+                    $errors[] = "ops[{$i}]: row out of range (0-" . ( $nrows - 1 ) . ')';
+                    break;
+                }
+                if ( isset( $touch_r[ $r ][ $t ] ) ) {
+                    $errors[] = "ops[{$i}]: op_conflict — row {$r} already has a {$t} op";
+                }
+                $touch_r[ $r ][ $t ] = $i;
+                if ( $t === 'delete_row' ) {
+                    $del_rows[ $r ] = $i;
+                }
+                if ( $t === 'move_row' && ! ( is_int( $op['to'] ?? null ) && $op['to'] >= 0 ) ) {
+                    $errors[] = "ops[{$i}]: to must be an integer >= 0";
+                }
+                if ( $t === 'update_row' && isset( $op['weights'] ) ) {
+                    $ws = $op['weights'];
+                    if ( ! cowboy_mcp_siteorigin_is_list( $ws ) || count( $ws ) !== count( $rows[ $r ]['cells'] ) || count( array_filter( $ws, $num_ok ) ) !== count( $ws ) ) {
+                        $errors[] = "ops[{$i}]: weights must list one number > 0 per cell (" . count( $rows[ $r ]['cells'] ) . ')';
+                    }
+                }
+                if ( $t === 'update_row' && isset( $op['style'] ) && ! cowboy_mcp_siteorigin_is_object_like( $op['style'] ) ) {
+                    $errors[] = "ops[{$i}]: style must be an object";
+                }
+                break;
+            case 'add_row':
+                $cells = $op['cells'] ?? [ 1 ];
+                if ( ! cowboy_mcp_siteorigin_is_list( $cells ) || count( $cells ) < 1 || count( $cells ) > COWBOY_MCP_SO_MAX_CELLS || count( array_filter( $cells, $num_ok ) ) !== count( $cells ) ) {
+                    $errors[] = "ops[{$i}]: cells must list 1-" . COWBOY_MCP_SO_MAX_CELLS . ' weights > 0';
+                }
+                break;
+            case 'add_widget':
+                if ( ! $cell_ok( $op['row'] ?? null, $op['cell'] ?? null ) ) {
+                    $errors[] = "ops[{$i}]: row/cell does not exist";
+                }
+                if ( ! is_string( $op['class'] ?? null ) || $op['class'] === '' ) {
+                    $errors[] = "ops[{$i}]: class is required";
+                }
+                if ( isset( $op['instance'] ) && ! cowboy_mcp_siteorigin_is_object_like( $op['instance'] ) ) {
+                    $errors[] = "ops[{$i}]: instance must be an object";
+                }
+                break;
+            default: // update_widget / move_widget / delete_widget
+                $id = (string) ( $op['widget_id'] ?? '' );
+                if ( $id === '' ) {
+                    $errors[] = "ops[{$i}]: widget_id_required";
+                    break;
+                }
+                if ( ! isset( $where[ $id ] ) ) {
+                    $errors[] = "ops[{$i}]: widget {$id} not found (widgets without a widget_id must be backfilled with wp_siteorigin_update_layout first: widget_id_required)";
+                    break;
+                }
+                if ( isset( $touch_w[ $id ][ $t ] ) ) {
+                    $errors[] = "ops[{$i}]: op_conflict — widget {$id} already has a {$t} op";
+                }
+                $touch_w[ $id ][ $t ] = $i;
+                if ( $t === 'move_widget' && ! $cell_ok( $op['row'] ?? null, $op['cell'] ?? null ) ) {
+                    $errors[] = "ops[{$i}]: target row/cell does not exist";
+                }
+                if ( $t === 'update_widget' && isset( $op['instance'] ) && ! cowboy_mcp_siteorigin_is_object_like( $op['instance'] ) ) {
+                    $errors[] = "ops[{$i}]: instance must be an object";
+                }
+                break;
+        }
+    }
+    // Pass 2 — conflicts.
+    foreach ( $touch_w as $id => $ts ) {
+        if ( isset( $ts['delete_widget'] ) && count( $ts ) > 1 ) {
+            $errors[] = "op_conflict: widget {$id} is deleted and also targeted by " . implode( '/', array_diff( array_keys( $ts ), [ 'delete_widget' ] ) );
+        }
+        if ( isset( $del_rows[ $where[ $id ][0] ] ) ) {
+            $errors[] = "op_conflict: widget {$id} is in row {$where[ $id ][0]}, which is deleted";
+        }
+    }
+    foreach ( $touch_r as $r => $ts ) {
+        if ( isset( $ts['delete_row'] ) && count( $ts ) > 1 ) {
+            $errors[] = "op_conflict: row {$r} is deleted and also targeted by " . implode( '/', array_diff( array_keys( $ts ), [ 'delete_row' ] ) );
+        }
+    }
+    foreach ( $ops as $i => $op ) {
+        if ( in_array( $op['op'] ?? '', [ 'add_widget', 'move_widget' ], true ) && is_int( $op['row'] ?? null ) && isset( $del_rows[ $op['row'] ] ) ) {
+            $errors[] = "ops[{$i}]: op_conflict — target row {$op['row']} is deleted";
+        }
+    }
+    if ( $errors ) {
+        return new WP_Error( 'invalid_ops', implode( ' | ', array_unique( $errors ) ) );
+    }
+
+    // Pass 3 — in-place updates (pre-call addresses are still valid).
+    foreach ( $ops as $op ) {
+        if ( $op['op'] === 'update_widget' ) {
+            [ $r, $c, $k ] = $where[ $op['widget_id'] ];
+            $w = $rows[ $r ]['cells'][ $c ]['widgets'][ $k ];
+            foreach ( (array) ( $op['instance'] ?? [] ) as $key => $v ) {
+                if ( $key === 'panels_info' ) {
+                    continue;
+                }
+                if ( $v === null ) {
+                    unset( $w[ $key ] );
+                } else {
+                    $w[ $key ] = $v;
+                }
+            }
+            if ( isset( $op['style'] ) && is_array( $op['style'] ) ) {
+                $w['panels_info']['style'] = array_merge( (array) ( $w['panels_info']['style'] ?? [] ), $op['style'] );
+            }
+            $rows[ $r ]['cells'][ $c ]['widgets'][ $k ] = $w;
+        } elseif ( $op['op'] === 'update_row' ) {
+            $r = $op['row'];
+            if ( isset( $op['style'] ) && is_array( $op['style'] ) ) {
+                $rows[ $r ]['style'] = array_merge( $rows[ $r ]['style'], $op['style'] );
+            }
+            foreach ( (array) ( $op['weights'] ?? [] ) as $c => $wt ) {
+                $rows[ $r ]['cells'][ $c ]['weight'] = (float) $wt;
+            }
+        }
+    }
+    // Pass 4 — widgets out (delete/move), then in (move/add) in op order.
+    $moved = [];
+    foreach ( $ops as $op ) {
+        if ( in_array( $op['op'], [ 'delete_widget', 'move_widget' ], true ) ) {
+            [ $r, $c, $k ] = $where[ $op['widget_id'] ];
+            if ( $op['op'] === 'move_widget' ) {
+                $moved[ $op['widget_id'] ] = $rows[ $r ]['cells'][ $c ]['widgets'][ $k ];
+            }
+            $rows[ $r ]['cells'][ $c ]['widgets'][ $k ] = null;
+        }
+    }
+    foreach ( $rows as $r => $row ) {
+        foreach ( $row['cells'] as $c => $cell ) {
+            $rows[ $r ]['cells'][ $c ]['widgets'] = array_values( array_filter( $cell['widgets'], static fn( $w ) => $w !== null ) );
+        }
+    }
+    $results = [];
+    foreach ( $ops as $i => $op ) {
+        if ( $op['op'] !== 'add_widget' && $op['op'] !== 'move_widget' ) {
+            continue;
+        }
+        if ( $op['op'] === 'add_widget' ) {
+            $w = (array) ( $op['instance'] ?? [] );
+            unset( $w['panels_info'] );
+            $id               = wp_generate_uuid4();
+            $w['panels_info'] = [ 'class' => ltrim( (string) $op['class'], '\\' ), 'widget_id' => $id, 'style' => is_array( $op['style'] ?? null ) ? $op['style'] : [] ];
+            $results[]        = [ 'op' => $i, 'widget_id' => $id ];
+        } else {
+            $w = $moved[ $op['widget_id'] ];
+        }
+        $list = $rows[ $op['row'] ]['cells'][ $op['cell'] ]['widgets'];
+        $pos  = is_int( $op['position'] ?? null ) ? max( 0, min( $op['position'], count( $list ) ) ) : count( $list );
+        array_splice( $list, $pos, 0, [ $w ] );
+        $rows[ $op['row'] ]['cells'][ $op['cell'] ]['widgets'] = $list;
+    }
+    // Pass 5 — rows: drop deleted, then move/add in op order.
+    $order = [];
+    foreach ( array_keys( $rows ) as $r ) {
+        if ( ! isset( $del_rows[ $r ] ) ) {
+            $order[] = $r;
+        }
+    }
+    $added = [];
+    foreach ( $ops as $i => $op ) {
+        if ( $op['op'] === 'move_row' ) {
+            $order = array_values( array_filter( $order, static fn( $k ) => $k !== $op['row'] ) );
+            array_splice( $order, min( $op['to'], count( $order ) ), 0, [ $op['row'] ] );
+        } elseif ( $op['op'] === 'add_row' ) {
+            $key           = "n{$i}";
+            $added[ $key ] = [
+                'style' => is_array( $op['style'] ?? null ) ? $op['style'] : [],
+                'extra' => [],
+                'cells' => array_map( static fn( $wt ) => [ 'weight' => (float) $wt, 'style' => [], 'extra' => [], 'widgets' => [] ], array_values( $op['cells'] ?? [ 1 ] ) ),
+            ];
+            $pos = is_int( $op['position'] ?? null ) ? max( 0, min( $op['position'], count( $order ) ) ) : count( $order );
+            array_splice( $order, $pos, 0, [ $key ] );
+        }
+    }
+    $final = [];
+    foreach ( $order as $idx => $k ) {
+        $final[] = is_int( $k ) ? $rows[ $k ] : $added[ $k ];
+        if ( ! is_int( $k ) ) {
+            $results[] = [ 'op' => (int) substr( $k, 1 ), 'row_added_at' => $idx ];
+        }
+    }
+    return [ 'panels_data' => cowboy_mcp_siteorigin_from_model( $final ), 'results' => $results ];
 }
