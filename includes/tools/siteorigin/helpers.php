@@ -19,6 +19,27 @@ function cowboy_mcp_siteorigin_is_object_like( $v ): bool {
     return is_array( $v ) && ( $v === [] || ! cowboy_mcp_siteorigin_is_list( $v ) );
 }
 
+/**
+ * Run a SiteOrigin layout read with the Widgets Bundle's auto-activation unhooked:
+ * load_missing_widgets() on siteorigin_panels_data writes siteorigin_widgets_active
+ * for any inactive widget a layout references — a read must never do that.
+ */
+function cowboy_mcp_siteorigin_without_autoactivation( callable $fn ) {
+    $cb  = class_exists( 'SiteOrigin_Widgets_Bundle' ) && method_exists( 'SiteOrigin_Widgets_Bundle', 'load_missing_widgets' )
+        ? [ SiteOrigin_Widgets_Bundle::single(), 'load_missing_widgets' ] : null;
+    $pri = $cb ? has_filter( 'siteorigin_panels_data', $cb ) : false;
+    if ( $pri !== false ) {
+        remove_filter( 'siteorigin_panels_data', $cb, $pri );
+    }
+    try {
+        return $fn();
+    } finally {
+        if ( $pri !== false ) {
+            add_filter( 'siteorigin_panels_data', $cb, $pri );
+        }
+    }
+}
+
 /** Editable post or a coded error. */
 function cowboy_mcp_siteorigin_post( int $post_id ): WP_Post|WP_Error {
     $post = $post_id > 0 ? get_post( $post_id ) : null;
@@ -54,7 +75,8 @@ function cowboy_mcp_siteorigin_stored( WP_Post $post ): array {
     $blocks = [];
     if ( class_exists( 'SiteOrigin_Panels_AI_Exposure' ) && method_exists( 'SiteOrigin_Panels_AI_Exposure', 'get_qualifying_block_layouts' ) ) {
         $parsed = parse_blocks( (string) $post->post_content );
-        foreach ( SiteOrigin_Panels_AI_Exposure::single()->get_qualifying_block_layouts( $post ) as $entry ) {
+        $qualifying = cowboy_mcp_siteorigin_without_autoactivation( static fn() => SiteOrigin_Panels_AI_Exposure::single()->get_qualifying_block_layouts( $post ) );
+        foreach ( $qualifying as $entry ) {
             $raw = $parsed[ $entry['block_key'] ]['attrs']['panelsData'] ?? null;
             $pd  = cowboy_mcp_siteorigin_normalize_stored( $raw );
             if ( $pd !== null ) {
@@ -69,7 +91,7 @@ function cowboy_mcp_siteorigin_stored( WP_Post $post ): array {
 /** SiteOrigin's public read shape { post_id, source, layouts[] } (filtered, as the front end sees it). */
 function cowboy_mcp_siteorigin_read( int $post_id ): array|WP_Error {
     if ( class_exists( 'SiteOrigin_Panels_AI_Exposure' ) && method_exists( 'SiteOrigin_Panels_AI_Exposure', 'read_layouts' ) ) {
-        $r = SiteOrigin_Panels_AI_Exposure::single()->read_layouts( $post_id );
+        $r = cowboy_mcp_siteorigin_without_autoactivation( static fn() => SiteOrigin_Panels_AI_Exposure::single()->read_layouts( $post_id ) );
         return is_wp_error( $r ) ? new WP_Error( 'not_found', "not_found: post #{$post_id} does not exist." ) : $r;
     }
     if ( ! get_post( $post_id ) ) {
@@ -77,7 +99,7 @@ function cowboy_mcp_siteorigin_read( int $post_id ): array|WP_Error {
     }
     $meta = get_post_meta( $post_id, 'panels_data', true );
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
-    $meta = is_array( $meta ) && $meta ? apply_filters( 'siteorigin_panels_data', $meta, $post_id ) : [];
+    $meta = is_array( $meta ) && $meta ? cowboy_mcp_siteorigin_without_autoactivation( static fn() => apply_filters( 'siteorigin_panels_data', $meta, $post_id ) ) : [];
     return [
         'post_id' => $post_id,
         'source'  => $meta ? 'meta' : 'none',
@@ -408,8 +430,16 @@ function cowboy_mcp_siteorigin_target( WP_Post $post, ?int $block_index ): array
  *
  * @return array{data: ?array, errors: string[], warnings: string[], generated: string[]}
  */
-function cowboy_mcp_siteorigin_prepare( $pd ): array {
+function cowboy_mcp_siteorigin_prepare( $pd, array $current = [] ): array {
     [ $rows, $errors ] = cowboy_mcp_siteorigin_to_model( $pd );
+    // Widgets already stored verbatim are not re-judged for an unknown class (SiteOrigin keeps
+    // orphans from removed plugins and renders a placeholder); inactive bundle classes always are.
+    $untouched = [];
+    foreach ( (array) ( $current['widgets'] ?? [] ) as $cw ) {
+        if ( is_array( $cw ) ) {
+            $untouched[ cowboy_mcp_siteorigin_fingerprint( $cw ) ] = true;
+        }
+    }
     if ( $rows === null ) {
         return [ 'data' => null, 'errors' => $errors, 'warnings' => [], 'generated' => [] ];
     }
@@ -424,7 +454,8 @@ function cowboy_mcp_siteorigin_prepare( $pd ): array {
                 $addr  = "row {$r} cell {$c} widget {$k}";
                 $class = ltrim( (string) ( $w['panels_info']['class'] ?? '' ), '\\' );
                 $w['panels_info']['class'] = $class;
-                if ( cowboy_mcp_siteorigin_class_status( $class ) !== 'active' ) {
+                $status = cowboy_mcp_siteorigin_class_status( $class );
+                if ( $status === 'inactive_bundle' || ( $status === 'unknown' && ! isset( $untouched[ cowboy_mcp_siteorigin_fingerprint( $w ) ] ) ) ) {
                     $errors[] = cowboy_mcp_siteorigin_class_error( $class, $addr )->get_error_message();
                 }
                 $wid = (string) ( $w['panels_info']['widget_id'] ?? '' );
@@ -452,6 +483,15 @@ function cowboy_mcp_siteorigin_prepare( $pd ): array {
         $errors[] = 'invalid_structure: Page Builder rejected the layout structure';
     }
     return [ 'data' => $errors ? null : $data, 'errors' => $errors, 'warnings' => $warnings, 'generated' => $generated ];
+}
+
+/** Position-independent identity of a widget (instance + class/style/widget_id). */
+function cowboy_mcp_siteorigin_fingerprint( array $w ): string {
+    if ( is_array( $w['panels_info'] ?? null ) ) {
+        unset( $w['panels_info']['id'], $w['panels_info']['grid'], $w['panels_info']['cell'], $w['panels_info']['raw'], $w['panels_info']['cell_index'], $w['panels_info']['widget_index'] );
+        $w['panels_info']['class'] = ltrim( (string) ( $w['panels_info']['class'] ?? '' ), '\\' );
+    }
+    return md5( (string) wp_json_encode( $w ) );
 }
 
 /** Widgets indexed by widget_id, without positional/computed panels_info keys. */
@@ -547,7 +587,7 @@ function cowboy_mcp_siteorigin_build( string $tool, array $a ): array|WP_Error {
         default:
             return new WP_Error( 'invalid_tool', "invalid_tool: {$tool} is not a SiteOrigin layout writer." );
     }
-    $prep = cowboy_mcp_siteorigin_prepare( $input );
+    $prep = cowboy_mcp_siteorigin_prepare( $input, $current );
     return [ 'post' => $post, 'target' => $target, 'current' => $current, 'op_results' => $op_results ] + $prep;
 }
 
