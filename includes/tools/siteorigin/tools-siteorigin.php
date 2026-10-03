@@ -281,4 +281,28 @@ if ( $cowboy_mcp_so_features['seam'] ) {
     $cowboy_mcp_so_handlers['wp_siteorigin_edit_layout'] = static fn( array $a ): array|WP_Error => cowboy_mcp_siteorigin_write_layout( 'wp_siteorigin_edit_layout', $a );
 }
 
+if ( $cowboy_mcp_so_features['bundle'] ) {
+    $cowboy_mcp_so_tools[] = Cowboy_MCP_Tools::tool( 'wp_siteorigin_set_widgets_active', '[SiteOrigin] Activate or deactivate SiteOrigin Widgets Bundle widgets by folder id (e.g. button, accordion; see wp_siteorigin_list_widgets include_inactive=true). Undoable. Deactivating warns which posts use the widget.', [
+        'widgets' => [ 'type' => 'array', 'description' => '1-30 widget folder ids', 'items' => [ 'type' => 'string' ], 'required' => true ],
+        'active'  => [ 'type' => 'boolean', 'description' => 'true = activate, false = deactivate', 'required' => true ],
+    ], [ 'title' => 'Set SiteOrigin Widgets Active' ] + $cowboy_mcp_so_rw );
+    $cowboy_mcp_so_handlers['wp_siteorigin_set_widgets_active'] = static function ( array $a ): array|WP_Error {
+        $plan = cowboy_mcp_siteorigin_activation_plan( $a['widgets'] ?? null, $a['active'] ?? null );
+        if ( $plan['errors'] ) {
+            return new WP_Error( 'invalid_args', implode( ' | ', $plan['errors'] ) );
+        }
+        $bundle = SiteOrigin_Widgets_Bundle::single();
+        foreach ( $plan['changes'] as $c ) {
+            if ( $c['to'] ) {
+                $bundle->activate_widget( $c['widget'], false );   // false: do not include the widget file in this request
+            } else {
+                $bundle->deactivate_widget( $c['widget'] );
+            }
+        }
+        wp_cache_delete( 'active_widgets', 'siteorigin_widgets' );
+        delete_transient( 'siteorigin_panels_widgets' );
+        return [ 'changes' => $plan['changes'], 'warnings' => $plan['warnings'] ];
+    };
+}
+
 return [ 'tools' => $cowboy_mcp_so_tools, 'handlers' => $cowboy_mcp_so_handlers ];

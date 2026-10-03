@@ -661,6 +661,13 @@ class Cowboy_MCP_Tools {
                 $preview['plan'] = [ 'valid' => ! $check['errors'], 'errors' => $check['errors'], 'changed' => $check['changed'] ];
             }
         }
+        if ( $name === 'wp_siteorigin_set_widgets_active' ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_siteorigin_activation_plan' ) ) {
+                $plan            = cowboy_mcp_siteorigin_activation_plan( $filtered_args['widgets'] ?? null, $filtered_args['active'] ?? null );
+                $preview['plan'] = [ 'valid' => ! $plan['errors'] ] + $plan;
+            }
+        }
         // wp_save_template: say which branch would run (update / materialize / create).
         if ( $name === 'wp_save_template' ) {
             self::boot_domains();

@@ -1050,3 +1050,45 @@ function cowboy_mcp_siteorigin_settings_check( $settings ): array {
     }
     return [ 'errors' => $errors, 'changed' => $changed, 'values' => $values ];
 }
+
+/** Up to 20 post ids whose classic or Layout Block layout references a widget class. */
+function cowboy_mcp_siteorigin_posts_using_class( string $class ): array {
+    global $wpdb;
+    $needle = '%' . $wpdb->esc_like( '"' . $class . '"' ) . '%';
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+    $meta = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s LIMIT 20", 'panels_data', $needle ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+    $blocks = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type <> 'revision' AND post_content LIKE %s AND post_content LIKE %s LIMIT 20", '%' . $wpdb->esc_like( '<!-- wp:' . COWBOY_MCP_SO_BLOCK ) . '%', $needle ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    return array_slice( array_values( array_unique( array_map( 'intval', array_merge( (array) $meta, (array) $blocks ) ) ) ), 0, 20 );
+}
+
+function cowboy_mcp_siteorigin_activation_plan( $widgets, $active ): array {
+    $errors   = [];
+    $changes  = [];
+    $warnings = [];
+    if ( ! cowboy_mcp_siteorigin_is_list( $widgets ) || count( $widgets ) < 1 || count( $widgets ) > 30 ) {
+        $errors[] = 'invalid_args: widgets must list 1-30 Widgets Bundle widget ids';
+    }
+    if ( ! is_bool( $active ) ) {
+        $errors[] = 'invalid_args: active must be true or false';
+    }
+    if ( $errors ) {
+        return compact( 'errors', 'changes', 'warnings' );
+    }
+    $all = cowboy_mcp_siteorigin_bundle_widgets( true );
+    foreach ( $widgets as $id ) {
+        $id = (string) $id;
+        if ( ! isset( $all[ $id ] ) ) {
+            $errors[] = "unknown_widget: '{$id}' is not a Widgets Bundle widget id (folder name, e.g. button — see wp_siteorigin_list_widgets include_inactive)";
+            continue;
+        }
+        $changes[] = [ 'widget' => $id, 'from' => $all[ $id ]['active'], 'to' => $active ];
+        if ( ! $active && $all[ $id ]['active'] && $all[ $id ]['class'] ) {
+            $used = cowboy_mcp_siteorigin_posts_using_class( $all[ $id ]['class'] );
+            if ( $used ) {
+                $warnings[] = "{$id} is used on post(s) " . implode( ', ', $used ) . '. SiteOrigin re-activates a widget automatically when a page that uses it is rendered.';
+            }
+        }
+    }
+    return compact( 'errors', 'changes', 'warnings' );
+}
