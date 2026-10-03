@@ -534,6 +534,13 @@ function cowboy_mcp_siteorigin_build( string $tool, array $a ): array|WP_Error {
             $input      = $r['panels_data'];
             $op_results = $r['results'];
             break;
+        case 'wp_siteorigin_apply_prebuilt_layout':
+            $src = cowboy_mcp_siteorigin_load_source( $a );
+            if ( is_wp_error( $src ) ) {
+                return $src;
+            }
+            $input = ( $a['mode'] ?? 'replace' ) === 'append' ? cowboy_mcp_siteorigin_append( $current, $src ) : $src;
+            break;
         default:
             return new WP_Error( 'invalid_tool', "invalid_tool: {$tool} is not a SiteOrigin layout writer." );
     }
@@ -884,4 +891,82 @@ function cowboy_mcp_siteorigin_apply_ops( array $current, $ops ): array|WP_Error
         }
     }
     return [ 'panels_data' => cowboy_mcp_siteorigin_from_model( $final ), 'results' => $results ];
+}
+
+/** Prebuilt layouts from the siteorigin_panels_prebuilt_layouts filter (no remote directory, no theme folders). */
+function cowboy_mcp_siteorigin_prebuilt_layouts(): array {
+    $l = apply_filters( 'siteorigin_panels_prebuilt_layouts', [] );
+    return is_array( $l ) ? $l : [];
+}
+
+/** Keep only layout keys; drop import metadata, form ids and widget ids (fresh ids are generated on write). */
+function cowboy_mcp_siteorigin_clean_source( array $pd ): array {
+    $widgets = [];
+    foreach ( (array) ( $pd['widgets'] ?? [] ) as $w ) {
+        if ( ! is_array( $w ) ) {
+            continue;
+        }
+        unset( $w['_sow_form_id'], $w['_sow_form_timestamp'], $w['panels_info']['widget_id'] );
+        $widgets[] = $w;
+    }
+    return [ 'widgets' => $widgets, 'grids' => array_values( (array) ( $pd['grids'] ?? [] ) ), 'grid_cells' => array_values( (array) ( $pd['grid_cells'] ?? [] ) ) ];
+}
+
+function cowboy_mcp_siteorigin_load_source( array $a ): array|WP_Error {
+    $has_layout = isset( $a['layout_id'] ) && (string) $a['layout_id'] !== '';
+    $has_post   = ! empty( $a['source_post_id'] );
+    if ( $has_layout === $has_post ) {
+        return new WP_Error( 'invalid_args', 'invalid_args: pass exactly one of layout_id or source_post_id.' );
+    }
+    if ( $has_layout ) {
+        $id  = (string) $a['layout_id'];
+        $all = cowboy_mcp_siteorigin_prebuilt_layouts();
+        if ( ! isset( $all[ $id ] ) || ! is_array( $all[ $id ] ) ) {
+            return new WP_Error( 'unknown_layout', "unknown_layout: no prebuilt layout '{$id}' (see wp_siteorigin_list_prebuilt_layouts)." );
+        }
+        if ( empty( $all[ $id ]['grids'] ) ) {
+            return new WP_Error( 'unsupported_layout', "unsupported_layout: prebuilt layout '{$id}' has no inline layout data (file-based layouts are not supported)." );
+        }
+        return cowboy_mcp_siteorigin_clean_source( $all[ $id ] );
+    }
+    $src = cowboy_mcp_siteorigin_post( (int) $a['source_post_id'] );
+    if ( is_wp_error( $src ) ) {
+        return $src;
+    }
+    $stored = cowboy_mcp_siteorigin_stored( $src );
+    if ( isset( $a['source_block_index'] ) ) {
+        $pd = $stored['blocks'][ (int) $a['source_block_index'] ]['panels_data'] ?? null;
+    } else {
+        $pd = $stored['meta'] ?? ( $stored['blocks'][0]['panels_data'] ?? null );
+    }
+    if ( ! is_array( $pd ) ) {
+        return new WP_Error( 'no_source_layout', "no_source_layout: post #{$src->ID} has no SiteOrigin layout at that location." );
+    }
+    return cowboy_mcp_siteorigin_clean_source( $pd );
+}
+
+/** Append $src's rows after $current's, re-basing row references. */
+function cowboy_mcp_siteorigin_append( array $current, array $src ): array {
+    $base = count( (array) ( $current['grids'] ?? [] ) );
+    $out  = [
+        'widgets'    => array_values( (array) ( $current['widgets'] ?? [] ) ),
+        'grids'      => array_values( (array) ( $current['grids'] ?? [] ) ),
+        'grid_cells' => array_values( (array) ( $current['grid_cells'] ?? [] ) ),
+    ];
+    foreach ( $src['grids'] as $g ) {
+        $out['grids'][] = $g;
+    }
+    foreach ( $src['grid_cells'] as $c ) {
+        if ( is_array( $c ) && is_numeric( $c['grid'] ?? null ) ) {
+            $c['grid'] = (int) $c['grid'] + $base;
+        }
+        $out['grid_cells'][] = $c;
+    }
+    foreach ( $src['widgets'] as $w ) {
+        if ( is_numeric( $w['panels_info']['grid'] ?? null ) ) {
+            $w['panels_info']['grid'] = (int) $w['panels_info']['grid'] + $base;
+        }
+        $out['widgets'][] = $w;
+    }
+    return $out;
 }

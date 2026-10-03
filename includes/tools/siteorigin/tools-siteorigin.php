@@ -53,6 +53,8 @@ $cowboy_mcp_so_tools = [
         'level'   => [ 'type' => 'string', 'description' => 'row, cell or widget', 'enum' => [ 'row', 'cell', 'widget' ], 'required' => true ],
         'post_id' => [ 'type' => 'integer', 'description' => 'Optional post context (some add-ons vary fields per post)' ],
     ], [ 'title' => 'Get SiteOrigin Style Fields' ] + $cowboy_mcp_so_ro ),
+
+    Cowboy_MCP_Tools::tool( 'wp_siteorigin_list_prebuilt_layouts', '[SiteOrigin] List prebuilt layouts registered on this site (by the theme or plugins via SiteOrigin\'s prebuilt-layouts filter). Apply one with wp_siteorigin_apply_prebuilt_layout layout_id, or copy any post\'s layout with source_post_id. The remote SiteOrigin layout directory is not used.', [], [ 'title' => 'List SiteOrigin Prebuilt Layouts' ] + $cowboy_mcp_so_ro ),
 ];
 
 $cowboy_mcp_so_handlers = [
@@ -204,6 +206,24 @@ $cowboy_mcp_so_handlers = [
         $fields = cowboy_mcp_siteorigin_style_fields( $level, (int) ( $a['post_id'] ?? 0 ) );
         return [ 'level' => $level, 'count' => count( $fields ), 'fields' => $fields ];
     },
+
+    'wp_siteorigin_list_prebuilt_layouts' => function ( array $a ): array|WP_Error {
+        $rows = [];
+        foreach ( cowboy_mcp_siteorigin_prebuilt_layouts() as $id => $l ) {
+            if ( ! is_array( $l ) ) {
+                continue;
+            }
+            $rows[] = [
+                'id'          => (string) $id,
+                'name'        => wp_strip_all_tags( (string) ( $l['name'] ?? $id ) ),
+                'description' => wp_strip_all_tags( (string) ( $l['description'] ?? '' ) ),
+                'rows'        => count( (array) ( $l['grids'] ?? [] ) ),
+                'widgets'     => count( (array) ( $l['widgets'] ?? [] ) ),
+                'applicable'  => ! empty( $l['grids'] ),
+            ];
+        }
+        return [ 'count' => count( $rows ), 'layouts' => $rows ];
+    },
 ];
 
 if ( $cowboy_mcp_so_features['seam'] ) {
@@ -213,6 +233,15 @@ if ( $cowboy_mcp_so_features['seam'] ) {
         'block_index' => [ 'type' => 'integer', 'description' => 'Target this Layout Block (0-based, from wp_siteorigin_get_layout). Required when the post has several.' ],
     ], [ 'title' => 'Update SiteOrigin Layout' ] + $cowboy_mcp_so_rw );
     $cowboy_mcp_so_handlers['wp_siteorigin_update_layout'] = static fn( array $a ): array|WP_Error => cowboy_mcp_siteorigin_write_layout( 'wp_siteorigin_update_layout', $a );
+    $cowboy_mcp_so_tools[] = Cowboy_MCP_Tools::tool( 'wp_siteorigin_apply_prebuilt_layout', '[SiteOrigin] Apply a prebuilt layout (layout_id) or copy another post\'s layout (source_post_id, optional source_block_index) onto a post (undoable). mode=replace (default) replaces the layout; append adds the rows after the existing ones. Widget ids are regenerated; unsafe HTML is stripped.', [
+        'post_id'            => [ 'type' => 'integer', 'description' => 'Target post/page ID', 'required' => true ],
+        'layout_id'          => [ 'type' => 'string', 'description' => 'Prebuilt layout id from wp_siteorigin_list_prebuilt_layouts' ],
+        'source_post_id'     => [ 'type' => 'integer', 'description' => 'Copy the layout of this post instead' ],
+        'source_block_index' => [ 'type' => 'integer', 'description' => 'Copy this Layout Block of the source post (default: its classic layout, else its first Layout Block)' ],
+        'mode'               => [ 'type' => 'string', 'enum' => [ 'replace', 'append' ], 'default' => 'replace', 'description' => 'replace or append' ],
+        'block_index'        => [ 'type' => 'integer', 'description' => 'Target Layout Block of the target post (0-based)' ],
+    ], [ 'title' => 'Apply SiteOrigin Prebuilt Layout' ] + array_merge( $cowboy_mcp_so_rw, [ 'idempotentHint' => false ] ) );
+    $cowboy_mcp_so_handlers['wp_siteorigin_apply_prebuilt_layout'] = static fn( array $a ): array|WP_Error => cowboy_mcp_siteorigin_write_layout( 'wp_siteorigin_apply_prebuilt_layout', $a );
     $cowboy_mcp_so_tools[] = Cowboy_MCP_Tools::tool( 'wp_siteorigin_edit_layout', '[SiteOrigin] Edit a Page Builder layout with addressed operations (undoable, all-or-nothing). Addresses refer to the layout BEFORE this call (get them from wp_siteorigin_get_layout summarize=true): rows by 0-based row, cells by row+cell, widgets by widget_id. Ops: add_row {position?, cells (weights, default [1]), style?}; update_row {row, style? (merged), weights? (one per cell)}; move_row {row, to}; delete_row {row}; add_widget {row, cell, position?, class, instance, style?} (returns the new widget_id); update_widget {widget_id, instance? (shallow merge, null deletes a key), style? (merged)}; move_widget {widget_id, row, cell, position?}; delete_widget {widget_id}. Order of effect: updates, widget moves/adds/deletes, then row moves/adds/deletes; positions index the list at that point. Conflicting ops (e.g. update + delete of one widget, ops inside a deleted row) fail with op_conflict. Unsafe HTML is stripped as in wp_siteorigin_update_layout.', [
         'post_id'     => [ 'type' => 'integer', 'description' => 'Post/page ID', 'required' => true ],
         'ops'         => [ 'type' => 'array', 'description' => '1-50 operation objects, each with an op field', 'items' => [ 'type' => 'object' ], 'required' => true ],
