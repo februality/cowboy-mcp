@@ -206,4 +206,13 @@ $cowboy_mcp_so_handlers = [
     },
 ];
 
+if ( $cowboy_mcp_so_features['seam'] ) {
+    $cowboy_mcp_so_tools[] = Cowboy_MCP_Tools::tool( 'wp_siteorigin_update_layout', '[SiteOrigin] Replace a post\'s whole Page Builder layout (undoable). Send panels_data { widgets[], grids[], grid_cells[] } as returned by wp_siteorigin_get_layout (summarize=false), edited. Widgets attach to cells by panels_info.grid/cell; missing panels_info.widget_id values are generated and returned. Written through SiteOrigin\'s own sanitizer: scripts, iframes and other unsafe HTML are always stripped (reported in warnings). An empty layout (no rows, no widgets) clears it. Storage follows SiteOrigin: the classic layout unless block_index targets a Layout Block. For small changes prefer wp_siteorigin_edit_layout.', [
+        'post_id'     => [ 'type' => 'integer', 'description' => 'Post/page ID', 'required' => true ],
+        'panels_data' => [ 'type' => 'object', 'description' => '{ widgets: [ { …instance settings, panels_info: { class, grid, cell, widget_id?, style? } } ], grids: [ { cells, style? } ], grid_cells: [ { grid, weight, style? } ] }', 'required' => true ],
+        'block_index' => [ 'type' => 'integer', 'description' => 'Target this Layout Block (0-based, from wp_siteorigin_get_layout). Required when the post has several.' ],
+    ], [ 'title' => 'Update SiteOrigin Layout' ] + $cowboy_mcp_so_rw );
+    $cowboy_mcp_so_handlers['wp_siteorigin_update_layout'] = static fn( array $a ): array|WP_Error => cowboy_mcp_siteorigin_write_layout( 'wp_siteorigin_update_layout', $a );
+}
+
 return [ 'tools' => $cowboy_mcp_so_tools, 'handlers' => $cowboy_mcp_so_handlers ];

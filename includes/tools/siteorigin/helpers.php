@@ -363,3 +363,284 @@ function cowboy_mcp_siteorigin_style_fields( string $level, int $post_id ): arra
     }
     return $out;
 }
+
+/** Where a write lands — mirrors SiteOrigin_Panels_Abilities::layout_update() routing. */
+function cowboy_mcp_siteorigin_target( WP_Post $post, ?int $block_index ): array|WP_Error {
+    $stored = cowboy_mcp_siteorigin_stored( $post );
+    $id     = (int) $post->ID;
+    $meta_target = static function () use ( $post, $stored, $id ) {
+        $types = function_exists( 'siteorigin_panels_setting' ) ? (array) siteorigin_panels_setting( 'post-types' ) : [];
+        if ( ! in_array( $post->post_type, $types, true ) ) {
+            return new WP_Error( 'post_type_not_enabled', "post_type_not_enabled: Page Builder is not enabled for post type '{$post->post_type}' (see wp_siteorigin_get_settings post-types)." );
+        }
+        return [ 'storage' => 'meta', 'block_index' => null, 'current' => $stored['meta'] ?? [] ];
+    };
+    if ( $block_index === null && $stored['meta'] !== null ) {
+        return $meta_target();
+    }
+    if ( $stored['blocks'] ) {
+        $n = count( $stored['blocks'] );
+        if ( $block_index === null ) {
+            if ( $n > 1 ) {
+                return new WP_Error( 'block_ambiguous', "block_ambiguous: post #{$id} has {$n} Layout Blocks; pass block_index 0-" . ( $n - 1 ) . '.' );
+            }
+            $block_index = 0;
+        }
+        if ( ! isset( $stored['blocks'][ $block_index ] ) ) {
+            return new WP_Error( 'block_ambiguous', "block_ambiguous: post #{$id} has no Layout Block {$block_index}; valid 0-" . ( $n - 1 ) . '.' );
+        }
+        return [ 'storage' => 'block', 'block_index' => $block_index, 'current' => $stored['blocks'][ $block_index ]['panels_data'] ];
+    }
+    if ( $stored['untargetable_block'] ) {
+        return new WP_Error( 'unsupported', "unsupported: post #{$id} has a Layout Block nested in another block or without layout data; SiteOrigin cannot target it." );
+    }
+    if ( $block_index !== null ) {
+        return new WP_Error( 'block_ambiguous', "block_ambiguous: post #{$id} has no Layout Block; omit block_index." );
+    }
+    return $meta_target();
+}
+
+/**
+ * Validate + normalise a candidate panels_data (all-or-nothing).
+ *
+ * @return array{data: ?array, errors: string[], warnings: string[], generated: string[]}
+ */
+function cowboy_mcp_siteorigin_prepare( $pd ): array {
+    [ $rows, $errors ] = cowboy_mcp_siteorigin_to_model( $pd );
+    if ( $rows === null ) {
+        return [ 'data' => null, 'errors' => $errors, 'warnings' => [], 'generated' => [] ];
+    }
+    $warnings  = [];
+    $generated = [];
+    $seen      = [];
+    foreach ( $rows as $r => &$row ) {
+        $sum = 0.0;
+        foreach ( $row['cells'] as $c => &$cell ) {
+            $sum += $cell['weight'];
+            foreach ( $cell['widgets'] as $k => &$w ) {
+                $addr  = "row {$r} cell {$c} widget {$k}";
+                $class = ltrim( (string) ( $w['panels_info']['class'] ?? '' ), '\\' );
+                $w['panels_info']['class'] = $class;
+                if ( cowboy_mcp_siteorigin_class_status( $class ) !== 'active' ) {
+                    $errors[] = cowboy_mcp_siteorigin_class_error( $class, $addr )->get_error_message();
+                }
+                $wid = (string) ( $w['panels_info']['widget_id'] ?? '' );
+                if ( $wid === '' ) {
+                    $wid                            = wp_generate_uuid4();
+                    $w['panels_info']['widget_id']  = $wid;
+                    $generated[]                    = $wid;
+                }
+                if ( isset( $seen[ $wid ] ) ) {
+                    $errors[] = "{$addr}: duplicate_widget_id {$wid}";
+                }
+                $seen[ $wid ] = true;
+            }
+            unset( $w );
+        }
+        unset( $cell );
+        if ( $sum < 0.99 || $sum > 1.01 ) {
+            $warnings[] = "row {$r}: weights_not_normalised (cell weights sum to " . round( $sum, 4 ) . '; Page Builder expects 1)';
+        }
+    }
+    unset( $row );
+    $data = cowboy_mcp_siteorigin_from_model( $rows );
+    if ( ! $errors && $data['grids'] && class_exists( 'SiteOrigin_Panels_Admin' ) && method_exists( 'SiteOrigin_Panels_Admin', 'decode_panels_data' )
+        && SiteOrigin_Panels_Admin::decode_panels_data( (string) wp_json_encode( $data ) ) === null ) {
+        $errors[] = 'invalid_structure: Page Builder rejected the layout structure';
+    }
+    return [ 'data' => $errors ? null : $data, 'errors' => $errors, 'warnings' => $warnings, 'generated' => $generated ];
+}
+
+/** Widgets indexed by widget_id, without positional/computed panels_info keys. */
+function cowboy_mcp_siteorigin_widget_index( array $pd ): array {
+    $out = [];
+    foreach ( (array) ( $pd['widgets'] ?? [] ) as $w ) {
+        $id = is_array( $w ) ? (string) ( $w['panels_info']['widget_id'] ?? '' ) : '';
+        if ( $id === '' ) {
+            continue;
+        }
+        unset( $w['panels_info']['id'], $w['panels_info']['raw'], $w['panels_info']['cell_index'], $w['panels_info']['widget_index'] );
+        $out[ $id ] = $w;
+    }
+    return $out;
+}
+
+function cowboy_mcp_siteorigin_diff( array $old, array $new ): array {
+    $a       = cowboy_mcp_siteorigin_widget_index( $old );
+    $b       = cowboy_mcp_siteorigin_widget_index( $new );
+    $changed = [];
+    foreach ( array_intersect_key( $b, $a ) as $id => $w ) {
+        if ( wp_json_encode( $w ) !== wp_json_encode( $a[ $id ] ) ) {
+            $changed[] = (string) $id;
+        }
+    }
+    return [
+        'rows_before'     => count( (array) ( $old['grids'] ?? [] ) ),
+        'rows_after'      => count( (array) ( $new['grids'] ?? [] ) ),
+        'widgets_added'   => array_map( 'strval', array_keys( array_diff_key( $b, $a ) ) ),
+        'widgets_removed' => array_map( 'strval', array_keys( array_diff_key( $a, $b ) ) ),
+        'widgets_changed' => $changed,
+    ];
+}
+
+/** Widgets whose instance changes under SiteOrigin's forced kses floor (pure — no update() calls). */
+function cowboy_mcp_siteorigin_would_strip( array $pd ): array {
+    if ( ! class_exists( 'SiteOrigin_Panels_Admin' ) || ! method_exists( 'SiteOrigin_Panels_Admin', 'kses_deep' ) ) {
+        return [];
+    }
+    $out = [];
+    foreach ( (array) ( $pd['widgets'] ?? [] ) as $w ) {
+        $inst = $w;
+        unset( $inst['panels_info'] );
+        $floored = SiteOrigin_Panels_Admin::kses_deep( $inst );
+        $keys    = [];
+        foreach ( $inst as $k => $v ) {
+            if ( ( $floored[ $k ] ?? null ) !== $v ) {
+                $keys[] = (string) $k;
+            }
+        }
+        if ( $keys ) {
+            $out[] = [ 'widget_id' => (string) ( $w['panels_info']['widget_id'] ?? '' ), 'keys' => $keys ];
+        }
+    }
+    return $out;
+}
+
+/** Shared by handlers and dry-run: resolve post + target, build the candidate layout, validate it. */
+function cowboy_mcp_siteorigin_build( string $tool, array $a ): array|WP_Error {
+    $post = cowboy_mcp_siteorigin_post( (int) ( $a['post_id'] ?? 0 ) );
+    if ( is_wp_error( $post ) ) {
+        return $post;
+    }
+    $bi     = isset( $a['block_index'] ) && $a['block_index'] !== null ? (int) $a['block_index'] : null;
+    $target = cowboy_mcp_siteorigin_target( $post, $bi );
+    if ( is_wp_error( $target ) ) {
+        return $target;
+    }
+    $current    = is_array( $target['current'] ) ? $target['current'] : [];
+    $op_results = [];
+    switch ( $tool ) {
+        case 'wp_siteorigin_update_layout':
+            $input = $a['panels_data'] ?? null;
+            if ( ! is_array( $input ) ) {
+                return new WP_Error( 'invalid_structure', 'invalid_structure: panels_data must be an object with widgets, grids and grid_cells lists.' );
+            }
+            break;
+        default:
+            return new WP_Error( 'invalid_tool', "invalid_tool: {$tool} is not a SiteOrigin layout writer." );
+    }
+    $prep = cowboy_mcp_siteorigin_prepare( $input );
+    return [ 'post' => $post, 'target' => $target, 'current' => $current, 'op_results' => $op_results ] + $prep;
+}
+
+/** Persist through SiteOrigin's own sanitized seam (kses floor forced, copy-content refreshed). */
+function cowboy_mcp_siteorigin_persist( int $post_id, array $data, ?int $block_index ): array|WP_Error {
+    if ( class_exists( 'SiteOrigin_Panels_Revisions' ) ) {
+        SiteOrigin_Panels_Revisions::single();   // wp-admin-only by default: makes REST revisions carry panels_data
+    }
+    $input = [ 'post_id' => $post_id, 'panels_data' => $data ];
+    if ( $block_index !== null ) {
+        $input['block_index'] = $block_index;
+    }
+    $r = SiteOrigin_Panels_Abilities::single()->layout_update( $input );
+    if ( is_wp_error( $r ) ) {
+        return $r;
+    }
+    if ( empty( $r['updated'] ) ) {
+        $code = match ( (string) ( $r['source'] ?? '' ) ) {
+            'block-ambiguous' => 'block_ambiguous',
+            'unsupported'     => 'unsupported',
+            default           => 'siteorigin_write_failed',
+        };
+        return new WP_Error( $code, "{$code}: SiteOrigin refused the write: " . (string) ( $r['message'] ?? 'unknown reason' ) );
+    }
+    return $r;
+}
+
+/** After a write: which widgets SiteOrigin's sanitizer changed (keys), so the agent sees stripped content. */
+function cowboy_mcp_siteorigin_sanitizer_warnings( int $post_id, ?int $block_index, array $sent ): array {
+    $post = get_post( $post_id );
+    if ( ! $post ) {
+        return [];
+    }
+    $stored = cowboy_mcp_siteorigin_stored( $post );
+    $now    = $block_index === null ? ( $stored['meta'] ?? [] ) : ( $stored['blocks'][ $block_index ]['panels_data'] ?? [] );
+    $a      = cowboy_mcp_siteorigin_widget_index( $sent );
+    $b      = cowboy_mcp_siteorigin_widget_index( $now );
+    $out    = [];
+    foreach ( $a as $id => $w ) {
+        if ( ! isset( $b[ $id ] ) ) {
+            $out[] = [ 'widget_id' => (string) $id, 'dropped' => true ];
+            continue;
+        }
+        $keys = [];
+        foreach ( array_unique( array_merge( array_keys( $w ), array_keys( $b[ $id ] ) ) ) as $k ) {
+            if ( in_array( $k, [ 'panels_info', '_sow_form_id', '_sow_form_timestamp' ], true ) ) {
+                continue;
+            }
+            if ( wp_json_encode( $w[ $k ] ?? null ) !== wp_json_encode( $b[ $id ][ $k ] ?? null ) ) {
+                $keys[] = (string) $k;
+            }
+        }
+        if ( $keys ) {
+            $out[] = [ 'widget_id' => (string) $id, 'keys_changed' => $keys ];
+        }
+    }
+    return $out;
+}
+
+/** Dry-run plan for every layout writer. */
+function cowboy_mcp_siteorigin_layout_plan( string $tool, array $a ): array {
+    $b = cowboy_mcp_siteorigin_build( $tool, $a );
+    if ( is_wp_error( $b ) ) {
+        return [ 'valid' => false, 'errors' => [ $b->get_error_message() ] ];
+    }
+    $plan = [
+        'valid'       => ! $b['errors'],
+        'errors'      => $b['errors'],
+        'warnings'    => $b['warnings'],
+        'storage'     => $b['target']['storage'],
+        'block_index' => $b['target']['block_index'],
+        'op_results'  => $b['op_results'],
+    ];
+    if ( $b['data'] !== null ) {
+        $plan += cowboy_mcp_siteorigin_diff( $b['current'], $b['data'] );
+        $plan['widget_ids_generated'] = $b['generated'];
+        $plan['would_strip']          = cowboy_mcp_siteorigin_would_strip( $b['data'] );
+    }
+    return $plan;
+}
+
+/** Handler body shared by update_layout / edit_layout / apply_prebuilt_layout. */
+function cowboy_mcp_siteorigin_write_layout( string $tool, array $a ): array|WP_Error {
+    $b = cowboy_mcp_siteorigin_build( $tool, $a );
+    if ( is_wp_error( $b ) ) {
+        return $b;
+    }
+    if ( $b['errors'] ) {
+        return new WP_Error( 'invalid_layout', implode( ' | ', $b['errors'] ) );
+    }
+    $post_id = (int) $b['post']->ID;
+    $bi      = $b['target']['block_index'];
+    $r       = cowboy_mcp_siteorigin_persist( $post_id, $b['data'], $bi );
+    if ( is_wp_error( $r ) ) {
+        return $r;
+    }
+    $warnings = $b['warnings'];
+    foreach ( cowboy_mcp_siteorigin_sanitizer_warnings( $post_id, $bi, $b['data'] ) as $w ) {
+        $warnings[] = $w;
+    }
+    $out = [
+        'post_id'              => $post_id,
+        'storage'              => $b['target']['storage'],
+        'block_index'          => $bi,
+        'rows'                 => count( $b['data']['grids'] ),
+        'widgets'              => count( $b['data']['widgets'] ),
+        'widget_ids_generated' => $b['generated'],
+        'warnings'             => $warnings,
+    ];
+    if ( $b['op_results'] ) {
+        $out['op_results'] = $b['op_results'];
+    }
+    return $out;
+}

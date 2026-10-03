@@ -73,6 +73,9 @@ class Cowboy_MCP_Rollback {
 		'wp_elementor_update_global_styles' => [ 'type' => 'post', 'action' => 'update' ], // kit id resolved below
 		'wp_beaver_update_layout'           => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
 		'wp_beaver_update_settings'         => [ 'type' => 'option', 'action' => 'update', 'static_id' => '_fl_builder_settings' ],
+		'wp_siteorigin_update_layout'          => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
+		'wp_siteorigin_edit_layout'            => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
+		'wp_siteorigin_apply_prebuilt_layout'  => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id' ],
 		'wp_seo_update_meta'                => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'post_id', 'seo_dynamic' => true ],
 		'wp_events_create_venue'     => [ 'type' => 'post', 'action' => 'create', 'result_id' => 'id' ],
 		'wp_events_update_venue'     => [ 'type' => 'post', 'action' => 'update', 'id_arg' => 'venue_id' ],

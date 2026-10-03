@@ -643,6 +643,17 @@ class Cowboy_MCP_Tools {
                 $preview['plan'] = cowboy_mcp_beaver_settings_check( $filtered_args['settings'] ?? null, ! empty( $filtered_args['allow_unfiltered_html'] ) );
             }
         }
+        // SiteOrigin layout writers: validate, diff and preview sanitizer stripping without writing.
+        if ( in_array( $name, [ 'wp_siteorigin_update_layout', 'wp_siteorigin_edit_layout', 'wp_siteorigin_apply_prebuilt_layout' ], true ) ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_siteorigin_layout_plan' ) ) {
+                $plan            = cowboy_mcp_siteorigin_layout_plan( $name, $filtered_args );
+                $preview['plan'] = $plan;
+                if ( empty( $plan['valid'] ) ) {
+                    $preview['description'] = 'Would be refused: ' . implode( ' | ', array_slice( (array) ( $plan['errors'] ?? [] ), 0, 3 ) );
+                }
+            }
+        }
         // wp_save_template: say which branch would run (update / materialize / create).
         if ( $name === 'wp_save_template' ) {
             self::boot_domains();
