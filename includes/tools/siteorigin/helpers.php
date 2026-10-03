@@ -76,6 +76,7 @@ function cowboy_mcp_siteorigin_read( int $post_id ): array|WP_Error {
         return new WP_Error( 'not_found', "not_found: post #{$post_id} does not exist." );
     }
     $meta = get_post_meta( $post_id, 'panels_data', true );
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
     $meta = is_array( $meta ) && $meta ? apply_filters( 'siteorigin_panels_data', $meta, $post_id ) : [];
     return [
         'post_id' => $post_id,
@@ -342,7 +343,9 @@ function cowboy_mcp_siteorigin_companion_keys( array $fields, string $path = '' 
 
 /** Registered style fields for row|cell|widget, mirroring SiteOrigin_Panels_Styles_Admin::render_styles_fields(). */
 function cowboy_mcp_siteorigin_style_fields( string $level, int $post_id ): array {
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
     $fields = apply_filters( 'siteorigin_panels_' . $level . '_style_fields', [], $post_id, [] );
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
     $fields = apply_filters( 'siteorigin_panels_general_style_fields', $fields, $post_id, [] );
     $out    = [];
     foreach ( (array) $fields as $name => $f ) {
@@ -895,6 +898,7 @@ function cowboy_mcp_siteorigin_apply_ops( array $current, $ops ): array|WP_Error
 
 /** Prebuilt layouts from the siteorigin_panels_prebuilt_layouts filter (no remote directory, no theme folders). */
 function cowboy_mcp_siteorigin_prebuilt_layouts(): array {
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
     $l = apply_filters( 'siteorigin_panels_prebuilt_layouts', [] );
     return is_array( $l ) ? $l : [];
 }
@@ -975,6 +979,7 @@ function cowboy_mcp_siteorigin_append( array $current, array $src ): array {
 function cowboy_mcp_siteorigin_settings_fields(): array {
     SiteOrigin_Panels_Settings::single();   // registers the defaults/fields filters (wp-admin-only by default)
     $out = [];
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
     foreach ( (array) apply_filters( 'siteorigin_panels_settings_fields', [] ) as $sid => $section ) {
         foreach ( (array) ( $section['fields'] ?? [] ) as $fid => $f ) {
             if ( is_array( $f ) ) {
@@ -1055,10 +1060,10 @@ function cowboy_mcp_siteorigin_settings_check( $settings ): array {
 function cowboy_mcp_siteorigin_posts_using_class( string $class ): array {
     global $wpdb;
     $needle = '%' . $wpdb->esc_like( '"' . $class . '"' ) . '%';
-    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-    $meta = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s LIMIT 20", 'panels_data', $needle ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-    $blocks = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type <> 'revision' AND post_content LIKE %s AND post_content LIKE %s LIMIT 20", '%' . $wpdb->esc_like( '<!-- wp:' . COWBOY_MCP_SO_BLOCK ) . '%', $needle ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $meta = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s LIMIT 20", 'panels_data', $needle ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $blocks = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type <> 'revision' AND post_content LIKE %s AND post_content LIKE %s LIMIT 20", '%' . $wpdb->esc_like( '<!-- wp:' . COWBOY_MCP_SO_BLOCK ) . '%', $needle ) );
     return array_slice( array_values( array_unique( array_map( 'intval', array_merge( (array) $meta, (array) $blocks ) ) ) ), 0, 20 );
 }
 

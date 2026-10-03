@@ -67,10 +67,10 @@ $cowboy_mcp_so_handlers = [
 
     'wp_siteorigin_list_pages' => function ( array $a ): array|WP_Error {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $meta_ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s", 'panels_data' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $block_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type <> 'revision' AND post_content LIKE %s", '%' . $wpdb->esc_like( '<!-- wp:' . COWBOY_MCP_SO_BLOCK ) . '%' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $meta_ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s", 'panels_data' ) );
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $block_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type <> 'revision' AND post_content LIKE %s", '%' . $wpdb->esc_like( '<!-- wp:' . COWBOY_MCP_SO_BLOCK ) . '%' ) );
         $ids = array_values( array_unique( array_map( 'intval', array_merge( (array) $meta_ids, (array) $block_ids ) ) ) );
         $limit  = max( 1, min( 100, (int) ( $a['limit'] ?? 20 ) ) );
         $offset = max( 0, (int) ( $a['offset'] ?? 0 ) );
@@ -251,6 +251,7 @@ $cowboy_mcp_so_handlers = [
         $stored = get_option( 'siteorigin_panels_settings', [] );
         $merged = array_merge( is_array( $stored ) ? $stored : [], $check['values'] );
         update_option( 'siteorigin_panels_settings', $merged );
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- SiteOrigin's own hook, applied deliberately.
         do_action( 'siteorigin_panels_save_settings', $merged );
         SiteOrigin_Panels_Settings::single()->clear_cache();
         return [ 'changed' => $check['changed'] ];
