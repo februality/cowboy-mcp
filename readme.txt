@@ -76,7 +76,7 @@ Generate an API key under **Settings > Cowboy MCP**, then run one command in you
 
     claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"
 
-The Connection tab shows this command pre-filled with your site's endpoint. Ask Claude Code to "list my draft posts" and it will call the matching tool.
+The Connection tab shows this command pre-filled with your site's endpoint.
 
 = Connect Claude to WordPress (claude.ai and Claude Desktop) =
 
@@ -105,14 +105,14 @@ Add one block to your editor's MCP config (for Cursor, `~/.cursor/mcp.json`), th
       }
     }
 
-The same block works in Windsurf (now Devin Desktop, `~/.config/devin/mcp_config.json`). Cline needs `"type": "streamableHttp"` added to the server entry. In VS Code, put it in `.vscode/mcp.json` under `servers` (not `mcpServers`) with `"type": "http"`, and GitHub Copilot's agent mode can use it. Zed takes the same `url` and `headers` under `context_servers` in its settings. Any client that speaks Streamable HTTP with a Bearer header works the same way.
+Windsurf (now Devin Desktop) uses the same block in `~/.config/devin/mcp_config.json`; Cline adds `"type": "streamableHttp"`; VS Code takes it in `.vscode/mcp.json` under `servers` with `"type": "http"`, for GitHub Copilot's agent mode; Zed takes `url` and `headers` under `context_servers`. Any Streamable HTTP client with a Bearer header works.
 
 = Connect Codex CLI =
 
     export COWBOY_MCP_API_KEY="YOUR_API_KEY"
     codex mcp add your-site --url https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --bearer-token-env-var COWBOY_MCP_API_KEY
 
-Codex reads the key every time it starts, so add the `export` line to your shell profile (e.g. `~/.zshrc`) as well.
+Codex reads the key at every start, so also add the `export` line to your shell profile (e.g. `~/.zshrc`).
 
 = Connect Gemini CLI =
 
@@ -120,7 +120,7 @@ Codex reads the key every time it starts, so add the `export` line to your shell
 
 = n8n, Opencode and other MCP clients =
 
-Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0). Point any MCP client - n8n, Opencode, LibreChat, your own agent - at `/wp-json/cowboy-mcp/v1/endpoint` with an `Authorization: Bearer` header. In Opencode, also set `"oauth": false` on the server so it uses the key instead of starting a sign-in.
+Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0). Point any MCP client - n8n, Opencode, LibreChat, your own agent - at `/wp-json/cowboy-mcp/v1/endpoint` with an `Authorization: Bearer` header. In Opencode, also set `"oauth": false` so it uses the key.
 
 = Local development sites =
 
@@ -130,7 +130,7 @@ Local, Studio, MAMP, DevKinsta, wp-env, Docker - it works the same. Terminal too
 
 You are handing an AI real control, so Cowboy MCP is built to keep you in charge:
 
-* **Safe mode** (on by default) - destructive tools refuse to run until the agent resends the call with explicit confirmation, and the refusal includes a preview of what would have happened.
+* **Safe mode** (on by default) - destructive tools refuse to run until the agent resends the call with explicit confirmation, with a preview of what would happen.
 * **Dry run** - every non-read-only tool accepts a dry-run flag that reports exactly what would change without touching anything.
 * **Per-change undo journal** - before-state snapshots for every journaled change; roll back one edit from the Activity tab or by asking your agent (seven days by default), with conflict detection.
 * **Database checkpoints** - one-click database snapshots, restorable in one click, taken automatically before plugin and theme updates and mutating WP-CLI commands (tables only, not uploads or code).
@@ -138,7 +138,7 @@ You are handing an AI real control, so Cowboy MCP is built to keep you in charge
 * **Audit log** - every tool call, error and authentication event, with key, tool, arguments and result, on the Logs tab; pruned after 30 days.
 * **AI agent permissions** - each API key and each OAuth connection can be full access, read-only, or a custom list of tools; a read-only key cannot write even if the agent tries.
 * **Hashed keys, rate limits, origin checks** - keys are shown once and stored as one-way hashes, requests are rate-limited per key (120/minute by default), and requests from unknown browser origins are rejected.
-* **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection, file writes confined to `wp-content` with a PHP syntax check, and last-administrator protection. Power mode lifts some of these for the rare job that needs it, and only a human can switch it on in wp-admin - the agent can never grant itself more power.
+* **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection, file writes confined to `wp-content` with a PHP syntax check, and last-administrator protection. Power mode lifts some of these for rare jobs; only a human can switch it on in wp-admin, so the agent can never grant itself more power.
 * **Connection Doctor** - a one-click self-test that names the exact thing blocking a connection (HTTPS, REST, OAuth discovery, Cloudflare, firewalls, caching) and gives you a report to paste into a support topic.
 
 = How Cowboy MCP is different =
@@ -146,8 +146,8 @@ You are handing an AI real control, so Cowboy MCP is built to keep you in charge
 * **Nothing in the middle.** Some WordPress MCP products route requests through their own cloud relay, meter actions in credits, or need a hosted account or paid plan. Cowboy MCP runs on your server, on any host: no account, no relay, no quota.
 * **Every tool is free.** Some plugins gate the useful tools - plugins, themes, the database, WooCommerce - behind a Pro licence. Cowboy MCP ships all of them, GPL-licensed, with no paid tier.
 * **Typed tools with undo, not a PHP shell.** Tools that let an agent execute arbitrary PHP are built for development copies. Cowboy MCP gives the agent typed tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills. (Want the comparison? See [Cowboy MCP vs Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira).)
-* **A full safety net, not just an undo button.** Many MCP plugins now promise undo - often a time-limited token, or edits made on a duplicate first. Cowboy MCP keeps a per-change journal with conflict detection, takes whole-database checkpoints, restores plugin and theme updates automatically if the site breaks, and puts dry run, safe mode and an always-on audit log in front of all of it - so you can preview what will happen, see what did, and reverse one change or all of them.
-* **A complete server today, wired into the official pieces.** The Abilities API and the official MCP adapter are a framework, not a turnkey server. Cowboy MCP is the turnkey server - install, generate a key, connect - and on WordPress 6.9+ it bridges both ways. Works on WordPress 6.2 or later with no Composer, Node.js or build step.
+* **A full safety net, not just an undo button.** Many MCP plugins now promise undo - often a time-limited token, or edits made on a duplicate first. Cowboy MCP adds a per-change journal with conflict detection, whole-database checkpoints, automatic restore of broken updates, dry run, safe mode and an always-on audit log - preview what will happen, see what did, reverse one change or all of them.
+* **A complete server today, wired into the official pieces.** The Abilities API and the official MCP adapter are a framework; Cowboy MCP is the turnkey server - install, generate a key, connect - and on WordPress 6.9+ it bridges both ways. Needs WordPress 6.2+, no Composer, Node.js or build step.
 
 Setup guides for every client, the security model and head-to-head comparisons live at [cowboymcp.com](https://cowboymcp.com).
 
@@ -157,7 +157,7 @@ Integrations that light up automatically: WooCommerce, Gutenberg and the Site Ed
 
 = External services =
 
-Cowboy MCP sends no telemetry and makes no calls home. The only outbound connections are to WordPress.org, when your agent installs or updates plugins or themes, and any HTTP requests you explicitly ask your agent to make with the HTTP-request tool. Your AI client connects directly to your site; no third-party server sits in between.
+Cowboy MCP sends no telemetry and makes no calls home. The only outbound connections are to WordPress.org, when your agent installs or updates plugins or themes, and any HTTP requests you explicitly ask your agent to make with the HTTP-request tool.
 
 = Support and reviews =
 
