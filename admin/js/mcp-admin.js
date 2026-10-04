@@ -72,15 +72,6 @@
 		} );
 	} );
 
-	/* ── Confirm dialogs via data attribute ───────────────── */
-	document.querySelectorAll( '[data-confirm]' ).forEach( function( el ) {
-		el.addEventListener( 'click', function( e ) {
-			if ( ! confirm( el.getAttribute( 'data-confirm' ) ) ) {
-				e.preventDefault();
-			}
-		} );
-	} );
-
 	/* ── "I've saved my key" dismiss buttons (one per client panel) ── */
 	var dismissBtns = document.querySelectorAll( '.mcp-dismiss-key' );
 	if ( dismissBtns.length && typeof cowboyMcpAdmin !== 'undefined' ) {
@@ -321,15 +312,6 @@
 
 	doctorInit();
 } )();
-
-/* Rollback: confirm dialogs (one or two stage) for undo/restore forms. */
-document.addEventListener('submit', function (e) {
-	var form = e.target.closest('form[data-mcp-confirm]');
-	if (!form) return;
-	if (!window.confirm(form.getAttribute('data-mcp-confirm'))) { e.preventDefault(); return; }
-	var second = form.getAttribute('data-mcp-confirm-2');
-	if (second && !window.confirm(second)) e.preventDefault();
-}, true);
 
 /* ── Per-key scope editor ─────────────────────────────────── */
 (function () {

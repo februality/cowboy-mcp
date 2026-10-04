@@ -138,10 +138,6 @@ class Cowboy_MCP_Admin {
         $css_ver  = file_exists( $css_path ) ? (string) filemtime( $css_path ) : COWBOY_MCP_VERSION;
         $js_ver   = file_exists( $js_path )  ? (string) filemtime( $js_path )  : COWBOY_MCP_VERSION;
 
-        $legacy_path = COWBOY_MCP_PATH . 'admin/css/mcp-admin-legacy.css';
-        if ( file_exists( $legacy_path ) ) { // Temporary: removed with the file in the cleanup task.
-            wp_enqueue_style( 'cowboy-mcp-admin-legacy', COWBOY_MCP_URL . 'admin/css/mcp-admin-legacy.css', [], (string) filemtime( $legacy_path ) );
-        }
         wp_enqueue_style(
             'cowboy-mcp-admin',
             COWBOY_MCP_URL . 'admin/css/mcp-admin.css',
@@ -462,7 +458,7 @@ class Cowboy_MCP_Admin {
             'about'      => __( 'About', 'cowboy-mcp' ),
         ];
         ?>
-        <div class="wrap mcp-admin cmcp">
+        <div class="wrap cmcp">
             <header class="cmcp-head">
                 <div class="cmcp-brand">
                     <img class="cmcp-logo" src="<?php echo esc_url( COWBOY_MCP_URL . 'admin/images/icon-128.png' ); ?>" alt="" width="32" height="32">
