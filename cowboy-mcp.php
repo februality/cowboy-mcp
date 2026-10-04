@@ -65,6 +65,7 @@ require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-connections.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-activity.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-logs.php';
+require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-settings.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-feedback.php';
 
 /* ── Boot ─────────────────────────────────────────────────── */

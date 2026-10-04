@@ -11,25 +11,6 @@
 }
 .mcp-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-/* ── Toggle switches (Settings) ───────────────────────────── */
-.mcp-switch-label { display: inline-flex; align-items: center; gap: 9px; }
-.mcp-switch { position: relative; display: inline-block; width: 38px; height: 20px; flex: 0 0 38px; }
-.mcp-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
-.mcp-switch-track { position: absolute; inset: 0; background: #c3c4c7; border-radius: 20px; transition: background .15s; }
-.mcp-switch-track::before {
-    content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px;
-    background: #fff; border-radius: 50%; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25);
-}
-.mcp-switch input:checked + .mcp-switch-track { background: #2271b1; }
-.mcp-switch input:checked + .mcp-switch-track::before { transform: translateX(18px); }
-.mcp-switch input:focus-visible + .mcp-switch-track { outline: 2px solid #2271b1; outline-offset: 2px; }
-
-/* ── Power Mode danger zone ───────────────────────────────── */
-.mcp-danger-zone { border-color: #f0c4c4; }
-.mcp-danger-zone .postbox-header { border-bottom: 1px solid #f5d6d6; }
-.mcp-danger-zone .postbox-header h2 { color: #b32d2e; }
-.mcp-h2-sub { font-weight: 400; color: #646970; font-size: 12px; }
-
 @media (max-width: 782px) {
     .mcp-choice-grid { grid-template-columns: 1fr; }
 }

@@ -579,3 +579,67 @@ document.addEventListener('submit', function (e) {
 		} );
 	} );
 } )();
+
+/* ── Settings: save bar + Power-mode typed confirm ── */
+( function() {
+	'use strict';
+	var form = document.querySelector( 'form.cmcp-settings-form' );
+	if ( ! form ) {
+		return;
+	}
+	var bar = form.querySelector( '.cmcp-savebar' ), msg = bar.querySelector( '.cmcp-savebar-msg' ), discard = bar.querySelector( '[data-cmcp-discard]' );
+	var snapshot = function() { return new URLSearchParams( new FormData( form ) ).toString(); };
+	var initial = snapshot();
+	var power = form.querySelector( '#cmcp-power-mode' ), panel = form.querySelector( '[data-cmcp-power-confirm]' );
+	var hostIn = panel && panel.querySelector( '#cmcp-power-host' ), go = panel && panel.querySelector( '[data-cmcp-power-go]' );
+
+	function refresh() {
+		var dirty = snapshot() !== initial;
+		bar.classList.toggle( 'is-dirty', dirty );
+		msg.textContent = dirty ? bar.getAttribute( 'data-dirty' ) : bar.getAttribute( 'data-clean' );
+		discard.hidden = ! dirty;
+	}
+	function closePower() {
+		if ( panel ) {
+			panel.hidden = true;
+			hostIn.value = '';
+			go.disabled = true;
+		}
+	}
+	form.addEventListener( 'input', refresh );
+	form.addEventListener( 'change', refresh );
+	discard.addEventListener( 'click', function() {
+		form.reset();
+		closePower();
+		refresh();
+	} );
+	if ( power && panel ) {
+		power.addEventListener( 'click', function( e ) {
+			if ( power.checked && power.dataset.cmcpArmed !== '1' ) {
+				e.preventDefault();
+				panel.hidden = false;
+				hostIn.focus();
+			}
+			delete power.dataset.cmcpArmed;
+		} );
+		hostIn.addEventListener( 'input', function() {
+			go.disabled = hostIn.value.trim() !== panel.getAttribute( 'data-host' );
+		} );
+		hostIn.addEventListener( 'keydown', function( e ) {
+			if ( e.key === 'Enter' ) {
+				e.preventDefault();
+				if ( ! go.disabled ) {
+					go.click();
+				}
+			}
+		} );
+		go.addEventListener( 'click', function() {
+			power.dataset.cmcpArmed = '1';
+			power.click();
+			closePower();
+			refresh();
+		} );
+		panel.querySelector( '[data-cmcp-power-cancel]' ).addEventListener( 'click', closePower );
+	}
+	refresh();
+} )();

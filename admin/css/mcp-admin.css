@@ -251,3 +251,46 @@ tr.is-open .cmcp-caret svg { transform: rotate(90deg); }
 .cmcp-cspace { display: inline-block; width: 18px; }
 tr.cmcp-detail td { padding: 0 18px 14px 40px; background: var(--cmcp-surface-2); }
 tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: auto; border-radius: var(--cmcp-radius-sm); }
+
+/* ── Settings ── */
+.cmcp-settings { max-width: 880px; }
+.cmcp-sect { margin-bottom: 28px; }
+.wrap.cmcp .cmcp-sect > h2 { font-size: 17px; font-weight: 600; margin: 0 0 4px; padding: 0; }
+.cmcp-sect > p { margin: 0 0 12px; color: var(--cmcp-muted); }
+.cmcp-sect > .cmcp-card { margin-bottom: 0; }
+.cmcp-srow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; padding: 16px 18px; border-top: 1px solid var(--cmcp-border); align-items: start; }
+.cmcp-card > .cmcp-srow:first-child { border-top: 0; }
+.wrap.cmcp .cmcp-srow h3 { margin: 0; font-size: 14px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.cmcp-desc { margin: 3px 0 0; color: var(--cmcp-muted); }
+.cmcp-desc code, .cmcp-nested code { font-size: 12.5px; background: #efefeb; border-radius: 4px; padding: 1px 5px; }
+.cmcp-desc--danger { color: #7d1a14; }
+.cmcp-ctl { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+.cmcp-unit { color: var(--cmcp-muted); font-size: 13px; }
+.wrap.cmcp .cmcp-num-in { width: 80px; text-align: right; }
+.cmcp-nested { grid-column: 1 / -1; padding: 12px 14px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface-2); }
+.wrap.cmcp .cmcp-nested label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
+.wrap.cmcp input.cmcp-switch { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 999px; background: #c9ccc9; border: 0; position: relative; cursor: pointer; flex: none; margin: 0; transition: background .15s; box-shadow: none; }
+.wrap.cmcp input.cmcp-switch::before { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; margin: 0; }
+.wrap.cmcp input.cmcp-switch:checked { background: #1f9d4c; }
+.wrap.cmcp input.cmcp-switch:checked::before { transform: translateX(16px); content: ""; }
+.cmcp-state { order: -1; font-size: 13px; color: var(--cmcp-muted); min-width: 24px; text-align: right; }
+.cmcp-switch + .cmcp-state::before { content: attr(data-off); }
+.cmcp-switch:checked + .cmcp-state::before { content: attr(data-on); }
+.cmcp-danger-zone { border: 1px solid var(--cmcp-danger-border); border-radius: var(--cmcp-radius); background: #fff; margin-bottom: 20px; scroll-margin-top: 48px; }
+.cmcp-dz-h { padding: 14px 18px; border-bottom: 1px solid var(--cmcp-danger-border); background: var(--cmcp-danger-bg); border-radius: var(--cmcp-radius) var(--cmcp-radius) 0 0; display: flex; align-items: center; gap: 10px; }
+.wrap.cmcp .cmcp-dz-h h2 { margin: 0; padding: 0; font-size: 15px; color: #7d1a14; }
+.cmcp-dz-h svg { width: 18px; height: 18px; color: var(--cmcp-danger); }
+.cmcp-danger-zone .cmcp-srow { border-top: 0; }
+.cmcp-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px; }
+@media (max-width: 782px) { .cmcp-lists { grid-template-columns: 1fr; } }
+.cmcp-lh { margin: 0; font-size: 12px; font-weight: 600; }
+.cmcp-lh--danger { color: var(--cmcp-danger); }
+.cmcp-lh--keep { color: var(--cmcp-ok); }
+.cmcp-lifts { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 13.5px; }
+.cmcp-lifts li { display: flex; gap: 8px; align-items: baseline; margin: 0; }
+.cmcp-lifts li::before { content: ""; width: 6px; height: 6px; border-radius: 1px; background: var(--cmcp-danger); flex: none; transform: translateY(-1px); }
+.cmcp-lifts--keep li::before { background: var(--cmcp-live); }
+.cmcp-savebar { position: sticky; bottom: 12px; margin-top: 8px; display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: #fff; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius); box-shadow: 0 6px 24px rgba(0,0,0,.10); }
+.cmcp-savebar-msg { flex: 1; font-size: 13.5px; color: var(--cmcp-muted); }
+.cmcp-savebar.is-dirty .cmcp-savebar-msg { color: var(--cmcp-text); font-weight: 600; }
+.wrap.cmcp [id^="cmcp-"] { scroll-margin-top: 48px; }
