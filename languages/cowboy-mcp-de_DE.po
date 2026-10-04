@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:13-0700\n"
+"POT-Creation-Date: 2026-10-04 16:48-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: German\n"
@@ -1391,7 +1391,7 @@ msgid "Save Settings"
 msgstr "Einstellungen speichern"
 
 #: admin/class-mcp-admin.php:30 admin/class-mcp-admin.php:31
-#: admin/class-mcp-admin.php:465
+#: admin/class-mcp-admin.php:467
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -1417,78 +1417,86 @@ msgstr "Bestätigen"
 msgid "Copied!"
 msgstr "Kopiert!"
 
-#: admin/class-mcp-admin.php:215 admin/class-mcp-admin.php:235
-#: admin/class-mcp-admin.php:257
+#: admin/class-mcp-admin.php:163
+msgid "Failed to copy"
+msgstr "Kopieren fehlgeschlagen"
+
+#: admin/class-mcp-admin.php:164
+msgid "Not currently available (kept in this scope until you untick them)"
+msgstr "Derzeit nicht verfügbar (bleiben in diesem Zugriff, bis Sie das Häkchen entfernen)"
+
+#: admin/class-mcp-admin.php:217 admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:259
 msgid "Select an access level before saving."
 msgstr "Wählen Sie eine Zugriffsebene aus, bevor Sie speichern."
 
-#: admin/class-mcp-admin.php:219
+#: admin/class-mcp-admin.php:221
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr ""
 "API-Schlüssel erstellt. Kopieren Sie ihn jetzt — er wird nur einmal "
 "angezeigt."
 
-#: admin/class-mcp-admin.php:227
+#: admin/class-mcp-admin.php:229
 msgid "API key revoked."
 msgstr "API-Schlüssel widerrufen."
 
-#: admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:239
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr ""
 "Der Bereich des Schlüssels wurde aktualisiert. Die Änderung wird bei der "
 "nächsten Anfrage mit diesem Schlüssel wirksam."
 
-#: admin/class-mcp-admin.php:239
+#: admin/class-mcp-admin.php:241
 msgid "Could not update key scope."
 msgstr "Der Bereich des Schlüssels konnte nicht aktualisiert werden."
 
-#: admin/class-mcp-admin.php:248
+#: admin/class-mcp-admin.php:250
 msgid "Connection revoked."
 msgstr "Verbindung widerrufen."
 
-#: admin/class-mcp-admin.php:259
+#: admin/class-mcp-admin.php:261
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr ""
 "Der Bereich der Verbindung wurde aktualisiert. Die Änderung wird bei der "
 "nächsten Anfrage dieser Verbindung wirksam."
 
-#: admin/class-mcp-admin.php:261
+#: admin/class-mcp-admin.php:263
 msgid "Could not update connection scope."
 msgstr "Der Bereich der Verbindung konnte nicht aktualisiert werden."
 
-#: admin/class-mcp-admin.php:275
+#: admin/class-mcp-admin.php:277
 msgid "Desktop Connector enabled."
 msgstr "Desktop Connector aktiviert."
 
-#: admin/class-mcp-admin.php:309
+#: admin/class-mcp-admin.php:311
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:318
 msgid "Audit log cleared."
 msgstr "Audit-Protokoll geleert."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:334
+#: admin/class-mcp-admin.php:336
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Änderung Nr. %1$d rückgängig gemacht.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:349
+#: admin/class-mcp-admin.php:351
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%1$d von %2$d Batch-Einträgen rückgängig gemacht."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:365
+#: admin/class-mcp-admin.php:367
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Checkpoint Nr. %1$d erstellt (%2$s)."
 
 #. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
-#: admin/class-mcp-admin.php:377
+#: admin/class-mcp-admin.php:379
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: "
@@ -1497,89 +1505,89 @@ msgstr ""
 "Datenbank aus Checkpoint Nr. %1$d wiederhergestellt. Sicherheits-Checkpoint "
 "vor der Wiederherstellung: Nr. %2$d."
 
-#: admin/class-mcp-admin.php:388
+#: admin/class-mcp-admin.php:390
 msgid "Checkpoint deleted."
 msgstr "Checkpoint gelöscht."
 
-#: admin/class-mcp-admin.php:454
+#: admin/class-mcp-admin.php:456
 msgid "Connections"
 msgstr "Verbindungen"
 
-#: admin/class-mcp-admin.php:455
+#: admin/class-mcp-admin.php:457
 msgid "Activity"
 msgstr "Aktivität"
 
-#: admin/class-mcp-admin.php:456
+#: admin/class-mcp-admin.php:458
 msgid "Logs"
 msgstr "Protokolle"
 
-#: admin/class-mcp-admin.php:457
+#: admin/class-mcp-admin.php:459
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: admin/class-mcp-admin.php:458
+#: admin/class-mcp-admin.php:460
 msgid "About"
 msgstr "Über"
 
-#: admin/class-mcp-admin.php:469
+#: admin/class-mcp-admin.php:471
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP-Bereiche"
 
-#: admin/class-mcp-admin.php:498
+#: admin/class-mcp-admin.php:500
 msgid "Power mode on"
 msgstr "Power Mode aktiv"
 
-#: admin/class-mcp-admin.php:501
+#: admin/class-mcp-admin.php:503
 msgid "Safe mode off"
 msgstr "Sicherer Modus aus"
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:528
 msgid "Every request from AI apps is rejected."
 msgstr "Jede Anfrage von KI-Apps wird abgelehnt."
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:528
 msgid "MCP server is off."
 msgstr "Der MCP-Server ist ausgeschaltet."
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:529
 msgid "Turn on in Settings"
 msgstr "In den Einstellungen aktivieren"
 
-#: admin/class-mcp-admin.php:554
+#: admin/class-mcp-admin.php:556
 msgid "Pagination"
 msgstr "Seitennavigation"
 
-#: admin/class-mcp-admin.php:555
+#: admin/class-mcp-admin.php:557
 msgid "Previous"
 msgstr "Vorherige"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:558
+#: admin/class-mcp-admin.php:560
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Seite %1$d von %2$d"
 
-#: admin/class-mcp-admin.php:560
+#: admin/class-mcp-admin.php:562
 msgid "Next"
 msgstr "Nächste"
 
-#: admin/class-mcp-admin.php:569
+#: admin/class-mcp-admin.php:571
 msgid "Project home, guides, and news."
 msgstr "Projekt-Startseite, Anleitungen und Neuigkeiten."
 
-#: admin/class-mcp-admin.php:569
+#: admin/class-mcp-admin.php:571
 msgid "Website"
 msgstr "Website"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:572
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:572
 msgid "Source, issues & releases."
 msgstr "Quellcode, Issues & Releases."
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:573
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -1587,11 +1595,11 @@ msgstr ""
 "Stellen Sie Ihre Frage im WordPress.org-Supportforum. Fügen Sie Ihren "
 "Verbindungsdiagnose-Bericht ein, um schneller eine Antwort zu erhalten."
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:573
 msgid "Get help"
 msgstr "Hilfe erhalten"
 
-#: admin/class-mcp-admin.php:572
+#: admin/class-mcp-admin.php:574
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -1599,12 +1607,12 @@ msgstr ""
 "Gefällt Ihnen Cowboy MCP? Eine Rezension auf WordPress.org hilft anderen "
 "Website-Betreibern, das Plugin zu finden."
 
-#: admin/class-mcp-admin.php:572 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:574 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "Rezension schreiben"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:580
+#: admin/class-mcp-admin.php:582
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -1681,15 +1689,10 @@ msgstr "Der OAuth-Connector ist auf dieser Website nicht aktiviert."
 msgid ""
 "This site has no record of this app. That usually means the site's database "
 "was restored or copied from another site. To let the app connect again: "
-"under Settings > Cowboy MCP > Connection, pick the app and click \"Enable "
-"for 30 minutes\", then use Reconnect in the app and approve it here."
-msgstr ""
-"Diese Website hat keinen Eintrag für diese App. Das bedeutet meist, dass die "
-"Datenbank der Website wiederhergestellt oder von einer anderen Website "
-"kopiert wurde. Damit sich die App wieder verbinden kann: Unter Einstellungen "
-"> Cowboy MCP > Connection die App auswählen und auf „Für 30 Minuten "
-"aktivieren“ klicken, dann in der App „Erneut verbinden“ wählen und hier "
-"genehmigen."
+"under Settings > Cowboy MCP > Connections, pick the app (\"Connect another "
+"app\" if the list is not shown) and click \"Enable for 30 minutes\", then "
+"use Reconnect in the app and approve it here."
+msgstr "Diese Website hat keinen Eintrag für diese App. Das bedeutet meist, dass die Datenbank der Website wiederhergestellt oder von einer anderen Website kopiert wurde. Damit sich die App wieder verbinden kann: Unter Einstellungen > Cowboy MCP > Verbindungen die App auswählen („Weitere App verbinden“, falls die Liste nicht angezeigt wird) und auf „Für 30 Minuten aktivieren“ klicken, dann in der App „Erneut verbinden“ wählen und hier genehmigen."
 
 #: includes/class-mcp-oauth.php:1010
 msgid "Invalid redirect_uri for this client."
@@ -1830,6 +1833,20 @@ msgstr "Genehmigen"
 #, php-format
 msgid "Redirects to: %s"
 msgstr "Weiterleitung zu: %s"
+
+#~ msgid ""
+#~ "This site has no record of this app. That usually means the site's "
+#~ "database was restored or copied from another site. To let the app connect "
+#~ "again: under Settings > Cowboy MCP > Connection, pick the app and click "
+#~ "\"Enable for 30 minutes\", then use Reconnect in the app and approve it "
+#~ "here."
+#~ msgstr ""
+#~ "Diese Website hat keinen Eintrag für diese App. Das bedeutet meist, dass "
+#~ "die Datenbank der Website wiederhergestellt oder von einer anderen "
+#~ "Website kopiert wurde. Damit sich die App wieder verbinden kann: Unter "
+#~ "Einstellungen > Cowboy MCP > Connection die App auswählen und auf „Für 30 "
+#~ "Minuten aktivieren“ klicken, dann in der App „Erneut verbinden“ wählen "
+#~ "und hier genehmigen."
 
 #~ msgid "Connection"
 #~ msgstr "Verbindung"

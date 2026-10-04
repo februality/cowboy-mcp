@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:13-0700\n"
+"POT-Creation-Date: 2026-10-04 16:48-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -1300,7 +1300,7 @@ msgid "Save Settings"
 msgstr "保存设置"
 
 #: admin/class-mcp-admin.php:30 admin/class-mcp-admin.php:31
-#: admin/class-mcp-admin.php:465
+#: admin/class-mcp-admin.php:467
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -1324,183 +1324,191 @@ msgstr "确认"
 msgid "Copied!"
 msgstr "已复制！"
 
-#: admin/class-mcp-admin.php:215 admin/class-mcp-admin.php:235
-#: admin/class-mcp-admin.php:257
+#: admin/class-mcp-admin.php:163
+msgid "Failed to copy"
+msgstr "复制失败"
+
+#: admin/class-mcp-admin.php:164
+msgid "Not currently available (kept in this scope until you untick them)"
+msgstr "当前不可用（取消勾选前会保留在此访问范围中）"
+
+#: admin/class-mcp-admin.php:217 admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:259
 msgid "Select an access level before saving."
 msgstr "保存前请选择访问级别。"
 
-#: admin/class-mcp-admin.php:219
+#: admin/class-mcp-admin.php:221
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API 密钥已创建。请立即复制——它只会显示一次。"
 
-#: admin/class-mcp-admin.php:227
+#: admin/class-mcp-admin.php:229
 msgid "API key revoked."
 msgstr "API 密钥已吊销。"
 
-#: admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:239
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "密钥范围已更新，将在该密钥的下一次请求时生效。"
 
-#: admin/class-mcp-admin.php:239
+#: admin/class-mcp-admin.php:241
 msgid "Could not update key scope."
 msgstr "无法更新密钥范围。"
 
-#: admin/class-mcp-admin.php:248
+#: admin/class-mcp-admin.php:250
 msgid "Connection revoked."
 msgstr "连接已吊销。"
 
-#: admin/class-mcp-admin.php:259
+#: admin/class-mcp-admin.php:261
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "连接范围已更新，将在该连接的下一次请求时生效。"
 
-#: admin/class-mcp-admin.php:261
+#: admin/class-mcp-admin.php:263
 msgid "Could not update connection scope."
 msgstr "无法更新连接范围。"
 
-#: admin/class-mcp-admin.php:275
+#: admin/class-mcp-admin.php:277
 msgid "Desktop Connector enabled."
 msgstr "Desktop Connector 已启用。"
 
-#: admin/class-mcp-admin.php:309
+#: admin/class-mcp-admin.php:311
 msgid "Settings saved."
 msgstr "设置已保存。"
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:318
 msgid "Audit log cleared."
 msgstr "审计日志已清除。"
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:334
+#: admin/class-mcp-admin.php:336
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "已撤销变更 #%1$d。%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:349
+#: admin/class-mcp-admin.php:351
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "已撤销 %2$d 个批处理条目中的 %1$d 个。"
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:365
+#: admin/class-mcp-admin.php:367
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "已创建检查点 #%1$d（%2$s）。"
 
 #. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
-#: admin/class-mcp-admin.php:377
+#: admin/class-mcp-admin.php:379
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: "
 "#%2$d."
 msgstr "已从检查点 #%1$d 恢复数据库。恢复前的安全检查点：#%2$d。"
 
-#: admin/class-mcp-admin.php:388
+#: admin/class-mcp-admin.php:390
 msgid "Checkpoint deleted."
 msgstr "检查点已删除。"
 
-#: admin/class-mcp-admin.php:454
+#: admin/class-mcp-admin.php:456
 msgid "Connections"
 msgstr "连接"
 
-#: admin/class-mcp-admin.php:455
+#: admin/class-mcp-admin.php:457
 msgid "Activity"
 msgstr "活动"
 
-#: admin/class-mcp-admin.php:456
+#: admin/class-mcp-admin.php:458
 msgid "Logs"
 msgstr "日志"
 
-#: admin/class-mcp-admin.php:457
+#: admin/class-mcp-admin.php:459
 msgid "Settings"
 msgstr "设置"
 
-#: admin/class-mcp-admin.php:458
+#: admin/class-mcp-admin.php:460
 msgid "About"
 msgstr "关于"
 
-#: admin/class-mcp-admin.php:469
+#: admin/class-mcp-admin.php:471
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP 分区"
 
-#: admin/class-mcp-admin.php:498
+#: admin/class-mcp-admin.php:500
 msgid "Power mode on"
 msgstr "强力模式已开启"
 
-#: admin/class-mcp-admin.php:501
+#: admin/class-mcp-admin.php:503
 msgid "Safe mode off"
 msgstr "安全模式已关闭"
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:528
 msgid "Every request from AI apps is rejected."
 msgstr "来自 AI 应用的所有请求都会被拒绝。"
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:528
 msgid "MCP server is off."
 msgstr "MCP 服务器已关闭。"
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:529
 msgid "Turn on in Settings"
 msgstr "在设置中开启"
 
-#: admin/class-mcp-admin.php:554
+#: admin/class-mcp-admin.php:556
 msgid "Pagination"
 msgstr "分页"
 
-#: admin/class-mcp-admin.php:555
+#: admin/class-mcp-admin.php:557
 msgid "Previous"
 msgstr "上一页"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:558
+#: admin/class-mcp-admin.php:560
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "第 %1$d 页，共 %2$d 页"
 
-#: admin/class-mcp-admin.php:560
+#: admin/class-mcp-admin.php:562
 msgid "Next"
 msgstr "下一页"
 
-#: admin/class-mcp-admin.php:569
+#: admin/class-mcp-admin.php:571
 msgid "Project home, guides, and news."
 msgstr "项目主页、指南和新闻。"
 
-#: admin/class-mcp-admin.php:569
+#: admin/class-mcp-admin.php:571
 msgid "Website"
 msgstr "网站"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:572
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:572
 msgid "Source, issues & releases."
 msgstr "源代码、问题与发布。"
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:573
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
 msgstr "在 WordPress.org 支持论坛提问。粘贴您的连接诊断报告，可更快获得解答。"
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:573
 msgid "Get help"
 msgstr "获取帮助"
 
-#: admin/class-mcp-admin.php:572
+#: admin/class-mcp-admin.php:574
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
 msgstr ""
 "喜欢 Cowboy MCP？在 WordPress.org 上留下评价，可以帮助更多站点所有者发现它。"
 
-#: admin/class-mcp-admin.php:572 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:574 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "留下评价"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:580
+#: admin/class-mcp-admin.php:582
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -1574,12 +1582,10 @@ msgstr "此站点未启用 OAuth 连接器。"
 msgid ""
 "This site has no record of this app. That usually means the site's database "
 "was restored or copied from another site. To let the app connect again: "
-"under Settings > Cowboy MCP > Connection, pick the app and click \"Enable "
-"for 30 minutes\", then use Reconnect in the app and approve it here."
-msgstr ""
-"本站没有此应用的记录。这通常表示站点数据库已被恢复或从其他站点复制。要让该应"
-"用重新连接：在“设置 > Cowboy MCP > Connection”中选择该应用并点击“启用 30 分"
-"钟”，然后在应用中点击“重新连接”并在此处批准。"
+"under Settings > Cowboy MCP > Connections, pick the app (\"Connect another "
+"app\" if the list is not shown) and click \"Enable for 30 minutes\", then "
+"use Reconnect in the app and approve it here."
+msgstr "本站没有此应用的记录。这通常表示站点数据库已被恢复或从其他站点复制。要让该应用重新连接：在“设置 > Cowboy MCP > 连接”中选择该应用（如未显示列表，请点击“连接其他应用”）并点击“启用 30 分钟”，然后在应用中点击“重新连接”并在此处批准。"
 
 #: includes/class-mcp-oauth.php:1010
 msgid "Invalid redirect_uri for this client."
@@ -1710,6 +1716,17 @@ msgstr "批准"
 #, php-format
 msgid "Redirects to: %s"
 msgstr "重定向到：%s"
+
+#~ msgid ""
+#~ "This site has no record of this app. That usually means the site's "
+#~ "database was restored or copied from another site. To let the app connect "
+#~ "again: under Settings > Cowboy MCP > Connection, pick the app and click "
+#~ "\"Enable for 30 minutes\", then use Reconnect in the app and approve it "
+#~ "here."
+#~ msgstr ""
+#~ "本站没有此应用的记录。这通常表示站点数据库已被恢复或从其他站点复制。要让该"
+#~ "应用重新连接：在“设置 > Cowboy MCP > Connection”中选择该应用并点击“启用 "
+#~ "30 分钟”，然后在应用中点击“重新连接”并在此处批准。"
 
 #~ msgid "Connection"
 #~ msgstr "连接"

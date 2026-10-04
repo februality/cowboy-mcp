@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:13-0700\n"
+"POT-Creation-Date: 2026-10-04 16:48-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Indonesian\n"
@@ -1360,7 +1360,7 @@ msgid "Save Settings"
 msgstr "Simpan Pengaturan"
 
 #: admin/class-mcp-admin.php:30 admin/class-mcp-admin.php:31
-#: admin/class-mcp-admin.php:465
+#: admin/class-mcp-admin.php:467
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -1386,76 +1386,84 @@ msgstr "Konfirmasi"
 msgid "Copied!"
 msgstr "Tersalin!"
 
-#: admin/class-mcp-admin.php:215 admin/class-mcp-admin.php:235
-#: admin/class-mcp-admin.php:257
+#: admin/class-mcp-admin.php:163
+msgid "Failed to copy"
+msgstr "Gagal menyalin"
+
+#: admin/class-mcp-admin.php:164
+msgid "Not currently available (kept in this scope until you untick them)"
+msgstr "Tidak tersedia saat ini (tetap ada di akses ini sampai Anda menghapus centangnya)"
+
+#: admin/class-mcp-admin.php:217 admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:259
 msgid "Select an access level before saving."
 msgstr "Pilih tingkat akses sebelum menyimpan."
 
-#: admin/class-mcp-admin.php:219
+#: admin/class-mcp-admin.php:221
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr ""
 "Kunci API dibuat. Salin sekarang — kunci hanya akan ditampilkan sekali."
 
-#: admin/class-mcp-admin.php:227
+#: admin/class-mcp-admin.php:229
 msgid "API key revoked."
 msgstr "Kunci API dicabut."
 
-#: admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:239
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr ""
 "Cakupan kunci diperbarui. Berlaku pada permintaan berikutnya dari kunci ini."
 
-#: admin/class-mcp-admin.php:239
+#: admin/class-mcp-admin.php:241
 msgid "Could not update key scope."
 msgstr "Tidak dapat memperbarui cakupan kunci."
 
-#: admin/class-mcp-admin.php:248
+#: admin/class-mcp-admin.php:250
 msgid "Connection revoked."
 msgstr "Koneksi dicabut."
 
-#: admin/class-mcp-admin.php:259
+#: admin/class-mcp-admin.php:261
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr ""
 "Cakupan koneksi diperbarui. Berlaku pada permintaan berikutnya dari koneksi "
 "ini."
 
-#: admin/class-mcp-admin.php:261
+#: admin/class-mcp-admin.php:263
 msgid "Could not update connection scope."
 msgstr "Tidak dapat memperbarui cakupan koneksi."
 
-#: admin/class-mcp-admin.php:275
+#: admin/class-mcp-admin.php:277
 msgid "Desktop Connector enabled."
 msgstr "Desktop Connector diaktifkan."
 
-#: admin/class-mcp-admin.php:309
+#: admin/class-mcp-admin.php:311
 msgid "Settings saved."
 msgstr "Pengaturan disimpan."
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:318
 msgid "Audit log cleared."
 msgstr "Log audit dibersihkan."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:334
+#: admin/class-mcp-admin.php:336
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Perubahan #%1$d dibatalkan.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:349
+#: admin/class-mcp-admin.php:351
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%1$d dari %2$d entri batch dibatalkan."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:365
+#: admin/class-mcp-admin.php:367
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Checkpoint #%1$d dibuat (%2$s)."
 
 #. translators: 1: restored checkpoint ID number, 2: pre-restore safety checkpoint ID number
-#: admin/class-mcp-admin.php:377
+#: admin/class-mcp-admin.php:379
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d. Pre-restore safety checkpoint: "
@@ -1464,89 +1472,89 @@ msgstr ""
 "Database dipulihkan dari checkpoint #%1$d. Checkpoint pengaman pra-"
 "pemulihan: #%2$d."
 
-#: admin/class-mcp-admin.php:388
+#: admin/class-mcp-admin.php:390
 msgid "Checkpoint deleted."
 msgstr "Checkpoint dihapus."
 
-#: admin/class-mcp-admin.php:454
+#: admin/class-mcp-admin.php:456
 msgid "Connections"
 msgstr "Koneksi"
 
-#: admin/class-mcp-admin.php:455
+#: admin/class-mcp-admin.php:457
 msgid "Activity"
 msgstr "Aktivitas"
 
-#: admin/class-mcp-admin.php:456
+#: admin/class-mcp-admin.php:458
 msgid "Logs"
 msgstr "Log"
 
-#: admin/class-mcp-admin.php:457
+#: admin/class-mcp-admin.php:459
 msgid "Settings"
 msgstr "Pengaturan"
 
-#: admin/class-mcp-admin.php:458
+#: admin/class-mcp-admin.php:460
 msgid "About"
 msgstr "Tentang"
 
-#: admin/class-mcp-admin.php:469
+#: admin/class-mcp-admin.php:471
 msgid "Cowboy MCP sections"
 msgstr "Bagian Cowboy MCP"
 
-#: admin/class-mcp-admin.php:498
+#: admin/class-mcp-admin.php:500
 msgid "Power mode on"
 msgstr "Power mode aktif"
 
-#: admin/class-mcp-admin.php:501
+#: admin/class-mcp-admin.php:503
 msgid "Safe mode off"
 msgstr "Safe mode mati"
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:528
 msgid "Every request from AI apps is rejected."
 msgstr "Semua permintaan dari aplikasi AI ditolak."
 
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:528
 msgid "MCP server is off."
 msgstr "Server MCP nonaktif."
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:529
 msgid "Turn on in Settings"
 msgstr "Nyalakan di Pengaturan"
 
-#: admin/class-mcp-admin.php:554
+#: admin/class-mcp-admin.php:556
 msgid "Pagination"
 msgstr "Penomoran halaman"
 
-#: admin/class-mcp-admin.php:555
+#: admin/class-mcp-admin.php:557
 msgid "Previous"
 msgstr "Sebelumnya"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:558
+#: admin/class-mcp-admin.php:560
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Halaman %1$d dari %2$d"
 
-#: admin/class-mcp-admin.php:560
+#: admin/class-mcp-admin.php:562
 msgid "Next"
 msgstr "Berikutnya"
 
-#: admin/class-mcp-admin.php:569
+#: admin/class-mcp-admin.php:571
 msgid "Project home, guides, and news."
 msgstr "Beranda proyek, panduan, dan berita."
 
-#: admin/class-mcp-admin.php:569
+#: admin/class-mcp-admin.php:571
 msgid "Website"
 msgstr "Situs Web"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:572
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:570
+#: admin/class-mcp-admin.php:572
 msgid "Source, issues & releases."
 msgstr "Kode sumber, isu & rilis."
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:573
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -1554,11 +1562,11 @@ msgstr ""
 "Tanyakan di forum dukungan WordPress.org. Tempelkan laporan Diagnostik "
 "Koneksi Anda agar lebih cepat mendapat jawaban."
 
-#: admin/class-mcp-admin.php:571
+#: admin/class-mcp-admin.php:573
 msgid "Get help"
 msgstr "Dapatkan bantuan"
 
-#: admin/class-mcp-admin.php:572
+#: admin/class-mcp-admin.php:574
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -1566,12 +1574,12 @@ msgstr ""
 "Menikmati Cowboy MCP? Ulasan di WordPress.org membantu pemilik situs lain "
 "menemukannya."
 
-#: admin/class-mcp-admin.php:572 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:574 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "Tinggalkan ulasan"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:580
+#: admin/class-mcp-admin.php:582
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -1647,14 +1655,10 @@ msgstr "Konektor OAuth tidak diaktifkan di situs ini."
 msgid ""
 "This site has no record of this app. That usually means the site's database "
 "was restored or copied from another site. To let the app connect again: "
-"under Settings > Cowboy MCP > Connection, pick the app and click \"Enable "
-"for 30 minutes\", then use Reconnect in the app and approve it here."
-msgstr ""
-"Situs ini tidak memiliki catatan tentang aplikasi ini. Biasanya itu berarti "
-"database situs dipulihkan atau disalin dari situs lain. Agar aplikasi dapat "
-"terhubung lagi: di Pengaturan > Cowboy MCP > Connection, pilih aplikasinya "
-"dan klik \"Aktifkan selama 30 menit\", lalu gunakan \"Sambungkan ulang\" di "
-"aplikasi dan setujui di sini."
+"under Settings > Cowboy MCP > Connections, pick the app (\"Connect another "
+"app\" if the list is not shown) and click \"Enable for 30 minutes\", then "
+"use Reconnect in the app and approve it here."
+msgstr "Situs ini tidak memiliki catatan tentang aplikasi ini. Biasanya itu berarti database situs dipulihkan atau disalin dari situs lain. Agar aplikasi dapat terhubung lagi: di Pengaturan > Cowboy MCP > Koneksi, pilih aplikasinya (\"Hubungkan aplikasi lain\" jika daftar tidak ditampilkan) dan klik \"Aktifkan selama 30 menit\", lalu gunakan \"Sambungkan ulang\" di aplikasi dan setujui di sini."
 
 #: includes/class-mcp-oauth.php:1010
 msgid "Invalid redirect_uri for this client."
@@ -1794,6 +1798,19 @@ msgstr "Setujui"
 #, php-format
 msgid "Redirects to: %s"
 msgstr "Mengalihkan ke: %s"
+
+#~ msgid ""
+#~ "This site has no record of this app. That usually means the site's "
+#~ "database was restored or copied from another site. To let the app connect "
+#~ "again: under Settings > Cowboy MCP > Connection, pick the app and click "
+#~ "\"Enable for 30 minutes\", then use Reconnect in the app and approve it "
+#~ "here."
+#~ msgstr ""
+#~ "Situs ini tidak memiliki catatan tentang aplikasi ini. Biasanya itu "
+#~ "berarti database situs dipulihkan atau disalin dari situs lain. Agar "
+#~ "aplikasi dapat terhubung lagi: di Pengaturan > Cowboy MCP > Connection, "
+#~ "pilih aplikasinya dan klik \"Aktifkan selama 30 menit\", lalu gunakan "
+#~ "\"Sambungkan ulang\" di aplikasi dan setujui di sini."
 
 #~ msgid "Connection"
 #~ msgstr "Koneksi"

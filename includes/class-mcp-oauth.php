@@ -27,7 +27,7 @@ class Cowboy_MCP_OAuth {
     const REGISTER_RATE_LIMIT  = 20;  // per IP per minute; its own bucket, never the auth-failure one
     /**
      * Safety lock: registration only answers while an administrator has "New
-     * connections" switched on (Connection tab button; auto-off after 30 minutes;
+     * connections" switched on (Connections tab button; auto-off after 30 minutes;
      * also switched on when the connector itself is enabled). Everything an existing
      * connection uses (authorize, token, refresh, the MCP endpoint, recovery via
      * signed ids) ignores the lock.
@@ -128,7 +128,7 @@ class Cowboy_MCP_OAuth {
         /**
          * Filters whether Dynamic Client Registration currently answers. Return true
          * to keep it always open (automated provisioning); the default is the
-         * 30-minute window an administrator switches on from the Connection tab.
+         * 30-minute window an administrator switches on from the Connections tab.
          *
          * @param bool $open
          */
@@ -756,7 +756,7 @@ class Cowboy_MCP_OAuth {
         }
 
         if ( ! self::registration_open() ) {
-            return self::rest_error( 'registration_closed', 'New connections are switched off on this site right now. An administrator switches them on for 30 minutes with the "New connections" button under Settings > Cowboy MCP > Connection in WordPress; then add the app again. Existing connections are not affected.', 403 );
+            return self::rest_error( 'registration_closed', 'New connections are switched off on this site right now. An administrator switches them on for 30 minutes with the "New connections" button in the app setup under Settings > Cowboy MCP > Connections in WordPress; then add the app again. Existing connections are not affected.', 403 );
         }
 
         $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
@@ -993,7 +993,7 @@ class Cowboy_MCP_OAuth {
                 && $client_id !== '' && strlen( $client_id ) <= self::SIGNED_MAX_ID && preg_match( '/^[A-Za-z0-9._~-]+$/', $client_id )
                 && $redirect_uri !== '';
             if ( ! $adoptable ) {
-                self::authorize_fatal( __( 'This site has no record of this app. That usually means the site\'s database was restored or copied from another site. To let the app connect again: under Settings > Cowboy MCP > Connection, pick the app and click "Enable for 30 minutes", then use Reconnect in the app and approve it here.', 'cowboy-mcp' ) );
+                self::authorize_fatal( __( 'This site has no record of this app. That usually means the site\'s database was restored or copied from another site. To let the app connect again: under Settings > Cowboy MCP > Connections, pick the app ("Connect another app" if the list is not shown) and click "Enable for 30 minutes", then use Reconnect in the app and approve it here.', 'cowboy-mcp' ) );
             }
             $adopting = true;
             $client   = [

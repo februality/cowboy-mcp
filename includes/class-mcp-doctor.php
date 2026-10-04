@@ -2,7 +2,7 @@
 /**
  * Connection Doctor - self-test engine diagnosing MCP connection failures.
  *
- * Shared by three surfaces: admin AJAX (Connection tab), WP-CLI, and the
+ * Shared by three surfaces: admin AJAX (Connections tab), WP-CLI, and the
  * wp_connection_doctor MCP tool. See docs spec 2026-07-18-connection-doctor.
  */
 
@@ -120,7 +120,7 @@ class Cowboy_MCP_Doctor {
 			$local ? "Hostname '{$host}' is local or resolves to a private address - terminal AI tools on this machine can connect, but cloud clients (claude.ai, ChatGPT) cannot reach it." : "Hostname '{$host}' looks publicly resolvable.",
 			[ 'host: ' . $host ],
 			$local ? 'local_host' : null,
-			$local ? 'Terminal clients (Claude Code, Cursor, Codex...) work locally as-is, and Claude Desktop can connect through the local bridge on the Connection tab. claude.ai and ChatGPT need a public URL (tunnel or staging).' : null
+			$local ? 'Terminal clients (Claude Code, Cursor, Codex...) work locally as-is, and Claude Desktop can connect through the local bridge on the Connections tab. claude.ai and ChatGPT need a public URL (tunnel or staging).' : null
 		);
 
 		// permalinks
@@ -144,7 +144,7 @@ class Cowboy_MCP_Doctor {
 			$has_keys ? 'API key(s) present.' : 'No API keys generated yet.',
 			[],
 			null,
-			$has_keys ? null : 'Generate a key on the Connection tab, or use the OAuth Desktop Connector instead.'
+			$has_keys ? null : 'Generate a key on the Connections tab, or use the OAuth Desktop Connector instead.'
 		);
 
 		// oauth_prereqs
@@ -163,7 +163,7 @@ class Cowboy_MCP_Doctor {
 			$out[] = self::result( 'oauth_prereqs', 'OAuth connector prerequisites', 'skip', 'Desktop Connector is disabled - connector checks skipped.' );
 		}
 
-		// registration_window (safety lock) - the "New connections" switch on the Connection tab
+		// registration_window (safety lock) - the "New connections" switch on the Connections tab
 		if ( $oauth_on ) {
 			$left  = Cowboy_MCP_OAuth::registration_seconds_left();
 			$open  = Cowboy_MCP_OAuth::registration_open();
@@ -171,10 +171,10 @@ class Cowboy_MCP_Doctor {
 				'registration_window',
 				'New connections switch',
 				$open ? 'pass' : 'warn',
-				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) : 'Disabled. New AI apps cannot register until an administrator clicks "Enable for 30 minutes" on the Connection tab; existing connections keep working.',
+				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) : 'Disabled. New AI apps cannot register until an administrator clicks "Enable for 30 minutes" in the app setup on the Connections tab; existing connections keep working.',
 				[],
 				null,
-				$open ? null : 'Under Settings > Cowboy MCP > Connection click "Enable for 30 minutes" (New connections), then add the app.'
+				$open ? null : 'Under Settings > Cowboy MCP > Connections, pick the app ("Connect another app" if the list is not shown) and click "Enable for 30 minutes" (New connections), then add the app.'
 			);
 		}
 

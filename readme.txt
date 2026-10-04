@@ -76,7 +76,7 @@ Generate an API key under **Settings > Cowboy MCP**, then run one command in you
 
     claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"
 
-The Connection tab shows this command pre-filled with your site's endpoint.
+The Connections tab shows this command pre-filled with your site's endpoint.
 
 = Connect Claude to WordPress (claude.ai and Claude Desktop) =
 
@@ -86,7 +86,7 @@ No terminal and no key to paste: turn on the **Desktop Connector** under **Setti
 
 ChatGPT connects with the same one-click sign-in. You need ChatGPT on the web with a Plus, Pro, Business, Enterprise or Edu plan, and a public HTTPS site, because ChatGPT connects from OpenAI's servers.
 
-1. On your site, turn on the **Desktop Connector** under **Settings > Cowboy MCP**, open the ChatGPT panel on the Connection tab and copy your connection link. If "New connections" shows as disabled there, click **Enable for 30 minutes**.
+1. On your site, turn on the **Desktop Connector** under **Settings > Cowboy MCP**, open the ChatGPT panel on the Connections tab and copy your connection link. If "New connections" shows as disabled there, click **Enable for 30 minutes**.
 2. In ChatGPT, open **Settings > Security and login** and turn on **Developer mode**. On Business and Enterprise workspaces an admin has to allow Developer mode first.
 3. Go to **Plugins**, click **+** and choose **Create MCP App**. Paste your connection link as the MCP server URL and choose **OAuth**.
 4. ChatGPT opens a sign-in page on your site. Review it and click **Approve**.
@@ -124,7 +124,7 @@ Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0). Point any MC
 
 = Local development sites =
 
-Local, Studio, MAMP, DevKinsta, wp-env, Docker - it works the same. Terminal tools connect with an API key, no public URL or tunnel needed; Claude Desktop uses the `mcp-remote` bridge shown on the Connection tab. Only claude.ai and ChatGPT need a public HTTPS address.
+Local, Studio, MAMP, DevKinsta, wp-env, Docker - it works the same. Terminal tools connect with an API key, no public URL or tunnel needed; Claude Desktop uses the `mcp-remote` bridge shown on the Connections tab. Only claude.ai and ChatGPT need a public HTTPS address.
 
 = Secure by design: built for live sites =
 
@@ -173,9 +173,9 @@ Questions and connection problems: post in the [support forum](https://wordpress
 
     claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"
 
-**Claude desktop / web (no terminal):** enable the OAuth connector under **Settings > Cowboy MCP > Settings > Desktop Connector**, add your site as a custom connector in Claude, and approve with one click. (Requires a public HTTPS site; on a local site use the `mcp-remote` bridge shown on the Connection tab.)
+**Claude desktop / web (no terminal):** enable the OAuth connector under **Settings > Cowboy MCP > Settings > Desktop Connector**, add your site as a custom connector in Claude, and approve with one click. (Requires a public HTTPS site; on a local site use the `mcp-remote` bridge shown on the Connections tab.)
 
-**Cursor, Codex, Gemini CLI, ChatGPT and other clients:** the Connection tab shows a ready-to-copy setup for each, and the connection guides at [cowboymcp.com](https://cowboymcp.com) walk through every client step by step.
+**Cursor, Codex, Gemini CLI, ChatGPT and other clients:** the Connections tab shows a ready-to-copy setup for each, and the connection guides at [cowboymcp.com](https://cowboymcp.com) walk through every client step by step.
 
 == Frequently Asked Questions ==
 
@@ -185,11 +185,11 @@ A plugin that lets AI assistants act on your site through the Model Context Prot
 
 = How do I connect ChatGPT to my WordPress site? =
 
-Turn on the Desktop Connector in Cowboy MCP and copy your connection link from the ChatGPT panel on the Connection tab. In ChatGPT on the web, turn on **Developer mode** under **Settings > Security and login**, then go to **Plugins**, click **+ > Create MCP App**, paste the link and choose OAuth. Approve the sign-in on your site as an administrator, then pick **Developer mode** from the **+** menu in a chat. It needs a Plus, Pro, Business, Enterprise or Edu plan and a public HTTPS site.
+Turn on the Desktop Connector in Cowboy MCP and copy your connection link from the ChatGPT panel on the Connections tab. In ChatGPT on the web, turn on **Developer mode** under **Settings > Security and login**, then go to **Plugins**, click **+ > Create MCP App**, paste the link and choose OAuth. Approve the sign-in on your site as an administrator, then pick **Developer mode** from the **+** menu in a chat. It needs a Plus, Pro, Business, Enterprise or Edu plan and a public HTTPS site.
 
 = How do I connect Claude to my WordPress site? =
 
-For the Claude desktop and web apps, enable the Desktop Connector, add your site as a custom connector in Claude and approve the one-click sign-in - no terminal needed. For Claude Code, generate an API key under **Settings > Cowboy MCP** and run the one-line command shown ready to copy on the Connection tab.
+For the Claude desktop and web apps, enable the Desktop Connector, add your site as a custom connector in Claude and approve the one-click sign-in - no terminal needed. For Claude Code, generate an API key under **Settings > Cowboy MCP** and run the one-line command shown ready to copy on the Connections tab.
 
 = Is it free? =
 
@@ -221,7 +221,7 @@ Yes. When The Events Calendar is active, your agent can create and edit events, 
 
 = Does it work on a local development site (Local, Studio, MAMP, DevKinsta)? =
 
-Yes. Terminal tools like Claude Code, Cursor, Codex and Gemini CLI run on the same computer as your local site, so they connect with an API key exactly like on a live site - no public URL needed. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connection tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
+Yes. Terminal tools like Claude Code, Cursor, Codex and Gemini CLI run on the same computer as your local site, so they connect with an API key exactly like on a live site - no public URL needed. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connections tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
 
 = My host or Jetpack already offers MCP. Do I need this? =
 
@@ -253,9 +253,9 @@ Cowboy MCP is built for single sites and is not network-aware. On a multisite ne
 
 = Connection problems: 401/404, "registration is closed", a refused redirect host, or a connector that stopped after a staging sync =
 
-Start with the **Connection Doctor** on the Connection tab. It tests HTTPS, the REST API, OAuth discovery and common host blockers (Cloudflare bot rules, ModSecurity-style firewalls, LiteSpeed caching of `/wp-json/`), names the exact problem and gives you a fix. The most common cases:
+Start with the **Connection Doctor** on the Connections tab. It tests HTTPS, the REST API, OAuth discovery and common host blockers (Cloudflare bot rules, ModSecurity-style firewalls, LiteSpeed caching of `/wp-json/`), names the exact problem and gives you a fix. The most common cases:
 
-* **"Registration is closed"** - new AI apps can register only while "New connections" is on: click "Enable for 30 minutes" at the top of the Connection tab, then add the connector.
+* **"Registration is closed"** - new AI apps can register only while "New connections" is on: on the Connections tab pick the app ("Connect another app" if the list is not shown), click "Enable for 30 minutes", then add the connector.
 * **Connector stopped after a staging sync or database restore** - click "Enable for 30 minutes", then Reconnect in the AI app and approve again. Nothing needs removing.
 * **"Not an allowed redirect host"** - the connector only returns approvals to known AI apps and localhost; add another OAuth client's host (for example a self-hosted n8n) under Desktop Connector > Additional allowed hosts.
 * **Connected, but "no tools"** - the agent sees two gateway tools and discovers the rest on demand; ask it to "discover tools for WooCommerce". If even those are missing, check the key's scope.
@@ -264,7 +264,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Screenshots ==
 
-1. Connection tab - pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Existing API keys are listed with one-click revoke.
+1. Connections tab - pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Existing API keys are listed with one-click revoke.
 2. Settings tab - turn the server on or off, require Safe Mode confirmation for destructive actions, enable the one-click Desktop/web (OAuth) connector, set a per-key rate limit, tune the undo journal and database checkpoints, and opt in to advanced Power Mode.
 3. Activity tab - a per-change undo journal: review every change your agents made and roll any of them back individually, plus one-click database checkpoints you can restore the whole site to.
 4. Logs tab - a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
