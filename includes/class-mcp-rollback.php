@@ -2061,7 +2061,7 @@ class Cowboy_MCP_Rollback {
 		$conditions = [];
 		$per_page   = max( 1, min( 200, (int) ( $filters['per_page'] ?? 50 ) ) );
 		$page       = max( 1, (int) ( $filters['page'] ?? 1 ) );
-		foreach ( [ 'object_type', 'object_id', 'tool', 'batch_id', 'session_id', 'status' ] as $col ) {
+		foreach ( [ 'object_type', 'object_id', 'tool', 'batch_id', 'session_id', 'status', 'key_id' ] as $col ) {
 			if ( ! empty( $filters[ $col ] ) ) {
 				$conditions[] = $wpdb->prepare( "{$col} = %s", $filters[ $col ] ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			}
@@ -2071,6 +2071,11 @@ class Cowboy_MCP_Rollback {
 		}
 		if ( ! empty( $filters['date_to'] ) ) {
 			$conditions[] = $wpdb->prepare( 'timestamp <= %s', $filters['date_to'] . ' 23:59:59' );
+		}
+		$search = trim( (string) ( $filters['search'] ?? '' ) );
+		if ( '' !== $search ) {
+			$like         = '%' . $wpdb->esc_like( $search ) . '%';
+			$conditions[] = $wpdb->prepare( '(tool LIKE %s OR object_label LIKE %s OR object_id LIKE %s)', $like, $like, $like );
 		}
 		$where = $conditions ? 'WHERE ' . implode( ' AND ', $conditions ) : '';
 
@@ -2091,6 +2096,45 @@ class Cowboy_MCP_Rollback {
 		unset( $row );
 
 		return [ 'entries' => $rows, 'total' => $total, 'page' => $page, 'per_page' => $per_page ];
+	}
+
+	/**
+	 * Map change ids to the newest wp_undo_change entry that reverted each one
+	 * (the undo row's `undo_of`). Ids with no undo are omitted.
+	 *
+	 * @param int[] $ids
+	 * @return array<int,int>
+	 */
+	public static function undone_by_map( array $ids ): array {
+		global $wpdb;
+		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
+		if ( ! $ids ) {
+			return [];
+		}
+		$in = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT undo_of, MAX(id) AS id FROM %i WHERE undo_of IN ({$in}) GROUP BY undo_of", self::table(), ...$ids ), ARRAY_A ) ?: [];
+		$map  = [];
+		foreach ( $rows as $r ) {
+			$map[ (int) $r['undo_of'] ] = (int) $r['id'];
+		}
+		return $map;
+	}
+
+	/**
+	 * Credentials that appear in the journal, most recently active first.
+	 *
+	 * @return array<string,string> key_id => label
+	 */
+	public static function journal_keys(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT key_id, MAX(key_label) AS key_label FROM %i WHERE key_id IS NOT NULL AND key_id <> %s GROUP BY key_id ORDER BY MAX(id) DESC LIMIT 50', self::table(), '' ), ARRAY_A ) ?: [];
+		$out  = [];
+		foreach ( $rows as $r ) {
+			$out[ (string) $r['key_id'] ] = (string) ( $r['key_label'] ?: $r['key_id'] );
+		}
+		return $out;
 	}
 
 	/** Redact secrets and truncate long values for listing display. */
