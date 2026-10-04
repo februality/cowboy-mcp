@@ -563,3 +563,28 @@ document.addEventListener('submit', function (e) {
 		}
 	} );
 } )();
+
+/* ── Journal: pair highlight + auto-submitting filters (Activity) ── */
+( function() {
+	'use strict';
+	document.querySelectorAll( 'select[data-cmcp-autosubmit]' ).forEach( function( s ) {
+		s.addEventListener( 'change', function() { s.form.requestSubmit(); } );
+	} );
+	document.querySelectorAll( '.cmcp-nojs' ).forEach( function( b ) { b.hidden = true; } );
+	function pairOf( row ) {
+		var id = row.getAttribute( 'data-cmcp-pair' );
+		return id ? document.getElementById( 'cmcp-change-' + id ) : null;
+	}
+	document.querySelectorAll( '.cmcp-journal tr[data-cmcp-pair]' ).forEach( function( row ) {
+		row.addEventListener( 'mouseenter', function() {
+			var other = pairOf( row );
+			row.classList.add( 'is-hl' );
+			if ( other ) { other.classList.add( 'is-hl' ); }
+		} );
+		row.addEventListener( 'mouseleave', function() {
+			var other = pairOf( row );
+			row.classList.remove( 'is-hl' );
+			if ( other ) { other.classList.remove( 'is-hl' ); }
+		} );
+	} );
+} )();

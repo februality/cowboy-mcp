@@ -14,6 +14,7 @@
 /* Admin notices (core, ours and third-party) that WordPress moves into the wrap. */
 .wrap.cmcp > div:not(.cmcp-head):not(.cmcp-body):not(.cmcp-offbar) { margin: 16px 32px 0; }
 .wrap.cmcp code, .cmcp-mono { font-family: var(--cmcp-mono); }
+.wrap.cmcp [hidden] { display: none !important; }
 .wrap.cmcp :focus-visible { outline: 2px solid var(--cmcp-ink); outline-offset: 2px; box-shadow: none; }
 
 /* ── Header ── */
@@ -200,3 +201,37 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-res--fail, .cmcp-res--error { background: var(--cmcp-danger-bg); color: var(--cmcp-danger); }
 .cmcp-doctor-summary { margin: 12px 0 0; font-weight: 600; }
 .wrap.cmcp .mcp-generate-form .cmcp-input { flex: 1 1 220px; max-width: 280px; }
+
+/* ── Activity ── */
+.cmcp-cp { display: flex; gap: 18px; align-items: center; padding: 14px 18px; flex-wrap: wrap; }
+.wrap.cmcp .cmcp-cp h2 { margin: 0; padding: 0; font-size: 15px; font-weight: 600; }
+.cmcp-cp p { margin: 2px 0 0; color: var(--cmcp-muted); font-size: 13.5px; }
+.cmcp-cp-form { margin-left: auto; }
+.cmcp-cp + .cmcp-table-wrap { border-top: 1px solid var(--cmcp-border); }
+.cmcp-toolbar { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--cmcp-border); flex-wrap: wrap; margin: 0; }
+.cmcp-search { position: relative; flex: 0 1 280px; }
+.cmcp-search svg { position: absolute; left: 10px; top: 10px; width: 14px; height: 14px; color: var(--cmcp-faint); }
+.wrap.cmcp .cmcp-search input { width: 100%; padding-left: 30px; }
+.cmcp-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.wrap.cmcp .cmcp-chip { height: 30px; border: 1px solid var(--cmcp-border-strong); border-radius: 999px; background: #fff; padding: 0 12px; font-size: 13px; color: var(--cmcp-muted); display: inline-flex; align-items: center; text-decoration: none; box-shadow: none; }
+.wrap.cmcp .cmcp-chip[aria-current="true"] { border-color: var(--cmcp-ink); color: var(--cmcp-text); background: #f3f3f0; font-weight: 600; }
+.wrap.cmcp select.cmcp-chip { padding: 0 24px 0 12px; min-height: 30px; line-height: 28px; }
+.cmcp-toolbar .cmcp-right { font-size: 13px; color: var(--cmcp-muted); gap: 10px; }
+.cmcp-nowrap { white-space: nowrap; }
+.cmcp-rel { font-size: 12.5px; margin-left: 6px; color: var(--cmcp-muted); white-space: nowrap; }
+.cmcp-rel a { color: var(--cmcp-text); text-underline-offset: 2px; }
+.cmcp-batchtag { display: block; font-size: 12px; color: var(--cmcp-muted); font-family: var(--cmcp-mono); }
+.cmcp-journal tr.is-undone td { color: var(--cmcp-faint); }
+.cmcp-journal tr.is-undone .cmcp-tool, .cmcp-journal tr.is-undone .cmcp-obj { text-decoration: line-through; text-decoration-color: rgba(0,0,0,.35); }
+.cmcp-journal tr.is-hl td { background: #eef7f0; }
+.cmcp-journal tr:target td { animation: cmcp-flash 1.4s ease-out; }
+@keyframes cmcp-flash { from { background: #d9efdf; } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .cmcp-journal tr:target td { animation: none; background: #eef7f0; } }
+.cmcp-obj { max-width: 260px; overflow-wrap: anywhere; }
+.cmcp-st { min-width: 160px; }
+.cmcp-reason { display: block; font-size: 12.5px; color: var(--cmcp-muted); line-height: 1.35; margin-top: 3px; }
+.cmcp-acts-cell { text-align: right; }
+.cmcp-acts { display: inline-flex; gap: 6px; }
+.cmcp-acts form { margin: 0; }
+.cmcp-conflict-card .cmcp-inline-confirm { margin: 0; }
+.cmcp-inline-confirm form { margin: 0; }
