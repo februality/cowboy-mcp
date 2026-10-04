@@ -80,6 +80,7 @@
 .cmcp-icon-btn { border: 1px solid var(--cmcp-border); background: var(--cmcp-surface); border-radius: 5px; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; color: var(--cmcp-muted); padding: 0; }
 .cmcp-icon-btn svg { width: 14px; height: 14px; }
 .cmcp-icon-btn.is-copied { color: var(--cmcp-ok); border-color: var(--cmcp-ok-border); }
+.cmcp-icon-btn.is-failed { color: var(--cmcp-danger); border-color: var(--cmcp-danger-border); }
 .cmcp-callout { padding: 10px 12px; border-radius: var(--cmcp-radius-sm); background: var(--cmcp-warn-bg); border: 1px solid var(--cmcp-warn-border); color: #5c3a00; font-size: 13px; margin: 8px 0; }
 .cmcp-callout p { margin: 0; }
 .cmcp-callout--info { background: var(--cmcp-info-bg); border-color: #d8dee9; color: #2a3342; }
@@ -172,6 +173,9 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-scope-select { margin: 0 0 10px; }
 .cmcp-scope-checklist { max-height: 320px; overflow-y: auto; margin-top: 10px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface-2); padding: 6px 12px; }
 .cmcp-scope-cat summary { cursor: pointer; padding: 5px 0; }
+.cmcp-scope-missing { padding: 8px 0 6px; border-top: 1px solid var(--cmcp-border); margin-top: 4px; }
+.cmcp-scope-missing-h { margin: 4px 0; font-weight: 600; color: var(--cmcp-warn); }
+.cmcp-scope-missing .mcp-scope-tool { display: block; margin: 2px 0; }
 .cmcp-scope-cat .mcp-scope-tool { display: block; margin-block: 2px; margin-inline: 24px 0; }
 .cmcp-scope-cat .mcp-scope-tool .description { color: var(--cmcp-muted); margin-inline-start: 4px; }
 .cmcp-scope-title { margin: 12px 0 8px; }
@@ -284,7 +288,7 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .wrap.cmcp .cmcp-num-in { width: 80px; text-align: end; }
 .cmcp-nested { grid-column: 1 / -1; padding: 12px 14px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface-2); }
 .wrap.cmcp .cmcp-nested label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
-.wrap.cmcp input.cmcp-switch { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 999px; background: #c9ccc9; border: 0; position: relative; cursor: pointer; flex: none; margin: 0; transition: background .15s; box-shadow: none; }
+.wrap.cmcp input.cmcp-switch { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 999px; background: #8a908b; border: 0; position: relative; cursor: pointer; flex: none; margin: 0; transition: background .15s; box-shadow: none; }
 .wrap.cmcp input.cmcp-switch::before { content: ""; position: absolute; top: 3px; inset-inline-start: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; margin: 0; }
 .wrap.cmcp input.cmcp-switch:checked { background: #1f9d4c; }
 .wrap.cmcp input.cmcp-switch:checked::before { transform: translateX(16px); content: ""; }
@@ -306,8 +310,10 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .cmcp-lifts li { display: flex; gap: 8px; align-items: baseline; margin: 0; }
 .cmcp-lifts li::before { content: ""; width: 6px; height: 6px; border-radius: 1px; background: var(--cmcp-danger); flex: none; transform: translateY(-1px); }
 .cmcp-lifts--keep li::before { background: var(--cmcp-live); }
-.cmcp-savebar { position: sticky; bottom: 12px; margin-top: 8px; display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: #fff; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius); box-shadow: 0 6px 24px rgba(0,0,0,.10); }
+/* In flow when clean; floats (sticky) only while there is something to save. */
+.cmcp-savebar { position: static; bottom: 12px; margin-top: 8px; display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: #fff; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius); box-shadow: 0 6px 24px rgba(0,0,0,.10); }
 .cmcp-savebar-msg { flex: 1; font-size: 13.5px; color: var(--cmcp-muted); }
+.cmcp-savebar.is-dirty { position: sticky; }
 .cmcp-savebar.is-dirty .cmcp-savebar-msg { color: var(--cmcp-text); font-weight: 600; }
 .wrap.cmcp [id^="cmcp-"] { scroll-margin-top: 48px; }
 
@@ -321,3 +327,13 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .cmcp-lcard b { font-size: 15px; display: flex; align-items: center; gap: 6px; }
 .cmcp-lcard b svg { width: 14px; height: 14px; color: var(--cmcp-muted); }
 .cmcp-lcard p { margin: 4px 0 0; color: var(--cmcp-muted); }
+
+/* Phones: tighter header gutters and tabs so all five tabs fit without a hidden scroll. */
+@media (max-width: 600px) {
+	.cmcp-head { padding-inline: 16px; }
+	.cmcp-body { padding-inline: 16px; }
+	.wrap.cmcp > div:not(.cmcp-head):not(.cmcp-body):not(.cmcp-offbar) { margin-inline: 16px; }
+	.cmcp-tabs { gap: 0; }
+	.cmcp-tab { padding-inline: 8px; font-size: 13.5px; }
+	.cmcp-tab[aria-current="page"]::after { left: 8px; right: 8px; }
+}

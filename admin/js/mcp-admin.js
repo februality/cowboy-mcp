@@ -35,40 +35,54 @@
 		document.body.removeChild( textarea );
 	}
 
+	var l10n = window.cowboyMcpAdmin || {};
+
+	/** Screen-reader announcement through one shared polite live region. */
+	function announce( text ) {
+		var live = document.getElementById( 'cmcp-live' );
+		if ( ! live ) {
+			live = document.createElement( 'span' );
+			live.id = 'cmcp-live';
+			live.className = 'screen-reader-text';
+			live.setAttribute( 'aria-live', 'polite' );
+			( document.querySelector( '.wrap.cmcp' ) || document.body ).appendChild( live );
+		}
+		live.textContent = '';
+		setTimeout( function() { live.textContent = text; }, 50 );
+	}
+
+	/**
+	 * Show copy feedback on a button for 2 s, then restore it. Icon buttons keep their SVG
+	 * (a class carries the state); text buttons swap their label.
+	 */
+	function copyFeedback( btn, ok ) {
+		var text = ok ? ( l10n.copied || 'Copied!' ) : ( l10n.copyFailed || 'Failed to copy' );
+		announce( text );
+		if ( btn.hasAttribute( 'data-cmcp-icon' ) ) {
+			btn.classList.add( ok ? 'is-copied' : 'is-failed' );
+			setTimeout( function() { btn.classList.remove( 'is-copied', 'is-failed' ); }, 2000 );
+			return;
+		}
+		if ( ! btn.hasAttribute( 'data-cmcp-label' ) ) {
+			btn.setAttribute( 'data-cmcp-label', btn.textContent );
+		}
+		clearTimeout( btn._cmcpCopyTimer );
+		btn.textContent = text;
+		btn.classList.toggle( 'mcp-copy-btn--copied', ok );
+		btn._cmcpCopyTimer = setTimeout( function() {
+			btn.textContent = btn.getAttribute( 'data-cmcp-label' );
+			btn.classList.remove( 'mcp-copy-btn--copied' );
+		}, 2000 );
+	}
+
 	/* ── Copy-to-clipboard buttons ────────────────────────── */
 	document.querySelectorAll( '.mcp-copy-btn' ).forEach( function( btn ) {
 		btn.addEventListener( 'click', function() {
-			var targetId = btn.getAttribute( 'data-copy-target' );
-			if ( ! targetId ) {
-				return;
-			}
-			var el = document.getElementById( targetId );
+			var el = document.getElementById( btn.getAttribute( 'data-copy-target' ) || '' );
 			if ( ! el ) {
 				return;
 			}
-			var originalText = btn.textContent;
-			copyToClipboard(
-				el.textContent,
-				function() {
-					if ( btn.hasAttribute( 'data-cmcp-icon' ) ) {
-						btn.classList.add( 'is-copied' );
-						setTimeout( function() { btn.classList.remove( 'is-copied' ); }, 2000 );
-						return;
-					}
-					btn.textContent = ( window.cowboyMcpAdmin && cowboyMcpAdmin.copied ) || 'Copied!';
-					btn.classList.add( 'mcp-copy-btn--copied' );
-					setTimeout( function() {
-						btn.textContent = originalText;
-						btn.classList.remove( 'mcp-copy-btn--copied' );
-					}, 2000 );
-				},
-				function() {
-					btn.textContent = 'Failed to copy';
-					setTimeout( function() {
-						btn.textContent = originalText;
-					}, 2000 );
-				}
-			);
+			copyToClipboard( el.textContent, function() { copyFeedback( btn, true ); }, function() { copyFeedback( btn, false ); } );
 		} );
 	} );
 
@@ -207,7 +221,7 @@
 		} );
 
 		copyBtn.addEventListener( 'click', function() {
-			copyToClipboard( reportText, function() { copyBtn.textContent = 'Copied!'; }, function() {} );
+			copyToClipboard( reportText, function() { copyFeedback( copyBtn, true ); }, function() { copyFeedback( copyBtn, false ); } );
 		} );
 
 		var counts = {};
@@ -332,6 +346,7 @@
 		} catch (e) {
 			preset = [];
 		}
+		var missing = null;
 		preset.forEach(function (name) {
 			var cb = Array.prototype.find.call(slot.querySelectorAll('input[name="allowed_tools[]"]'), function (c) { return c.value === name; });
 			if (cb) {
@@ -339,12 +354,26 @@
 				return;
 			}
 			// Stored tool that is not registered right now (inactive plugin, classic theme, abilities off):
-			// keep it in the scope instead of silently dropping it on save.
-			var keep = document.createElement('input');
-			keep.type = 'hidden';
-			keep.name = 'allowed_tools[]';
-			keep.value = name;
-			slot.appendChild(keep);
+			// keep it in the scope instead of silently dropping it on save, but show it so it can be removed.
+			if (!missing) {
+				missing = document.createElement('div');
+				missing.className = 'cmcp-scope-missing';
+				var h = document.createElement('p');
+				h.className = 'cmcp-scope-missing-h';
+				h.textContent = (window.cowboyMcpAdmin && cowboyMcpAdmin.scopeMissing) || 'Not currently available (kept in this scope until you untick them)';
+				missing.appendChild(h);
+				var list = slot.querySelector('.cmcp-scope-checklist') || slot;
+				list.insertBefore(missing, list.querySelector(':scope > p.description'));
+			}
+			var label = document.createElement('label'), input = document.createElement('input'), code = document.createElement('code');
+			label.className = 'mcp-scope-tool';
+			input.type = 'checkbox';
+			input.name = 'allowed_tools[]';
+			input.value = name;
+			input.checked = true;
+			code.textContent = name;
+			label.append(input, ' ', code);
+			missing.appendChild(label);
 		});
 	}
 
@@ -393,7 +422,7 @@
 			}
 		}
 	});
-	/* ── "New connections" countdown (Connection tab) ─────── */
+	/* ── "New connections" countdown (Connections tab) ─────── */
 
 	( function() {
 		var els = document.querySelectorAll( '[data-mcp-lock-until]' );
@@ -412,7 +441,7 @@
 			var label = gate.querySelector( '.mcp-conn-gate-label' ), timer = gate.querySelector( '.mcp-conn-gate-timer' ), btn = gate.querySelector( 'button[name="cowboy_mcp_toggle_connections"]' );
 			if ( label ) { label.textContent = l10n.gateOff || 'New connections: disabled'; }
 			if ( timer ) { timer.remove(); }
-			if ( btn ) { btn.value = 'enable'; btn.textContent = l10n.gateEnable || 'Enable for 30 minutes'; btn.classList.add( 'button-primary' ); }
+			if ( btn ) { btn.value = 'enable'; btn.textContent = l10n.gateEnable || 'Enable for 30 minutes'; btn.classList.add( 'cmcp-btn--primary' ); }
 		}
 		function tick() {
 			var now = Math.floor( Date.now() / 1000 ) - skew, live = false;
@@ -463,7 +492,22 @@
 		if ( menu ) {
 			menu.open = false;
 		}
-		box.querySelector( '[data-cmcp-go]' ).focus();
+		// Destructive confirms start on Cancel so Enter-Enter cannot revoke/clear by accident.
+		var tone = form.getAttribute( 'data-cmcp-confirm-tone' );
+		box.querySelector( tone === 'danger' ? '[data-cmcp-cancel]' : '[data-cmcp-go]' ).focus();
+	}
+
+	/** Return focus to the control that opened the confirm — or its menu toggle, if that menu is now closed. */
+	function refocus( submitter ) {
+		if ( ! submitter ) {
+			return;
+		}
+		var menu = submitter.closest( 'details' );
+		if ( menu && ! menu.open ) {
+			menu.querySelector( 'summary' ).focus();
+			return;
+		}
+		submitter.focus();
 	}
 
 	function build( form, submitter, step ) {
@@ -477,6 +521,7 @@
 		text.textContent = msg;
 		cancel.type = 'button';
 		cancel.className = 'cmcp-btn cmcp-btn--sm';
+		cancel.setAttribute( 'data-cmcp-cancel', '' );
 		cancel.textContent = l10n.cancel || 'Cancel';
 		go.type = 'button';
 		go.className = 'cmcp-btn cmcp-btn--sm ' + ( tone === 'danger' ? 'cmcp-btn--danger-solid' : 'cmcp-btn--primary' );
@@ -485,9 +530,7 @@
 		box.append( text, cancel, go );
 		cancel.addEventListener( 'click', function() {
 			close( form );
-			if ( submitter ) {
-				submitter.focus();
-			}
+			refocus( submitter );
 		} );
 		go.addEventListener( 'click', function() {
 			close( form );
@@ -519,6 +562,17 @@
 /* ── Credential menus + access editor (Connections) ── */
 ( function() {
 	'use strict';
+	document.addEventListener( 'keydown', function( e ) {
+		if ( e.key !== 'Escape' ) {
+			return;
+		}
+		document.querySelectorAll( 'details.cmcp-menu[open]' ).forEach( function( d ) {
+			d.open = false;
+			if ( d.contains( document.activeElement ) ) {
+				d.querySelector( 'summary' ).focus();
+			}
+		} );
+	} );
 	document.addEventListener( 'click', function( e ) {
 		document.querySelectorAll( 'details.cmcp-menu[open]' ).forEach( function( d ) {
 			if ( ! d.contains( e.target ) ) {
@@ -527,7 +581,11 @@
 		} );
 		var edit = e.target.closest( '[data-cmcp-edit-scope]' );
 		if ( edit ) {
+			// Skip an in-page confirm row (revoke) that may sit between the credential and its editor.
 			var row = edit.closest( 'tr' ).nextElementSibling;
+			while ( row && ! row.hasAttribute( 'data-cmcp-scope-row' ) && row.classList.contains( 'cmcp-panel-row' ) ) {
+				row = row.nextElementSibling;
+			}
 			edit.closest( 'details' ).open = false;
 			if ( row && row.hasAttribute( 'data-cmcp-scope-row' ) ) {
 				row.hidden = false;
@@ -540,7 +598,20 @@
 		}
 		var cancel = e.target.closest( '[data-cmcp-scope-cancel]' );
 		if ( cancel ) {
+			// Throw away unsaved edits: back to the stored mode, and drop the cloned checklist
+			// (it is rebuilt from data-scope-tools the next time the editor opens).
+			var form = cancel.closest( 'form' ), sel = form.querySelector( '.mcp-scope-select' ), slot = sel.querySelector( '.mcp-scope-custom-slot' );
+			form.reset();
+			slot.textContent = '';
+			slot.hidden = ! sel.querySelector( 'input[value="custom"]' ).checked;
 			cancel.closest( 'tr' ).hidden = true;
+			var owner = cancel.closest( 'tr' ).previousElementSibling;
+			while ( owner && owner.classList.contains( 'cmcp-panel-row' ) ) {
+				owner = owner.previousElementSibling;
+			}
+			if ( owner && owner.querySelector( 'summary.cmcp-kebab' ) ) {
+				owner.querySelector( 'summary.cmcp-kebab' ).focus();
+			}
 		}
 	} );
 } )();
@@ -583,6 +654,15 @@
 	var power = form.querySelector( '#cmcp-power-mode' ), panel = form.querySelector( '[data-cmcp-power-confirm]' );
 	var hostIn = panel && panel.querySelector( '#cmcp-power-host' ), go = panel && panel.querySelector( '[data-cmcp-power-go]' );
 
+	var submitting = false;
+	form.addEventListener( 'submit', function() { submitting = true; } );
+	window.addEventListener( 'beforeunload', function( e ) {
+		if ( ! submitting && snapshot() !== initial ) {
+			e.preventDefault();
+			e.returnValue = '';
+		}
+	} );
+
 	function refresh() {
 		var dirty = snapshot() !== initial;
 		bar.classList.toggle( 'is-dirty', dirty );
@@ -613,7 +693,7 @@
 			delete power.dataset.cmcpArmed;
 		} );
 		hostIn.addEventListener( 'input', function() {
-			go.disabled = hostIn.value.trim() !== panel.getAttribute( 'data-host' );
+			go.disabled = hostIn.value.trim().toLowerCase() !== panel.getAttribute( 'data-host' ).toLowerCase();
 		} );
 		hostIn.addEventListener( 'keydown', function( e ) {
 			if ( e.key === 'Enter' ) {

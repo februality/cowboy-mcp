@@ -2128,8 +2128,9 @@ class Cowboy_MCP_Rollback {
 	 */
 	public static function journal_keys(): array {
 		global $wpdb;
+		// Label from each key's newest row, so a renamed key shows its current name.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT key_id, MAX(key_label) AS key_label FROM %i WHERE key_id IS NOT NULL AND key_id <> %s GROUP BY key_id ORDER BY MAX(id) DESC LIMIT 50', self::table(), '' ), ARRAY_A ) ?: [];
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT j.key_id, j.key_label FROM %i j JOIN ( SELECT MAX(id) AS mid FROM %i WHERE key_id IS NOT NULL AND key_id <> %s GROUP BY key_id ORDER BY mid DESC LIMIT 50 ) m ON j.id = m.mid ORDER BY j.id DESC', self::table(), self::table(), '' ), ARRAY_A ) ?: [];
 		$out  = [];
 		foreach ( $rows as $r ) {
 			$out[ (string) $r['key_id'] ] = (string) ( $r['key_label'] ?: $r['key_id'] );

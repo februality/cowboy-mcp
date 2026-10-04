@@ -160,6 +160,8 @@ class Cowboy_MCP_Admin {
             'cancel'       => __( 'Cancel', 'cowboy-mcp' ),
             'confirm'      => __( 'Confirm', 'cowboy-mcp' ),
             'copied'       => __( 'Copied!', 'cowboy-mcp' ),
+            'copyFailed'   => __( 'Failed to copy', 'cowboy-mcp' ),
+            'scopeMissing' => __( 'Not currently available (kept in this scope until you untick them)', 'cowboy-mcp' ),
         ] );
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
