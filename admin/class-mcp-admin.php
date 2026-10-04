@@ -569,61 +569,31 @@ class Cowboy_MCP_Admin {
     /* ── About tab ────────────────────────────────────────── */
 
     private static function render_about_tab(): void {
+        $links = [
+            [ 'https://cowboymcp.com', __( 'Website', 'cowboy-mcp' ), __( 'Project home, guides, and news.', 'cowboy-mcp' ) ],
+            [ 'https://github.com/februality/cowboy-mcp', __( 'GitHub', 'cowboy-mcp' ), __( 'Source, issues & releases.', 'cowboy-mcp' ) ],
+            [ 'https://wordpress.org/support/plugin/cowboy-mcp/', __( 'Get help', 'cowboy-mcp' ), __( 'Ask in the WordPress.org support forum. Paste your Connection Doctor report for a fast answer.', 'cowboy-mcp' ) ],
+            [ 'https://wordpress.org/support/plugin/cowboy-mcp/reviews/#new-post', __( 'Leave a review', 'cowboy-mcp' ), __( 'Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find it.', 'cowboy-mcp' ) ],
+        ];
         ?>
-        <div class="postbox">
-            <div class="inside">
-                <p class="mcp-about-lead"><?php
-                    echo wp_kses(
-                        sprintf(
-                            /* translators: %s: Model Context Protocol website URL. */
-                            __( '<strong>Cowboy MCP</strong> turns this WordPress site into a <a href="%s" target="_blank" rel="noopener noreferrer">Model Context Protocol</a> server, so AI coding agents like Claude Code, Codex, and Opencode can read, edit, and manage the whole site through a single authenticated endpoint.', 'cowboy-mcp' ),
-                            esc_url( 'https://modelcontextprotocol.io/' )
-                        ),
-                        [
-                            'strong' => [],
-                            'a'      => [ 'href' => [], 'target' => [], 'rel' => [] ],
-                        ]
-                    );
-                ?></p>
-
-                <div class="mcp-choice-grid mcp-res-grid">
-                    <a class="mcp-res-card" href="https://cowboymcp.com" target="_blank" rel="noopener noreferrer">
-                        <span class="mcp-res-ic" aria-hidden="true">&#x1f310;</span>
-                        <span class="mcp-res-body">
-                            <span class="mcp-res-title"><?php esc_html_e( 'Website', 'cowboy-mcp' ); ?> &rarr;</span>
-                            <span class="mcp-res-sub"><?php esc_html_e( 'Project home, guides, and news.', 'cowboy-mcp' ); ?></span>
-                        </span>
+        <div class="cmcp-about">
+            <p class="cmcp-about-lead"><?php
+                echo wp_kses(
+                    sprintf(
+                        /* translators: %s: Model Context Protocol website URL. */
+                        __( '<strong>Cowboy MCP</strong> turns this WordPress site into a <a href="%s" target="_blank" rel="noopener noreferrer">Model Context Protocol</a> server, so AI coding agents like Claude Code, Codex, and Opencode can read, edit, and manage the whole site through a single authenticated endpoint.', 'cowboy-mcp' ),
+                        esc_url( 'https://modelcontextprotocol.io/' )
+                    ),
+                    [ 'strong' => [], 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
+                );
+            ?></p>
+            <div class="cmcp-links">
+                <?php foreach ( $links as [ $href, $title, $sub ] ) : ?>
+                    <a class="cmcp-card cmcp-lcard" href="<?php echo esc_url( $href ); ?>" target="_blank" rel="noopener noreferrer">
+                        <b><?php echo esc_html( $title ); ?> <?php echo self::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literal. ?></b>
+                        <p><?php echo esc_html( $sub ); ?></p>
                     </a>
-                    <a class="mcp-res-card" href="https://github.com/februality/cowboy-mcp" target="_blank" rel="noopener noreferrer">
-                        <span class="mcp-res-ic" aria-hidden="true">&#x1f419;</span>
-                        <span class="mcp-res-body">
-                            <span class="mcp-res-title"><?php esc_html_e( 'GitHub', 'cowboy-mcp' ); ?> &rarr;</span>
-                            <span class="mcp-res-sub"><?php esc_html_e( 'Source, issues & releases.', 'cowboy-mcp' ); ?></span>
-                        </span>
-                    </a>
-                    <a class="mcp-res-card" href="https://wordpress.org/support/plugin/cowboy-mcp/" target="_blank" rel="noopener noreferrer">
-                        <span class="mcp-res-ic" aria-hidden="true">&#x1f4ac;</span>
-                        <span class="mcp-res-body">
-                            <span class="mcp-res-title"><?php esc_html_e( 'Get help', 'cowboy-mcp' ); ?> &rarr;</span>
-                            <span class="mcp-res-sub"><?php esc_html_e( 'Ask in the WordPress.org support forum. Paste your Connection Doctor report for a fast answer.', 'cowboy-mcp' ); ?></span>
-                        </span>
-                    </a>
-                    <a class="mcp-res-card" href="https://wordpress.org/support/plugin/cowboy-mcp/reviews/#new-post" target="_blank" rel="noopener noreferrer">
-                        <span class="mcp-res-ic" aria-hidden="true">&#x2b50;</span>
-                        <span class="mcp-res-body">
-                            <span class="mcp-res-title"><?php esc_html_e( 'Leave a review', 'cowboy-mcp' ); ?> &rarr;</span>
-                            <span class="mcp-res-sub"><?php esc_html_e( 'Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find it.', 'cowboy-mcp' ); ?></span>
-                        </span>
-                    </a>
-                </div>
-
-                <p class="mcp-about-foot"><?php
-                    printf(
-                        /* translators: %s: plugin version number */
-                        esc_html__( 'v%s · GPL-2.0', 'cowboy-mcp' ),
-                        esc_html( COWBOY_MCP_VERSION )
-                    );
-                ?></p>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php

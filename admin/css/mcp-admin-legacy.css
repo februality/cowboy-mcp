@@ -9,28 +9,3 @@
         overflow-x: auto; -webkit-overflow-scrolling: touch;
     }
 }
-.mcp-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-@media (max-width: 782px) {
-    .mcp-choice-grid { grid-template-columns: 1fr; }
-}
-
-/* ── About tab ────────────────────────────────────────────── */
-.mcp-about-lead { font-size: 14px; line-height: 1.6; color: #3c434a; margin: 4px 0 18px; max-width: 70ch; }
-.mcp-about-lead a { text-decoration: none; }
-.mcp-res-card {
-    display: flex; align-items: center; gap: 14px; background: #fff;
-    border: 1px solid #c3c4c7; border-radius: 6px; padding: 18px 20px;
-    text-decoration: none; transition: border-color .12s, box-shadow .12s;
-}
-.mcp-res-card:hover { border-color: #2271b1; box-shadow: 0 2px 10px rgba(34,113,177,.13); }
-.mcp-res-card:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
-.mcp-res-ic {
-    width: 46px; height: 46px; flex: 0 0 46px; border-radius: 9px; font-size: 24px; line-height: 1;
-    display: inline-flex; align-items: center; justify-content: center;
-    background: #f0f6fc; border: 1px solid #cfe3f4;
-}
-.mcp-res-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.mcp-res-title { font-size: 16px; font-weight: 600; color: #2271b1; }
-.mcp-res-sub { font-size: 13px; color: #50575e; }
-.mcp-about-foot { margin: 18px 0 0; color: #646970; font-size: 12px; }

@@ -294,3 +294,14 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .cmcp-savebar-msg { flex: 1; font-size: 13.5px; color: var(--cmcp-muted); }
 .cmcp-savebar.is-dirty .cmcp-savebar-msg { color: var(--cmcp-text); font-weight: 600; }
 .wrap.cmcp [id^="cmcp-"] { scroll-margin-top: 48px; }
+
+/* ── About ── */
+.cmcp-about { max-width: 880px; }
+.cmcp-about-lead { font-size: 15px; margin: 0 0 20px; max-width: 75ch; }
+.cmcp-links { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 782px) { .cmcp-links { grid-template-columns: 1fr; } }
+.wrap.cmcp .cmcp-lcard { display: block; text-decoration: none; padding: 16px 18px; margin: 0; color: var(--cmcp-text); }
+.wrap.cmcp .cmcp-lcard:hover { border-color: var(--cmcp-border-strong); background: #fdfdfc; }
+.cmcp-lcard b { font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.cmcp-lcard b svg { width: 14px; height: 14px; color: var(--cmcp-muted); }
+.cmcp-lcard p { margin: 4px 0 0; color: var(--cmcp-muted); }
