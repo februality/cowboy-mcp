@@ -50,7 +50,12 @@
 			copyToClipboard(
 				el.textContent,
 				function() {
-					btn.textContent = 'Copied!';
+					if ( btn.hasAttribute( 'data-cmcp-icon' ) ) {
+						btn.classList.add( 'is-copied' );
+						setTimeout( function() { btn.classList.remove( 'is-copied' ); }, 2000 );
+						return;
+					}
+					btn.textContent = ( window.cowboyMcpAdmin && cowboyMcpAdmin.copied ) || 'Copied!';
 					btn.classList.add( 'mcp-copy-btn--copied' );
 					setTimeout( function() {
 						btn.textContent = originalText;
@@ -80,17 +85,8 @@
 	var dismissBtns = document.querySelectorAll( '.mcp-dismiss-key' );
 	if ( dismissBtns.length && typeof cowboyMcpAdmin !== 'undefined' ) {
 		var dismissKeySteps = function() {
-			document.querySelectorAll( '.mcp-key-step' ).forEach( function( step ) {
-				step.classList.remove( 'mcp-step--completed' );
-				step.classList.add( 'mcp-step--active' );
-				var number = step.querySelector( '.mcp-step-number' );
-				if ( number ) {
-					number.textContent = '1';
-				}
-				var body = step.querySelector( '.mcp-step-body' );
-				if ( body ) {
-					body.innerHTML = '<p><em>Key dismissed. Reload the page to generate a new one.</em></p>';
-				}
+			document.querySelectorAll( '.cmcp-keybox' ).forEach( function( box ) {
+				box.remove();
 			} );
 		};
 		dismissBtns.forEach( function( btn ) {
@@ -195,11 +191,12 @@
 		}
 		var resultsEl = document.getElementById( 'cowboy-doctor-results' );
 		var copyBtn   = document.getElementById( 'cowboy-doctor-copy' );
-		var helpLink  = document.getElementById( 'cowboy-doctor-help' );
 		var reportText = '';
 
 		run.addEventListener( 'click', function() {
 			run.disabled = true;
+			counts = {};
+			resultsEl.dataset.state = 'running';
 			resultsEl.textContent = 'Running checks...';
 			var data = new URLSearchParams( { action: 'cowboy_mcp_doctor', _ajax_nonce: cowboyMcpDoctor.nonce } );
 			fetch( cowboyMcpDoctor.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: data } )
@@ -212,13 +209,13 @@
 				} )
 				.then( function( probeChecks ) {
 					renderChecks( probeChecks, 'From your browser (outside the server)' );
+					renderSummary();
 					reportText += '\n--- From your browser (outside the server) ---\n' +
 						'Note: your browser IP is not a datacenter IP - a pass here can still be blocked for cloud AI clients.\n' +
 						probeChecks.map( function( c ) {
 							return '[' + c.status.toUpperCase() + '] ' + c.label + ( c.detail ? ' - ' + c.detail : '' ) + ( c.fix ? '\n       Fix: ' + c.fix : '' );
 						} ).join( '\n' );
 					copyBtn.hidden = false;
-					if ( helpLink ) { helpLink.hidden = false; }
 					run.disabled = false;
 				} )
 				.catch( function( err ) {
@@ -231,24 +228,53 @@
 			copyToClipboard( reportText, function() { copyBtn.textContent = 'Copied!'; }, function() {} );
 		} );
 
+		var counts = {};
+		function tally( checks ) {
+			checks.forEach( function( c ) { counts[ c.status ] = ( counts[ c.status ] || 0 ) + 1; } );
+		}
+		function renderSummary() {
+			var order = [ [ 'fail', 'failed' ], [ 'error', 'errors' ], [ 'warn', 'warnings' ], [ 'pass', 'passed' ], [ 'skip', 'skipped' ] ];
+			var parts = order.filter( function( o ) { return counts[ o[ 0 ] ]; } ).map( function( o ) { return counts[ o[ 0 ] ] + ' ' + o[ 1 ]; } );
+			var p = document.createElement( 'p' );
+			p.className = 'cmcp-doctor-summary';
+			p.textContent = parts.join( ' · ' );
+			resultsEl.appendChild( p );
+		}
 		function renderChecks( checks, heading ) {
-			if ( resultsEl.textContent === 'Running checks...' ) { resultsEl.textContent = ''; }
-			var h = document.createElement( 'div' );
-			h.className = 'cowboy-doctor-group';
+			if ( resultsEl.dataset.state === 'running' ) {
+				resultsEl.textContent = '';
+				resultsEl.dataset.state = '';
+			}
+			tally( checks );
+			var h = document.createElement( 'p' ), ul = document.createElement( 'ul' );
+			h.className = 'cmcp-checks-group';
 			h.textContent = heading;
-			resultsEl.appendChild( h );
+			ul.className = 'cmcp-checks';
 			checks.forEach( function( c ) {
-				var el = document.createElement( 'div' );
-				el.className = 'cowboy-doctor-check is-' + c.status;
-				el.textContent = '[' + c.status.toUpperCase() + '] ' + c.label + ( c.detail ? ' - ' + c.detail : '' );
-				if ( c.fix ) {
-					var fix = document.createElement( 'span' );
-					fix.className = 'fix';
-					fix.textContent = 'Fix: ' + c.fix;
-					el.appendChild( fix );
+				var li = document.createElement( 'li' ), dot = document.createElement( 'span' ), label = document.createElement( 'span' ), res = document.createElement( 'span' );
+				var tone = { pass: '', warn: ' cmcp-dot--warn', fail: ' cmcp-dot--bad', error: ' cmcp-dot--bad', skip: ' cmcp-dot--off' }[ c.status ] || ' cmcp-dot--off';
+				dot.className = 'cmcp-dot' + tone;
+				dot.setAttribute( 'aria-hidden', 'true' );
+				label.className = 'cmcp-check-label';
+				label.textContent = c.label;
+				res.className = 'cmcp-res cmcp-res--' + c.status;
+				res.textContent = c.status;
+				li.append( dot, label, res );
+				if ( c.detail && c.status !== 'pass' ) {
+					var det = document.createElement( 'span' );
+					det.className = 'cmcp-det';
+					det.textContent = c.detail;
+					li.appendChild( det );
 				}
-				resultsEl.appendChild( el );
+				if ( c.fix && ( c.status === 'warn' || c.status === 'fail' || c.status === 'error' ) ) {
+					var fix = document.createElement( 'span' );
+					fix.className = 'cmcp-fix';
+					fix.textContent = 'Fix: ' + c.fix;
+					li.appendChild( fix );
+				}
+				ul.appendChild( li );
 			} );
+			resultsEl.append( h, ul );
 		}
 	}
 
@@ -358,23 +384,6 @@ document.addEventListener('submit', function (e) {
 	});
 
 	document.addEventListener('click', function (e) {
-		// Toggle the inline editor row under a key row.
-		if (e.target.matches('.mcp-edit-scope')) {
-			var editorRow = e.target.closest('tr').nextElementSibling;
-			if (editorRow && editorRow.classList.contains('mcp-scope-editor-row')) {
-				editorRow.hidden = !editorRow.hidden;
-				e.target.setAttribute('aria-expanded', String(!editorRow.hidden));
-				if (!editorRow.hidden) {
-					// Pre-open the checklist for custom-scoped keys.
-					var wrap = editorRow.querySelector('.mcp-scope-select');
-					var slot = wrap.querySelector('.mcp-scope-custom-slot');
-					if (wrap.querySelector('input[value="custom"]').checked) {
-						ensureChecklist(wrap, slot);
-						slot.hidden = false;
-					}
-				}
-			}
-		}
 		// Category select-all checkbox lives inside <summary>, so a native click
 		// also toggles the parent <details> — that's <summary>'s default action,
 		// not propagation, so stopPropagation() alone can't stop it. preventDefault()
@@ -524,4 +533,33 @@ document.addEventListener('submit', function (e) {
 		close( form );
 		place( form, build( form, e.submitter || null, 1 ) );
 	}, true );
+} )();
+
+/* ── Credential menus + access editor (Connections) ── */
+( function() {
+	'use strict';
+	document.addEventListener( 'click', function( e ) {
+		document.querySelectorAll( 'details.cmcp-menu[open]' ).forEach( function( d ) {
+			if ( ! d.contains( e.target ) ) {
+				d.open = false;
+			}
+		} );
+		var edit = e.target.closest( '[data-cmcp-edit-scope]' );
+		if ( edit ) {
+			var row = edit.closest( 'tr' ).nextElementSibling;
+			edit.closest( 'details' ).open = false;
+			if ( row && row.hasAttribute( 'data-cmcp-scope-row' ) ) {
+				row.hidden = false;
+				var wrap = row.querySelector( '.mcp-scope-select' );
+				if ( wrap.querySelector( 'input[value="custom"]' ).checked ) {
+					wrap.querySelector( 'input[value="custom"]' ).dispatchEvent( new Event( 'change', { bubbles: true } ) );
+				}
+				row.querySelector( 'input[type="radio"]:checked' ).focus();
+			}
+		}
+		var cancel = e.target.closest( '[data-cmcp-scope-cancel]' );
+		if ( cancel ) {
+			cancel.closest( 'tr' ).hidden = true;
+		}
+	} );
 } )();
