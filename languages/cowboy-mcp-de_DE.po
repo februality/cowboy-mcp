@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: German\n"
@@ -19,7 +19,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "Jede Änderung eines Agenten wird mit ihrem vorherigen Zustand protokolliert. Machen Sie eine einzelne Änderung rückgängig oder setzen Sie die ganze Datenbank auf einen Checkpoint zurück."
+msgstr ""
+"Jede Änderung eines Agenten wird mit ihrem vorherigen Zustand protokolliert. "
+"Machen Sie eine einzelne Änderung rückgängig oder setzen Sie die ganze "
+"Datenbank auf einen Checkpoint zurück."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -91,7 +94,9 @@ msgstr "von %s"
 #: admin/class-mcp-admin-activity.php:132
 #, php-format
 msgid "Undo change #%1$s? Restores %2$s to how it was before %3$s."
-msgstr "Änderung #%1$s rückgängig machen? Stellt %2$s so wieder her, wie es vor %3$s war."
+msgstr ""
+"Änderung #%1$s rückgängig machen? Stellt %2$s so wieder her, wie es vor %3$s "
+"war."
 
 #: admin/class-mcp-admin-activity.php:139
 msgid "Undo ALL active changes in this batch (newest first)?"
@@ -162,13 +167,17 @@ msgstr "%1$d von %2$d gespeichert"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "Noch keine Checkpoints. Vor verändernden WP-CLI-Befehlen sowie Plugin- und Theme-Updates wird automatisch einer erstellt."
+msgstr ""
+"Noch keine Checkpoints. Vor verändernden WP-CLI-Befehlen sowie Plugin- und "
+"Theme-Updates wird automatisch einer erstellt."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "Das Wiederherstellen eines Checkpoints überschreibt alle Tabellen der Website. Zuvor wird ein Sicherheits-Checkpoint erstellt."
+msgstr ""
+"Das Wiederherstellen eines Checkpoints überschreibt alle Tabellen der "
+"Website. Zuvor wird ein Sicherheits-Checkpoint erstellt."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -809,7 +818,9 @@ msgstr "Verbinden Sie Ihre erste App"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "Wählen Sie Ihre KI-App oder Ihr Coding-Tool – die Einrichtung dauert etwa eine Minute."
+msgstr ""
+"Wählen Sie Ihre KI-App oder Ihr Coding-Tool – die Einrichtung dauert etwa "
+"eine Minute."
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -993,6 +1004,10 @@ msgstr ""
 "Alle Einträge des Audit-Protokolls löschen? Dies kann nicht rückgängig "
 "gemacht werden."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "Wirklich sicher? Alle Einträge des Audit-Logs werden gelöscht."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1051,7 +1066,9 @@ msgstr "Details anzeigen"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "Wie sich der Server verhält, wie viel er speichert und wie weit ein Agent reichen darf."
+msgstr ""
+"Wie sich der Server verhält, wie viel er speichert und wie weit ein Agent "
+"reichen darf."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"
@@ -1325,7 +1342,8 @@ msgstr "Die eigenen Einstellungen des Plugins"
 
 #: admin/class-mcp-admin-settings.php:117
 msgid "Self-delete and last-admin guards"
-msgstr "Schutz vor Selbstlöschung und vor dem Entfernen des letzten Administrators"
+msgstr ""
+"Schutz vor Selbstlöschung und vor dem Entfernen des letzten Administrators"
 
 #: admin/class-mcp-admin-settings.php:118
 msgid "Secret redaction in results"

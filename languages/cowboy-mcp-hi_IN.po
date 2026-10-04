@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Hindi\n"
@@ -19,7 +19,9 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "एजेंट द्वारा किया गया हर बदलाव उसकी पिछली स्थिति के साथ दर्ज होता है। किसी एक बदलाव को पूर्ववत करें, या पूरे डेटाबेस को किसी चेकपॉइंट पर वापस ले जाएँ।"
+msgstr ""
+"एजेंट द्वारा किया गया हर बदलाव उसकी पिछली स्थिति के साथ दर्ज होता है। किसी एक बदलाव "
+"को पूर्ववत करें, या पूरे डेटाबेस को किसी चेकपॉइंट पर वापस ले जाएँ।"
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -161,13 +163,17 @@ msgstr "%2$d में से %1$d सहेजे गए"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "अभी कोई चेकपॉइंट नहीं है। बदलाव करने वाले WP-CLI कमांड और प्लगइन व थीम अपडेट से पहले एक अपने-आप बन जाता है।"
+msgstr ""
+"अभी कोई चेकपॉइंट नहीं है। बदलाव करने वाले WP-CLI कमांड और प्लगइन व थीम अपडेट से पहले एक "
+"अपने-आप बन जाता है।"
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "चेकपॉइंट बहाल करने पर साइट की सभी तालिकाएँ दोबारा लिखी जाती हैं। इससे पहले एक सुरक्षा चेकपॉइंट बनाया जाता है।"
+msgstr ""
+"चेकपॉइंट बहाल करने पर साइट की सभी तालिकाएँ दोबारा लिखी जाती हैं। इससे पहले एक सुरक्षा "
+"चेकपॉइंट बनाया जाता है।"
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -953,6 +959,10 @@ msgstr ""
 #: admin/class-mcp-admin-logs.php:36
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "सभी ऑडिट लॉग प्रविष्टियाँ साफ़ करें? इसे पूर्ववत नहीं किया जा सकता।"
+
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "क्या आप निश्चित हैं? ऑडिट लॉग की सभी प्रविष्टियाँ हटा दी जाएँगी।"
 
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39

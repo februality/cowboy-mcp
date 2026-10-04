@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Japanese\n"
@@ -19,7 +19,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "エージェントが行った変更はすべて、変更前の状態とともにジャーナルに記録されます。変更を1件だけ取り消すことも、データベース全体をチェックポイントまで戻すこともできます。"
+msgstr ""
+"エージェントが行った変更はすべて、変更前の状態とともにジャーナルに記録されま"
+"す。変更を1件だけ取り消すことも、データベース全体をチェックポイントまで戻すこ"
+"ともできます。"
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -160,13 +163,17 @@ msgstr "%1$d / %2$d 件保持"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "チェックポイントはまだありません。変更を伴う WP-CLI コマンドやプラグイン・テーマの更新の前に自動で作成されます。"
+msgstr ""
+"チェックポイントはまだありません。変更を伴う WP-CLI コマンドやプラグイン・"
+"テーマの更新の前に自動で作成されます。"
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "チェックポイントを復元すると、サイトのすべてのテーブルが書き換えられます。先に復元前の安全用チェックポイントが作成されます。"
+msgstr ""
+"チェックポイントを復元すると、サイトのすべてのテーブルが書き換えられます。先"
+"に復元前の安全用チェックポイントが作成されます。"
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -784,7 +791,9 @@ msgstr "最初のアプリを接続"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "AIアプリまたはコーディングツールを選択してください。設定は1分ほどで完了します。"
+msgstr ""
+"AIアプリまたはコーディングツールを選択してください。設定は1分ほどで完了しま"
+"す。"
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -964,6 +973,10 @@ msgstr ""
 #: admin/class-mcp-admin-logs.php:36
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "すべての監査ログエントリを消去しますか？この操作は取り消せません。"
+
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "本当によろしいですか？監査ログのすべてのエントリが削除されます。"
 
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39

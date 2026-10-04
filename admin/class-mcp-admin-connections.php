@@ -501,7 +501,7 @@ class Cowboy_MCP_Admin_Connections {
             <div class="cmcp-card-h">
                 <h2 id="cmcp-connect-h"><?php echo $has_creds ? esc_html__( 'Connect another app', 'cowboy-mcp' ) : esc_html__( 'Connect your first app', 'cowboy-mcp' ); ?></h2>
                 <span class="cmcp-sub"><?php esc_html_e( 'Pick your AI app or coding tool — setup takes about a minute.', 'cowboy-mcp' ); ?></span>
-                <?php if ( $has_creds ) : ?>
+                <?php if ( $has_creds && ! $new_key ) : // A pending new key keeps the flow open until "I've saved my key". ?>
                     <div class="cmcp-right"><a class="cmcp-btn cmcp-btn--sm cmcp-btn--ghost" href="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection' ] ) ); ?>"><?php esc_html_e( 'Close', 'cowboy-mcp' ); ?></a></div>
                 <?php endif; ?>
             </div>

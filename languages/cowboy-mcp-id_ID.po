@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Indonesian\n"
@@ -19,7 +19,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "Setiap perubahan yang dibuat agen dicatat beserta kondisi sebelumnya. Batalkan satu perubahan, atau kembalikan seluruh database ke sebuah checkpoint."
+msgstr ""
+"Setiap perubahan yang dibuat agen dicatat beserta kondisi sebelumnya. "
+"Batalkan satu perubahan, atau kembalikan seluruh database ke sebuah "
+"checkpoint."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -160,13 +163,17 @@ msgstr "%1$d dari %2$d disimpan"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "Belum ada checkpoint. Satu dibuat otomatis sebelum perintah WP-CLI yang mengubah data serta pembaruan plugin dan tema."
+msgstr ""
+"Belum ada checkpoint. Satu dibuat otomatis sebelum perintah WP-CLI yang "
+"mengubah data serta pembaruan plugin dan tema."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "Memulihkan checkpoint akan menulis ulang semua tabel situs. Checkpoint pengaman dibuat lebih dulu."
+msgstr ""
+"Memulihkan checkpoint akan menulis ulang semua tabel situs. Checkpoint "
+"pengaman dibuat lebih dulu."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -789,7 +796,8 @@ msgstr "Hubungkan aplikasi pertama Anda"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "Pilih aplikasi AI atau alat pemrograman Anda — penyiapan sekitar satu menit."
+msgstr ""
+"Pilih aplikasi AI atau alat pemrograman Anda — penyiapan sekitar satu menit."
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -969,6 +977,10 @@ msgstr ""
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "Bersihkan semua entri log audit? Ini tidak dapat dibatalkan."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "Yakin? Semua entri log audit akan dihapus."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1027,7 +1039,9 @@ msgstr "Tampilkan detail"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "Perilaku server, seberapa banyak yang diingat, dan sejauh mana agen dapat menjangkau."
+msgstr ""
+"Perilaku server, seberapa banyak yang diingat, dan sejauh mana agen dapat "
+"menjangkau."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"

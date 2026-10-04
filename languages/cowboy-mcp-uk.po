@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Ukrainian\n"
@@ -20,7 +20,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "Кожна зміна, яку робить агент, записується в журнал разом із попереднім станом. Скасуйте одну зміну або поверніть усю базу даних до контрольної точки."
+msgstr ""
+"Кожна зміна, яку робить агент, записується в журнал разом із попереднім "
+"станом. Скасуйте одну зміну або поверніть усю базу даних до контрольної "
+"точки."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -163,13 +166,17 @@ msgstr "збережено: %1$d з %2$d"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "Контрольних точок поки немає. Одна створюється автоматично перед командами WP-CLI, що змінюють дані, та оновленнями плагінів і тем."
+msgstr ""
+"Контрольних точок поки немає. Одна створюється автоматично перед командами "
+"WP-CLI, що змінюють дані, та оновленнями плагінів і тем."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "Відновлення контрольної точки перезаписує всі таблиці сайту. Спершу створюється страхувальна контрольна точка."
+msgstr ""
+"Відновлення контрольної точки перезаписує всі таблиці сайту. Спершу "
+"створюється страхувальна контрольна точка."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -791,7 +798,9 @@ msgstr "Підключіть перший застосунок"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "Виберіть ШІ-застосунок або інструмент для розробки — налаштування займе близько хвилини."
+msgstr ""
+"Виберіть ШІ-застосунок або інструмент для розробки — налаштування займе "
+"близько хвилини."
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -971,6 +980,10 @@ msgstr ""
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "Очистити всі записи журналу аудиту? Цю дію не можна скасувати."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "Ви впевнені? Усі записи журналу аудиту буде видалено."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1029,7 +1042,8 @@ msgstr "Показати деталі"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "Як працює сервер, скільки він запам’ятовує і як далеко може зайти агент."
+msgstr ""
+"Як працює сервер, скільки він запам’ятовує і як далеко може зайти агент."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"
@@ -1205,7 +1219,8 @@ msgstr "WordPress Abilities API"
 
 #: admin/class-mcp-admin-settings.php:75
 msgid "Share tools with WordPress' own Abilities API, in both directions."
-msgstr "Обмін інструментами з вбудованим WordPress Abilities API в обидва боки."
+msgstr ""
+"Обмін інструментами з вбудованим WordPress Abilities API в обидва боки."
 
 #: admin/class-mcp-admin-settings.php:78
 msgid "Expose tools as WordPress Abilities"

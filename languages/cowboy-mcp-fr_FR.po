@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: French\n"
@@ -19,7 +19,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "Chaque modification effectuée par un agent est consignée avec son état antérieur. Annulez une modification isolée ou restaurez toute la base de données à un point de contrôle."
+msgstr ""
+"Chaque modification effectuée par un agent est consignée avec son état "
+"antérieur. Annulez une modification isolée ou restaurez toute la base de "
+"données à un point de contrôle."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -91,7 +94,9 @@ msgstr "par %s"
 #: admin/class-mcp-admin-activity.php:132
 #, php-format
 msgid "Undo change #%1$s? Restores %2$s to how it was before %3$s."
-msgstr "Annuler la modification n° %1$s ? Cela restaure %2$s dans l'état où il était avant %3$s."
+msgstr ""
+"Annuler la modification n° %1$s ? Cela restaure %2$s dans l'état où il était "
+"avant %3$s."
 
 #: admin/class-mcp-admin-activity.php:139
 msgid "Undo ALL active changes in this batch (newest first)?"
@@ -163,13 +168,18 @@ msgstr "%1$d sur %2$d conservés"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "Aucun point de contrôle pour l'instant. Un point est créé automatiquement avant les commandes WP-CLI qui modifient des données et avant les mises à jour d'extensions et de thèmes."
+msgstr ""
+"Aucun point de contrôle pour l'instant. Un point est créé automatiquement "
+"avant les commandes WP-CLI qui modifient des données et avant les mises à "
+"jour d'extensions et de thèmes."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "La restauration d'un point de contrôle réécrit toutes les tables du site. Un point de contrôle de sécurité est d'abord créé."
+msgstr ""
+"La restauration d'un point de contrôle réécrit toutes les tables du site. Un "
+"point de contrôle de sécurité est d'abord créé."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -803,7 +813,9 @@ msgstr "Connectez votre première application"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "Choisissez votre application d'IA ou votre outil de développement : la configuration prend environ une minute."
+msgstr ""
+"Choisissez votre application d'IA ou votre outil de développement : la "
+"configuration prend environ une minute."
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -984,6 +996,10 @@ msgid "Clear all audit log entries? This cannot be undone."
 msgstr ""
 "Vider toutes les entrées du journal d'audit ? Cette action est irréversible."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "Vraiment ? Toutes les entrées du journal d’audit seront supprimées."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1042,7 +1058,9 @@ msgstr "Afficher les détails"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "Comment le serveur se comporte, ce dont il se souvient et jusqu'où un agent peut aller."
+msgstr ""
+"Comment le serveur se comporte, ce dont il se souvient et jusqu'où un agent "
+"peut aller."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"
@@ -1155,7 +1173,8 @@ msgstr "Annulation et points de contrôle"
 
 #: admin/class-mcp-admin-settings.php:60
 msgid "What gets remembered so any change can be rolled back."
-msgstr "Ce qui est conservé pour pouvoir annuler n'importe quelle modification."
+msgstr ""
+"Ce qui est conservé pour pouvoir annuler n'importe quelle modification."
 
 #: admin/class-mcp-admin-settings.php:63
 msgid ""
@@ -1225,7 +1244,8 @@ msgstr "WordPress Abilities API"
 
 #: admin/class-mcp-admin-settings.php:75
 msgid "Share tools with WordPress' own Abilities API, in both directions."
-msgstr "Partagez des outils avec l'Abilities API de WordPress, dans les deux sens."
+msgstr ""
+"Partagez des outils avec l'Abilities API de WordPress, dans les deux sens."
 
 #: admin/class-mcp-admin-settings.php:78
 msgid "Expose tools as WordPress Abilities"
@@ -1319,7 +1339,9 @@ msgstr "Les réglages propres à l'extension"
 
 #: admin/class-mcp-admin-settings.php:117
 msgid "Self-delete and last-admin guards"
-msgstr "Protections contre l'auto-suppression et la suppression du dernier administrateur"
+msgstr ""
+"Protections contre l'auto-suppression et la suppression du dernier "
+"administrateur"
 
 #: admin/class-mcp-admin-settings.php:118
 msgid "Secret redaction in results"

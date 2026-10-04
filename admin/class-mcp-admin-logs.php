@@ -33,7 +33,7 @@ class Cowboy_MCP_Admin_Logs {
         ?>
         <div class="cmcp-lede-row">
             <p class="cmcp-lede"><?php esc_html_e( 'Structured log of all MCP tool calls, errors, and auth events. Auto-pruned after 30 days.', 'cowboy-mcp' ); ?></p>
-            <form method="post" class="cmcp-right" data-cmcp-confirm="<?php esc_attr_e( 'Clear all audit log entries? This cannot be undone.', 'cowboy-mcp' ); ?>" data-cmcp-confirm-tone="danger">
+            <form method="post" class="cmcp-right" data-cmcp-confirm="<?php esc_attr_e( 'Clear all audit log entries? This cannot be undone.', 'cowboy-mcp' ); ?>" data-cmcp-confirm-2="<?php esc_attr_e( 'Really sure? Every audit log entry will be deleted.', 'cowboy-mcp' ); ?>" data-cmcp-confirm-tone="danger">
                 <span class="cmcp-sub"><?php
                     /* translators: %s: total number of log entries */
                     printf( esc_html__( '%s entries total', 'cowboy-mcp' ), esc_html( number_format_i18n( $total ) ) );

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -19,7 +19,9 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "代理所做的每项更改都会连同更改前的状态记入日志。您可以撤销单项更改，也可以将整个数据库回滚到某个检查点。"
+msgstr ""
+"代理所做的每项更改都会连同更改前的状态记入日志。您可以撤销单项更改，也可以将"
+"整个数据库回滚到某个检查点。"
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -160,7 +162,9 @@ msgstr "已保留 %1$d / %2$d"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "尚无检查点。在执行会修改数据的 WP-CLI 命令以及更新插件和主题之前，系统会自动创建一个。"
+msgstr ""
+"尚无检查点。在执行会修改数据的 WP-CLI 命令以及更新插件和主题之前，系统会自动"
+"创建一个。"
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
@@ -927,6 +931,10 @@ msgstr "所有 MCP 工具调用、错误和身份验证事件的结构化日志�
 #: admin/class-mcp-admin-logs.php:36
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "清除所有审计日志条目？此操作无法撤销。"
+
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "确定吗？所有审计日志条目都将被删除。"
 
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -19,7 +19,9 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "에이전트가 수행한 모든 변경은 변경 전 상태와 함께 기록됩니다. 변경 하나를 실행 취소하거나 데이터베이스 전체를 체크포인트로 되돌릴 수 있습니다."
+msgstr ""
+"에이전트가 수행한 모든 변경은 변경 전 상태와 함께 기록됩니다. 변경 하나를 실"
+"행 취소하거나 데이터베이스 전체를 체크포인트로 되돌릴 수 있습니다."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -91,7 +93,9 @@ msgstr "%s 작업"
 #: admin/class-mcp-admin-activity.php:132
 #, php-format
 msgid "Undo change #%1$s? Restores %2$s to how it was before %3$s."
-msgstr "변경 #%1$s을(를) 실행 취소하시겠습니까? %2$s을(를) %3$s 이전 상태로 복원합니다."
+msgstr ""
+"변경 #%1$s을(를) 실행 취소하시겠습니까? %2$s을(를) %3$s 이전 상태로 복원합니"
+"다."
 
 #: admin/class-mcp-admin-activity.php:139
 msgid "Undo ALL active changes in this batch (newest first)?"
@@ -160,13 +164,17 @@ msgstr "%1$d/%2$d 보관 중"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "아직 체크포인트가 없습니다. 변경을 가하는 WP-CLI 명령과 플러그인 및 테마 업데이트 전에 자동으로 생성됩니다."
+msgstr ""
+"아직 체크포인트가 없습니다. 변경을 가하는 WP-CLI 명령과 플러그인 및 테마 업데"
+"이트 전에 자동으로 생성됩니다."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "체크포인트를 복원하면 사이트의 모든 테이블이 덮어쓰여집니다. 복원 전에 안전 체크포인트가 먼저 생성됩니다."
+msgstr ""
+"체크포인트를 복원하면 사이트의 모든 테이블이 덮어쓰여집니다. 복원 전에 안전 "
+"체크포인트가 먼저 생성됩니다."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -959,6 +967,10 @@ msgstr ""
 msgid "Clear all audit log entries? This cannot be undone."
 msgstr "모든 감사 로그 항목을 지우시겠습니까? 이 작업은 취소할 수 없습니다."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "정말 진행할까요? 모든 감사 로그 항목이 삭제됩니다."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1017,7 +1029,9 @@ msgstr "세부정보 표시"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "서버의 동작 방식, 기억하는 정보의 양, 에이전트가 접근할 수 있는 범위를 설정합니다."
+msgstr ""
+"서버의 동작 방식, 기억하는 정보의 양, 에이전트가 접근할 수 있는 범위를 설정합"
+"니다."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"

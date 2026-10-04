@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -19,7 +19,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "Cada alteração feita por um agente é registrada com o estado anterior. Desfaça uma única alteração ou reverta todo o banco de dados para um ponto de verificação."
+msgstr ""
+"Cada alteração feita por um agente é registrada com o estado anterior. "
+"Desfaça uma única alteração ou reverta todo o banco de dados para um ponto "
+"de verificação."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -163,13 +166,17 @@ msgstr "%1$d de %2$d mantidos"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "Ainda não há pontos de verificação. Um é criado automaticamente antes de comandos WP-CLI que modificam dados e de atualizações de plugins e temas."
+msgstr ""
+"Ainda não há pontos de verificação. Um é criado automaticamente antes de "
+"comandos WP-CLI que modificam dados e de atualizações de plugins e temas."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "Restaurar um ponto de verificação reescreve todas as tabelas do site. Um ponto de verificação de segurança é criado antes."
+msgstr ""
+"Restaurar um ponto de verificação reescreve todas as tabelas do site. Um "
+"ponto de verificação de segurança é criado antes."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -795,7 +802,9 @@ msgstr "Conecte seu primeiro app"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "Escolha seu app de IA ou ferramenta de programação — a configuração leva cerca de um minuto."
+msgstr ""
+"Escolha seu app de IA ou ferramenta de programação — a configuração leva "
+"cerca de um minuto."
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -976,6 +985,10 @@ msgstr ""
 "Limpar todas as entradas do registro de auditoria? Isso não pode ser "
 "desfeito."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "Tem certeza? Todas as entradas do log de auditoria serão excluídas."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1034,7 +1047,9 @@ msgstr "Mostrar detalhes"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "Como o servidor se comporta, quanto ele memoriza e até onde um agente pode chegar."
+msgstr ""
+"Como o servidor se comporta, quanto ele memoriza e até onde um agente pode "
+"chegar."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"
@@ -1212,7 +1227,9 @@ msgstr "WordPress Abilities API"
 
 #: admin/class-mcp-admin-settings.php:75
 msgid "Share tools with WordPress' own Abilities API, in both directions."
-msgstr "Compartilhe ferramentas com a Abilities API do próprio WordPress, nos dois sentidos."
+msgstr ""
+"Compartilhe ferramentas com a Abilities API do próprio WordPress, nos dois "
+"sentidos."
 
 #: admin/class-mcp-admin-settings.php:78
 msgid "Expose tools as WordPress Abilities"

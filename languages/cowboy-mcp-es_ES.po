@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-04 02:00-0700\n"
+"POT-Creation-Date: 2026-10-04 02:13-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Spanish\n"
@@ -19,7 +19,10 @@ msgstr ""
 msgid ""
 "Every change an agent makes is journaled with its before-state. Undo a "
 "single change, or roll the whole database back to a checkpoint."
-msgstr "Cada cambio que realiza un agente se registra con su estado anterior. Deshaga un cambio concreto o restaure toda la base de datos a un punto de control."
+msgstr ""
+"Cada cambio que realiza un agente se registra con su estado anterior. "
+"Deshaga un cambio concreto o restaure toda la base de datos a un punto de "
+"control."
 
 #: admin/class-mcp-admin-activity.php:49
 msgid "Change journal"
@@ -91,7 +94,8 @@ msgstr "por %s"
 #: admin/class-mcp-admin-activity.php:132
 #, php-format
 msgid "Undo change #%1$s? Restores %2$s to how it was before %3$s."
-msgstr "¿Deshacer el cambio n.º %1$s? Restaura %2$s a como estaba antes de %3$s."
+msgstr ""
+"¿Deshacer el cambio n.º %1$s? Restaura %2$s a como estaba antes de %3$s."
 
 #: admin/class-mcp-admin-activity.php:139
 msgid "Undo ALL active changes in this batch (newest first)?"
@@ -162,13 +166,18 @@ msgstr "%1$d de %2$d conservados"
 msgid ""
 "No checkpoints yet. One is taken automatically before mutating WP-CLI "
 "commands and plugin & theme updates."
-msgstr "Aún no hay puntos de control. Se crea uno automáticamente antes de los comandos WP-CLI que modifican datos y de las actualizaciones de plugins y temas."
+msgstr ""
+"Aún no hay puntos de control. Se crea uno automáticamente antes de los "
+"comandos WP-CLI que modifican datos y de las actualizaciones de plugins y "
+"temas."
 
 #: admin/class-mcp-admin-activity.php:235
 msgid ""
 "Restoring a checkpoint rewrites every site table. A pre-restore safety "
 "checkpoint is taken first."
-msgstr "Restaurar un punto de control reescribe todas las tablas del sitio. Antes se crea un punto de control de seguridad."
+msgstr ""
+"Restaurar un punto de control reescribe todas las tablas del sitio. Antes se "
+"crea un punto de control de seguridad."
 
 #: admin/class-mcp-admin-activity.php:239
 #: admin/class-mcp-admin-activity.php:240
@@ -803,7 +812,9 @@ msgstr "Conecte su primera aplicación"
 
 #: admin/class-mcp-admin-connections.php:503
 msgid "Pick your AI app or coding tool — setup takes about a minute."
-msgstr "Elija su aplicación de IA o herramienta de programación: la configuración lleva alrededor de un minuto."
+msgstr ""
+"Elija su aplicación de IA o herramienta de programación: la configuración "
+"lleva alrededor de un minuto."
 
 #: admin/class-mcp-admin-connections.php:505
 msgid "Close"
@@ -985,6 +996,10 @@ msgstr ""
 "¿Vaciar todas las entradas del registro de auditoría? Esto no se puede "
 "deshacer."
 
+#: admin/class-mcp-admin-logs.php:36
+msgid "Really sure? Every audit log entry will be deleted."
+msgstr "¿Seguro? Se eliminarán todas las entradas del registro de auditoría."
+
 #. translators: %s: total number of log entries
 #: admin/class-mcp-admin-logs.php:39
 #, php-format
@@ -1043,7 +1058,9 @@ msgstr "Mostrar detalles"
 msgid ""
 "How the server behaves, how much it remembers, and how far an agent may "
 "reach."
-msgstr "Cómo se comporta el servidor, cuánto recuerda y hasta dónde puede llegar un agente."
+msgstr ""
+"Cómo se comporta el servidor, cuánto recuerda y hasta dónde puede llegar un "
+"agente."
 
 #: admin/class-mcp-admin-settings.php:23
 msgid "General"
@@ -1051,7 +1068,8 @@ msgstr "General"
 
 #: admin/class-mcp-admin-settings.php:24
 msgid "Server switch, safety gate and request limits."
-msgstr "Interruptor del servidor, puerta de seguridad y límites de solicitudes."
+msgstr ""
+"Interruptor del servidor, puerta de seguridad y límites de solicitudes."
 
 #: admin/class-mcp-admin-settings.php:27
 msgid "MCP Server"
@@ -1222,7 +1240,9 @@ msgstr "WordPress Abilities API"
 
 #: admin/class-mcp-admin-settings.php:75
 msgid "Share tools with WordPress' own Abilities API, in both directions."
-msgstr "Comparta herramientas con la Abilities API de WordPress, en ambas direcciones."
+msgstr ""
+"Comparta herramientas con la Abilities API de WordPress, en ambas "
+"direcciones."
 
 #: admin/class-mcp-admin-settings.php:78
 msgid "Expose tools as WordPress Abilities"
@@ -1317,7 +1337,9 @@ msgstr "Los ajustes propios del plugin"
 
 #: admin/class-mcp-admin-settings.php:117
 msgid "Self-delete and last-admin guards"
-msgstr "Protecciones contra la autoeliminación y contra eliminar al último administrador"
+msgstr ""
+"Protecciones contra la autoeliminación y contra eliminar al último "
+"administrador"
 
 #: admin/class-mcp-admin-settings.php:118
 msgid "Secret redaction in results"

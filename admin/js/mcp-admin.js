@@ -333,10 +333,18 @@
 			preset = [];
 		}
 		preset.forEach(function (name) {
-			var cb = slot.querySelector('input[name="allowed_tools[]"][value="' + name + '"]');
+			var cb = Array.prototype.find.call(slot.querySelectorAll('input[name="allowed_tools[]"]'), function (c) { return c.value === name; });
 			if (cb) {
 				cb.checked = true;
+				return;
 			}
+			// Stored tool that is not registered right now (inactive plugin, classic theme, abilities off):
+			// keep it in the scope instead of silently dropping it on save.
+			var keep = document.createElement('input');
+			keep.type = 'hidden';
+			keep.name = 'allowed_tools[]';
+			keep.value = name;
+			slot.appendChild(keep);
 		});
 	}
 

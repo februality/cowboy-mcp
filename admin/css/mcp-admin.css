@@ -83,6 +83,8 @@
 
 /* ── Tables ── */
 .cmcp-table-wrap { overflow-x: auto; }
+/* The apps table holds dropdown menus; a scrolling wrapper would clip them. Its cells wrap instead. */
+.cmcp-table-wrap:has(.cmcp-apps) { overflow: visible; }
 .wrap.cmcp table.cmcp-t { width: 100%; border-collapse: collapse; font-size: 13.5px; border: 0; }
 .cmcp-t th { text-align: left; font-weight: 600; font-size: 12px; color: var(--cmcp-muted); padding: 9px 12px; border-bottom: 1px solid var(--cmcp-border); background: var(--cmcp-surface-2); white-space: nowrap; }
 .cmcp-t td { padding: 10px 12px; border-bottom: 1px solid var(--cmcp-border); vertical-align: middle; }
