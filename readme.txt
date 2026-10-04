@@ -61,9 +61,12 @@ Up to 184 tools. The core set is always on; integrations light up automatically 
 * **Safety** - list changes, undo a change, create/list/restore/delete database checkpoints (6) · batch execution and audit-log retrieval (2)
 * **WooCommerce MCP** - products and variations, orders and refunds, customers, coupons, tax and shipping settings, reports (40)
 * **Wordfence** - scans, blocks, firewall, live traffic, activity, settings (17)
-* **ACF MCP** - field groups, fields, values, repeaters (9) · **Elementor MCP** - templates, page content, global styles, widgets (7)
+* **ACF MCP** - field groups, fields, values, repeaters (9)
+* **Elementor MCP** - templates, page content, global styles, widgets (7)
 * **Events** - The Events Calendar events, venues, organizers (11) plus Events Calendar Pro recurrence and occurrences (2)
-* **SEO MCP** - Yoast SEO, Rank Math, All in One SEO and SEOPress meta read/write/audit (4) · **Cache** - WP Rocket, LiteSpeed Cache, W3 Total Cache (4) · **Forms** - WPForms, Gravity Forms, Contact Form 7 (1)
+* **SEO MCP** - Yoast SEO, Rank Math, All in One SEO and SEOPress meta read/write/audit (4)
+* **Cache** - WP Rocket, LiteSpeed Cache, W3 Total Cache (4)
+* **Forms** - WPForms, Gravity Forms, Contact Form 7 (1)
 
 Plus 17 read-only MCP resources, 4 resource templates and 8 guided workflow prompts (site audit, troubleshooting, SEO, security hardening, performance and more).
 
