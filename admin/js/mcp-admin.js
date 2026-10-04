@@ -100,24 +100,15 @@
 		} );
 	}
 
-	/* ── Audit log detail expand/collapse ────────────────── */
-	document.querySelectorAll( '.mcp-log-row' ).forEach( function( row ) {
-		row.addEventListener( 'click', function() {
-			var detail = row.nextElementSibling;
-			if ( ! detail || ! detail.classList.contains( 'mcp-log-detail' ) ) {
-				return;
-			}
-			var arrow = row.querySelector( '.mcp-expand-arrow' );
-			if ( detail.style.display === 'table-row' ) {
-				detail.style.display = 'none';
-				if ( arrow ) {
-					arrow.textContent = '\u25B6';
-				}
-			} else {
-				detail.style.display = 'table-row';
-				if ( arrow ) {
-					arrow.textContent = '\u25BC';
-				}
+	/* ── Log rows: caret toggles the detail row ── */
+	document.querySelectorAll( '.cmcp-caret' ).forEach( function( btn ) {
+		btn.addEventListener( 'click', function() {
+			var detail = document.getElementById( btn.getAttribute( 'aria-controls' ) );
+			var open = btn.getAttribute( 'aria-expanded' ) !== 'true';
+			btn.setAttribute( 'aria-expanded', String( open ) );
+			btn.closest( 'tr' ).classList.toggle( 'is-open', open );
+			if ( detail ) {
+				detail.hidden = ! open;
 			}
 		} );
 	} );

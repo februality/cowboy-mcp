@@ -235,3 +235,19 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-acts form { margin: 0; }
 .cmcp-conflict-card .cmcp-inline-confirm { margin: 0; }
 .cmcp-inline-confirm form { margin: 0; }
+
+/* ── Logs ── */
+.cmcp-filters { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; padding: 12px 14px; border-bottom: 1px solid var(--cmcp-border); margin: 0; }
+.cmcp-filters label { font-size: 12px; color: var(--cmcp-muted); display: flex; flex-direction: column; gap: 3px; }
+.wrap.cmcp .cmcp-filters .cmcp-input { height: 32px; font-size: 13px; }
+.cmcp-reset { align-self: flex-end; padding-bottom: 8px; }
+.cmcp-ev { font-family: var(--cmcp-mono); font-size: 12.5px; padding: 1px 7px; border-radius: 4px; background: #efefeb; }
+.cmcp-ev--err { background: var(--cmcp-warn-bg); color: var(--cmcp-warn); }
+.cmcp-ev--exc { background: var(--cmcp-danger-bg); color: var(--cmcp-danger); }
+.cmcp-ev--auth { background: var(--cmcp-info-bg); color: #2a3342; }
+.wrap.cmcp .cmcp-caret { border: 0; background: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; color: var(--cmcp-muted); display: inline-flex; align-items: center; justify-content: center; margin: 0 2px 0 -6px; padding: 0; vertical-align: middle; }
+.cmcp-caret svg { width: 12px; height: 12px; transition: transform .15s; }
+tr.is-open .cmcp-caret svg { transform: rotate(90deg); }
+.cmcp-cspace { display: inline-block; width: 18px; }
+tr.cmcp-detail td { padding: 0 18px 14px 40px; background: var(--cmcp-surface-2); }
+tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: auto; border-radius: var(--cmcp-radius-sm); }

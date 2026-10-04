@@ -1,33 +1,8 @@
 .mcp-admin .postbox { margin-bottom: 20px; }
 .mcp-admin .postbox-header { cursor: default; }
 .mcp-admin .postbox-header h2 { padding: 8px 12px; }
-
-.mcp-filter-form {
-    display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin: 12px 0;
-}
-.mcp-filter-label {
-    display: flex; flex-direction: column; gap: 2px; font-size: 12px;
-}
-.mcp-pagination {
-    margin-top: 12px; display: flex; gap: 8px; align-items: center;
-}
-.mcp-clear-form { margin-bottom: 12px; }
 .mcp-nav-tabs { margin-bottom: 20px; }
 .mcp-revoke-form { display: inline; }
-.mcp-audit-table { font-size: 13px; }
-
-.mcp-filter-badge {
-    display: inline-block; background: #f0f6fc; color: #2271b1;
-    padding: 2px 8px; border-radius: 3px; font-size: 12px; margin-left: 8px;
-}
-.mcp-filter-badge a { text-decoration: none; }
-
-.mcp-log-detail { display: none; }
-.mcp-log-detail td { background: #f6f7f7; padding: 8px 12px; }
-.mcp-log-detail pre { margin: 0; white-space: pre-wrap; font-size: 12px; max-height: 300px; overflow-y: auto; }
-.mcp-log-row { cursor: pointer; }
-.mcp-log-row:hover td { background: #f0f6fc; }
-.mcp-expand-arrow { font-size: 10px; margin-right: 4px; }
 
 @media (max-width: 782px) {
     .mcp-table-wrap {
@@ -78,4 +53,3 @@
 .mcp-res-title { font-size: 16px; font-weight: 600; color: #2271b1; }
 .mcp-res-sub { font-size: 13px; color: #50575e; }
 .mcp-about-foot { margin: 18px 0 0; color: #646970; font-size: 12px; }
-.mcp-pagination { margin-top:10px; }
