@@ -443,3 +443,85 @@ document.addEventListener('submit', function (e) {
 		setTimeout( tick, 1000 );
 	} )();
 })();
+/* ── In-page confirmations: <form data-cmcp-confirm="…"> (replaces window.confirm) ── */
+( function() {
+	'use strict';
+	var l10n = window.cowboyMcpAdmin || {};
+
+	function close( form ) {
+		if ( form._cmcpConfirm ) {
+			form._cmcpConfirm.remove();
+			form._cmcpConfirm = null;
+		}
+	}
+
+	function place( form, box ) {
+		var row = form.closest( 'tr' );
+		if ( row && row.parentNode ) {
+			var tr = document.createElement( 'tr' ), td = document.createElement( 'td' );
+			tr.className = 'cmcp-panel-row';
+			td.colSpan = row.cells.length;
+			td.appendChild( box );
+			tr.appendChild( td );
+			row.after( tr );
+			form._cmcpConfirm = tr;
+		} else {
+			form.after( box );
+			form._cmcpConfirm = box;
+		}
+		var menu = form.closest( 'details' );
+		if ( menu ) {
+			menu.open = false;
+		}
+		box.querySelector( '[data-cmcp-go]' ).focus();
+	}
+
+	function build( form, submitter, step ) {
+		var msg   = form.getAttribute( step === 2 ? 'data-cmcp-confirm-2' : 'data-cmcp-confirm' );
+		var tone  = form.getAttribute( 'data-cmcp-confirm-tone' ) || 'plain';
+		var label = form.getAttribute( 'data-cmcp-confirm-label' ) || ( submitter && submitter.textContent.trim().replace( /…$/, '' ) ) || l10n.confirm || 'Confirm';
+		var box = document.createElement( 'div' ), text = document.createElement( 'span' ), cancel = document.createElement( 'button' ), go = document.createElement( 'button' );
+		box.className = 'cmcp-inline-confirm cmcp-inline-confirm--' + tone;
+		box.setAttribute( 'role', 'alert' );
+		text.className = 'cmcp-msg';
+		text.textContent = msg;
+		cancel.type = 'button';
+		cancel.className = 'cmcp-btn cmcp-btn--sm';
+		cancel.textContent = l10n.cancel || 'Cancel';
+		go.type = 'button';
+		go.className = 'cmcp-btn cmcp-btn--sm ' + ( tone === 'danger' ? 'cmcp-btn--danger-solid' : 'cmcp-btn--primary' );
+		go.setAttribute( 'data-cmcp-go', '' );
+		go.textContent = label;
+		box.append( text, cancel, go );
+		cancel.addEventListener( 'click', function() {
+			close( form );
+			if ( submitter ) {
+				submitter.focus();
+			}
+		} );
+		go.addEventListener( 'click', function() {
+			close( form );
+			if ( step === 1 && form.hasAttribute( 'data-cmcp-confirm-2' ) ) {
+				place( form, build( form, submitter, 2 ) );
+				return;
+			}
+			form.dataset.cmcpConfirmed = '1';
+			form.requestSubmit( submitter || undefined );
+		} );
+		return box;
+	}
+
+	document.addEventListener( 'submit', function( e ) {
+		var form = e.target;
+		if ( ! form.matches || ! form.matches( 'form[data-cmcp-confirm]' ) ) {
+			return;
+		}
+		if ( form.dataset.cmcpConfirmed === '1' ) {
+			delete form.dataset.cmcpConfirmed;
+			return;
+		}
+		e.preventDefault();
+		close( form );
+		place( form, build( form, e.submitter || null, 1 ) );
+	}, true );
+} )();

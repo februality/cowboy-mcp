@@ -138,6 +138,10 @@ class Cowboy_MCP_Admin {
         $css_ver  = file_exists( $css_path ) ? (string) filemtime( $css_path ) : COWBOY_MCP_VERSION;
         $js_ver   = file_exists( $js_path )  ? (string) filemtime( $js_path )  : COWBOY_MCP_VERSION;
 
+        $legacy_path = COWBOY_MCP_PATH . 'admin/css/mcp-admin-legacy.css';
+        if ( file_exists( $legacy_path ) ) { // Temporary: removed with the file in the cleanup task.
+            wp_enqueue_style( 'cowboy-mcp-admin-legacy', COWBOY_MCP_URL . 'admin/css/mcp-admin-legacy.css', [], (string) filemtime( $legacy_path ) );
+        }
         wp_enqueue_style(
             'cowboy-mcp-admin',
             COWBOY_MCP_URL . 'admin/css/mcp-admin.css',
@@ -157,6 +161,9 @@ class Cowboy_MCP_Admin {
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
             'gateOff'      => __( 'New connections: disabled', 'cowboy-mcp' ),
             'gateEnable'   => __( 'Enable for 30 minutes', 'cowboy-mcp' ),
+            'cancel'       => __( 'Cancel', 'cowboy-mcp' ),
+            'confirm'      => __( 'Confirm', 'cowboy-mcp' ),
+            'copied'       => __( 'Copied!', 'cowboy-mcp' ),
         ] );
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
@@ -465,66 +472,137 @@ class Cowboy_MCP_Admin {
 
     /* ── Page renderer ────────────────────────────────────── */
 
+    /** Resolve the requested tab (with the legacy `audit-log` alias). */
+    private static function active_tab(): string {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view routing.
+        $raw = sanitize_key( wp_unslash( $_GET['tab'] ?? 'connection' ) );
+        $map = [ 'connection' => 'connection', 'activity' => 'activity', 'logs' => 'logs', 'audit-log' => 'logs', 'settings' => 'settings', 'about' => 'about' ];
+        return $map[ $raw ] ?? 'connection';
+    }
+
+    /** options-general.php?page=cowboy-mcp URL; empty values are dropped. */
+    public static function url( array $args = [] ): string {
+        $args = array_filter( array_merge( [ 'page' => self::SLUG ], $args ), static fn( $v ) => '' !== (string) $v );
+        return add_query_arg( $args, admin_url( 'options-general.php' ) );
+    }
+
     public static function render_page(): void {
-        $settings = get_option( 'cowboy_mcp_settings', [] );
-        $keys     = Cowboy_MCP_Auth::list_keys();
-        $endpoint = rest_url( 'cowboy-mcp/v1/endpoint' );
-        $new_key  = get_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
-
-        $active_client = (string) get_user_meta( get_current_user_id(), 'cowboy_mcp_conn_client', true );
-        if ( ! array_key_exists( $active_client, self::client_registry() ) ) {
-            $active_client = '';
-        }
-
-        // Tab routing with backwards compat.
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $raw_tab = sanitize_text_field( wp_unslash( $_GET['tab'] ?? 'connection' ) );
-
-        $tab_map = [
-            'connection' => 'connection',
-            'settings'   => 'settings',
-            'activity'   => 'activity',
-            'audit-log'  => 'logs',
-            'logs'       => 'logs',
-            'about'      => 'about',
+        $settings   = get_option( 'cowboy_mcp_settings', [] );
+        $active_tab = self::active_tab();
+        $tabs       = [
+            'connection' => __( 'Connections', 'cowboy-mcp' ),
+            'activity'   => __( 'Activity', 'cowboy-mcp' ),
+            'logs'       => __( 'Logs', 'cowboy-mcp' ),
+            'settings'   => __( 'Settings', 'cowboy-mcp' ),
+            'about'      => __( 'About', 'cowboy-mcp' ),
         ];
-        $active_tab = $tab_map[ $raw_tab ] ?? 'connection';
-
         ?>
-        <div class="wrap mcp-admin">
-            <h1><?php
-                /* translators: plugin version */
-                printf( '&#x1f50c; %s <small style="font-size:12px;color:#888">v%s</small>',
-                    esc_html__( 'Cowboy MCP', 'cowboy-mcp' ),
-                    esc_html( COWBOY_MCP_VERSION )
-                );
-            ?></h1>
-            <p class="description"><?php
-                echo wp_kses(
-                    __( 'Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or <strong>Codex</strong> to this WordPress site over the Model Context Protocol.', 'cowboy-mcp' ),
-                    [ 'strong' => [] ]
-                );
-            ?></p>
-
-            <nav class="nav-tab-wrapper mcp-nav-tabs">
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=connection" class="nav-tab <?php echo esc_attr( $active_tab === 'connection' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Connection', 'cowboy-mcp' ); ?></a>
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=settings" class="nav-tab <?php echo esc_attr( $active_tab === 'settings' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Settings', 'cowboy-mcp' ); ?></a>
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=activity" class="nav-tab <?php echo esc_attr( $active_tab === 'activity' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Activity', 'cowboy-mcp' ); ?></a>
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=logs" class="nav-tab <?php echo esc_attr( $active_tab === 'logs' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Logs', 'cowboy-mcp' ); ?></a>
-                <a href="?page=<?php echo esc_attr( self::SLUG ); ?>&tab=about" class="nav-tab <?php echo esc_attr( $active_tab === 'about' ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'About', 'cowboy-mcp' ); ?></a>
-            </nav>
-
-            <?php
-            match ( $active_tab ) {
-                'settings' => self::render_settings_tab( $settings ),
-                'activity' => self::render_activity_tab(),
-                'logs'     => self::render_logs_tab(),
-                'about'    => self::render_about_tab(),
-                default    => self::render_connection_tab( $keys, $endpoint, $new_key, $active_client ),
-            };
-            ?>
-
+        <div class="wrap mcp-admin cmcp">
+            <header class="cmcp-head">
+                <div class="cmcp-brand">
+                    <img class="cmcp-logo" src="<?php echo esc_url( COWBOY_MCP_URL . 'admin/images/icon-128.png' ); ?>" alt="" width="32" height="32">
+                    <span class="cmcp-name"><?php esc_html_e( 'Cowboy MCP', 'cowboy-mcp' ); ?></span>
+                    <span class="cmcp-ver">v<?php echo esc_html( COWBOY_MCP_VERSION ); ?></span>
+                    <?php self::render_exceptions( $settings ); ?>
+                </div>
+                <nav class="cmcp-tabs" aria-label="<?php esc_attr_e( 'Cowboy MCP sections', 'cowboy-mcp' ); ?>">
+                    <?php foreach ( $tabs as $slug => $label ) : ?>
+                        <a class="cmcp-tab" href="<?php echo esc_url( self::url( [ 'tab' => $slug ] ) ); ?>"<?php echo $slug === $active_tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
+                    <?php endforeach; ?>
+                </nav>
+            </header>
+            <?php self::render_offbar( $settings ); ?>
+            <h1 class="screen-reader-text"><?php echo esc_html( $tabs[ $active_tab ] ); ?></h1>
+            <div class="cmcp-body">
+                <?php
+                $keys          = Cowboy_MCP_Auth::list_keys();
+                $endpoint      = rest_url( 'cowboy-mcp/v1/endpoint' );
+                $new_key       = get_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
+                $active_client = (string) get_user_meta( get_current_user_id(), 'cowboy_mcp_conn_client', true );
+                if ( ! array_key_exists( $active_client, self::client_registry() ) ) {
+                    $active_client = '';
+                }
+                match ( $active_tab ) {
+                    'settings' => self::render_settings_tab( $settings ),
+                    'activity' => self::render_activity_tab(),
+                    'logs'     => self::render_logs_tab(),
+                    'about'    => self::render_about_tab(),
+                    default    => self::render_connection_tab( $keys, $endpoint, $new_key, $active_client ),
+                };
+                ?>
+            </div>
         </div>
+        <?php
+    }
+
+    /** Header status: only states that differ from the safe defaults. */
+    private static function render_exceptions( array $s ): void {
+        $chips = [];
+        if ( ! empty( $s['power_mode'] ) ) {
+            $chips[] = [ 'red', '#cmcp-power', __( 'Power mode on', 'cowboy-mcp' ) ];
+        }
+        if ( ! ( $s['safe_mode'] ?? true ) ) {
+            $chips[] = [ 'amber', '#cmcp-safe-mode', __( 'Safe mode off', 'cowboy-mcp' ) ];
+        }
+        if ( ! $chips ) {
+            return;
+        }
+        echo '<div class="cmcp-exceptions">';
+        foreach ( $chips as [ $tone, $anchor, $label ] ) {
+            printf(
+                '<a class="cmcp-xchip cmcp-xchip--%1$s" href="%2$s">%3$s%4$s</a>',
+                esc_attr( $tone ),
+                esc_url( self::url( [ 'tab' => 'settings' ] ) . $anchor ),
+                self::icon( 'warning' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literal.
+                esc_html( $label )
+            );
+        }
+        echo '</div>';
+    }
+
+    /** Full-width bar while the MCP server is switched off. */
+    private static function render_offbar( array $s ): void {
+        if ( $s['enabled'] ?? true ) {
+            return;
+        }
+        ?>
+        <div class="cmcp-offbar" role="status">
+            <span><strong><?php esc_html_e( 'MCP server is off.', 'cowboy-mcp' ); ?></strong> <?php esc_html_e( 'Every request from AI apps is rejected.', 'cowboy-mcp' ); ?></span>
+            <a class="cmcp-btn cmcp-btn--sm" href="<?php echo esc_url( self::url( [ 'tab' => 'settings' ] ) . '#cmcp-enabled' ); ?>"><?php esc_html_e( 'Turn on in Settings', 'cowboy-mcp' ); ?></a>
+        </div>
+        <?php
+    }
+
+    /** Static, trusted SVG icons (stroke = currentColor). */
+    public static function icon( string $name ): string {
+        $p = [
+            'kebab'    => '<circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"></circle><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"></circle>',
+            'search'   => '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>',
+            'warning'  => '<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17.5v.5"></path>',
+            'external' => '<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"></path>',
+            'copy'     => '<rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"></path>',
+            'caret'    => '<path d="M9 6l6 6-6 6"></path>',
+            'plus'     => '<path d="M12 5v14M5 12h14"></path>',
+        ];
+        return isset( $p[ $name ] )
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $p[ $name ] . '</svg>'
+            : '';
+    }
+
+    /** Previous / "Page X of Y" / Next. */
+    public static function render_pager( int $page, int $pages, callable $url_for ): void {
+        if ( $pages <= 1 ) {
+            return;
+        }
+        ?>
+        <nav class="cmcp-pager" aria-label="<?php esc_attr_e( 'Pagination', 'cowboy-mcp' ); ?>">
+            <a class="cmcp-btn cmcp-btn--sm" href="<?php echo esc_url( $url_for( max( 1, $page - 1 ) ) ); ?>"<?php echo $page <= 1 ? ' aria-disabled="true" tabindex="-1"' : ''; ?>><?php esc_html_e( 'Previous', 'cowboy-mcp' ); ?></a>
+            <span><?php
+                /* translators: 1: current page number, 2: total number of pages */
+                printf( esc_html__( 'Page %1$d of %2$d', 'cowboy-mcp' ), (int) $page, (int) $pages );
+            ?></span>
+            <a class="cmcp-btn cmcp-btn--sm" href="<?php echo esc_url( $url_for( min( $pages, $page + 1 ) ) ); ?>"<?php echo $page >= $pages ? ' aria-disabled="true" tabindex="-1"' : ''; ?>><?php esc_html_e( 'Next', 'cowboy-mcp' ); ?></a>
+        </nav>
         <?php
     }
 
