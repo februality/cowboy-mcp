@@ -271,7 +271,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 3. Activity tab - a per-change undo journal: review every change your agents made and roll any of them back individually, plus one-click database checkpoints you can restore the whole site to.
 4. Logs tab - a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
 5. About tab - what Cowboy MCP does, with links to the project site and source.
-6. One-click browser sign-in - the connector opens a consent screen on your own site; no access is granted until you approve it as an administrator.
+6. One-click browser sign-in - the connector opens a consent screen on your own site that names where you will be sent next and lets you choose full or read-only access; no access is granted until you approve it as an administrator.
 
 == Changelog ==
 
@@ -281,6 +281,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * New: a redesigned settings page. Connections lists every API key and app connection in one table with when it was created and last used; Activity filters the change journal by connection, status or text and links each undo to the change it reverted; confirmations happen on the page; Settings saves from one bar. Works on phones and in right-to-left languages.
 * Improved: Connection Doctor results are shown in your language (the copied report stays in English for support threads).
 * Fix: undoing a post change no longer strips backslashes from page-builder data stored in post meta.
+* Fix: the connection approval page no longer shows a PHP deprecation notice on sites with debugging turned on.
 
 = Earlier versions =
 

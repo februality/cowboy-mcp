@@ -1210,7 +1210,11 @@ class Cowboy_MCP_OAuth {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title><?php echo esc_html__( 'Authorize connection', 'cowboy-mcp' ); ?></title>
-<?php wp_print_styles(); ?>
+<?php
+// By handle: a bare call fires the wp_print_styles action, which runs core's deprecated
+// print_emoji_styles() here (core only unhooks it on wp_enqueue_scripts, which never fires).
+wp_print_styles( 'cowboy-mcp-oauth-consent' );
+?>
 </head>
 <body>
 <div class="cowboy-mcp-oauth-card">
