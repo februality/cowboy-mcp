@@ -17,6 +17,7 @@
 	}
 
 	function fallbackCopy( text, onSuccess, onFailure ) {
+		var prev = document.activeElement; // select() moves focus into the throwaway textarea
 		var textarea = document.createElement( 'textarea' );
 		textarea.value = text;
 		textarea.style.position = 'fixed';
@@ -33,6 +34,9 @@
 			onFailure();
 		}
 		document.body.removeChild( textarea );
+		if ( prev && prev.focus ) {
+			prev.focus();
+		}
 	}
 
 	var l10n = window.cowboyMcpAdmin || {};
@@ -187,24 +191,25 @@
 		}
 		var resultsEl = document.getElementById( 'cowboy-doctor-results' );
 		var copyBtn   = document.getElementById( 'cowboy-doctor-copy' );
+		var t         = cowboyMcpDoctor.i18n;
 		var reportText = '';
 
 		run.addEventListener( 'click', function() {
 			run.disabled = true;
 			counts = {};
 			resultsEl.dataset.state = 'running';
-			resultsEl.textContent = 'Running checks...';
+			resultsEl.textContent = t.running;
 			var data = new URLSearchParams( { action: 'cowboy_mcp_doctor', _ajax_nonce: cowboyMcpDoctor.nonce } );
 			fetch( cowboyMcpDoctor.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: data } )
 				.then( function( r ) { return r.json(); } )
 				.then( function( json ) {
 					if ( ! json.success ) { throw new Error( 'AJAX error' ); }
 					reportText = json.data.report;
-					renderChecks( json.data.results.checks, 'Server-side checks' );
-					return browserProbes( json.data.probes, json.data.fingerprints );
+					renderChecks( json.data.results.checks, t.serverChecks );
+					return browserProbes( json.data.probes, json.data.fingerprints, t );
 				} )
 				.then( function( probeChecks ) {
-					renderChecks( probeChecks, 'From your browser (outside the server)' );
+					renderChecks( probeChecks, t.browserChecks );
 					renderSummary();
 					reportText += '\n--- From your browser (outside the server) ---\n' +
 						'Note: your browser IP is not a datacenter IP - a pass here can still be blocked for cloud AI clients.\n' +
@@ -215,7 +220,7 @@
 					run.disabled = false;
 				} )
 				.catch( function( err ) {
-					resultsEl.textContent = 'Doctor failed to run: ' + err.message;
+					resultsEl.textContent = fmt( t.failed, err.message );
 					run.disabled = false;
 				} );
 		} );
@@ -229,8 +234,7 @@
 			checks.forEach( function( c ) { counts[ c.status ] = ( counts[ c.status ] || 0 ) + 1; } );
 		}
 		function renderSummary() {
-			var order = [ [ 'fail', 'failed' ], [ 'error', 'errors' ], [ 'warn', 'warnings' ], [ 'pass', 'passed' ], [ 'skip', 'skipped' ] ];
-			var parts = order.filter( function( o ) { return counts[ o[ 0 ] ]; } ).map( function( o ) { return counts[ o[ 0 ] ] + ' ' + o[ 1 ]; } );
+			var parts = [ 'fail', 'error', 'warn', 'pass', 'skip' ].filter( function( k ) { return counts[ k ]; } ).map( function( k ) { return fmt( t.summary[ k ], counts[ k ] ); } );
 			var p = document.createElement( 'p' );
 			p.className = 'cmcp-doctor-summary';
 			p.textContent = parts.join( ' · ' );
@@ -246,7 +250,8 @@
 			h.className = 'cmcp-checks-group';
 			h.textContent = heading;
 			ul.className = 'cmcp-checks';
-			checks.forEach( function( c ) {
+			checks.forEach( function( raw ) {
+				var c = raw.ui ? Object.assign( {}, raw, raw.ui ) : raw;
 				var li = document.createElement( 'li' ), dot = document.createElement( 'span' ), label = document.createElement( 'span' ), res = document.createElement( 'span' );
 				var tone = { pass: '', warn: ' cmcp-dot--warn', fail: ' cmcp-dot--bad', error: ' cmcp-dot--bad', skip: ' cmcp-dot--off' }[ c.status ] || ' cmcp-dot--off';
 				dot.className = 'cmcp-dot' + tone;
@@ -254,7 +259,7 @@
 				label.className = 'cmcp-check-label';
 				label.textContent = c.label;
 				res.className = 'cmcp-res cmcp-res--' + c.status;
-				res.textContent = c.status;
+				res.textContent = t.status[ c.status ] || c.status;
 				li.append( dot, label, res );
 				if ( c.detail && c.status !== 'pass' ) {
 					var det = document.createElement( 'span' );
@@ -265,7 +270,7 @@
 				if ( c.fix && ( c.status === 'warn' || c.status === 'fail' || c.status === 'error' ) ) {
 					var fix = document.createElement( 'span' );
 					fix.className = 'cmcp-fix';
-					fix.textContent = 'Fix: ' + c.fix;
+					fix.textContent = fmt( t.fix, c.fix );
 					li.appendChild( fix );
 				}
 				ul.appendChild( li );
@@ -274,18 +279,30 @@
 		}
 	}
 
+	/** Replace the first %s / %d in a localized string. */
+	function fmt( str, value ) {
+		// A replacer function: a string replacement would expand $& / $' inside the value.
+		return String( str ).replace( /%[sd]/, function() { return String( value ); } );
+	}
+
 	/** Probe the public endpoint from the admin's browser. Same-origin, no CORS needed. */
-	function browserProbes( probes, fingerprints ) {
+	function browserProbes( probes, fingerprints, t ) {
 		var jobs = [];
-		jobs.push( probeOne( 'GET', probes.endpoint, null, 'GET MCP endpoint', fingerprints ) );
-		jobs.push( probeOne( 'POST', probes.endpoint, JSON.stringify( { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'cowboy-doctor-browser', version: '0' } } } ), 'POST MCP endpoint', fingerprints ) );
+		jobs.push( probeOne( 'GET', probes.endpoint, null, [ 'GET MCP endpoint', t.probeGet ], fingerprints, t ) );
+		jobs.push( probeOne( 'POST', probes.endpoint, JSON.stringify( { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'cowboy-doctor-browser', version: '0' } } } ), [ 'POST MCP endpoint', t.probePost ], fingerprints, t ) );
 		probes.well_known.forEach( function( url ) {
-			jobs.push( probeOne( 'GET', url, null, 'OAuth discovery ' + url.split( '/.well-known' )[ 1 ], fingerprints ) );
+			var path = url.split( '/.well-known' )[ 1 ];
+			jobs.push( probeOne( 'GET', url, null, [ 'OAuth discovery ' + path, fmt( t.probeOauth, path ) ], fingerprints, t ) );
 		} );
 		return Promise.all( jobs );
 	}
 
-	function probeOne( method, url, body, label, fingerprints ) {
+	/**
+	 * One browser probe. The top-level label/detail/fix are English (they go into the
+	 * copied report); `ui` holds the localized text shown on screen. labels = [ en, localized ].
+	 */
+	function probeOne( method, url, body, labels, fingerprints, t ) {
+		var label = labels[ 0 ];
 		var opts = { method: method, credentials: 'omit', headers: { Accept: 'application/json, text/event-stream' } };
 		if ( body ) {
 			opts.headers[ 'Content-Type' ] = 'application/json';
@@ -299,14 +316,23 @@
 				try { JSON.parse( text ); } catch ( e ) { isJson = false; }
 				var ok = okStatus && isJson;
 				var fp = ok ? null : matchFingerprint( r, text, fingerprints );
+				var edgeFix = ok ? null : 'See the server-side result for this URL; if that passed, the block is at your network edge (CDN/WAF).';
 				return {
 					label: label, status: ok ? 'pass' : 'fail',
 					detail: ok ? '' : 'HTTP ' + r.status + ( isJson ? '' : ', non-JSON body' ),
-					fix: fp ? fp.fix : ( ok ? null : 'See the server-side result for this URL; if that passed, the block is at your network edge (CDN/WAF).' )
+					fix: fp ? fp.fix : edgeFix,
+					ui: {
+						label: labels[ 1 ],
+						detail: ok ? '' : fmt( isJson ? t.probeHttp : t.probeNonJson, r.status ),
+						fix: fp ? fp.fix : ( ok ? null : t.probeEdgeFix )
+					}
 				};
 			} );
 		} ).catch( function( err ) {
-			return { label: label, status: 'fail', detail: 'Network error: ' + err.message, fix: 'Your browser could not reach the site at all (DNS, TLS, or connection refused). Remote AI clients will hit the same wall.' };
+			return {
+				label: label, status: 'fail', detail: 'Network error: ' + err.message, fix: 'Your browser could not reach the site at all (DNS, TLS, or connection refused). Remote AI clients will hit the same wall.',
+				ui: { label: labels[ 1 ], detail: fmt( t.probeNetwork, err.message ), fix: t.probeNetFix }
+			};
 		} );
 	}
 
@@ -448,7 +474,7 @@
 			Array.prototype.forEach.call( els, function( el ) {
 				var left = parseInt( el.getAttribute( 'data-mcp-lock-until' ), 10 ) - now;
 				if ( left > 0 ) {
-					el.textContent = Math.floor( left / 60 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 );
+					el.textContent = ( '0' + Math.floor( left / 60 ) ).slice( -2 ) + ':' + ( '0' + ( left % 60 ) ).slice( -2 ); // mm:ss, as the server renders it
 					live = true;
 				} else if ( ! el.hasAttribute( 'data-mcp-expired' ) ) {
 					el.setAttribute( 'data-mcp-expired', '1' );
@@ -540,9 +566,21 @@
 			}
 			form.dataset.cmcpConfirmed = '1';
 			form.requestSubmit( submitter || undefined );
+			// requestSubmit dispatches synchronously; if validation blocked it, the flag is still set
+			// and would let the next submit skip the confirm.
+			delete form.dataset.cmcpConfirmed;
 		} );
 		return box;
 	}
+
+	// Escape = Cancel on the confirm that holds focus (Cancel restores focus to the opener).
+	document.addEventListener( 'keydown', function( e ) {
+		var box = e.key === 'Escape' && document.activeElement && document.activeElement.closest( '.cmcp-inline-confirm' );
+		if ( box ) {
+			e.preventDefault();
+			box.querySelector( '[data-cmcp-cancel]' ).click();
+		}
+	} );
 
 	document.addEventListener( 'submit', function( e ) {
 		var form = e.target;
@@ -619,10 +657,28 @@
 /* ── Journal: pair highlight + auto-submitting filters (Activity) ── */
 ( function() {
 	'use strict';
-	document.querySelectorAll( 'select[data-cmcp-autosubmit]' ).forEach( function( s ) {
-		s.addEventListener( 'change', function() { s.form.requestSubmit(); } );
-	} );
 	document.querySelectorAll( '.cmcp-nojs' ).forEach( function( b ) { b.hidden = true; } );
+	// A mouse pick submits at once. Arrow keys on a closed select also fire `change`
+	// (Windows/Linux), so a keyboard change waits for Enter or the revealed Filter button.
+	document.querySelectorAll( 'select[data-cmcp-autosubmit]' ).forEach( function( s ) {
+		var keyboard = false;
+		s.addEventListener( 'pointerdown', function() { keyboard = false; } );
+		s.addEventListener( 'keydown', function( e ) {
+			if ( e.key === 'Enter' ) {
+				e.preventDefault();
+				s.form.requestSubmit();
+				return;
+			}
+			keyboard = true;
+		} );
+		s.addEventListener( 'change', function() {
+			if ( ! keyboard ) {
+				s.form.requestSubmit();
+				return;
+			}
+			s.form.querySelectorAll( '.cmcp-nojs' ).forEach( function( b ) { b.hidden = false; } );
+		} );
+	} );
 	function pairOf( row ) {
 		var id = row.getAttribute( 'data-cmcp-pair' );
 		return id ? document.getElementById( 'cmcp-change-' + id ) : null;
@@ -648,7 +704,7 @@
 	if ( ! form ) {
 		return;
 	}
-	var bar = form.querySelector( '.cmcp-savebar' ), msg = bar.querySelector( '.cmcp-savebar-msg' ), discard = bar.querySelector( '[data-cmcp-discard]' );
+	var bar = form.querySelector( '.cmcp-savebar' ), msg = bar.querySelector( '.cmcp-savebar-msg' ), discard = bar.querySelector( '[data-cmcp-discard]' ), save = bar.querySelector( 'button[type="submit"]' );
 	var snapshot = function() { return new URLSearchParams( new FormData( form ) ).toString(); };
 	var initial = snapshot();
 	var power = form.querySelector( '#cmcp-power-mode' ), panel = form.querySelector( '[data-cmcp-power-confirm]' );
@@ -682,6 +738,7 @@
 		form.reset();
 		closePower();
 		refresh();
+		save.focus(); // Discard just hid itself
 	} );
 	if ( power && panel ) {
 		power.addEventListener( 'click', function( e ) {
@@ -703,13 +760,25 @@
 				}
 			}
 		} );
+		// Closing the panel hides the control that has focus: hand it back to the switch.
 		go.addEventListener( 'click', function() {
 			power.dataset.cmcpArmed = '1';
 			power.click();
 			closePower();
 			refresh();
+			power.focus();
 		} );
-		panel.querySelector( '[data-cmcp-power-cancel]' ).addEventListener( 'click', closePower );
+		panel.querySelector( '[data-cmcp-power-cancel]' ).addEventListener( 'click', function() {
+			closePower();
+			power.focus();
+		} );
+		panel.addEventListener( 'keydown', function( e ) {
+			if ( e.key === 'Escape' ) {
+				e.preventDefault();
+				closePower();
+				power.focus();
+			}
+		} );
 	}
 	refresh();
 } )();

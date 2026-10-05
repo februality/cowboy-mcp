@@ -166,6 +166,47 @@ class Cowboy_MCP_Admin {
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'cowboy_mcp_doctor' ),
+            // On-screen text only; the copied report stays English for support threads.
+            'i18n'    => [
+                'running'      => __( 'Running checks…', 'cowboy-mcp' ),
+                /* translators: %s: error message */
+                'failed'       => __( 'Doctor failed to run: %s', 'cowboy-mcp' ),
+                'serverChecks' => __( 'Server-side checks', 'cowboy-mcp' ),
+                'browserChecks' => __( 'From your browser (outside the server)', 'cowboy-mcp' ),
+                /* translators: %s: how to fix a failed check */
+                'fix'          => __( 'Fix: %s', 'cowboy-mcp' ),
+                'status'       => [
+                    'pass'  => _x( 'pass', 'connection check result', 'cowboy-mcp' ),
+                    'warn'  => _x( 'warning', 'connection check result', 'cowboy-mcp' ),
+                    'fail'  => _x( 'fail', 'connection check result', 'cowboy-mcp' ),
+                    'error' => _x( 'error', 'connection check result', 'cowboy-mcp' ),
+                    'skip'  => _x( 'skipped', 'connection check result', 'cowboy-mcp' ),
+                ],
+                'summary'      => [
+                    /* translators: %d: number of checks */
+                    'fail'  => __( 'Failed: %d', 'cowboy-mcp' ),
+                    /* translators: %d: number of checks */
+                    'error' => __( 'Errors: %d', 'cowboy-mcp' ),
+                    /* translators: %d: number of checks */
+                    'warn'  => __( 'Warnings: %d', 'cowboy-mcp' ),
+                    /* translators: %d: number of checks */
+                    'pass'  => __( 'Passed: %d', 'cowboy-mcp' ),
+                    /* translators: %d: number of checks */
+                    'skip'  => __( 'Skipped: %d', 'cowboy-mcp' ),
+                ],
+                'probeGet'     => __( 'GET MCP endpoint', 'cowboy-mcp' ),
+                'probePost'    => __( 'POST MCP endpoint', 'cowboy-mcp' ),
+                /* translators: %s: discovery URL path, e.g. /oauth-authorization-server */
+                'probeOauth'   => __( 'OAuth discovery %s', 'cowboy-mcp' ),
+                /* translators: %s: HTTP status code */
+                'probeHttp'    => __( 'HTTP %s', 'cowboy-mcp' ),
+                /* translators: %s: HTTP status code */
+                'probeNonJson' => __( 'HTTP %s, non-JSON body', 'cowboy-mcp' ),
+                /* translators: %s: browser error message */
+                'probeNetwork' => __( 'Network error: %s', 'cowboy-mcp' ),
+                'probeEdgeFix' => __( 'See the server-side result for this URL; if that passed, the block is at your network edge (CDN/WAF).', 'cowboy-mcp' ),
+                'probeNetFix'  => __( 'Your browser could not reach the site at all (DNS, TLS, or connection refused). Remote AI clients will hit the same wall.', 'cowboy-mcp' ),
+            ],
         ] );
     }
 

@@ -175,7 +175,7 @@ class Cowboy_MCP_Admin_Settings {
     /** One labelled number row ($max 0 = no maximum). */
     private static function number_row( string $id, string $name, int $value, int $min, int $max, string $title, string $unit ): void {
         ?>
-        <div class="cmcp-srow">
+        <div class="cmcp-srow cmcp-srow--num">
             <div><h3><label for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $title ); ?></label></h3></div>
             <div class="cmcp-ctl">
                 <input type="number" class="cmcp-input cmcp-num-in" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>" min="<?php echo esc_attr( (string) $min ); ?>"<?php echo $max ? ' max="' . esc_attr( (string) $max ) . '"' : ''; ?>>

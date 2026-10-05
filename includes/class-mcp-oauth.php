@@ -392,7 +392,11 @@ class Cowboy_MCP_OAuth {
      *
      * @return array{access_token:string,refresh_token:string,expires_in:int,scope:?string}
      */
-    public static function issue_tokens( int $user_id, string $client_id, string $aud, ?string $scope = 'mcp' ): array {
+    /**
+     * @param bool $rotated True when issued by redeeming a refresh token (the client was
+     *                      active then); false for the initial authorization-code grant.
+     */
+    public static function issue_tokens( int $user_id, string $client_id, string $aud, ?string $scope = 'mcp', bool $rotated = false ): array {
         self::prune_expired();
         $now = time();
 
@@ -428,6 +432,7 @@ class Cowboy_MCP_OAuth {
             'expires'     => $now + self::REFRESH_TTL,
             'access_id'   => $at_id,
             'used'        => false,
+            'rotated'     => $rotated,
         ];
         update_option( self::REFRESH_OPTION, $refresh, false );
 
@@ -559,7 +564,7 @@ class Cowboy_MCP_OAuth {
             self::revoke_token_record( (string) $rec['access_id'] );
         }
 
-        return self::issue_tokens( (int) $rec['user_id'], (string) $rec['client_id'], (string) $rec['aud'], (string) $rec['scope'] );
+        return self::issue_tokens( (int) $rec['user_id'], (string) $rec['client_id'], (string) $rec['aud'], (string) $rec['scope'], true );
     }
 
     /**
@@ -572,20 +577,25 @@ class Cowboy_MCP_OAuth {
         $clients = get_option( self::CLIENTS_OPTION, [] );
         $tokens  = get_option( self::TOKENS_OPTION, [] );
 
+        // Access tokens live an hour; an idle connection may hold only a refresh token
+        // and must still be listed (and revocable) until that expires too.
+        $refresh = get_option( self::REFRESH_OPTION, [] );
+
         $by_client = [];
-        foreach ( $tokens as $t ) {
+        foreach ( array_merge( array_values( $tokens ), array_values( $refresh ) ) as $t ) {
             $cid = $t['client_id'] ?? '';
-            if ( $cid === '' ) {
+            // Tokens of a deleted client are rejected at validation: nothing to list or manage.
+            if ( $cid === '' || ! isset( $clients[ $cid ] ) ) {
                 continue;
             }
             if ( empty( $by_client[ $cid ] ) ) {
                 $by_client[ $cid ] = [
                     'user_id'   => (int) $t['user_id'],
-                    'last_used' => (int) $t['last_used'],
+                    'last_used' => self::token_last_activity( $t ),
                     'created'   => (int) $t['created'],
                 ];
             } else {
-                $by_client[ $cid ]['last_used'] = max( $by_client[ $cid ]['last_used'], (int) $t['last_used'] );
+                $by_client[ $cid ]['last_used'] = max( $by_client[ $cid ]['last_used'], self::token_last_activity( $t ) );
                 $by_client[ $cid ]['created']   = min( $by_client[ $cid ]['created'], (int) $t['created'] );
             }
         }
@@ -597,12 +607,47 @@ class Cowboy_MCP_OAuth {
                 'client_id'   => $cid,
                 'client_name' => $clients[ $cid ]['client_name'] ?? __( 'Unknown client', 'cowboy-mcp' ),
                 'user'        => $user ? $user->user_login : '—',
-                'created'     => $info['created'],
+                'created'     => (int) ( $clients[ $cid ]['created'] ?? $info['created'] ),
                 'last_used'   => $info['last_used'],
                 'tool_scope'  => ( isset( $clients[ $cid ]['tool_scope'] ) && is_array( $clients[ $cid ]['tool_scope'] ) ) ? $clients[ $cid ]['tool_scope'] : null,
             ];
         }
         return $out;
+    }
+
+    /**
+     * Access token id => client_id for every access token this site still has a record of:
+     * live access tokens, plus the `access_id` kept on refresh records (retained, used or not,
+     * until they expire after REFRESH_TTL). Read-only; lets the admin group journal rows,
+     * which carry one `oauth_<access token id>` key per hourly token, by connection.
+     *
+     * @return array<string,string>
+     */
+    public static function access_token_clients(): array {
+        $map = [];
+        foreach ( get_option( self::REFRESH_OPTION, [] ) as $r ) {
+            if ( ! empty( $r['access_id'] ) && ! empty( $r['client_id'] ) ) {
+                $map[ (string) $r['access_id'] ] = (string) $r['client_id'];
+            }
+        }
+        foreach ( get_option( self::TOKENS_OPTION, [] ) as $id => $t ) {
+            if ( ! empty( $t['client_id'] ) ) {
+                $map[ (string) $id ] = (string) $t['client_id'];
+            }
+        }
+        return $map;
+    }
+
+    /**
+     * When a token shows the client was active: an access token's last use, or a refresh
+     * token issued by a rotation. The initial grant's refresh token is not use (a just-approved
+     * connection reads "Never"); records from before the `rotated` flag count as before.
+     */
+    private static function token_last_activity( array $t ): int {
+        if ( array_key_exists( 'last_used', $t ) ) {
+            return (int) $t['last_used'];
+        }
+        return ( $t['rotated'] ?? true ) ? (int) ( $t['created'] ?? 0 ) : 0;
     }
 
     public static function revoke_connection( string $client_id ): bool {

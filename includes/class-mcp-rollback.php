@@ -2072,6 +2072,12 @@ class Cowboy_MCP_Rollback {
 		if ( ! empty( $filters['date_to'] ) ) {
 			$conditions[] = $wpdb->prepare( 'timestamp <= %s', $filters['date_to'] . ' 23:59:59' );
 		}
+		$key_ids = array_values( array_filter( array_map( 'strval', (array) ( $filters['key_ids'] ?? [] ) ) ) );
+		if ( $key_ids ) {
+			$in = implode( ',', array_fill( 0, count( $key_ids ), '%s' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $in is a run of %s placeholders, one per id.
+			$conditions[] = $wpdb->prepare( "key_id IN ({$in})", ...$key_ids );
+		}
 		$search = trim( (string) ( $filters['search'] ?? '' ) );
 		if ( '' !== $search ) {
 			$like         = '%' . $wpdb->esc_like( $search ) . '%';
@@ -2122,18 +2128,20 @@ class Cowboy_MCP_Rollback {
 	}
 
 	/**
-	 * Credentials that appear in the journal, most recently active first.
+	 * Credentials that appear in the journal, most recently active first. Not capped
+	 * at a handful: OAuth rows carry one key per hourly access token, so the admin
+	 * groups these before deciding what to show.
 	 *
-	 * @return array<string,string> key_id => label
+	 * @return array<string,array{label:string,last:int}> key_id => newest label + newest row id
 	 */
 	public static function journal_keys(): array {
 		global $wpdb;
 		// Label from each key's newest row, so a renamed key shows its current name.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT j.key_id, j.key_label FROM %i j JOIN ( SELECT MAX(id) AS mid FROM %i WHERE key_id IS NOT NULL AND key_id <> %s GROUP BY key_id ORDER BY mid DESC LIMIT 50 ) m ON j.id = m.mid ORDER BY j.id DESC', self::table(), self::table(), '' ), ARRAY_A ) ?: [];
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT j.id, j.key_id, j.key_label FROM %i j JOIN ( SELECT MAX(id) AS mid FROM %i WHERE key_id IS NOT NULL AND key_id <> %s GROUP BY key_id ORDER BY mid DESC LIMIT 2000 ) m ON j.id = m.mid ORDER BY j.id DESC', self::table(), self::table(), '' ), ARRAY_A ) ?: [];
 		$out  = [];
 		foreach ( $rows as $r ) {
-			$out[ (string) $r['key_id'] ] = (string) ( $r['key_label'] ?: $r['key_id'] );
+			$out[ (string) $r['key_id'] ] = [ 'label' => (string) ( $r['key_label'] ?: $r['key_id'] ), 'last' => (int) $r['id'] ];
 		}
 		return $out;
 	}

@@ -141,10 +141,13 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-step-body > p { margin: 0 0 10px; color: var(--cmcp-muted); }
 .cmcp-step-body p code, .cmcp-step-body li code, .cmcp-callout code { font-size: 12.5px; background: #efefeb; border-radius: 4px; padding: 1px 5px; }
 .cmcp-term-wrap { border-radius: var(--cmcp-radius-sm); overflow: hidden; background: var(--cmcp-code-bg); margin: 4px 0 8px; }
-.cmcp-term-bar { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 6px 0 12px; border-bottom: 1px solid #1d2a20; font-size: 12px; color: var(--cmcp-code-dim); font-family: var(--cmcp-mono); }
+.cmcp-term-bar { display: flex; align-items: center; gap: 8px; height: 32px; padding-block: 0; padding-inline: 12px 6px; border-bottom: 1px solid #1d2a20; font-size: 12px; color: var(--cmcp-code-dim); font-family: var(--cmcp-mono); }
 .cmcp-lamp { width: 7px; height: 7px; border-radius: 50%; background: var(--cmcp-code-green); box-shadow: 0 0 6px rgba(60,240,122,.6); }
 .wrap.cmcp .cmcp-term-copy { margin-inline-start: auto; height: 24px; padding: 0 9px; font-size: 12px; border-radius: 5px; border: 1px solid #2b3a2f; background: #121a14; color: #cfeedd; cursor: pointer; }
 .wrap.cmcp .cmcp-term-copy.mcp-copy-btn--copied { color: var(--cmcp-code-green); }
+/* The default ink focus ring is invisible on the dark code bar and the red server-off bar. */
+.wrap.cmcp .cmcp-term-bar :focus-visible { outline-color: var(--cmcp-code-green); }
+.wrap.cmcp .cmcp-offbar :focus-visible { outline-color: #fff; }
 .wrap.cmcp pre.cmcp-term { background: var(--cmcp-code-bg); color: var(--cmcp-code-text); font-family: var(--cmcp-mono); font-size: 13px; line-height: 1.6; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .cmcp-keybox { border: 1px solid var(--cmcp-ok-border); background: var(--cmcp-ok-bg); border-radius: var(--cmcp-radius-sm); padding: 10px 12px; }
 .cmcp-keybox-note { margin: 0 0 8px; color: var(--cmcp-ok); }
@@ -232,7 +235,7 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .wrap.cmcp .cmcp-chip { height: 30px; border: 1px solid var(--cmcp-border-strong); border-radius: 999px; background: #fff; padding: 0 12px; font-size: 13px; color: var(--cmcp-muted); display: inline-flex; align-items: center; text-decoration: none; box-shadow: none; }
 .wrap.cmcp .cmcp-chip[aria-current="true"] { border-color: var(--cmcp-ink); color: var(--cmcp-text); background: #f3f3f0; font-weight: 600; }
-.wrap.cmcp select.cmcp-chip { padding: 0 24px 0 12px; min-height: 30px; line-height: 28px; }
+.wrap.cmcp select.cmcp-chip { padding-block: 0; padding-inline: 12px 24px; min-height: 30px; line-height: 28px; }
 .cmcp-toolbar .cmcp-right { font-size: 13px; color: var(--cmcp-muted); gap: 10px; }
 .cmcp-nowrap { white-space: nowrap; }
 .cmcp-rel { font-size: 12.5px; margin-inline-start: 6px; color: var(--cmcp-muted); white-space: nowrap; }
@@ -244,7 +247,8 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-journal tr:target td { animation: cmcp-flash 1.4s ease-out; }
 @keyframes cmcp-flash { from { background: #d9efdf; } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .cmcp-journal tr:target td { animation: none; background: #eef7f0; } }
-.cmcp-obj { max-width: 260px; overflow-wrap: anywhere; }
+/* break-word, not anywhere: `anywhere` lets the column shrink to one character and splits names mid-word. */
+.cmcp-obj { min-width: 10ch; max-width: 260px; overflow-wrap: break-word; }
 .cmcp-st { min-width: 160px; }
 .cmcp-reason { display: block; font-size: 12.5px; color: var(--cmcp-muted); line-height: 1.35; margin-top: 3px; }
 .cmcp-acts-cell { text-align: end; }
@@ -268,7 +272,7 @@ tr.is-open .cmcp-caret svg { transform: rotate(90deg); }
 .rtl .wrap.cmcp .cmcp-caret svg { transform: scaleX(-1); }
 .rtl .wrap.cmcp tr.is-open .cmcp-caret svg { transform: rotate(90deg); }
 .cmcp-cspace { display: inline-block; width: 18px; }
-tr.cmcp-detail td { padding: 0 18px 14px 40px; background: var(--cmcp-surface-2); }
+.cmcp-t tr.cmcp-detail td { padding-block: 0 14px; padding-inline: 40px 18px; background: var(--cmcp-surface-2); }
 tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: auto; border-radius: var(--cmcp-radius-sm); }
 
 /* ── Settings ── */
@@ -286,6 +290,11 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .cmcp-ctl { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
 .cmcp-unit { color: var(--cmcp-muted); font-size: 13px; }
 .wrap.cmcp .cmcp-num-in { width: 80px; text-align: end; }
+/* Phones: a number row stacks its label above the field, or long labels shrink to a few letters. */
+@media (max-width: 600px) {
+	.cmcp-srow--num { grid-template-columns: minmax(0, 1fr); }
+	.cmcp-srow--num .cmcp-ctl { flex-wrap: wrap; }
+}
 .cmcp-nested { grid-column: 1 / -1; padding: 12px 14px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface-2); }
 .wrap.cmcp .cmcp-nested label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; }
 .wrap.cmcp input.cmcp-switch { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; border-radius: 999px; background: #8a908b; border: 0; position: relative; cursor: pointer; flex: none; margin: 0; transition: background .15s; box-shadow: none; }
@@ -328,12 +337,12 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .cmcp-lcard b svg { width: 14px; height: 14px; color: var(--cmcp-muted); }
 .cmcp-lcard p { margin: 4px 0 0; color: var(--cmcp-muted); }
 
-/* Phones: tighter header gutters and tabs so all five tabs fit without a hidden scroll. */
+/* Phones: tighter header gutters and tabs; tabs wrap to a second line rather than hide off-screen (long locales). */
 @media (max-width: 600px) {
 	.cmcp-head { padding-inline: 16px; }
 	.cmcp-body { padding-inline: 16px; }
 	.wrap.cmcp > div:not(.cmcp-head):not(.cmcp-body):not(.cmcp-offbar) { margin-inline: 16px; }
-	.cmcp-tabs { gap: 0; }
+	.cmcp-tabs { gap: 0; flex-wrap: wrap; }
 	.cmcp-tab { padding-inline: 8px; font-size: 13.5px; }
 	.cmcp-tab[aria-current="page"]::after { left: 8px; right: 8px; }
 }

@@ -9,6 +9,12 @@ class Cowboy_MCP_Admin_Activity {
 
     const PER_PAGE = 25;
 
+    /** Journal key ids that are not credentials: wp-admin, the MCP fallback actor, the Abilities API. */
+    const ACTORS = [ 'admin', 'mcp', 'ability' ];
+
+    /** Most removed/untraceable keys listed in the key filter (live credentials are never cut). */
+    const TAIL_MAX = 50;
+
     public static function render_tab(): void {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only view filters.
         $filters = [
@@ -22,7 +28,16 @@ class Cowboy_MCP_Admin_Activity {
             $filters['status'] = '';
         }
 
-        $result    = Cowboy_MCP_Rollback::query( array_merge( $filters, [ 'per_page' => self::PER_PAGE, 'page' => $page ] ) );
+        $key_options = self::key_options( $filters['key_id'] );
+        $query       = $filters;
+        if ( '' !== $filters['key_id'] ) {
+            unset( $query['key_id'] );
+            // A grouped option filters on all of its keys. Anything else is taken as one
+            // raw key id; a stale `conn:` group then matches nothing rather than everything.
+            $query['key_ids'] = $key_options[ $filters['key_id'] ]['ids'] ?? [ $filters['key_id'] ];
+        }
+
+        $result    = Cowboy_MCP_Rollback::query( array_merge( $query, [ 'per_page' => self::PER_PAGE, 'page' => $page ] ) );
         $entries   = $result['entries'];
         $on_page   = array_map( 'intval', array_column( $entries, 'id' ) );
         $undone_by = Cowboy_MCP_Rollback::undone_by_map( $on_page );
@@ -47,7 +62,7 @@ class Cowboy_MCP_Admin_Activity {
         ?>
         <section class="cmcp-card cmcp-journal-card" aria-labelledby="cmcp-journal-h">
             <div class="cmcp-card-h"><h2 id="cmcp-journal-h"><?php esc_html_e( 'Change journal', 'cowboy-mcp' ); ?></h2></div>
-            <?php self::render_toolbar( $filters, (int) $result['total'], $page ); ?>
+            <?php self::render_toolbar( $filters, (int) $result['total'], $page, $key_options ); ?>
             <?php if ( empty( $entries ) ) : ?>
                 <p class="cmcp-empty"><?php echo array_filter( $filters ) ? esc_html__( 'No changes match these filters.', 'cowboy-mcp' ) : esc_html__( 'No journaled changes yet.', 'cowboy-mcp' ); ?></p>
             <?php else : ?>
@@ -172,7 +187,79 @@ class Cowboy_MCP_Admin_Activity {
         <?php
     }
 
-    private static function render_toolbar( array $filters, int $total, int $page ): void {
+    /**
+     * Key-filter options, value => [label, ids]. The journal stores the key of the
+     * credential that made each change; an OAuth connection gets a new one with every
+     * hourly access token (`oauth_<token id>`), so those are grouped back into one
+     * option per connection through the token records the site still holds (refresh
+     * records are kept 30 days). Order: live credentials, then wp-admin / MCP actors,
+     * then up to TAIL_MAX removed or untraceable keys, each newest first.
+     *
+     * @return array<string,array{label:string,ids:string[]}>
+     */
+    private static function key_options( string $selected ): array {
+        $journal = Cowboy_MCP_Rollback::journal_keys();
+        if ( ! $journal ) {
+            return [];
+        }
+        $live_keys = [];
+        foreach ( Cowboy_MCP_Auth::list_keys() as $k ) {
+            $live_keys[ (string) $k['id'] ] = (string) $k['prefix'];
+        }
+        $has_oauth = class_exists( 'Cowboy_MCP_OAuth' );
+        $clients   = $has_oauth ? get_option( Cowboy_MCP_OAuth::CLIENTS_OPTION, [] ) : [];
+        $tokens    = $has_oauth ? Cowboy_MCP_OAuth::access_token_clients() : [];
+
+        $groups = [];
+        foreach ( $journal as $kid => $info ) { // newest first
+            $kid = (string) $kid;
+            $cid = str_starts_with( $kid, 'oauth_' ) ? ( $tokens[ substr( $kid, 6 ) ] ?? null ) : null;
+            if ( null !== $cid ) {
+                $live  = isset( $clients[ $cid ] );
+                $value = 'conn:' . substr( hash( 'sha256', $cid ), 0, 12 );
+                $label = $live ? (string) ( $clients[ $cid ]['client_name'] ?? $info['label'] ) : $info['label'];
+                $tier  = $live ? 0 : 2;
+                $gone  = ! $live;
+                $hint  = ( $live && ! empty( $clients[ $cid ]['created'] ) ) ? wp_date( 'M j, Y', (int) $clients[ $cid ]['created'] ) : '';
+            } else {
+                $value = $kid;
+                $label = $info['label'];
+                $tier  = ( isset( $live_keys[ $kid ] ) ? 0 : ( in_array( $kid, self::ACTORS, true ) ? 1 : 2 ) );
+                // Only an API-key id we no longer have is known to be revoked; an OAuth token
+                // key older than its refresh records cannot be traced, so it is not labelled.
+                $gone  = 2 === $tier && 1 === preg_match( '/^[0-9a-f]{12}$/', $kid );
+                $hint  = $live_keys[ $kid ] ?? ( str_starts_with( $kid, 'oauth_' ) ? '#' . substr( $kid, 6, 6 ) : substr( $kid, 0, 8 ) );
+            }
+            if ( ! isset( $groups[ $value ] ) ) {
+                $groups[ $value ] = [ 'label' => $label, 'ids' => [], 'last' => (int) $info['last'], 'tier' => $tier, 'gone' => $gone, 'hint' => $hint ];
+            }
+            $groups[ $value ]['ids'][] = $kid;
+        }
+
+        uasort( $groups, static fn( $a, $b ) => [ $a['tier'], $b['last'] ] <=> [ $b['tier'], $a['last'] ] );
+        $tail = 0;
+        foreach ( $groups as $value => $g ) {
+            // (string): an all-digit key id became an int array key.
+            if ( 2 === $g['tier'] && ++$tail > self::TAIL_MAX && (string) $value !== $selected ) {
+                unset( $groups[ $value ] );
+            }
+        }
+
+        // Tell same-named entries apart (a regenerated "Claude Code" key, two ChatGPT apps).
+        $counts = array_count_values( array_column( $groups, 'label' ) );
+        $out    = [];
+        foreach ( $groups as $value => $g ) {
+            $label = ( $counts[ $g['label'] ] > 1 && '' !== $g['hint'] ) ? $g['label'] . ' · ' . $g['hint'] : $g['label'];
+            if ( $g['gone'] ) {
+                /* translators: %s: API key or app name */
+                $label = sprintf( __( '%s (revoked)', 'cowboy-mcp' ), $label );
+            }
+            $out[ (string) $value ] = [ 'label' => $label, 'ids' => $g['ids'] ];
+        }
+        return $out;
+    }
+
+    private static function render_toolbar( array $filters, int $total, int $page, array $keys ): void {
         $keep  = [ 'tab' => 'activity', 'jsearch' => $filters['search'], 'jstatus' => $filters['status'], 'jkey' => $filters['key_id'] ];
         $pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
         $chips = [
@@ -181,7 +268,6 @@ class Cowboy_MCP_Admin_Activity {
             'undone'       => __( 'Undone', 'cowboy-mcp' ),
             'not_undoable' => __( 'Not undoable', 'cowboy-mcp' ),
         ];
-        $keys  = Cowboy_MCP_Rollback::journal_keys();
         ?>
         <form method="get" class="cmcp-toolbar" role="search">
             <input type="hidden" name="page" value="<?php echo esc_attr( Cowboy_MCP_Admin::SLUG ); ?>">
@@ -202,8 +288,8 @@ class Cowboy_MCP_Admin_Activity {
                     <span class="screen-reader-text"><?php esc_html_e( 'Key', 'cowboy-mcp' ); ?></span>
                     <select name="jkey" class="cmcp-chip" data-cmcp-autosubmit>
                         <option value=""><?php esc_html_e( 'All keys', 'cowboy-mcp' ); ?></option>
-                        <?php foreach ( $keys as $kid => $klabel ) : ?>
-                            <option value="<?php echo esc_attr( $kid ); ?>" <?php selected( $filters['key_id'], $kid ); ?>><?php echo esc_html( $klabel ); ?></option>
+                        <?php foreach ( $keys as $kid => $opt ) : ?>
+                            <option value="<?php echo esc_attr( (string) $kid ); ?>" <?php selected( $filters['key_id'], (string) $kid ); ?>><?php echo esc_html( $opt['label'] ); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </label>
