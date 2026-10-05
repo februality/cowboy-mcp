@@ -5,7 +5,7 @@ Tags: mcp, ai-agent, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.9
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ Cowboy MCP connects your WordPress site to Claude, ChatGPT, Cursor, Gemini or an
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
 * 🔄 **Updates plugins & themes safely** - backup first, health check after, one-command undo if anything breaks.
 * 🛡️ **Secure by default** - safe mode confirms before anything destructive, you can preview any change before it runs, every key can be scoped to read-only, and every action is written to an audit log.
-* 🆓 **Free and open source** - every tool included, with deep WooCommerce, Gutenberg, ACF, Elementor, Wordfence and SEO support. No Pro tier, no credits, no usage meter.
+* 🆓 **Free and open source** - every tool included, with deep WooCommerce, Gutenberg, ACF, Elementor, Beaver Builder, SiteOrigin, Wordfence and SEO support. No Pro tier, no credits, no usage meter.
 * 🔒 **Your data stays yours** - self-hosted, no accounts, no relay, no phone-home. Your agent connects to your site; nothing leaves your server.
 * 🔌 **Works with your AI assistant** - Claude, ChatGPT, Cursor, GitHub Copilot, Codex, Gemini, Claude Code and any MCP client. Set up in about two minutes, on a live site or a local one.
 
@@ -52,7 +52,7 @@ MCP (Model Context Protocol) is the open standard AI assistants use to work with
 
 = Tool coverage =
 
-Up to 184 tools. The core set is always on; integrations light up automatically when their plugin is active. Your agent sees two gateway tools (`cowboy_discover` and `cowboy_run`) and finds the rest on demand, so a big toolset never crowds its context.
+Up to 203 tools. The core set is always on; integrations light up automatically when their plugin is active. Your agent sees two gateway tools (`cowboy_discover` and `cowboy_run`) and finds the rest on demand, so a big toolset never crowds its context.
 
 * **Content** - posts, pages and custom post types (5) · taxonomies (4) · comments (4) · media (4) · menus (6) · options (1) · revisions: list, diff and restore (3)
 * **Gutenberg MCP** - block tree read/edit with path addressing, block types, patterns, Site Editor templates and template parts, global styles, navigations (15; 8 on classic themes)
@@ -63,6 +63,8 @@ Up to 184 tools. The core set is always on; integrations light up automatically 
 * **Wordfence** - scans, blocks, firewall, live traffic, activity, settings (17)
 * **ACF MCP** - field groups, fields, values, repeaters (9)
 * **Elementor MCP** - templates, page content, global styles, widgets (7)
+* **Beaver Builder** - builder pages, layouts, modules, global settings (7)
+* **SiteOrigin Page Builder** - layouts, row and widget edits, prebuilt layouts, widgets, settings, Widgets Bundle activation (12)
 * **Events** - The Events Calendar events, venues, organizers (11) plus Events Calendar Pro recurrence and occurrences (2)
 * **SEO MCP** - Yoast SEO, Rank Math, All in One SEO and SEOPress meta read/write/audit (4)
 * **Cache** - WP Rocket, LiteSpeed Cache, W3 Total Cache (4)
@@ -153,7 +155,7 @@ Setup guides for every client, the security model and head-to-head comparisons l
 
 = Works with =
 
-Integrations that light up automatically: WooCommerce, Gutenberg and the Site Editor, Yoast SEO, Rank Math, All in One SEO, SEOPress, The Events Calendar (and Events Calendar Pro), Advanced Custom Fields (ACF), Elementor, Wordfence, WP Rocket, LiteSpeed Cache, W3 Total Cache, WPForms, Gravity Forms and Contact Form 7.
+Integrations that light up automatically: WooCommerce, Gutenberg and the Site Editor, Yoast SEO, Rank Math, All in One SEO, SEOPress, The Events Calendar (and Events Calendar Pro), Advanced Custom Fields (ACF), Elementor, Beaver Builder, SiteOrigin Page Builder and Widgets Bundle, Wordfence, WP Rocket, LiteSpeed Cache, W3 Total Cache, WPForms, Gravity Forms and Contact Form 7.
 
 = External services =
 
@@ -197,7 +199,7 @@ Yes. Every tool, every integration and every safety feature is in this free plug
 
 = Is it secure? Can the AI break my site? =
 
-It is built so a mistake can be reversed. Keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, changes can be previewed with a dry run, and every action is written to an audit log. Content, options, users, media deletions, menus, terms, comments, WooCommerce objects, SEO meta, revisions, events, Gutenberg and Site Editor edits, search-replace runs and plugin or theme installs, updates and deletions are journaled and can be undone individually or as a batch - seven days by default - and database checkpoints roll every site table back to an earlier moment. Things with no inverse - a sent email, a cache flush, an arbitrary WP-CLI command, an outbound HTTP request - are recorded as not undoable rather than pretended otherwise; take a checkpoint first when you ask for those.
+It is built so a mistake can be reversed. Keys are hashed and shown once, requests are rate-limited, destructive actions need confirmation, changes can be previewed with a dry run, and every action is written to an audit log. Content, options, users, media deletions, menus, terms, comments, WooCommerce objects, SEO meta, revisions, events, Gutenberg and Site Editor edits, Beaver Builder and SiteOrigin layouts, search-replace runs and plugin or theme installs, updates and deletions are journaled and can be undone individually or as a batch - seven days by default - and database checkpoints roll every site table back to an earlier moment. Things with no inverse - a sent email, a cache flush, an arbitrary WP-CLI command, an outbound HTTP request - are recorded as not undoable rather than pretended otherwise; take a checkpoint first when you ask for those.
 
 = Can I limit what an AI agent is allowed to do? =
 
@@ -264,7 +266,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Screenshots ==
 
-1. Connections tab - pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Existing API keys are listed with one-click revoke.
+1. Connections tab - pick your AI tool (Claude Code, Claude Desktop, claude.ai, ChatGPT, Cursor, Codex, and more) and copy the ready-made setup command. Connected apps - API keys and app connections - are listed in one table with when each was created and last used, and can be limited to chosen tools or revoked.
 2. Settings tab - turn the server on or off, require Safe Mode confirmation for destructive actions, enable the one-click Desktop/web (OAuth) connector, set a per-key rate limit, tune the undo journal and database checkpoints, and opt in to advanced Power Mode.
 3. Activity tab - a per-change undo journal: review every change your agents made and roll any of them back individually, plus one-click database checkpoints you can restore the whole site to.
 4. Logs tab - a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
@@ -273,10 +275,12 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.6.9 =
-* New: Revisions - list a post's revisions, see a git-style diff, restore one (undoable).
-* New: The Events Calendar - events, venues and organizers; recurring events with Events Calendar Pro (whole-series edits, cancel/restore single dates). Changes are undoable; permanent deletes take a database checkpoint first.
-* New: SEO tools now also work with All in One SEO and SEOPress (and report when several SEO plugins are active).
+= 1.7.0 =
+* New: Beaver Builder - list builder pages, read a page layout and replace it (preview the node-by-node changes with a dry run), browse modules and their settings, edit global settings. Changes are undoable.
+* New: SiteOrigin Page Builder - read layouts and edit them whole or row by row and widget by widget, apply prebuilt layouts, browse widgets and their settings, edit Page Builder settings, activate Widgets Bundle widgets. Changes are undoable. Editing needs Page Builder 2.36.0 or later.
+* New: a redesigned settings page. Connections lists every API key and app connection in one table with when it was created and last used; Activity filters the change journal by connection, status or text and links each undo to the change it reverted; confirmations happen on the page; Settings saves from one bar. Works on phones and in right-to-left languages.
+* Improved: Connection Doctor results are shown in your language (the copied report stays in English for support threads).
+* Fix: undoing a post change no longer strips backslashes from page-builder data stored in post meta.
 
 = Earlier versions =
 

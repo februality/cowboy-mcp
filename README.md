@@ -2,7 +2,7 @@
 
 Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Cursor, Claude Code, Codex, Gemini** and any other MCP client can manage the site in plain English — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
 
-![Version](https://img.shields.io/badge/version-1.6.9-34ff7a)
+![Version](https://img.shields.io/badge/version-1.7.0-34ff7a)
 ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
 ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b)
@@ -14,13 +14,13 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 
 ## Why Cowboy MCP?
 
-- **Every tool is free.** Up to **184 built-in tools** plus every ability your plugins register through the WordPress Abilities API — content, Gutenberg/Site Editor, WooCommerce, users, media, menus, plugins, themes, files, database, WP-CLI, diagnostics, revisions, SEO (Yoast, Rank Math, AIOSEO, SEOPress), The Events Calendar, ACF, Elementor, Wordfence, caching, forms — GPL-licensed, no Pro tier, no credits, no usage meter.
+- **Every tool is free.** Up to **203 built-in tools** plus every ability your plugins register through the WordPress Abilities API — content, Gutenberg/Site Editor, WooCommerce, users, media, menus, plugins, themes, files, database, WP-CLI, diagnostics, revisions, SEO (Yoast, Rank Math, AIOSEO, SEOPress), The Events Calendar, ACF, Elementor, Beaver Builder, SiteOrigin, Wordfence, caching, forms — GPL-licensed, no Pro tier, no credits, no usage meter.
 - **Every change is undoable.** A per-change undo journal (before-state snapshots, conflict detection, batch undo) plus one-click database checkpoints, with an always-on audit log. Plugin and theme updates take a file backup and a checkpoint first and auto-restore if the post-update health check fails.
 - **Nothing in the middle.** The MCP endpoint runs inside your WordPress install. No hosted relay, no account, no telemetry — your AI client connects straight to your site.
 - **Safe by default.** Safe mode (confirmation for destructive tools), dry run on every write tool, per-credential read-only/custom scoping, hashed keys shown once, per-key rate limits, denylists for sensitive options / dangerous SQL / WP-CLI commands, SSRF protection, path confinement to `wp-content`, and a Power mode only a human can enable in wp-admin.
 - **Two ways to connect.** A Bearer-token endpoint for terminal agents and editors, and a one-click OAuth 2.1 connector (admin consent, scope choice) for the Claude desktop/web apps and ChatGPT.
 - **Works locally too.** Local, Studio, MAMP, DevKinsta, wp-env: terminal tools connect with a key as on a live site; Claude Desktop connects through an `mcp-remote` bridge the Connection tab generates for you.
-- **Context-efficient.** `tools/list` returns two gateway tools (`cowboy_discover`, `cowboy_run`); the agent discovers and runs the other tools on demand instead of loading 184 schemas into its context. On WordPress 6.9+ every tool is also a `cowboy-mcp/*` ability for WP-CLI, REST and the official MCP Adapter — with undo.
+- **Context-efficient.** `tools/list` returns two gateway tools (`cowboy_discover`, `cowboy_run`); the agent discovers and runs the other tools on demand instead of loading 203 schemas into its context. On WordPress 6.9+ every tool is also a `cowboy-mcp/*` ability for WP-CLI, REST and the official MCP Adapter — with undo.
 - **Zero dependencies.** Native WordPress APIs only — no Composer, no npm, no build step, no `wp-admin/includes` at request time. Works on hosts without WP-CLI or `shell_exec()`.
 
 > "More access than any other MCP offers, easy to use, LOVE the change journal and the checkpoints — safe if you break something." — WordPress.org review
@@ -37,6 +37,7 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 | WooCommerce | 40 | products & variations, orders & refunds, customers, coupons, tax/shipping/payment settings, reports |
 | Wordfence | 17 | scans, blocks, firewall, live traffic, activity, settings |
 | ACF / Elementor | 9 / 7 | field groups, fields, repeaters / templates, page content, global styles, widgets |
+| Beaver Builder / SiteOrigin | 7 / 12 | builder pages, layouts with dry-run diff, modules, global settings / layouts and row/widget edits, prebuilt layouts, widgets, settings, Widgets Bundle activation |
 | Revisions / Events | 3 / 13 | list, diff & restore post revisions / The Events Calendar events, venues, organizers + Events Calendar Pro recurrence |
 | SEO / Cache / Forms | 4 / 4 / 1 | Yoast, Rank Math, All in One SEO & SEOPress meta read/write/audit / WP Rocket, LiteSpeed, W3TC / WPForms, Gravity Forms, CF7 |
 
