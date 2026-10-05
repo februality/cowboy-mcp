@@ -276,10 +276,10 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 == Changelog ==
 
 = 1.7.0 =
-* New: Beaver Builder - list builder pages, read a page layout and replace it (preview the node-by-node changes with a dry run), browse modules and their settings, edit global settings. Changes are undoable.
-* New: SiteOrigin Page Builder - read layouts and edit them whole or row by row and widget by widget, apply prebuilt layouts, browse widgets and their settings, edit Page Builder settings, activate Widgets Bundle widgets. Changes are undoable. Editing needs Page Builder 2.36.0 or later.
 * New: a redesigned settings page. Connections lists every API key and app connection in one table with when it was created and last used; Activity filters the change journal by connection, status or text and links each undo to the change it reverted; confirmations happen on the page; Settings saves from one bar. Works on phones and in right-to-left languages.
 * New: an Add to Claude button on the claude.ai and Claude Desktop panels opens Claude with your site already filled in - no link to copy. Shown on public HTTPS sites, the only ones Claude can connect to.
+* New: Beaver Builder - list builder pages, read a page layout and replace it (preview the node-by-node changes with a dry run), browse modules and their settings, edit global settings. Changes are undoable.
+* New: SiteOrigin Page Builder - read layouts and edit them whole or row by row and widget by widget, apply prebuilt layouts, browse widgets and their settings, edit Page Builder settings, activate Widgets Bundle widgets. Changes are undoable. Editing needs Page Builder 2.36.0 or later.
 * Improved: Connection Doctor results are shown in your language (the copied report stays in English for support threads).
 * Fix: undoing a post change no longer strips backslashes from page-builder data stored in post meta.
 * Fix: the connection approval page no longer shows a PHP deprecation notice on sites with debugging turned on.
