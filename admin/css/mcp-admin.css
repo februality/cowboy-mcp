@@ -78,7 +78,10 @@
 .cmcp-dot--off { background: #b9bdb9; box-shadow: none; }
 .cmcp-dot--warn { background: #e0a21b; box-shadow: 0 0 0 3px rgba(224,162,27,.16); }
 .cmcp-dot--bad { background: #d93a2f; box-shadow: 0 0 0 3px rgba(217,58,47,.14); }
-.wrap.cmcp .cmcp-input { height: 34px; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius-sm); padding: 0 10px; background: #fff; font-size: 14px; min-width: 0; box-shadow: none; margin: 0; }
+.wrap.cmcp .cmcp-input { height: 34px; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius-sm); padding: 0 10px; background-color: #fff; font-size: 14px; min-width: 0; box-shadow: none; margin: 0; box-sizing: border-box; min-height: 0; }
+/* WordPress 7 core forms set min-height: 40px (and a 38px select line-height) on fields; ours match the 34px buttons beside them.
+   background-color, not background: the shorthand would wipe core's select arrow. */
+.wrap.cmcp select.cmcp-input { line-height: normal; padding-inline-end: 24px; }
 .wrap.cmcp textarea.cmcp-input { height: auto; padding: 8px 10px; font-family: var(--cmcp-mono); font-size: 13px; width: 100%; resize: vertical; }
 .cmcp-formrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .cmcp-icon-btn { border: 1px solid var(--cmcp-border); background: var(--cmcp-surface); border-radius: 5px; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; color: var(--cmcp-muted); padding: 0; }
@@ -122,6 +125,8 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-chooser { border-inline-end: 1px solid var(--cmcp-border); padding: 10px 8px 14px; background: var(--cmcp-surface-2); border-end-start-radius: var(--cmcp-radius); display: flex; flex-direction: column; }
 .cmcp-grp { font-size: 12px; font-weight: 600; color: var(--cmcp-muted); padding: 10px 10px 6px; margin: 0; }
 .wrap.cmcp .cmcp-client { width: 100%; display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 10px; border: 1px solid transparent; background: none; border-radius: 6px; padding: 7px 10px; text-align: start; cursor: pointer; font-size: 14px; color: var(--cmcp-text); align-items: center; }
+/* Spans the name and the local-site hint, so the logo centres on both lines (no hint: the second row is empty, 0px). */
+.cmcp-client-ic { grid-row: 1 / span 2; }
 .cmcp-client-ic svg { width: 18px; height: 18px; color: var(--cmcp-muted); display: block; }
 .cmcp-hint { grid-column: 2; font-size: 12px; color: var(--cmcp-ok); line-height: 1.3; }
 .cmcp-hint--pub { color: var(--cmcp-warn); }
@@ -170,7 +175,7 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .wrap.cmcp .mcp-local-guidance ul { list-style: disc; margin-block: 8px 12px; margin-inline: 20px 0; }
 
 /* access (scope) */
-.cmcp-seg { display: inline-flex; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius-sm); overflow: hidden; height: 34px; background: #fff; }
+.cmcp-seg { display: inline-flex; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius-sm); overflow: hidden; height: 34px; box-sizing: border-box; background: #fff; }
 .cmcp-seg-opt { display: flex; }
 .cmcp-seg-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .cmcp-seg-opt span { display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: var(--cmcp-muted); border-inline-start: 1px solid var(--cmcp-border); cursor: pointer; }
@@ -178,6 +183,8 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-seg-opt input:checked + span { background: #efefeb; color: var(--cmcp-text); font-weight: 600; }
 .cmcp-seg-opt input:focus-visible + span { outline: 2px solid var(--cmcp-ink); outline-offset: -2px; }
 .cmcp-scope-select { margin: 0 0 10px; }
+/* In a field row the margin would lift the selector off the row's centre line. */
+.cmcp-formrow .cmcp-scope-select { margin: 0; }
 .cmcp-scope-checklist { max-height: 320px; overflow-y: auto; margin-top: 10px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface-2); padding: 6px 12px; }
 .cmcp-scope-cat summary { cursor: pointer; padding: 5px 0; }
 .cmcp-scope-missing { padding: 8px 0 6px; border-top: 1px solid var(--cmcp-border); margin-top: 4px; }
@@ -264,7 +271,7 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 /* ── Logs ── */
 .cmcp-filters { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; padding: 12px 14px; border-bottom: 1px solid var(--cmcp-border); margin: 0; }
 .cmcp-filters label { font-size: 12px; color: var(--cmcp-muted); display: flex; flex-direction: column; gap: 3px; }
-.wrap.cmcp .cmcp-filters .cmcp-input { height: 32px; font-size: 13px; }
+.wrap.cmcp .cmcp-filters .cmcp-input { font-size: 13px; }
 .cmcp-reset { align-self: flex-end; padding-bottom: 8px; }
 .cmcp-ev { font-family: var(--cmcp-mono); font-size: 12.5px; padding: 1px 7px; border-radius: 4px; background: #efefeb; }
 .cmcp-ev--err { background: var(--cmcp-warn-bg); color: var(--cmcp-warn); }
