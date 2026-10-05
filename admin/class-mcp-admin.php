@@ -314,6 +314,16 @@ class Cowboy_MCP_Admin {
             }
         }
 
+        // "Add to Claude": open the registration window, then hand off (new tab) to
+        // Claude's prefilled Add-custom-connector dialog. Only offered on public HTTPS sites.
+        if ( isset( $_POST['cowboy_mcp_add_to_claude'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_add_to_claude' ) && class_exists( 'Cowboy_MCP_OAuth' ) && ! empty( get_option( 'cowboy_mcp_settings', [] )['oauth_enabled'] ) ) {
+            $org = 'org' === sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_add_to_claude'] ) );
+            Cowboy_MCP_OAuth::open_registration_window();
+            add_filter( 'allowed_redirect_hosts', static fn( $hosts ) => array_merge( (array) $hosts, [ 'claude.ai' ] ) );
+            wp_safe_redirect( Cowboy_MCP_Admin_Connections::claude_install_link( $org ) );
+            exit;
+        }
+
         if ( isset( $_POST['cowboy_mcp_enable_oauth'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_enable_oauth' ) ) {
             self::enable_oauth_connector( __( 'Desktop Connector enabled.', 'cowboy-mcp' ) );
         }

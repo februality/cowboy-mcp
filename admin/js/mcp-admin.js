@@ -582,6 +582,14 @@
 		}
 	} );
 
+	// "Add to Claude" posts into a new tab (which then goes on to claude.ai). Re-load this
+	// page with a GET so the "New connections" status shows the window it just opened.
+	document.addEventListener( 'submit', function( e ) {
+		if ( e.target.matches && e.target.matches( 'form[data-cmcp-refresh-after-submit]' ) ) {
+			window.setTimeout( function() { window.location.assign( window.location.href.split( '#' )[ 0 ] ); }, 1500 );
+		}
+	} );
+
 	document.addEventListener( 'submit', function( e ) {
 		var form = e.target;
 		if ( ! form.matches || ! form.matches( 'form[data-cmcp-confirm]' ) ) {

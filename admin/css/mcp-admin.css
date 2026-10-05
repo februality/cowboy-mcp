@@ -64,6 +64,11 @@
 .wrap.cmcp .cmcp-btn--sm { height: 28px; padding: 0 10px; font-size: 13px; }
 .wrap.cmcp .cmcp-btn--ghost { border-color: transparent; background: none; }
 .wrap.cmcp .cmcp-linkbtn { border: 0; background: none; padding: 0; color: var(--cmcp-text); text-decoration: underline; text-decoration-color: var(--cmcp-border-strong); text-underline-offset: 3px; cursor: pointer; font-size: inherit; }
+/* "Add to Claude" (connect flow): the form wraps one button; the org variant sits inline in a sentence. */
+.wrap.cmcp .cmcp-add-claude { display: inline; margin: 0; }
+.wrap.cmcp .cmcp-add-claude + p { margin-top: 10px; }
+.wrap.cmcp .cmcp-linkbtn svg { width: 12px; height: 12px; margin-inline-start: 3px; vertical-align: -1px; }
+.wrap.cmcp .cmcp-org-add { margin-top: 8px; }
 
 /* ── Cards, badges, dots, inputs ── */
 .cmcp-card { background: var(--cmcp-surface); border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius); margin-bottom: 20px; }

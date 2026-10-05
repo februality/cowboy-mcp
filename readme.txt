@@ -82,7 +82,7 @@ The Connections tab shows this command pre-filled with your site's endpoint.
 
 = Connect Claude to WordPress (claude.ai and Claude Desktop) =
 
-No terminal and no key to paste: turn on the **Desktop Connector** under **Settings > Cowboy MCP > Settings**, add your site's endpoint as a custom connector in the Claude desktop or web app, and approve the sign-in on your own site as an administrator. The consent screen lets you choose full access, read-only, or a hand-picked list of tools. This is a standard OAuth 2.1 flow and needs a public HTTPS site.
+No terminal and no key to paste: turn on the **Desktop Connector** under **Settings > Cowboy MCP > Settings**, click **Add to Claude** on the Connections tab, and approve the sign-in on your own site as an administrator. The consent screen lets you choose full access, read-only, or a hand-picked list of tools. This is a standard OAuth 2.1 flow and needs a public HTTPS site.
 
 = Connect ChatGPT to WordPress =
 
@@ -175,7 +175,7 @@ Questions and connection problems: post in the [support forum](https://wordpress
 
     claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint --header "Authorization: Bearer YOUR_API_KEY"
 
-**Claude desktop / web (no terminal):** enable the OAuth connector under **Settings > Cowboy MCP > Settings > Desktop Connector**, add your site as a custom connector in Claude, and approve with one click. (Requires a public HTTPS site; on a local site use the `mcp-remote` bridge shown on the Connections tab.)
+**Claude desktop / web (no terminal):** enable the OAuth connector under **Settings > Cowboy MCP > Settings > Desktop Connector**, click **Add to Claude** on the Connections tab (Claude opens with your site already filled in), and approve with one click. (Requires a public HTTPS site; on a local site use the `mcp-remote` bridge shown on the Connections tab.)
 
 **Cursor, Codex, Gemini CLI, ChatGPT and other clients:** the Connections tab shows a ready-to-copy setup for each, and the connection guides at [cowboymcp.com](https://cowboymcp.com) walk through every client step by step.
 
@@ -191,7 +191,7 @@ Turn on the Desktop Connector in Cowboy MCP and copy your connection link from t
 
 = How do I connect Claude to my WordPress site? =
 
-For the Claude desktop and web apps, enable the Desktop Connector, add your site as a custom connector in Claude and approve the one-click sign-in - no terminal needed. For Claude Code, generate an API key under **Settings > Cowboy MCP** and run the one-line command shown ready to copy on the Connections tab.
+For the Claude desktop and web apps, enable the Desktop Connector, click **Add to Claude** on the Connections tab and approve the one-click sign-in - no terminal needed. For Claude Code, generate an API key under **Settings > Cowboy MCP** and run the one-line command shown ready to copy on the Connections tab.
 
 = Is it free? =
 
@@ -279,6 +279,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * New: Beaver Builder - list builder pages, read a page layout and replace it (preview the node-by-node changes with a dry run), browse modules and their settings, edit global settings. Changes are undoable.
 * New: SiteOrigin Page Builder - read layouts and edit them whole or row by row and widget by widget, apply prebuilt layouts, browse widgets and their settings, edit Page Builder settings, activate Widgets Bundle widgets. Changes are undoable. Editing needs Page Builder 2.36.0 or later.
 * New: a redesigned settings page. Connections lists every API key and app connection in one table with when it was created and last used; Activity filters the change journal by connection, status or text and links each undo to the change it reverted; confirmations happen on the page; Settings saves from one bar. Works on phones and in right-to-left languages.
+* New: an Add to Claude button on the claude.ai and Claude Desktop panels opens Claude with your site already filled in - no link to copy. Shown on public HTTPS sites, the only ones Claude can connect to.
 * Improved: Connection Doctor results are shown in your language (the copied report stays in English for support threads).
 * Fix: undoing a post change no longer strips backslashes from page-builder data stored in post meta.
 * Fix: the connection approval page no longer shows a PHP deprecation notice on sites with debugging turned on.

@@ -68,7 +68,7 @@ claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mc
   --header "Authorization: Bearer YOUR_API_KEY"
 ```
 
-**Claude desktop & web, ChatGPT (one-click, no key)** — turn on **Settings → Cowboy MCP → Settings → Desktop Connector**, add the endpoint as a custom connector in the app, approve the consent screen on your site (choose full, read-only or custom access). Requires a public HTTPS site.
+**Claude desktop & web, ChatGPT (one-click, no key)** — turn on **Settings → Cowboy MCP → Settings → Desktop Connector**, add the endpoint as a custom connector in the app (for Claude, the **Add to Claude** button on the Connections tab fills it in for you), approve the consent screen on your site (choose full, read-only or custom access). Requires a public HTTPS site.
 
 **Claude Desktop on a local site** — use the `mcp-remote` bridge config shown on the Connection tab:
 
