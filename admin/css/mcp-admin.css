@@ -19,6 +19,8 @@
 .wrap.cmcp pre { text-align: left; }
 .wrap.cmcp [hidden] { display: none !important; }
 .wrap.cmcp :focus-visible { outline: 2px solid var(--cmcp-ink); outline-offset: 2px; box-shadow: none; }
+/* Core rings every focused link (a:focus box-shadow), so a clicked link shows it until the next page loads; keyboard focus keeps the ring above. */
+.wrap.cmcp a:focus:not(:focus-visible) { box-shadow: none; outline: none; }
 
 /* ── Header ── */
 .cmcp-head { background: var(--cmcp-surface); border-bottom: 1px solid var(--cmcp-border); padding: 18px 32px 0; }
@@ -35,6 +37,8 @@
 .cmcp-tabs { display: flex; gap: 4px; margin-top: 12px; overflow-x: auto; }
 .cmcp-tab { padding: 10px 12px 12px; font-size: 14px; color: var(--cmcp-muted); text-decoration: none; position: relative; white-space: nowrap; }
 .cmcp-tab:hover, .cmcp-tab:focus { color: var(--cmcp-text); }
+/* Inset: .cmcp-tabs scrolls horizontally, which clips anything drawn outside a tab. */
+.wrap.cmcp .cmcp-tab:focus-visible { outline-offset: -2px; border-radius: 6px; }
 .cmcp-tab[aria-current="page"] { color: var(--cmcp-text); font-weight: 600; }
 .cmcp-tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--cmcp-ink); border-radius: 2px; }
 .cmcp-offbar { display: flex; align-items: center; gap: 12px; background: var(--cmcp-danger); color: #fff; padding: 10px 32px; flex-wrap: wrap; }
