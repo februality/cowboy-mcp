@@ -14,6 +14,9 @@ class Cowboy_MCP_Checkpoint {
 	const TEMP_PREFIX = '_cmcp_restore_';
 	const OLD_PREFIX  = '_cmcp_old_';
 
+	/** The $wpdb placeholder esc_sql() leaves in place of `%` (found in pre-1.7.1 dumps). */
+	const PLACEHOLDER_RE = '/\{[0-9a-f]{64}\}/';
+
 	/** Max bytes per generated INSERT statement (~256 KB — far under max_allowed_packet). */
 	const MAX_STMT = 262144;
 
@@ -164,7 +167,10 @@ class Cowboy_MCP_Checkpoint {
 	/**
 	 * Dump one table: DROP + single-line CREATE + batched multi-row INSERTs.
 	 * esc_sql() escapes \n and \r, so every generated statement is one line —
-	 * the restore reader is line-based. Returns the row count.
+	 * the restore reader is line-based; remove_placeholder_escape() undoes
+	 * esc_sql()'s per-request `%` placeholder (WP >= 4.8.3) — without it every `%`
+	 * lands in the dump as `{64 hex}` and survives into the restore request.
+	 * Returns the row count.
 	 */
 	private static function dump_table( $gz, string $table ): int {
 		global $wpdb;
@@ -193,7 +199,7 @@ class Cowboy_MCP_Checkpoint {
 			foreach ( $rows as $row ) {
 				$vals = [];
 				foreach ( $row as $v ) {
-					$vals[] = $v === null ? 'NULL' : "'" . esc_sql( (string) $v ) . "'";
+					$vals[] = $v === null ? 'NULL' : "'" . $wpdb->remove_placeholder_escape( esc_sql( (string) $v ) ) . "'";
 				}
 				$tuple = '(' . implode( ',', $vals ) . ')';
 				if ( $stmt !== '' && strlen( $head . $stmt . ',' . $tuple ) > self::MAX_STMT ) {
@@ -260,6 +266,7 @@ class Cowboy_MCP_Checkpoint {
 			self::drop_prefixed( self::TEMP_PREFIX );
 			return $imported;
 		}
+		$legacy_rewritten = (int) $imported;
 
 		// 4. Verify row counts against the recorded manifest.
 		$expected = (array) json_decode( (string) $row['tables'], true );
@@ -323,7 +330,7 @@ class Cowboy_MCP_Checkpoint {
 	}
 
 	/** Stream the dump, rewriting table names to the temp prefix, executing line by line. */
-	private static function import_as_temp( string $path, array $tables ): bool|WP_Error {
+	private static function import_as_temp( string $path, array $tables ): int|WP_Error {
 		global $wpdb;
 		$gz = gzopen( $path, 'rb' );
 		if ( ! $gz ) {
@@ -333,6 +340,7 @@ class Cowboy_MCP_Checkpoint {
 		usort( $tables, fn( $a, $b ) => strlen( $b ) <=> strlen( $a ) );
 		$search  = array_map( fn( $t ) => "`{$t}`", $tables );
 		$replace = array_map( fn( $t ) => '`' . self::TEMP_PREFIX . $t . '`', $tables );
+		$rewritten = 0;
 		$temp_map = [];
 		foreach ( $tables as $t ) {
 			$temp_map[ $t ] = self::TEMP_PREFIX . $t;
@@ -371,6 +379,11 @@ class Cowboy_MCP_Checkpoint {
 					gzclose( $gz );
 					return new WP_Error( 'checkpoint_failed', 'Checkpoint contains an unrecognized table reference; aborting restore (originals untouched).' );
 				}
+				if ( str_starts_with( $stmt, 'INSERT INTO ' ) ) {
+					// Dumps written before 1.7.1 carry the dump request's $wpdb placeholder for every %.
+					$stmt       = preg_replace( self::PLACEHOLDER_RE, '%', $stmt, -1, $n );
+					$rewritten += (int) $n;
+				}
 			} else {
 				// Schema statements (CREATE TABLE): whole-statement rewrite so any
 				// self-references (e.g. FK REFERENCES) follow the temp prefix too.
@@ -384,7 +397,7 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 		gzclose( $gz );
-		return true;
+		return $rewritten;
 	}
 
 	/** Drop all tables carrying one of our work prefixes. */
