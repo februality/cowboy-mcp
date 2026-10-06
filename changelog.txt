@@ -4,13 +4,13 @@ Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
 = 1.7.0 =
-* New: a redesigned settings page. Connections lists every API key and app connection in one table with when it was created and last used; Activity filters the change journal by connection, status or text and links each undo to the change it reverted; confirmations happen on the page; Settings saves from one bar. Works on phones and in right-to-left languages.
-* New: an Add to Claude button on the claude.ai and Claude Desktop panels opens Claude with your site already filled in - no link to copy. Shown on public HTTPS sites, the only ones Claude can connect to.
-* New: Beaver Builder - list builder pages, read a page layout and replace it (preview the node-by-node changes with a dry run), browse modules and their settings, edit global settings. Changes are undoable.
-* New: SiteOrigin Page Builder - read layouts and edit them whole or row by row and widget by widget, apply prebuilt layouts, browse widgets and their settings, edit Page Builder settings, activate Widgets Bundle widgets. Changes are undoable. Editing needs Page Builder 2.36.0 or later.
-* Improved: Connection Doctor results are shown in your language (the copied report stays in English for support threads).
-* Fix: undoing a post change no longer strips backslashes from page-builder data stored in post meta.
-* Fix: the connection approval page no longer shows a PHP deprecation notice on sites with debugging turned on.
+* New: a redesigned, simpler settings page that also works on phones.
+* New: an Add to Claude button - connect claude.ai or Claude Desktop in one click (public HTTPS sites).
+* New: Beaver Builder support - read and edit page layouts, modules and settings, with undo.
+* New: SiteOrigin Page Builder support - read and edit layouts, widgets and settings, with undo (needs Page Builder 2.36.0+).
+* Improved: Connection Doctor results are shown in your language.
+* Fix: undo no longer strips backslashes from page-builder data.
+* Fix: no more PHP deprecation notice on the connection approval page.
 
 = 1.6.9 =
 * New: Revisions - list a post's revisions, see a git-style diff, restore one (undoable).
