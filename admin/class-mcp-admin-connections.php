@@ -7,6 +7,20 @@ defined( 'ABSPATH' ) || exit;
 
 class Cowboy_MCP_Admin_Connections {
 
+    // Verified 2026-10-06 against live ChatGPT: the Plugins page; its + menu offers 'Add custom MCP server'.
+    const CHATGPT_URL = 'https://chatgpt.com/plugins';
+
+    /** Remember (30 min, per admin) which app the admin just started connecting. */
+    public static function set_connect_watch( string $app ): void {
+        set_transient( 'cowboy_mcp_connect_watch_' . get_current_user_id(), [ 'app' => $app, 'since' => time() ], 30 * MINUTE_IN_SECONDS );
+    }
+
+    /** @return array{app:string,since:int}|null */
+    public static function connect_watch(): ?array {
+        $w = get_transient( 'cowboy_mcp_connect_watch_' . get_current_user_id() );
+        return ( is_array( $w ) && isset( $w['app'], $w['since'] ) ) ? $w : null;
+    }
+
     public static function client_registry(): array {
         // 'local' is how the client behaves against a local dev site: it either
         // works as-is ('works'), works through the on-machine mcp-remote bridge
@@ -160,12 +174,13 @@ class Cowboy_MCP_Admin_Connections {
         // Claude's install link only works where Claude can reach the site: public HTTPS
         // (its dialog rejects http://, and it connects from Anthropic's cloud).
         $quick = ! $is_chatgpt && $oauth_avail && $reachable;
+        $chatgpt_quick = $is_chatgpt && $oauth_avail && $reachable;
 
         if ( $oauth_on ) {
             self::render_connections_gate( $quick );
         }
 
-        if ( ! $oauth_on ) :
+        if ( ! $oauth_on && ! $quick && ! $chatgpt_quick ) :
             // Browsing never flips settings — enabling the connector is an explicit click.
             ?>
             <?php self::step_open( '1', __( 'Turn on the Desktop Connector', 'cowboy-mcp' ), '' ); ?>
@@ -213,17 +228,35 @@ class Cowboy_MCP_Admin_Connections {
             return;
         endif;
         ?>
+        <?php if ( $chatgpt_quick ) : ?>
+        <?php self::step_open( '1', __( 'Open ChatGPT', 'cowboy-mcp' ), '' ); ?>
+                <form method="post" target="_blank" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
+                    <?php wp_nonce_field( 'cowboy_mcp_open_chatgpt' ); ?>
+                    <button type="submit" name="cowboy_mcp_open_chatgpt" value="1" class="cmcp-btn cmcp-btn--primary"><?php
+                        esc_html_e( 'Open ChatGPT', 'cowboy-mcp' );
+                        echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+                    ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
+                </form>
+                <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php esc_html_e( 'Connection link copied — paste it into ChatGPT as the MCP server URL.', 'cowboy-mcp' ); ?></p>
+                <p><?php esc_html_e( 'Copies your connection link, turns on new connections for 30 minutes and opens ChatGPT in a new tab.', 'cowboy-mcp' ); ?></p>
+                <details class="mcp-local-details">
+                    <summary><?php esc_html_e( 'Copy the link yourself', 'cowboy-mcp' ); ?></summary>
+                    <div class="mcp-local-details-body"><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
+                </details>
+        <?php self::step_close(); ?>
+        <?php else : ?>
         <?php self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' ); ?>
                 <p><?php echo esc_html( $paste_hint ); ?></p>
                 <?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?>
         <?php self::step_close(); ?>
+        <?php endif; ?>
 
         <?php self::step_open( '2', $step2_title, '' ); ?>
                 <?php if ( $is_chatgpt ) : ?>
                     <ol class="mcp-substeps">
                         <li><?php echo wp_kses( __( 'Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work on the web only).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
                         <li><?php echo wp_kses( __( 'Go to <code>Settings → Security and login</code> and turn on <strong>Developer mode</strong> (one-time).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Create MCP App</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
+                        <li><?php echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
                         <li><?php echo wp_kses( __( 'Give it a name, paste the link from step 1 as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong>, and create it.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
                     </ol>
                 <?php else : ?>

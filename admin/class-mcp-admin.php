@@ -325,13 +325,26 @@ class Cowboy_MCP_Admin {
             }
         }
 
-        // "Add to Claude": open the registration window, then hand off (new tab) to
-        // Claude's prefilled Add-custom-connector dialog. Only offered on public HTTPS sites.
-        if ( isset( $_POST['cowboy_mcp_add_to_claude'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_add_to_claude' ) && class_exists( 'Cowboy_MCP_OAuth' ) && ! empty( get_option( 'cowboy_mcp_settings', [] )['oauth_enabled'] ) ) {
+        // "Add to Claude": the same click turns the connector on (only oauth_enabled changes),
+        // opens the registration window, then hands off (new tab) to Claude's prefilled
+        // Add-custom-connector dialog. Offered only on public HTTPS sites.
+        if ( isset( $_POST['cowboy_mcp_add_to_claude'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_add_to_claude' ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
             $org = 'org' === sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_add_to_claude'] ) );
+            self::enable_oauth_connector();
             Cowboy_MCP_OAuth::open_registration_window();
+            Cowboy_MCP_Admin_Connections::set_connect_watch( 'claude' );
             add_filter( 'allowed_redirect_hosts', static fn( $hosts ) => array_merge( (array) $hosts, [ 'claude.ai' ] ) );
             wp_safe_redirect( Cowboy_MCP_Admin_Connections::claude_install_link( $org ) );
+            exit;
+        }
+
+        // "Open ChatGPT": connector on + window open, then a new tab to ChatGPT (no prefill link exists; the JS copied the URL).
+        if ( isset( $_POST['cowboy_mcp_open_chatgpt'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_open_chatgpt' ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
+            self::enable_oauth_connector();
+            Cowboy_MCP_OAuth::open_registration_window();
+            Cowboy_MCP_Admin_Connections::set_connect_watch( 'chatgpt' );
+            add_filter( 'allowed_redirect_hosts', static fn( $hosts ) => array_merge( (array) $hosts, [ 'chatgpt.com' ] ) );
+            wp_safe_redirect( Cowboy_MCP_Admin_Connections::CHATGPT_URL );
             exit;
         }
 
@@ -490,15 +503,22 @@ class Cowboy_MCP_Admin {
         return false;
     }
 
-    /** Flip oauth_enabled on (preserving the rest of the settings array). */
-    private static function enable_oauth_connector( string $notice ): void {
+    /**
+     * Flip oauth_enabled on (preserving the rest of the settings array).
+     * Returns true when it flipped, false when already on. Empty $notice = silent.
+     */
+    public static function enable_oauth_connector( string $notice = '' ): bool {
         $s = get_option( 'cowboy_mcp_settings', [] );
-        if ( empty( $s['oauth_enabled'] ) ) {
-            $s['oauth_enabled'] = true;
-            update_option( 'cowboy_mcp_settings', $s );
-            Cowboy_MCP_OAuth::open_registration_window();
+        if ( ! empty( $s['oauth_enabled'] ) ) {
+            return false;
+        }
+        $s['oauth_enabled'] = true;
+        update_option( 'cowboy_mcp_settings', $s );
+        Cowboy_MCP_OAuth::open_registration_window();
+        if ( '' !== $notice ) {
             add_settings_error( 'cowboy_mcp', 'oauth_on', $notice, 'success' );
         }
+        return true;
     }
 
     /* ── Page renderer ────────────────────────────────────── */

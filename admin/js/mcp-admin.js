@@ -799,3 +799,15 @@ document.addEventListener( 'click', function( e ) {
 	fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } );
 	if ( box ) { box.remove(); }
 } );
+
+// "Open ChatGPT": copy the connection link during the click (user gesture), then let the form open the new tab.
+document.addEventListener( 'submit', function( e ) {
+	var form = e.target;
+	if ( ! form.matches || ! form.matches( 'form[data-cmcp-copy]' ) ) { return; }
+	var note = form.parentNode.querySelector( '[data-cmcp-copy-note]' );
+	if ( navigator.clipboard && window.isSecureContext !== false ) {
+		navigator.clipboard.writeText( form.getAttribute( 'data-cmcp-copy' ) ).then( function() {
+			if ( note ) { note.hidden = false; }
+		}, function() {} );
+	}
+} );
