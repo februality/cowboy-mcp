@@ -89,6 +89,7 @@ add_action( 'plugins_loaded', function () {
         Cowboy_MCP_Audit_Log::create_table();
         Cowboy_MCP_Rollback::create_table();
         Cowboy_MCP_Checkpoint::create_table();
+        Cowboy_MCP_Checkpoint::maybe_upgrade_schema();
         global $wpdb;
         $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching

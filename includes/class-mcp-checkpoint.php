@@ -23,6 +23,9 @@ class Cowboy_MCP_Checkpoint {
 	/** Rows fetched per SELECT while dumping. */
 	const CHUNK_ROWS = 500;
 
+	/** Largest prime below 2^52: sums of 52-bit row hashes stay below 2^53 (no float overflow on 64-bit PHP). */
+	const FP_PRIME = 4503599627370449;
+
 	private static function table(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'cowboy_mcp_checkpoints';
@@ -57,12 +60,24 @@ class Cowboy_MCP_Checkpoint {
 			size_bytes BIGINT UNSIGNED DEFAULT 0,
 			tables_count INT UNSIGNED DEFAULT 0,
 			tables LONGTEXT DEFAULT NULL,
+			checksums LONGTEXT DEFAULT NULL,
 			wp_version VARCHAR(20) DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY idx_created (created)
 		) {$charset};";
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$wpdb->query( $sql );
+	}
+
+	/** 1.7.1: add the checksums column to installs created before it existed. */
+	public static function maybe_upgrade_schema(): void {
+		global $wpdb;
+		$table = self::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'checksums' ) ) === null ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN checksums LONGTEXT DEFAULT NULL AFTER tables', $table ) );
+		}
 	}
 
 	/* ── Storage directory (web-denied) ────────────────────── */
@@ -128,9 +143,12 @@ class Cowboy_MCP_Checkpoint {
 		}
 
 		$counts = [];
+		$sums   = [];
 		try {
 			foreach ( $tables as $t ) {
-				$counts[ $t ] = self::dump_table( $gz, $t );
+				$s            = 0;
+				$counts[ $t ] = self::dump_table( $gz, $t, $s );
+				$sums[ $t ]   = [ 'rows' => $counts[ $t ], 'sum' => $s ];
 			}
 		} catch ( \Throwable $e ) {
 			gzclose( $gz );
@@ -147,6 +165,7 @@ class Cowboy_MCP_Checkpoint {
 			'size_bytes'   => filesize( $path ) ?: 0,
 			'tables_count' => count( $tables ),
 			'tables'       => wp_json_encode( $counts ),
+			'checksums'    => wp_json_encode( $sums ),
 			'wp_version'   => get_bloginfo( 'version' ),
 		] );
 		$id = (int) $wpdb->insert_id;
@@ -172,7 +191,7 @@ class Cowboy_MCP_Checkpoint {
 	 * lands in the dump as `{64 hex}` and survives into the restore request.
 	 * Returns the row count.
 	 */
-	private static function dump_table( $gz, string $table ): int {
+	private static function dump_table( $gz, string $table, ?int &$sum = null ): int {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$create = $wpdb->get_row( "SHOW CREATE TABLE `{$table}`", ARRAY_N );
@@ -184,6 +203,7 @@ class Cowboy_MCP_Checkpoint {
 
 		$offset = 0;
 		$total  = 0;
+		$sum    = 0;
 		$cols   = null;
 		while ( true ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -197,6 +217,7 @@ class Cowboy_MCP_Checkpoint {
 			$head   = "INSERT INTO `{$table}` ({$cols}) VALUES ";
 			$stmt   = '';
 			foreach ( $rows as $row ) {
+				$sum  = ( $sum + self::row_fp( $row ) ) % self::FP_PRIME;
 				$vals = [];
 				foreach ( $row as $v ) {
 					$vals[] = $v === null ? 'NULL' : "'" . $wpdb->remove_placeholder_escape( esc_sql( (string) $v ) ) . "'";
@@ -215,6 +236,60 @@ class Cowboy_MCP_Checkpoint {
 			$offset += self::CHUNK_ROWS;
 		}
 		return $total;
+	}
+
+	/** Order-independent row hash over the raw values $wpdb returns (not the SQL). */
+	private static function row_fp( array $row ): int {
+		$parts = array_map( static fn( $v ) => $v === null ? "\x00N" : (string) $v, array_values( $row ) );
+		return (int) hexdec( substr( hash( 'sha256', implode( "\x1f", $parts ) ), 0, 13 ) );
+	}
+
+	/** Same chunked SELECT as dump_table(), hashing instead of writing. */
+	private static function table_fingerprint( string $table ): array {
+		global $wpdb;
+		$offset = 0;
+		$rows   = 0;
+		$sum    = 0;
+		while ( true ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$chunk = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM `{$table}` LIMIT %d OFFSET %d", self::CHUNK_ROWS, $offset ), ARRAY_A );
+			if ( empty( $chunk ) ) {
+				break;
+			}
+			foreach ( $chunk as $row ) {
+				$sum = ( $sum + self::row_fp( $row ) ) % self::FP_PRIME;
+			}
+			$rows   += count( $chunk );
+			$offset += self::CHUNK_ROWS;
+		}
+		return [ 'rows' => $rows, 'sum' => $sum ];
+	}
+
+	/** Columns that hold site content worth checking for $wpdb placeholders: full table name => pk + text columns. */
+	public static function placeholder_columns(): array {
+		global $wpdb;
+		return [
+			$wpdb->options     => [ 'pk' => 'option_id', 'cols' => [ 'option_value' ] ],
+			$wpdb->postmeta    => [ 'pk' => 'meta_id',   'cols' => [ 'meta_value' ] ],
+			$wpdb->posts       => [ 'pk' => 'ID',        'cols' => [ 'post_content', 'post_excerpt', 'post_title' ] ],
+			$wpdb->termmeta    => [ 'pk' => 'meta_id',   'cols' => [ 'meta_value' ] ],
+			$wpdb->usermeta    => [ 'pk' => 'umeta_id',  'cols' => [ 'meta_value' ] ],
+			$wpdb->commentmeta => [ 'pk' => 'meta_id',   'cols' => [ 'meta_value' ] ],
+		];
+	}
+
+	/** Rows (per column) still carrying a $wpdb placeholder in the live content tables. */
+	public static function count_placeholders(): int {
+		global $wpdb;
+		$n = 0;
+		foreach ( self::placeholder_columns() as $table => $spec ) {
+			foreach ( $spec['cols'] as $col ) {
+				// Identifiers are from placeholder_columns() (core tables), never input.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				$n += (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE `{$col}` REGEXP %s", '[{][0-9a-f]{64}[}]' ) );
+			}
+		}
+		return $n;
 	}
 
 	/* ── Restore ───────────────────────────────────────────── */
@@ -279,6 +354,21 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 
+		// 4b. Content verification (checkpoints from 1.7.1 on): the imported rows must hash
+		//     to exactly what was dumped, or the live tables are never touched.
+		$checksums = json_decode( (string) ( $row['checksums'] ?? '' ), true );
+		$method    = is_array( $checksums ) && $checksums ? 'content' : 'rows';
+		$total     = array_sum( array_map( 'intval', $expected ) );
+		if ( 'content' === $method ) {
+			foreach ( $checksums as $t => $want ) {
+				$got = self::table_fingerprint( self::TEMP_PREFIX . $t );
+				if ( $got['rows'] !== (int) $want['rows'] || $got['sum'] !== (int) $want['sum'] ) {
+					self::drop_prefixed( self::TEMP_PREFIX );
+					return new WP_Error( 'checkpoint_verify_failed', "Restored data for {$t} does not match the checkpoint; originals untouched." );
+				}
+			}
+		}
+
 		// 5. Atomic multi-table swap.
 		$live  = self::site_tables();
 		$pairs = [];
@@ -307,6 +397,9 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 
+		$found   = self::count_placeholders();
+		$summary = sprintf( '%d tables, %s rows, %s', count( $tables ), number_format( $total ), 'content' === $method ? 'verified' : 'rows checked' );
+
 		// Ledger entry: the restore itself (reversible via the pre-restore checkpoint).
 		if ( class_exists( 'Cowboy_MCP_Rollback' ) ) {
 			Cowboy_MCP_Rollback::insert_row( [
@@ -314,7 +407,7 @@ class Cowboy_MCP_Checkpoint {
 				'action'              => 'update',
 				'object_type'         => 'checkpoint',
 				'object_id'           => (string) $id,
-				'object_label'        => 'Database restore from checkpoint #' . $id,
+				'object_label'        => 'Database restore from checkpoint #' . $id . ' — ' . $summary,
 				'key_id'              => $actor,
 				'status'              => Cowboy_MCP_Rollback::STATUS_NOT_UNDOABLE,
 				'not_undoable_reason' => 'Whole-DB restore. To reverse it, restore pre-restore checkpoint #' . $pre['checkpoint_id'] . '.',
@@ -326,6 +419,14 @@ class Cowboy_MCP_Checkpoint {
 			'checkpoint_id'             => $id,
 			'tables_count'              => count( $tables ),
 			'pre_restore_checkpoint_id' => (int) $pre['checkpoint_id'],
+			'verification'              => [
+				'method'                        => $method,
+				'tables'                        => count( $tables ),
+				'rows'                          => $total,
+				'placeholders_found'            => $found,
+				'legacy_placeholders_rewritten' => $legacy_rewritten,
+			],
+			'summary'                   => $summary,
 		];
 	}
 
@@ -397,6 +498,11 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 		gzclose( $gz );
+		/**
+		 * Fires after a checkpoint is imported into temp tables, before verification.
+		 * Test seam; the harness tampers a temp row here.
+		 */
+		do_action( 'cowboy_mcp_checkpoint_imported' );
 		return $rewritten;
 	}
 
@@ -419,6 +525,8 @@ class Cowboy_MCP_Checkpoint {
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id DESC', self::table() ), ARRAY_A ) ?: [];
 		foreach ( $rows as &$r ) {
 			unset( $r['file'] ); // never expose storage paths
+			$r['verifiable'] = ! empty( $r['checksums'] );
+			unset( $r['checksums'] );
 			$r['tables'] = json_decode( (string) $r['tables'], true );
 		}
 		unset( $r );
