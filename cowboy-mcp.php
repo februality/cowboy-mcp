@@ -68,6 +68,7 @@ require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-activity.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-logs.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-settings.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-feedback.php';
+require_once COWBOY_MCP_PATH . 'admin/class-mcp-repair-notice.php';
 
 /* ── Boot ─────────────────────────────────────────────────── */
 add_action( 'plugins_loaded', function () {
@@ -80,6 +81,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
     Cowboy_MCP_Feedback::init();
+    Cowboy_MCP_Repair_Notice::init();
     Cowboy_MCP_OAuth::init();
     Cowboy_MCP_Abilities::init();
 

@@ -38,3 +38,5 @@
     opacity: 0;
     transition: opacity .3s ease;
 }
+
+.mcp-repair-actions{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin:.5em 0}.mcp-repair-details summary{cursor:pointer;line-height:30px}.mcp-repair-details ul{margin:.25em 0 0 1.2em;list-style:disc}

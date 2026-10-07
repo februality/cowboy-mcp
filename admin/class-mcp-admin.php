@@ -105,7 +105,7 @@ class Cowboy_MCP_Admin {
     public static function enqueue_assets( string $hook ): void {
         // The two notices are mutually exclusive (setup = no credentials,
         // feedback = credentials + usage) but share one CSS/JS pair.
-        if ( self::setup_notice_due() || Cowboy_MCP_Feedback::is_due() ) {
+        if ( self::setup_notice_due() || Cowboy_MCP_Feedback::is_due() || Cowboy_MCP_Repair_Notice::is_due() ) {
             $css_path = COWBOY_MCP_PATH . 'admin/css/mcp-notice.css';
             $js_path  = COWBOY_MCP_PATH . 'admin/js/mcp-notice.js';
             wp_enqueue_style(
@@ -125,6 +125,7 @@ class Cowboy_MCP_Admin {
                 'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
                 'nonce'         => wp_create_nonce( 'cowboy_mcp_dismiss_setup_notice' ),
                 'feedbackNonce' => wp_create_nonce( 'cowboy_mcp_feedback' ),
+                'repairNonce'   => wp_create_nonce( 'cowboy_mcp_dismiss_repair' ),
             ] );
         }
 

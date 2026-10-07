@@ -37,10 +37,10 @@ class Cowboy_MCP_Checkpoint {
 
 	public static function cron_prune(): void {
 		self::prune_excess();
-		// pre_restore checkpoints are exempt from the count cap but expire by age.
+		// pre_restore/pre_repair checkpoints are exempt from the count cap but expire by age.
 		$days = (int) ( Cowboy_MCP_Tools::get_settings()['undo_retention_days'] ?? 7 );
 		foreach ( self::list_all() as $cp ) {
-			if ( $cp['trigger_type'] === 'pre_restore'
+			if ( in_array( $cp['trigger_type'], [ 'pre_restore', 'pre_repair' ], true )
 				&& strtotime( $cp['created'] ) < time() - $days * DAY_IN_SECONDS ) {
 				self::delete( (int) $cp['id'] );
 			}
@@ -170,7 +170,7 @@ class Cowboy_MCP_Checkpoint {
 		] );
 		$id = (int) $wpdb->insert_id;
 
-		if ( $trigger !== 'pre_restore' ) {
+		if ( ! in_array( $trigger, [ 'pre_restore', 'pre_repair' ], true ) ) {
 			self::prune_excess();
 		}
 
@@ -560,7 +560,7 @@ class Cowboy_MCP_Checkpoint {
 	/** Enforce checkpoint_max (oldest first); pre_restore checkpoints are exempt. */
 	public static function prune_excess(): int {
 		$max     = max( 1, (int) ( Cowboy_MCP_Tools::get_settings()['checkpoint_max'] ?? 5 ) );
-		$rows    = array_filter( self::list_all(), fn( $r ) => $r['trigger_type'] !== 'pre_restore' );
+		$rows    = array_filter( self::list_all(), fn( $r ) => ! in_array( $r['trigger_type'], [ 'pre_restore', 'pre_repair' ], true ) );
 		$excess  = array_slice( array_values( $rows ), $max ); // list_all is newest-first
 		$deleted = 0;
 		foreach ( $excess as $r ) {

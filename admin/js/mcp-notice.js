@@ -29,6 +29,16 @@
 		} );
 	}
 
+	/* ── Placeholder-repair notice (found / done ×) ── */
+	var repair = document.querySelector( '.mcp-repair-notice[data-cmcp-dismiss]' );
+	if ( repair && cowboyMcpNotice.repairNonce ) {
+		repair.addEventListener( 'click', function( e ) {
+			if ( e.target.closest( '.notice-dismiss' ) ) {
+				send( { action: 'cowboy_mcp_dismiss_repair', _ajax_nonce: cowboyMcpNotice.repairNonce, which: repair.getAttribute( 'data-cmcp-dismiss' ) } );
+			}
+		} );
+	}
+
 	/* ── Feedback prompt ── */
 	var fb = document.querySelector( '.mcp-feedback-notice' );
 	if ( ! fb || ! cowboyMcpNotice.feedbackNonce ) {

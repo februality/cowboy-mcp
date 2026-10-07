@@ -64,11 +64,7 @@ class Cowboy_MCP_Placeholder_Repair {
 			foreach ( $spec['cols'] as $col ) {
 				// %% because this string goes through prepare(); never touch the plugin's own options.
 				$extra     = $table === $wpdb->options ? " AND option_name NOT LIKE 'cowboy\\\\_mcp\\\\_%%'" : '';
-				$label_col = match ( $table ) {
-					$wpdb->options => 'option_name',
-					$wpdb->posts   => 'post_title',
-					default        => 'meta_key',
-				};
+				$label_col = self::label_column( $table );
 				// Identifiers come from placeholder_columns() (core tables), never input.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT `{$spec['pk']}` AS pk, `{$col}` AS v, `{$label_col}` AS l FROM `{$table}` WHERE `{$col}` REGEXP %s{$extra} ORDER BY `{$spec['pk']}` LIMIT %d", self::SQL_RE, $limit ), ARRAY_A );
@@ -96,18 +92,120 @@ class Cowboy_MCP_Placeholder_Repair {
 	}
 
 	/** Read-only scan; nothing in site data is written. */
+	/** Counts per column in SQL and samples pk + label only: never loads the values. */
 	public static function scan(): array {
-		$rows = self::find( 100000 );
-		$s    = array_merge( self::state(), [
-			'status' => $rows ? 'found' : 'clean',
-			'count'  => count( $rows ),
-			'sample' => array_map( static fn( $r ) => [ 'label' => $r['label'] ], array_slice( $rows, 0, 10 ) ),
+		global $wpdb;
+		$count  = 0;
+		$sample = [];
+		foreach ( Cowboy_MCP_Checkpoint::placeholder_columns() as $table => $spec ) {
+			foreach ( $spec['cols'] as $col ) {
+				$extra     = $table === $wpdb->options ? " AND option_name NOT LIKE 'cowboy\\\\_mcp\\\\_%%'" : '';
+				$label_col = self::label_column( $table );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				$count += (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE `{$col}` REGEXP %s{$extra}", self::SQL_RE ) );
+				if ( count( $sample ) < 10 ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+					$rows = $wpdb->get_results( $wpdb->prepare( "SELECT `{$label_col}` AS l FROM `{$table}` WHERE `{$col}` REGEXP %s{$extra} ORDER BY `{$spec['pk']}` LIMIT %d", self::SQL_RE, 10 - count( $sample ) ), ARRAY_A );
+					foreach ( (array) $rows as $r ) {
+						$sample[] = [ 'label' => self::label( $table, $col, (string) $r['l'] ) ];
+					}
+				}
+			}
+		}
+		$s = array_merge( self::state(), [
+			'status' => $count ? 'found' : 'clean',
+			'count'  => $count,
+			'sample' => $sample,
 			'at'     => time(),
 		] );
 		self::save( $s );
 		return $s;
 	}
 
-	/** Repair arrives in a later task; the hook is registered so scheduled events never fatal. */
-	public static function repair_batch(): void {}
+	private static function label_column( string $table ): string {
+		global $wpdb;
+		return match ( $table ) {
+			$wpdb->options => 'option_name',
+			$wpdb->posts   => 'post_title',
+			default        => 'meta_key',
+		};
+	}
+
+	/** Re-arm a cron event that was lost (e.g. WP-Cron cleared) while a scan/repair is pending. */
+	public static function ensure_scheduled(): void {
+		$status = self::state()['status'] ?? '';
+		$hook   = 'scanning' === $status ? self::SCAN_HOOK : ( 'repairing' === $status ? self::REPAIR_HOOK : '' );
+		if ( $hook && ! wp_next_scheduled( $hook ) ) {
+			wp_schedule_single_event( time() + 60, $hook );
+		}
+	}
+
+	/** Admin clicked Repair: checkpoint first, then batches (first one inline, rest via cron). */
+	public static function start(): array|WP_Error {
+		$s = self::state();
+		if ( 'repairing' === ( $s['status'] ?? '' ) ) {
+			return new WP_Error( 'repair_running', 'A repair is already running.' );
+		}
+		if ( ! self::find( 1 ) ) {
+			self::save( array_merge( $s, [ 'status' => 'clean', 'count' => 0, 'sample' => [] ] ) );
+			return new WP_Error( 'nothing_to_repair', 'No damaged values found.' );
+		}
+		$cp = Cowboy_MCP_Checkpoint::create( 'Before placeholder repair', 'pre_repair' );
+		if ( is_wp_error( $cp ) ) {
+			return new WP_Error( 'repair_failed', 'Could not take the safety checkpoint; nothing was changed. ' . $cp->get_error_message() );
+		}
+		$s = array_merge( $s, [ 'status' => 'repairing', 'repaired' => 0, 'batch_id' => wp_generate_uuid4(), 'checkpoint_id' => (int) $cp['checkpoint_id'], 'at' => time() ] );
+		self::save( $s );
+		self::repair_batch();
+		return self::state();
+	}
+
+	/** One batch: fix up to BATCH rows per column, journal them, reschedule until none are left. */
+	public static function repair_batch(): void {
+		global $wpdb;
+		$s = self::state();
+		if ( 'repairing' !== ( $s['status'] ?? '' ) ) {
+			return;
+		}
+		$rows = self::find( self::BATCH );
+		if ( ! $rows ) {
+			wp_cache_flush();
+			$s['status'] = 'done';
+			$s['at']     = time();
+			self::save( $s );
+			Cowboy_MCP_Auth::log( 'placeholder_repair_done', [ 'key_id' => 'admin', 'tool' => 'placeholder_repair', 'args' => [ 'repaired' => (int) $s['repaired'] ] ] );
+			return;
+		}
+		$journal = [];
+		foreach ( $rows as $r ) {
+			$new = preg_replace( Cowboy_MCP_Checkpoint::PLACEHOLDER_RE, '%', $r['value'] );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( false !== $wpdb->update( $r['table'], [ $r['col'] => $new ], [ $r['pk_col'] => $r['pk_val'] ] ) ) {
+				$journal[] = [ 'table' => $r['table'], 'col' => $r['col'], 'pk_col' => $r['pk_col'], 'pk_val' => $r['pk_val'], 'old' => $r['value'], 'new' => $new ];
+				if ( $r['table'] === $wpdb->posts ) {
+					clean_post_cache( (int) $r['pk_val'] );
+				}
+			}
+		}
+		if ( ! $journal ) { // every update failed: stop rather than loop forever
+			$s['status'] = 'found';
+			self::save( $s );
+			return;
+		}
+		Cowboy_MCP_Rollback::$batch_id = $s['batch_id'];
+		Cowboy_MCP_Rollback::insert_row( [
+			'tool'         => 'placeholder_repair',
+			'action'       => 'update',
+			'object_type'  => 'db_rows',
+			'object_id'    => 'placeholder_repair',
+			'object_label' => 'Repaired ' . count( $journal ) . ' values damaged by an earlier checkpoint restore',
+			'key_id'       => 'admin',
+			'before_state' => [ 'rows' => $journal ],
+			'after_hash'   => Cowboy_MCP_Rollback::state_hash( [ 'values' => array_column( $journal, 'new' ) ] ),
+		] );
+		Cowboy_MCP_Rollback::$batch_id = null;
+		$s['repaired'] = (int) $s['repaired'] + count( $journal );
+		self::save( $s );
+		wp_schedule_single_event( time() + 5, self::REPAIR_HOOK );
+	}
 }
