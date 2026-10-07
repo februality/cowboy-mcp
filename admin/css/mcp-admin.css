@@ -368,3 +368,6 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 	.cmcp-tab[aria-current="page"]::after { left: 8px; right: 8px; }
 }
 .wrap.cmcp .cmcp-copy-note { margin: 8px 0; color: var(--cmcp-ok); font-weight: 600; }
+.wrap.cmcp .cmcp-connect-status { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--cmcp-radius-sm); border: 1px solid var(--cmcp-border); background: var(--cmcp-surface); margin: 0 0 16px; font-size: 13px; }
+.wrap.cmcp .cmcp-connect-status--connected { border-color: var(--cmcp-ok-border); background: var(--cmcp-ok-bg, #edfaef); color: var(--cmcp-ok); }
+.wrap.cmcp .cmcp-connect-status--blocked { border-color: var(--cmcp-warn-border); background: var(--cmcp-warn-bg); }

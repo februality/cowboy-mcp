@@ -21,6 +21,84 @@ class Cowboy_MCP_Admin_Connections {
         return ( is_array( $w ) && isset( $w['app'], $w['since'] ) ) ? $w : null;
     }
 
+    /**
+     * Read-only: how far the watched app has got since the click. Never writes
+     * clients or tokens. Only clients whose redirect host maps to the watched
+     * app's label count, so unrelated connections can never report "connected".
+     *
+     * @param array{app:string,since:int} $watch
+     * @return array{stage:string,reused:bool,app:string}
+     */
+    public static function connect_status( array $watch ): array {
+        $label   = 'chatgpt' === $watch['app'] ? 'ChatGPT' : 'Claude';
+        $since   = (int) $watch['since'];
+        $clients = (array) get_option( 'cowboy_mcp_oauth_clients', [] );
+        $tokens  = array_merge( array_values( (array) get_option( 'cowboy_mcp_oauth_tokens', [] ) ), array_values( (array) get_option( 'cowboy_mcp_oauth_refresh', [] ) ) );
+        $order   = [ 'waiting' => 0, 'registered' => 1, 'approved' => 2, 'connected' => 3 ];
+        $stage   = 'waiting';
+        $reused  = false;
+        foreach ( $clients as $cid => $c ) {
+            if ( ! is_array( $c ) ) {
+                continue;
+            }
+            $host = (string) wp_parse_url( (string) ( $c['redirect_uris'][0] ?? '' ), PHP_URL_HOST );
+            if ( '' === $host || Cowboy_MCP_OAuth::app_label_for_host( $host ) !== $label ) {
+                continue;
+            }
+            $mine  = array_filter( $tokens, static fn( $t ) => is_array( $t ) && ( $t['client_id'] ?? '' ) === $cid );
+            $used  = array_filter( $mine, static fn( $t ) => ! empty( $t['last_used'] ) && (int) $t['last_used'] >= $since );
+            $fresh = (int) ( $c['created'] ?? 0 ) >= $since;
+            if ( $fresh ) {
+                $s = $used ? 'connected' : ( $mine ? 'approved' : 'registered' );
+            } elseif ( $used ) {
+                $s = 'connected';
+            } else {
+                continue;
+            }
+            if ( $order[ $s ] > $order[ $stage ] || ( 'connected' === $s && 'connected' === $stage && $fresh ) ) {
+                $stage  = $s;
+                $reused = 'connected' === $s && ! $fresh;
+            }
+        }
+        if ( 'waiting' === $stage ) {
+            foreach ( Cowboy_MCP_OAuth::blocked_attempts() as $a ) {
+                if ( $a['app'] === $label && (int) $a['at'] >= $since ) {
+                    $stage = 'blocked';
+                    break;
+                }
+            }
+        }
+        return [ 'stage' => $stage, 'reused' => $reused, 'app' => $watch['app'] ];
+    }
+
+    /** Whole translated sentences per app and stage. */
+    public static function connect_status_text( array $st ): string {
+        $gpt = 'chatgpt' === $st['app'];
+        return match ( $st['stage'] ) {
+            'registered' => $gpt ? __( 'ChatGPT found your site — approve access on the sign-in page.', 'cowboy-mcp' ) : __( 'Claude found your site — approve access on the sign-in page.', 'cowboy-mcp' ),
+            'approved'   => $gpt ? __( 'Approved — waiting for ChatGPT\'s first request.', 'cowboy-mcp' ) : __( 'Approved — waiting for Claude\'s first request.', 'cowboy-mcp' ),
+            'connected'  => ! empty( $st['reused'] )
+                ? ( $gpt ? __( '✓ Connected — ChatGPT reused your earlier connection.', 'cowboy-mcp' ) : __( '✓ Connected — Claude reused your earlier connection.', 'cowboy-mcp' ) )
+                : ( $gpt ? __( '✓ Connected — ChatGPT can now use this site.', 'cowboy-mcp' ) : __( '✓ Connected — Claude can now use this site.', 'cowboy-mcp' ) ),
+            'blocked'    => $gpt ? __( 'ChatGPT tried to connect, but new connections were off.', 'cowboy-mcp' ) : __( 'Claude tried to connect, but new connections were off.', 'cowboy-mcp' ),
+            default      => $gpt ? __( 'Waiting for ChatGPT…', 'cowboy-mcp' ) : __( 'Waiting for Claude…', 'cowboy-mcp' ),
+        };
+    }
+
+    public static function render_connect_status(): void {
+        $w = self::connect_watch();
+        if ( ! $w || ! class_exists( 'Cowboy_MCP_OAuth' ) ) {
+            return;
+        }
+        $st = self::connect_status( $w );
+        ?>
+        <div class="cmcp-connect-status cmcp-connect-status--<?php echo esc_attr( $st['stage'] ); ?>" aria-live="polite" data-cmcp-connect-watch data-stage="<?php echo esc_attr( $st['stage'] ); ?>">
+            <span class="cmcp-connect-status-text"><?php echo esc_html( self::connect_status_text( $st ) ); ?></span>
+            <a class="cmcp-connect-status-refresh" href="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection' ] ) ); ?>" <?php echo 'connected' === $st['stage'] ? '' : 'hidden'; ?>><?php esc_html_e( 'Refresh list', 'cowboy-mcp' ); ?></a>
+        </div>
+        <?php
+    }
+
     public static function client_registry(): array {
         // 'local' is how the client behaves against a local dev site: it either
         // works as-is ('works'), works through the on-machine mcp-remote bridge
@@ -659,6 +737,7 @@ class Cowboy_MCP_Admin_Connections {
             $active = '';
         }
         self::render_blocked_callout();
+        self::render_connect_status();
         ?>
         <p class="cmcp-lede"><?php
             echo wp_kses(

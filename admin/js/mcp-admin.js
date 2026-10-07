@@ -831,3 +831,30 @@ document.addEventListener( 'click', function( e ) {
 		p.then( function() { flag( true ); showNote( note ); }, function() { openFallback( form ); } );
 	} );
 } )();
+
+// Live "Connected": poll while the strip is on screen and the tab is visible.
+( function() {
+	var strip = document.querySelector( '[data-cmcp-connect-watch]' );
+	if ( ! strip || strip.getAttribute( 'data-stage' ) === 'connected' ) { return; }
+	var timer = null;
+	function tick() {
+		if ( document.visibilityState !== 'visible' ) { return; }
+		var body = new URLSearchParams( { action: 'cowboy_mcp_connect_status', _ajax_nonce: cowboyMcpAdmin.statusNonce } );
+		fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } )
+			.then( function( r ) { return r.json(); } )
+			.then( function( r ) {
+				if ( ! r || ! r.success ) { return; }
+				var d = r.data;
+				if ( d.stage === 'expired' ) { strip.remove(); window.clearInterval( timer ); return; }
+				strip.setAttribute( 'data-stage', d.stage );
+				strip.className = 'cmcp-connect-status cmcp-connect-status--' + d.stage;
+				strip.querySelector( '.cmcp-connect-status-text' ).textContent = d.text;
+				if ( d.done ) {
+					strip.querySelector( '.cmcp-connect-status-refresh' ).hidden = false;
+					window.clearInterval( timer );
+				}
+			} )
+			.catch( function() {} );
+	}
+	timer = window.setInterval( tick, 3000 );
+} )();

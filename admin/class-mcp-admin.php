@@ -23,6 +23,7 @@ class Cowboy_MCP_Admin {
         add_action( 'wp_ajax_cowboy_mcp_dismiss_new_key', [ __CLASS__, 'ajax_dismiss_new_key' ] );
         add_action( 'wp_ajax_cowboy_mcp_dismiss_setup_notice', [ __CLASS__, 'ajax_dismiss_setup_notice' ] );
         add_action( 'wp_ajax_cowboy_mcp_dismiss_blocked', [ __CLASS__, 'ajax_dismiss_blocked' ] );
+        add_action( 'wp_ajax_cowboy_mcp_connect_status', [ __CLASS__, 'ajax_connect_status' ] );
         add_action( 'wp_ajax_cowboy_mcp_set_conn_client', [ __CLASS__, 'ajax_set_conn_client' ] );
     }
 
@@ -111,6 +112,22 @@ class Cowboy_MCP_Admin {
         wp_die();
     }
 
+    public static function ajax_connect_status(): void {
+        check_ajax_referer( 'cowboy_mcp_connect_status' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( null, 403 );
+        }
+        $w = Cowboy_MCP_Admin_Connections::connect_watch();
+        if ( ! $w || ! class_exists( 'Cowboy_MCP_OAuth' ) ) {
+            wp_send_json_success( [ 'stage' => 'expired', 'reused' => false, 'text' => '', 'done' => true ] );
+        }
+        $st = Cowboy_MCP_Admin_Connections::connect_status( $w );
+        if ( 'connected' === $st['stage'] ) {
+            delete_transient( 'cowboy_mcp_connect_watch_' . get_current_user_id() );
+        }
+        wp_send_json_success( [ 'stage' => $st['stage'], 'reused' => $st['reused'], 'text' => Cowboy_MCP_Admin_Connections::connect_status_text( $st ), 'done' => 'connected' === $st['stage'] ] );
+    }
+
     public static function enqueue_assets( string $hook ): void {
         // The two notices are mutually exclusive (setup = no credentials,
         // feedback = credentials + usage) but share one CSS/JS pair.
@@ -164,6 +181,7 @@ class Cowboy_MCP_Admin {
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpAdmin', [
             'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
             'dismissNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
+            'statusNonce'  => wp_create_nonce( 'cowboy_mcp_connect_status' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
             'blockedNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_blocked' ),
             'gateOff'      => __( 'New connections: disabled', 'cowboy-mcp' ),
