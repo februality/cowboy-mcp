@@ -277,10 +277,10 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 = 1.7.1 =
 * Fix: restoring a checkpoint no longer damages values that contain % signs (permalinks, page-builder data). Every restore is now checked against the checkpoint before it replaces your data.
+* Fix: media uploads failed on sites where no other plugin loaded WordPress's admin file helpers.
 * New: if an earlier restore damaged values on your site, Cowboy MCP finds them and offers a one-click repair (checkpointed and undoable).
 * New: the Connections tab shows when an app such as ChatGPT tried to connect while new connections were off, with the switch right there.
 * New: Add to Claude turns the connector on in the same click, a new Open ChatGPT button copies your link and opens ChatGPT, and the page confirms live when the app is connected.
-* Fix: media uploads failed on sites where no other plugin loaded WordPress's admin file helpers.
 
 = Earlier versions =
 
