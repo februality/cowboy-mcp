@@ -51,6 +51,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-rollback.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-checkpoint.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-placeholder-repair.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-installer.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-doctor.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth.php';
@@ -73,6 +74,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Audit_Log::init();
     Cowboy_MCP_Rollback::init();
     Cowboy_MCP_Checkpoint::init();
+    Cowboy_MCP_Placeholder_Repair::init();
     Cowboy_MCP_Doctor::init();
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
@@ -90,6 +92,7 @@ add_action( 'plugins_loaded', function () {
         Cowboy_MCP_Rollback::create_table();
         Cowboy_MCP_Checkpoint::create_table();
         Cowboy_MCP_Checkpoint::maybe_upgrade_schema();
+        Cowboy_MCP_Placeholder_Repair::on_upgrade();
         global $wpdb;
         $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -185,6 +188,9 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_setup_notice' );
     delete_option( 'cowboy_mcp_ability_index' );
     delete_option( 'cowboy_mcp_feedback' );
+    delete_option( 'cowboy_mcp_placeholder_repair' );
+    wp_clear_scheduled_hook( 'cowboy_mcp_placeholder_scan' );
+    wp_clear_scheduled_hook( 'cowboy_mcp_placeholder_repair' );
     delete_transient( 'cowboy_mcp_feedback_gate' );
 
     // Remove per-user admin preferences (remembered connection method).

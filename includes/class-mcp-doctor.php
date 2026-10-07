@@ -178,6 +178,22 @@ class Cowboy_MCP_Doctor {
 			);
 		}
 
+		// restore_damage - values a pre-1.7.1 checkpoint restore broke (see Cowboy_MCP_Placeholder_Repair)
+		if ( class_exists( 'Cowboy_MCP_Placeholder_Repair' ) ) {
+			$rs = Cowboy_MCP_Placeholder_Repair::state();
+			if ( in_array( $rs['status'] ?? '', [ 'found', 'repairing' ], true ) ) {
+				$out[] = self::result(
+					'restore_damage',
+					'Checkpoint restore damage',
+					'warn',
+					(int) ( $rs['count'] ?? 0 ) . ' values damaged by an earlier checkpoint restore (% signs saved incorrectly).',
+					[],
+					null,
+					'Open Settings > Cowboy MCP and click "Repair now" on the notice; the repair takes a checkpoint first and can be undone from the Activity tab.'
+				);
+			}
+		}
+
 		// rest_blockers
 		$known   = [
 			'better-wp-security/better-wp-security.php' => [ 'Solid Security', 'allow the cowboy-mcp/v1 REST namespace in its REST API settings' ],
