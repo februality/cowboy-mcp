@@ -1286,16 +1286,26 @@ class Cowboy_MCP_Rollback {
 		if ( empty( $rows ) ) {
 			return new WP_Error( 'undo_failed', 'No captured rows to restore.' );
 		}
+		$flush = false;
 		foreach ( $rows as $r ) {
 			// Table/column names come from our own capture code (trusted), values are data.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$updated = $wpdb->update( $r['table'], [ $r['col'] => $r['old'] ], [ $r['pk_col'] => $r['pk_val'] ] );
+			if ( $r['table'] !== $wpdb->posts ) {
+				$flush = true; // options/meta rows: direct writes bypass the object cache
+			}
 			if ( $updated === false ) {
+				if ( $flush ) {
+					wp_cache_flush();
+				}
 				return new WP_Error( 'undo_failed', "Row restore failed for {$r['table']} {$r['pk_col']}={$r['pk_val']}: " . $wpdb->last_error );
 			}
 			if ( $r['table'] === $wpdb->posts ) {
 				clean_post_cache( (int) $r['pk_val'] );
 			}
+		}
+		if ( $flush ) {
+			wp_cache_flush();
 		}
 		return true;
 	}

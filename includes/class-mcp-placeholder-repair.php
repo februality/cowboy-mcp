@@ -155,6 +155,7 @@ class Cowboy_MCP_Placeholder_Repair {
 			return new WP_Error( 'repair_failed', 'Could not take the safety checkpoint; nothing was changed. ' . $cp->get_error_message() );
 		}
 		$s = array_merge( $s, [ 'status' => 'repairing', 'repaired' => 0, 'batch_id' => wp_generate_uuid4(), 'checkpoint_id' => (int) $cp['checkpoint_id'], 'at' => time() ] );
+		unset( $s['dismissed'], $s['done_dismissed'] );
 		self::save( $s );
 		self::repair_batch();
 		return self::state();
@@ -179,7 +180,7 @@ class Cowboy_MCP_Placeholder_Repair {
 		$journal = [];
 		foreach ( $rows as $r ) {
 			$new = preg_replace( Cowboy_MCP_Checkpoint::PLACEHOLDER_RE, '%', $r['value'] );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 			if ( false !== $wpdb->update( $r['table'], [ $r['col'] => $new ], [ $r['pk_col'] => $r['pk_val'] ] ) ) {
 				$journal[] = [ 'table' => $r['table'], 'col' => $r['col'], 'pk_col' => $r['pk_col'], 'pk_val' => $r['pk_val'], 'old' => $r['value'], 'new' => $new ];
 				if ( $r['table'] === $wpdb->posts ) {
