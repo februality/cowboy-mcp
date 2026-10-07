@@ -790,3 +790,12 @@
 	}
 	refresh();
 } )();
+
+document.addEventListener( 'click', function( e ) {
+	var x = e.target.closest && e.target.closest( '.cmcp-blocked-x' );
+	if ( ! x ) { return; }
+	var box = x.closest( '[data-cmcp-blocked]' );
+	var body = new URLSearchParams( { action: 'cowboy_mcp_dismiss_blocked', _ajax_nonce: cowboyMcpAdmin.blockedNonce } );
+	fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } );
+	if ( box ) { box.remove(); }
+} );

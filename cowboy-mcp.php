@@ -186,6 +186,7 @@ function cowboy_mcp_uninstall(): void {
     delete_option( 'cowboy_mcp_oauth_tokens' );
     delete_option( 'cowboy_mcp_oauth_refresh' );
     delete_option( 'cowboy_mcp_oauth_clients' );
+    delete_option( 'cowboy_mcp_oauth_blocked' );
     delete_option( 'cowboy_mcp_db_version' );
     delete_option( 'cowboy_mcp_setup_notice' );
     delete_option( 'cowboy_mcp_ability_index' );

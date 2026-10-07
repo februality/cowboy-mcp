@@ -562,6 +562,52 @@ class Cowboy_MCP_Admin_Connections {
 
     /* ── Page ─────────────────────────────────────────────── */
 
+    public static function render_blocked_callout(): void {
+        if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || empty( get_option( 'cowboy_mcp_settings', [] )['oauth_enabled'] ) ) {
+            return;
+        }
+        $attempts = array_slice( Cowboy_MCP_OAuth::blocked_attempts(), 0, 3 );
+        if ( ! $attempts ) {
+            return;
+        }
+        $left = Cowboy_MCP_OAuth::registration_seconds_left();
+        ?>
+        <div class="cmcp-callout cmcp-callout--warn cmcp-blocked" role="status" data-cmcp-blocked>
+            <button type="button" class="cmcp-blocked-x" aria-label="<?php esc_attr_e( 'Dismiss', 'cowboy-mcp' ); ?>">&times;</button>
+            <?php foreach ( $attempts as $a ) : ?>
+                <p><strong><?php
+                    /* translators: 1: app name such as ChatGPT, 2: relative time such as "4 minutes" */
+                    echo esc_html( sprintf( __( '%1$s tried to connect %2$s ago, but new connections were off.', 'cowboy-mcp' ), $a['app'], human_time_diff( (int) $a['at'] ) ) );
+                ?></strong><?php if ( (int) $a['count'] > 1 ) : ?> <?php
+                    /* translators: %d: number of attempts */
+                    echo esc_html( sprintf( __( '(%d attempts)', 'cowboy-mcp' ), (int) $a['count'] ) );
+                endif; ?></p>
+                <?php if ( empty( $a['allowlisted'] ) && '' !== $a['host'] ) : ?>
+                    <p class="description"><?php
+                        /* translators: %s: host name */
+                        echo esc_html( sprintf( __( 'Its sign-in address (%s) is not on the allowed list either; add it to the extra sign-in hosts on the Settings tab.', 'cowboy-mcp' ), $a['host'] ) );
+                    ?></p>
+                <?php endif; ?>
+            <?php endforeach; ?>
+            <?php if ( $left > 0 ) : ?>
+                <p><?php
+                    /* translators: %s: app name such as ChatGPT */
+                    echo esc_html( sprintf( __( 'New connections are on. Try again in %s now.', 'cowboy-mcp' ), $attempts[0]['app'] ) );
+                ?></p>
+            <?php else : ?>
+                <form method="post" class="mcp-inline-form">
+                    <?php wp_nonce_field( 'cowboy_mcp_toggle_connections' ); ?>
+                    <button type="submit" name="cowboy_mcp_toggle_connections" value="enable" class="cmcp-btn cmcp-btn--primary"><?php esc_html_e( 'Enable for 30 minutes', 'cowboy-mcp' ); ?></button>
+                    <span><?php
+                        /* translators: %s: app name such as ChatGPT */
+                        echo esc_html( sprintf( __( 'Then add the app again in %s.', 'cowboy-mcp' ), $attempts[0]['app'] ) );
+                    ?></span>
+                </form>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
     public static function render_tab( string $endpoint, $new_key ): void {
         $registry    = self::client_registry();
         $is_local    = self::site_looks_local();
@@ -574,6 +620,7 @@ class Cowboy_MCP_Admin_Connections {
         if ( ! array_key_exists( $active, $registry ) ) {
             $active = '';
         }
+        self::render_blocked_callout();
         ?>
         <p class="cmcp-lede"><?php
             echo wp_kses(

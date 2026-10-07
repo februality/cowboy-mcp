@@ -95,6 +95,11 @@
 .cmcp-icon-btn.is-failed { color: var(--cmcp-danger); border-color: var(--cmcp-danger-border); }
 .cmcp-callout { padding: 10px 12px; border-radius: var(--cmcp-radius-sm); background: var(--cmcp-warn-bg); border: 1px solid var(--cmcp-warn-border); color: #5c3a00; font-size: 13px; margin: 8px 0; }
 .cmcp-callout p { margin: 0; }
+.cmcp-callout--warn { background: var(--cmcp-warn-bg); border-color: var(--cmcp-warn-border); }
+.wrap.cmcp .cmcp-blocked { position: relative; padding-right: 40px; margin: 0 0 18px; }
+.wrap.cmcp .cmcp-blocked p + p, .wrap.cmcp .cmcp-blocked p + form { margin-top: 6px; }
+.wrap.cmcp .cmcp-blocked-x { position: absolute; top: 6px; right: 8px; background: none; border: 0; font-size: 20px; cursor: pointer; line-height: 1; color: inherit; }
+.wrap.cmcp .cmcp-blocked .mcp-inline-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cmcp-callout--info { background: var(--cmcp-info-bg); border-color: #d8dee9; color: #2a3342; }
 
 /* ── Tables ── */

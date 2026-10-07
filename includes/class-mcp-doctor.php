@@ -167,11 +167,18 @@ class Cowboy_MCP_Doctor {
 		if ( $oauth_on ) {
 			$left  = Cowboy_MCP_OAuth::registration_seconds_left();
 			$open  = Cowboy_MCP_OAuth::registration_open();
+			$blocked = Cowboy_MCP_OAuth::blocked_attempts();
+			$extra   = '';
+			if ( $blocked ) {
+				$n     = array_sum( array_column( $blocked, 'count' ) );
+				$mins  = max( 1, (int) round( ( time() - (int) $blocked[0]['at'] ) / 60 ) );
+				$extra = ' ' . $n . ( 1 === $n ? ' attempt' : ' attempts' ) . ' blocked in the last 24 h (latest: ' . $blocked[0]['app'] . ', ' . $mins . ' min ago).' . ( $open ? ' Earlier attempts were blocked; retry the app now.' : '' );
+			}
 			$out[] = self::result(
 				'registration_window',
 				'New connections switch',
 				$open ? 'pass' : 'warn',
-				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) : 'Disabled. New AI apps cannot register until an administrator clicks "Enable for 30 minutes" in the app setup on the Connections tab; existing connections keep working.',
+				$open ? ( $left > 0 ? 'Open for another ' . (int) ceil( $left / 60 ) . ' min - new AI apps can register.' : 'Held open by a filter.' ) . $extra : 'Disabled. New AI apps cannot register until an administrator clicks "Enable for 30 minutes" in the app setup on the Connections tab; existing connections keep working.' . $extra,
 				[],
 				null,
 				$open ? null : 'Under Settings > Cowboy MCP > Connections, pick the app ("Connect another app" if the list is not shown) and click "Enable for 30 minutes" (New connections), then add the app.'

@@ -22,6 +22,7 @@ class Cowboy_MCP_Admin {
         add_action( 'admin_notices',         [ __CLASS__, 'render_setup_notice' ] );
         add_action( 'wp_ajax_cowboy_mcp_dismiss_new_key', [ __CLASS__, 'ajax_dismiss_new_key' ] );
         add_action( 'wp_ajax_cowboy_mcp_dismiss_setup_notice', [ __CLASS__, 'ajax_dismiss_setup_notice' ] );
+        add_action( 'wp_ajax_cowboy_mcp_dismiss_blocked', [ __CLASS__, 'ajax_dismiss_blocked' ] );
         add_action( 'wp_ajax_cowboy_mcp_set_conn_client', [ __CLASS__, 'ajax_set_conn_client' ] );
     }
 
@@ -102,6 +103,14 @@ class Cowboy_MCP_Admin {
         wp_die();
     }
 
+    public static function ajax_dismiss_blocked(): void {
+        check_ajax_referer( 'cowboy_mcp_dismiss_blocked' );
+        if ( current_user_can( 'manage_options' ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
+            Cowboy_MCP_OAuth::clear_blocked_attempts();
+        }
+        wp_die();
+    }
+
     public static function enqueue_assets( string $hook ): void {
         // The two notices are mutually exclusive (setup = no credentials,
         // feedback = credentials + usage) but share one CSS/JS pair.
@@ -156,6 +165,7 @@ class Cowboy_MCP_Admin {
             'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
             'dismissNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_new_key' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
+            'blockedNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_blocked' ),
             'gateOff'      => __( 'New connections: disabled', 'cowboy-mcp' ),
             'gateEnable'   => __( 'Enable for 30 minutes', 'cowboy-mcp' ),
             'cancel'       => __( 'Cancel', 'cowboy-mcp' ),

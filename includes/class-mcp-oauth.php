@@ -45,6 +45,8 @@ class Cowboy_MCP_OAuth {
      */
     const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'claude.com', 'anthropic.com', 'vscode.dev', 'cursor.com', 'perplexity.ai', 'n8n.cloud' ];
     const LOOPBACK_HOSTS         = [ 'localhost', '127.0.0.1', '::1' ];
+    /** Registrations refused while the "New connections" window was closed (shown on the Connections tab and in the Doctor). */
+    const BLOCKED_OPTION         = 'cowboy_mcp_oauth_blocked';
     const SIGNED_PREFIX = 'cmcp_client_s1_';
     const SIGNED_MAX_ID = 255; // whole id; longer registrations keep the legacy random id
     const SIGNED_SIG_LEN = 16; // bytes of HMAC-SHA256 kept (128-bit tag)
@@ -133,6 +135,78 @@ class Cowboy_MCP_OAuth {
          * @param bool $open
          */
         return (bool) apply_filters( 'cowboy_mcp_oauth_registration_open', self::registration_seconds_left() > 0 );
+    }
+
+    /* ── Blocked registrations (closed window) ─────────────── */
+
+    /** Human name for the app behind a redirect host. client_name is unverified, so never use it. */
+    public static function app_label_for_host( string $host ): string {
+        $host = strtolower( $host );
+        $map  = [
+            'chatgpt.com' => 'ChatGPT', 'openai.com' => 'ChatGPT',
+            'claude.ai' => 'Claude', 'claude.com' => 'Claude', 'anthropic.com' => 'Claude',
+            'vscode.dev' => 'VS Code', 'cursor.com' => 'Cursor', 'perplexity.ai' => 'Perplexity', 'n8n.cloud' => 'n8n',
+        ];
+        foreach ( $map as $base => $label ) {
+            if ( $host === $base || str_ends_with( $host, '.' . $base ) ) {
+                return $label;
+            }
+        }
+        if ( in_array( $host, self::LOOPBACK_HOSTS, true ) || '[::1]' === $host ) {
+            return 'A desktop or terminal app';
+        }
+        return substr( preg_replace( '/[^a-z0-9.\-]/', '', $host ), 0, 100 );
+    }
+
+    /** Closed-window DCR: remember who tried (throttled, because this endpoint is unauthenticated). */
+    private static function record_blocked_registration( array $body ): void {
+        $ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+        $rl = 'cowboy_mcp_rl_regblk_' . md5( $ip );
+        if ( get_transient( $rl ) ) {
+            return;
+        }
+        set_transient( $rl, 1, MINUTE_IN_SECONDS );
+        $uri = '';
+        foreach ( (array) ( $body['redirect_uris'] ?? [] ) as $u ) {
+            if ( is_string( $u ) && wp_parse_url( $u, PHP_URL_HOST ) ) {
+                $uri = $u;
+                break;
+            }
+        }
+        $host  = '' !== $uri ? strtolower( (string) wp_parse_url( $uri, PHP_URL_HOST ) ) : '';
+        $app   = '' !== $host ? self::app_label_for_host( $host ) : 'An unknown app';
+        $now   = time();
+        $store = get_option( self::BLOCKED_OPTION, [] );
+        $store = is_array( $store ) ? $store : [];
+        $list  = array_values( array_filter( (array) ( $store['attempts'] ?? [] ), static fn( $a ) => (int) ( $a['at'] ?? 0 ) > $now - DAY_IN_SECONDS ) );
+        if ( $list && $list[0]['app'] === $app && $now - (int) $list[0]['at'] < MINUTE_IN_SECONDS ) {
+            $list[0]['at'] = $now;
+            ++$list[0]['count'];
+        } else {
+            array_unshift( $list, [ 'app' => $app, 'host' => preg_replace( '/[^a-z0-9.\-:\[\]]/', '', $host ), 'allowlisted' => '' !== $uri && self::redirect_uri_allowed( $uri ), 'count' => 1, 'at' => $now ] );
+        }
+        $store['attempts'] = array_slice( $list, 0, 10 );
+        update_option( self::BLOCKED_OPTION, $store, false );
+        Cowboy_MCP_Auth::log( 'oauth_registration_blocked', [ 'app' => $app, 'host' => $host ] );
+    }
+
+    /** Visible blocked attempts (last 24 h, after any dismissal), newest first. */
+    public static function blocked_attempts(): array {
+        $store = get_option( self::BLOCKED_OPTION, [] );
+        if ( ! is_array( $store ) ) {
+            return [];
+        }
+        $floor = max( (int) ( $store['cleared_at'] ?? 0 ), time() - DAY_IN_SECONDS );
+        return array_values( array_filter( (array) ( $store['attempts'] ?? [] ), static fn( $a ) => (int) ( $a['at'] ?? 0 ) > $floor ) );
+    }
+
+    public static function clear_blocked_attempts(): void {
+        $store = get_option( self::BLOCKED_OPTION, [] );
+        if ( ! is_array( $store ) || empty( $store['attempts'] ) ) {
+            return;
+        }
+        $store['cleared_at'] = time();
+        update_option( self::BLOCKED_OPTION, $store, false );
     }
 
     /* ── Redirect-host allowlist ───────────────────────────── */
@@ -801,6 +875,7 @@ class Cowboy_MCP_OAuth {
         }
 
         if ( ! self::registration_open() ) {
+            self::record_blocked_registration( $body );
             return self::rest_error( 'registration_closed', 'New connections are switched off on this site right now. An administrator switches them on for 30 minutes with the "New connections" button in the app setup under Settings > Cowboy MCP > Connections in WordPress; then add the app again. Existing connections are not affected.', 403 );
         }
 
@@ -880,6 +955,7 @@ class Cowboy_MCP_OAuth {
             'token_endpoint_auth_method' => 'none',
         ];
         update_option( self::CLIENTS_OPTION, $clients, false );
+        self::clear_blocked_attempts();
 
         return self::rest_json( [
             'client_id'                  => $client_id,
