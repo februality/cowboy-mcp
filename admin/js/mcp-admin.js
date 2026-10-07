@@ -812,13 +812,24 @@ document.addEventListener( 'click', function( e ) {
 		} catch ( err ) { return false; }
 	}
 	function showNote( note ) { if ( note ) { note.hidden = false; } }
-	function openFallback( form ) {
-		var d = form.parentNode.querySelector( 'details' );
+	function openDetails( form ) {
+		var d = form && form.parentNode.querySelector( 'details' );
 		if ( d ) { d.open = true; }
+	}
+	function openFallback( form ) {
+		openDetails( form );
+		// The page reloads after the submit; reopen the fallback there too.
+		try { window.sessionStorage.setItem( 'cmcpCopyFailed', '1' ); } catch ( err ) {}
 	}
 	function restore() {
 		var note = document.querySelector( '[data-cmcp-copy-note]' );
 		if ( note && flag() ) { flag( false ); showNote( note ); }
+		var failed = false;
+		try {
+			failed = window.sessionStorage.getItem( 'cmcpCopyFailed' ) === '1';
+			window.sessionStorage.removeItem( 'cmcpCopyFailed' );
+		} catch ( err ) {}
+		if ( failed ) { openDetails( document.querySelector( 'form[data-cmcp-copy]' ) ); }
 	}
 	if ( document.readyState === 'loading' ) { document.addEventListener( 'DOMContentLoaded', restore ); } else { restore(); }
 	document.addEventListener( 'submit', function( e ) {
@@ -843,7 +854,7 @@ document.addEventListener( 'click', function( e ) {
 		fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } )
 			.then( function( r ) { return r.json(); } )
 			.then( function( r ) {
-				if ( ! r || ! r.success ) { return; }
+				if ( ! r || r.success !== true ) { window.clearInterval( timer ); return; } // expired nonce / 403: stop polling
 				var d = r.data;
 				if ( d.stage === 'expired' ) { strip.remove(); window.clearInterval( timer ); return; }
 				strip.setAttribute( 'data-stage', d.stage );

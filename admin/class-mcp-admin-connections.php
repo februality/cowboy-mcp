@@ -287,9 +287,11 @@ class Cowboy_MCP_Admin_Connections {
                         );
                     ?></p>
                     <p class="description"><?php echo wp_kses( __( 'Already added? Claude reports that a connector with this URL already exists. Find it under <strong>Customize → Connectors</strong> and click <strong>Connect</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                    <?php if ( ! $oauth_on ) { self::render_enable_first(); } ?>
                     <details class="mcp-local-details">
                         <summary><?php esc_html_e( 'Add it by hand instead', 'cowboy-mcp' ); ?></summary>
                         <div class="mcp-local-details-body">
+                            <?php if ( ! $oauth_on ) { self::render_enable_first(); } ?>
                             <?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?>
                             <?php self::render_claude_manual_substeps( $is_desktop, true ); ?>
                         </div>
@@ -319,7 +321,7 @@ class Cowboy_MCP_Admin_Connections {
                 <p><?php esc_html_e( 'Copies your connection link, turns on new connections for 30 minutes and opens ChatGPT in a new tab.', 'cowboy-mcp' ); ?></p>
                 <details class="mcp-local-details">
                     <summary><?php esc_html_e( 'Copy the link yourself', 'cowboy-mcp' ); ?></summary>
-                    <div class="mcp-local-details-body"><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
+                    <div class="mcp-local-details-body"><?php if ( ! $oauth_on ) { self::render_enable_first(); } ?><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
                 </details>
         <?php self::step_close(); ?>
         <?php else : ?>
@@ -346,6 +348,17 @@ class Cowboy_MCP_Admin_Connections {
                 <p><?php echo wp_kses( $approve_text, [ 'strong' => [] ] ); ?></p>
                 <p class="description"><?php echo wp_kses( $plan_note, [ 'strong' => [] ] ); ?></p>
         <?php self::step_close(); ?>
+        <?php
+    }
+
+    /** Manual connect paths with the connector off: the same Enable form, so a hand-added connector can sign in. */
+    private static function render_enable_first(): void {
+        ?>
+        <form method="post" class="mcp-inline-form cmcp-enable-first">
+            <?php wp_nonce_field( 'cowboy_mcp_enable_oauth' ); ?>
+            <p><?php esc_html_e( 'Turn on connections first:', 'cowboy-mcp' ); ?>
+            <button type="submit" name="cowboy_mcp_enable_oauth" class="cmcp-btn cmcp-btn--sm"><?php esc_html_e( 'Enable Desktop Connector', 'cowboy-mcp' ); ?></button></p>
+        </form>
         <?php
     }
 
