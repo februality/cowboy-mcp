@@ -706,6 +706,7 @@ class Cowboy_MCP_Admin_Connections {
                     echo esc_html( sprintf( __( 'New connections are on — try again in %s now.', 'cowboy-mcp' ), $attempts[0]['app'] ) );
                     if ( $left > 0 ) {
                         echo ' (';
+                        /* translators: %s: countdown such as 29:59 */
                         printf( esc_html__( '%s left', 'cowboy-mcp' ), '<span data-mcp-lock-until="' . esc_attr( (string) ( time() + $left ) ) . '">' . esc_html( gmdate( 'i:s', $left ) ) . '</span>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                         echo ')';
                     }

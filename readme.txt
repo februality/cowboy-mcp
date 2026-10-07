@@ -5,7 +5,7 @@ Tags: mcp, ai-agent, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -275,14 +275,12 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.0 =
-* New: a redesigned, simpler settings page that also works on phones.
-* New: an Add to Claude button - connect claude.ai or Claude Desktop in one click (public HTTPS sites).
-* New: Beaver Builder support - read and edit page layouts, modules and settings, with undo.
-* New: SiteOrigin Page Builder support - read and edit layouts, widgets and settings, with undo (needs Page Builder 2.36.0+).
-* Improved: Connection Doctor results are shown in your language.
-* Fix: undo no longer strips backslashes from page-builder data.
-* Fix: no more PHP deprecation notice on the connection approval page.
+= 1.7.1 =
+* Fix: restoring a checkpoint no longer damages values that contain % signs (permalinks, page-builder data). Every restore is now checked against the checkpoint before it replaces your data.
+* New: if an earlier restore damaged values on your site, Cowboy MCP finds them and offers a one-click repair (checkpointed and undoable).
+* New: the Connections tab shows when an app such as ChatGPT tried to connect while new connections were off, with the switch right there.
+* New: Add to Claude turns the connector on in the same click, a new Open ChatGPT button copies your link and opens ChatGPT, and the page confirms live when the app is connected.
+* Fix: media uploads failed on sites where no other plugin loaded WordPress's admin file helpers.
 
 = Earlier versions =
 
