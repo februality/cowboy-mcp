@@ -426,11 +426,13 @@ class Cowboy_MCP_Admin {
             if ( is_wp_error( $r ) ) {
                 add_settings_error( 'cowboy_mcp', 'cp_failed', esc_html( $r->get_error_message() ), 'error' );
             } else {
-                /* translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID */
-                $msg = 'content' === ( $r['verification']['method'] ?? '' )
-                    ? __( 'Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. Pre-restore safety checkpoint: #%4$d.', 'cowboy-mcp' )
+                if ( 'content' === ( $r['verification']['method'] ?? '' ) ) {
                     /* translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID */
-                    : __( 'Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. Pre-restore safety checkpoint: #%4$d.', 'cowboy-mcp' );
+                    $msg = __( 'Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. Pre-restore safety checkpoint: #%4$d.', 'cowboy-mcp' );
+                } else {
+                    /* translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID */
+                    $msg = __( 'Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. Pre-restore safety checkpoint: #%4$d.', 'cowboy-mcp' );
+                }
                 add_settings_error( 'cowboy_mcp', 'cp_restored', esc_html( sprintf( $msg, (int) $r['checkpoint_id'], (int) $r['verification']['tables'], number_format_i18n( (int) $r['verification']['rows'] ), (int) $r['pre_restore_checkpoint_id'] ) ), 'success' );
                 if ( class_exists( 'Cowboy_MCP_Audit_Log' ) ) {
                     Cowboy_MCP_Audit_Log::log( 'admin_restore_checkpoint', [ 'key_id' => 'admin', 'tool' => 'wp_restore_checkpoint', 'args' => [ 'checkpoint_id' => absint( wp_unslash( $_POST['checkpoint_id'] ?? 0 ) ) ] ] );

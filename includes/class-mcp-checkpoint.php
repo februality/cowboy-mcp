@@ -334,9 +334,12 @@ class Cowboy_MCP_Checkpoint {
 			$preserved[ $opt ] = get_option( $opt, '__cmcp_absent__' );
 		}
 
-		// 3. Import into temp-prefixed tables.
+		// 3. Import into temp-prefixed tables. Only legacy dumps (no checksums) get the
+		//    placeholder rewrite; 1.7.1+ dumps import byte-exact so they verify.
+		$checksums = json_decode( (string) ( $row['checksums'] ?? '' ), true );
+		$method    = is_array( $checksums ) && $checksums ? 'content' : 'rows';
 		self::drop_prefixed( self::TEMP_PREFIX );
-		$imported = self::import_as_temp( $path, $tables );
+		$imported = self::import_as_temp( $path, $tables, 'rows' === $method );
 		if ( is_wp_error( $imported ) ) {
 			self::drop_prefixed( self::TEMP_PREFIX );
 			return $imported;
@@ -356,13 +359,12 @@ class Cowboy_MCP_Checkpoint {
 
 		// 4b. Content verification (checkpoints from 1.7.1 on): the imported rows must hash
 		//     to exactly what was dumped, or the live tables are never touched.
-		$checksums = json_decode( (string) ( $row['checksums'] ?? '' ), true );
-		$method    = is_array( $checksums ) && $checksums ? 'content' : 'rows';
-		$total     = array_sum( array_map( 'intval', $expected ) );
+		$total = array_sum( array_map( 'intval', $expected ) );
 		if ( 'content' === $method ) {
-			foreach ( $checksums as $t => $want ) {
-				$got = self::table_fingerprint( self::TEMP_PREFIX . $t );
-				if ( $got['rows'] !== (int) $want['rows'] || $got['sum'] !== (int) $want['sum'] ) {
+			foreach ( $tables as $t ) {
+				$want = $checksums[ $t ] ?? null;
+				$got  = self::table_fingerprint( self::TEMP_PREFIX . $t );
+				if ( ! is_array( $want ) || $got['rows'] !== (int) ( $want['rows'] ?? -1 ) || $got['sum'] !== (int) ( $want['sum'] ?? -1 ) ) {
 					self::drop_prefixed( self::TEMP_PREFIX );
 					return new WP_Error( 'checkpoint_verify_failed', "Restored data for {$t} does not match the checkpoint; originals untouched." );
 				}
@@ -431,7 +433,7 @@ class Cowboy_MCP_Checkpoint {
 	}
 
 	/** Stream the dump, rewriting table names to the temp prefix, executing line by line. */
-	private static function import_as_temp( string $path, array $tables ): int|WP_Error {
+	private static function import_as_temp( string $path, array $tables, bool $legacy = false ): int|WP_Error {
 		global $wpdb;
 		$gz = gzopen( $path, 'rb' );
 		if ( ! $gz ) {
@@ -480,7 +482,7 @@ class Cowboy_MCP_Checkpoint {
 					gzclose( $gz );
 					return new WP_Error( 'checkpoint_failed', 'Checkpoint contains an unrecognized table reference; aborting restore (originals untouched).' );
 				}
-				if ( str_starts_with( $stmt, 'INSERT INTO ' ) ) {
+				if ( $legacy && str_starts_with( $stmt, 'INSERT INTO ' ) ) {
 					// Dumps written before 1.7.1 carry the dump request's $wpdb placeholder for every %.
 					$stmt       = preg_replace( self::PLACEHOLDER_RE, '%', $stmt, -1, $n );
 					$rewritten += (int) $n;
