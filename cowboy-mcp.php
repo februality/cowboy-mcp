@@ -93,12 +93,13 @@ add_action( 'plugins_loaded', function () {
         Cowboy_MCP_Audit_Log::create_table();
         Cowboy_MCP_Rollback::create_table();
         Cowboy_MCP_Checkpoint::create_table();
-        Cowboy_MCP_Checkpoint::maybe_upgrade_schema();
+        $schema_ok = Cowboy_MCP_Checkpoint::maybe_upgrade_schema();
         Cowboy_MCP_Placeholder_Repair::on_upgrade();
         global $wpdb;
         $journal = $wpdb->prefix . 'cowboy_mcp_undo_journal';
+        // Bump only when the upgrade really landed; a failed ALTER retries (hourly) on later requests.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $journal ) ) === $journal ) {
+        if ( $schema_ok && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $journal ) ) === $journal ) {
             update_option( 'cowboy_mcp_db_version', COWBOY_MCP_VERSION, false );
         }
     }

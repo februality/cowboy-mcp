@@ -69,15 +69,33 @@ class Cowboy_MCP_Checkpoint {
 		$wpdb->query( $sql );
 	}
 
-	/** 1.7.1: add the checksums column to installs created before it existed. */
-	public static function maybe_upgrade_schema(): void {
+	/**
+	 * 1.7.1: add the checksums column to installs created before it existed.
+	 * Returns true when the column exists afterwards. A failed ALTER (no ALTER
+	 * privilege) is not retried for an hour, so it never costs every request.
+	 */
+	public static function maybe_upgrade_schema(): bool {
 		global $wpdb;
 		$table = self::table();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'checksums' ) ) === null ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN checksums LONGTEXT DEFAULT NULL AFTER tables', $table ) );
+		if ( self::has_checksums_column( $table ) ) {
+			return true;
 		}
+		if ( get_transient( 'cowboy_mcp_schema_retry' ) ) {
+			return false;
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN checksums LONGTEXT DEFAULT NULL AFTER tables', $table ) );
+		if ( self::has_checksums_column( $table ) ) {
+			return true;
+		}
+		set_transient( 'cowboy_mcp_schema_retry', 1, HOUR_IN_SECONDS );
+		return false;
+	}
+
+	private static function has_checksums_column( string $table ): bool {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return null !== $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'checksums' ) );
 	}
 
 	/* ── Storage directory (web-denied) ────────────────────── */
@@ -157,8 +175,7 @@ class Cowboy_MCP_Checkpoint {
 		}
 		gzclose( $gz );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->insert( self::table(), [
+		$record = [
 			'label'        => substr( $label !== '' ? $label : 'Checkpoint', 0, 255 ),
 			'trigger_type' => substr( $trigger, 0, 20 ),
 			'file'         => $fname,
@@ -167,8 +184,23 @@ class Cowboy_MCP_Checkpoint {
 			'tables'       => wp_json_encode( $counts ),
 			'checksums'    => wp_json_encode( $sums ),
 			'wp_version'   => get_bloginfo( 'version' ),
-		] );
-		$id = (int) $wpdb->insert_id;
+		];
+		$quiet = $wpdb->suppress_errors( true ); // a missing column is handled below, not printed into the response
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$ok = $wpdb->insert( self::table(), $record );
+		$wpdb->suppress_errors( $quiet );
+		if ( ! $ok ) {
+			// Schema upgrade not applied yet (no checksums column): record it without
+			// checksums — such a checkpoint restores through the legacy "rows" path.
+			unset( $record['checksums'] );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$ok = $wpdb->insert( self::table(), $record );
+		}
+		$id = $ok ? (int) $wpdb->insert_id : 0;
+		if ( $id <= 0 ) {
+			wp_delete_file( $path );
+			return new WP_Error( 'checkpoint_failed', 'Could not record the checkpoint: ' . $wpdb->last_error );
+		}
 
 		if ( ! in_array( $trigger, [ 'pre_restore', 'pre_repair' ], true ) ) {
 			self::prune_excess();
@@ -399,7 +431,6 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 
-		$found   = self::count_placeholders();
 		$summary = sprintf( '%d tables, %s rows, %s', count( $tables ), number_format( $total ), 'content' === $method ? 'verified' : 'rows checked' );
 
 		// Ledger entry: the restore itself (reversible via the pre-restore checkpoint).
@@ -415,6 +446,9 @@ class Cowboy_MCP_Checkpoint {
 				'not_undoable_reason' => 'Whole-DB restore. To reverse it, restore pre-restore checkpoint #' . $pre['checkpoint_id'] . '.',
 			] );
 		}
+
+		// Scan after the journal row exists: a slow or failing scan must never lose the ledger entry.
+		$found = self::count_placeholders();
 
 		return [
 			'restored'                  => true,
