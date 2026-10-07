@@ -394,9 +394,44 @@ class Cowboy_MCP_Compat {
 	}
 
 	/* ============================================================
-	 * Media  (replaces media.php :: media_handle_sideload and
-	 *         image.php :: wp_generate_attachment_metadata)
+	 * Media  (replaces media.php :: media_handle_sideload,
+	 *         image.php :: wp_generate_attachment_metadata and
+	 *         file.php :: wp_tempnam)
 	 * ============================================================ */
+
+	/**
+	 * Require-free reimplementation of core wp_tempnam().
+	 *
+	 * Creates an empty, uniquely named file in the temp directory and returns
+	 * its path. The extension of $filename is dropped and a random suffix plus
+	 * `.tmp` appended, exactly as core does.
+	 *
+	 * @param string $filename Name to base the temp file on.
+	 * @return string Path to the created temp file.
+	 */
+	public static function tempnam( string $filename = '' ): string {
+		$dir  = get_temp_dir();
+		$base = preg_replace( '|\.[^.]*$|', '', wp_basename( $filename ) );
+		$base = sanitize_file_name( (string) $base );
+		if ( '' === $base ) {
+			$base = uniqid();
+		}
+		// Stay well under the usual 255-character filename limit.
+		$base = substr( $base, 0, 200 );
+
+		for ( $i = 0; $i < 5; $i++ ) {
+			$path = $dir . wp_unique_filename( $dir, $base . '-' . wp_generate_password( 6, false ) . '.tmp' );
+			$fp   = @fopen( $path, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+			if ( $fp ) {
+				fclose( $fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+				return $path;
+			}
+		}
+
+		// Same fallback as core: return the path even if it could not be pre-created;
+		// the caller's write then fails with its own error.
+		return $path;
+	}
 
 	/**
 	 * Require-free reimplementation of core media_handle_sideload().

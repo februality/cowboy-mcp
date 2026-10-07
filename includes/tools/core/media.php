@@ -196,7 +196,7 @@ return [
                     return new WP_Error( 'download_failed', 'Downloaded file is empty.' );
                 }
 
-                $tmp = wp_tempnam( basename( wp_parse_url( $a['url'], PHP_URL_PATH ) ) ?: 'download' );
+                $tmp = Cowboy_MCP_Compat::tempnam( basename( wp_parse_url( $a['url'], PHP_URL_PATH ) ) ?: 'download' );
                 if ( file_put_contents( $tmp, $body ) === false ) {
                     wp_delete_file( $tmp );
                     return new WP_Error( 'write_failed', 'Failed to write downloaded file to temp location.' );
@@ -226,7 +226,7 @@ return [
                     return new WP_Error( 'invalid_base64', 'Could not decode base64 data.' );
                 }
 
-                $tmp = wp_tempnam( $a['filename'] );
+                $tmp = Cowboy_MCP_Compat::tempnam( $a['filename'] );
                 if ( file_put_contents( $tmp, $decoded ) === false ) {
                     wp_delete_file( $tmp );
                     return new WP_Error( 'write_failed', 'Failed to write decoded data to temp location.' );

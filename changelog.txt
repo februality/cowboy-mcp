@@ -3,6 +3,9 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.7.1 =
+* Fix: media uploads failed on sites where no other plugin loaded WordPress's admin file helpers.
+
 = 1.7.0 =
 * New: a redesigned, simpler settings page that also works on phones.
 * New: an Add to Claude button - connect claude.ai or Claude Desktop in one click (public HTTPS sites).
