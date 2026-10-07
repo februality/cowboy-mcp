@@ -580,19 +580,24 @@ class Cowboy_MCP_Admin_Connections {
                     echo esc_html( sprintf( __( '%1$s tried to connect %2$s ago, but new connections were off.', 'cowboy-mcp' ), $a['app'], human_time_diff( (int) $a['at'] ) ) );
                 ?></strong><?php if ( (int) $a['count'] > 1 ) : ?> <?php
                     /* translators: %d: number of attempts */
-                    echo esc_html( sprintf( __( '(%d attempts)', 'cowboy-mcp' ), (int) $a['count'] ) );
+                    echo esc_html( sprintf( _n( '(%d attempt)', '(%d attempts)', (int) $a['count'], 'cowboy-mcp' ), (int) $a['count'] ) );
                 endif; ?></p>
                 <?php if ( empty( $a['allowlisted'] ) && '' !== $a['host'] ) : ?>
                     <p class="description"><?php
                         /* translators: %s: host name */
-                        echo esc_html( sprintf( __( 'Its sign-in address (%s) is not on the allowed list either; add it to the extra sign-in hosts on the Settings tab.', 'cowboy-mcp' ), $a['host'] ) );
+                        echo esc_html( sprintf( __( 'Its sign-in address (%s) is not on the allowed list either — add it to the extra sign-in hosts on the Settings tab.', 'cowboy-mcp' ), $a['host'] ) );
                     ?></p>
                 <?php endif; ?>
             <?php endforeach; ?>
-            <?php if ( $left > 0 ) : ?>
+            <?php if ( Cowboy_MCP_OAuth::registration_open() ) : ?>
                 <p><?php
                     /* translators: %s: app name such as ChatGPT */
-                    echo esc_html( sprintf( __( 'New connections are on. Try again in %s now.', 'cowboy-mcp' ), $attempts[0]['app'] ) );
+                    echo esc_html( sprintf( __( 'New connections are on — try again in %s now.', 'cowboy-mcp' ), $attempts[0]['app'] ) );
+                    if ( $left > 0 ) {
+                        echo ' (';
+                        printf( esc_html__( '%s left', 'cowboy-mcp' ), '<span data-mcp-lock-until="' . esc_attr( (string) ( time() + $left ) ) . '">' . esc_html( gmdate( 'i:s', $left ) ) . '</span>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                        echo ')';
+                    }
                 ?></p>
             <?php else : ?>
                 <form method="post" class="mcp-inline-form">

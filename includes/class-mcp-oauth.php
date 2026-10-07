@@ -155,7 +155,8 @@ class Cowboy_MCP_OAuth {
         if ( in_array( $host, self::LOOPBACK_HOSTS, true ) || '[::1]' === $host ) {
             return 'A desktop or terminal app';
         }
-        return substr( preg_replace( '/[^a-z0-9.\-]/', '', $host ), 0, 100 );
+        $clean = substr( (string) preg_replace( '/[^a-z0-9.\-]/', '', $host ), 0, 100 );
+        return '' !== $clean ? $clean : 'An unknown app';
     }
 
     /** Closed-window DCR: remember who tried (throttled, because this endpoint is unauthenticated). */
@@ -175,6 +176,7 @@ class Cowboy_MCP_OAuth {
         }
         $host  = '' !== $uri ? strtolower( (string) wp_parse_url( $uri, PHP_URL_HOST ) ) : '';
         $app   = '' !== $host ? self::app_label_for_host( $host ) : 'An unknown app';
+        $allowlisted = '' !== $uri && self::redirect_uri_allowed( $uri );
         $now   = time();
         $store = get_option( self::BLOCKED_OPTION, [] );
         $store = is_array( $store ) ? $store : [];
@@ -183,11 +185,11 @@ class Cowboy_MCP_OAuth {
             $list[0]['at'] = $now;
             ++$list[0]['count'];
         } else {
-            array_unshift( $list, [ 'app' => $app, 'host' => preg_replace( '/[^a-z0-9.\-:\[\]]/', '', $host ), 'allowlisted' => '' !== $uri && self::redirect_uri_allowed( $uri ), 'count' => 1, 'at' => $now ] );
+            array_unshift( $list, [ 'app' => $app, 'host' => preg_replace( '/[^a-z0-9.\-:\[\]]/', '', $host ), 'allowlisted' => $allowlisted, 'count' => 1, 'at' => $now ] );
         }
         $store['attempts'] = array_slice( $list, 0, 10 );
         update_option( self::BLOCKED_OPTION, $store, false );
-        Cowboy_MCP_Auth::log( 'oauth_registration_blocked', [ 'app' => $app, 'host' => $host ] );
+        Cowboy_MCP_Auth::log( 'oauth_registration_blocked', [ 'args' => [ 'app' => $app, 'host' => $host, 'allowlisted' => $allowlisted ] ] );
     }
 
     /** Visible blocked attempts (last 24 h, after any dismissal), newest first. */
