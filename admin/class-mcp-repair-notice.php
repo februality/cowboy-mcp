@@ -45,6 +45,9 @@ class Cowboy_MCP_Repair_Notice {
 		$s     = Cowboy_MCP_Placeholder_Repair::state();
 		$count = (int) ( $s['count'] ?? 0 );
 		if ( 'found' === $s['status'] ) :
+			if ( ! empty( $s['error'] ) ) {
+				echo '<div class="notice notice-error mcp-repair-notice"><p>' . esc_html__( 'Cowboy MCP could not record an undo point for the repair, so it stopped. Nothing was left half-repaired.', 'cowboy-mcp' ) . '</p></div>';
+			}
 			?>
 			<div class="notice notice-warning is-dismissible mcp-repair-notice" data-cmcp-dismiss="found">
 				<p><strong><?php

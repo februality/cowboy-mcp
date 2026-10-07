@@ -16,6 +16,7 @@ class Cowboy_MCP_Placeholder_Repair {
 	const SCAN_HOOK   = 'cowboy_mcp_placeholder_scan';
 	const REPAIR_HOOK = 'cowboy_mcp_placeholder_repair';
 	const BATCH       = 500;
+	const BATCH_BYTES = 2097152; // 2 MB of values per batch (always at least one row)
 	const SQL_RE      = '[{][0-9a-f]{64}[}]';
 
 	public static function init(): void {
@@ -53,13 +54,34 @@ class Cowboy_MCP_Placeholder_Repair {
 		$cp = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE trigger_type = %s', $wpdb->prefix . 'cowboy_mcp_checkpoints', 'pre_restore' ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$jr = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE tool = %s', $wpdb->prefix . 'cowboy_mcp_undo_journal', 'wp_restore_checkpoint' ) );
-		return $cp + $jr > 0;
+		if ( $cp + $jr > 0 ) {
+			return true;
+		}
+		// Restores older than the checkpoint/journal retention still leave audit rows.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$au = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE event = %s OR ( event = %s AND tool = %s )', $wpdb->prefix . 'cowboy_mcp_audit_log', 'admin_restore_checkpoint', 'tool_call', 'wp_restore_checkpoint' ) );
+		if ( $au > 0 ) {
+			return true;
+		}
+		// …and a damaged permalink/base option is direct evidence on its own.
+		foreach ( [ 'permalink_structure', 'category_base', 'tag_base' ] as $opt ) {
+			if ( preg_match( Cowboy_MCP_Checkpoint::PLACEHOLDER_RE, (string) get_option( $opt, '' ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	/** Damaged rows, at most $limit per column: [table, pk_col, pk_val, col, value, label]. */
-	private static function find( int $limit ): array {
+	/**
+	 * Damaged rows, at most $limit per column and — after the first row — no more than
+	 * $max_bytes of values in total: [table, pk_col, pk_val, col, value, label]. Lengths
+	 * are read first and values fetched one row at a time, so a batch never holds more
+	 * than the byte budget (plus one oversized row) in memory.
+	 */
+	private static function find( int $limit, int $max_bytes = PHP_INT_MAX ): array {
 		global $wpdb;
-		$out = [];
+		$out   = [];
+		$bytes = 0;
 		foreach ( Cowboy_MCP_Checkpoint::placeholder_columns() as $table => $spec ) {
 			foreach ( $spec['cols'] as $col ) {
 				// %% because this string goes through prepare(); never touch the plugin's own options.
@@ -67,12 +89,18 @@ class Cowboy_MCP_Placeholder_Repair {
 				$label_col = self::label_column( $table );
 				// Identifiers come from placeholder_columns() (core tables), never input.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT `{$spec['pk']}` AS pk, `{$col}` AS v, `{$label_col}` AS l FROM `{$table}` WHERE `{$col}` REGEXP %s{$extra} ORDER BY `{$spec['pk']}` LIMIT %d", self::SQL_RE, $limit ), ARRAY_A );
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT `{$spec['pk']}` AS pk, LENGTH(`{$col}`) AS n, `{$label_col}` AS l FROM `{$table}` WHERE `{$col}` REGEXP %s{$extra} ORDER BY `{$spec['pk']}` LIMIT %d", self::SQL_RE, $limit ), ARRAY_A );
 				foreach ( (array) $rows as $r ) {
-					if ( ! preg_match( Cowboy_MCP_Checkpoint::PLACEHOLDER_RE, (string) $r['v'] ) ) {
+					if ( $out && $bytes + (int) $r['n'] > $max_bytes ) {
+						return $out;
+					}
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+					$v = (string) $wpdb->get_var( $wpdb->prepare( "SELECT `{$col}` FROM `{$table}` WHERE `{$spec['pk']}` = %s", $r['pk'] ) );
+					if ( ! preg_match( Cowboy_MCP_Checkpoint::PLACEHOLDER_RE, $v ) ) {
 						continue; // REGEXP is case-insensitive on some collations; PHP check is exact.
 					}
-					$out[] = [ 'table' => $table, 'pk_col' => $spec['pk'], 'pk_val' => (string) $r['pk'], 'col' => $col, 'value' => (string) $r['v'], 'label' => self::label( $table, $col, (string) $r['l'] ) ];
+					$bytes += strlen( $v );
+					$out[]  = [ 'table' => $table, 'pk_col' => $spec['pk'], 'pk_val' => (string) $r['pk'], 'col' => $col, 'value' => $v, 'label' => self::label( $table, $col, (string) $r['l'] ) ];
 				}
 			}
 		}
@@ -155,7 +183,7 @@ class Cowboy_MCP_Placeholder_Repair {
 			return new WP_Error( 'repair_failed', 'Could not take the safety checkpoint; nothing was changed. ' . $cp->get_error_message() );
 		}
 		$s = array_merge( $s, [ 'status' => 'repairing', 'repaired' => 0, 'batch_id' => wp_generate_uuid4(), 'checkpoint_id' => (int) $cp['checkpoint_id'], 'at' => time() ] );
-		unset( $s['dismissed'], $s['done_dismissed'] );
+		unset( $s['dismissed'], $s['done_dismissed'], $s['error'] );
 		self::save( $s );
 		self::repair_batch();
 		return self::state();
@@ -168,7 +196,7 @@ class Cowboy_MCP_Placeholder_Repair {
 		if ( 'repairing' !== ( $s['status'] ?? '' ) ) {
 			return;
 		}
-		$rows = self::find( self::BATCH );
+		$rows = self::find( self::BATCH, self::BATCH_BYTES );
 		if ( ! $rows ) {
 			wp_cache_flush();
 			$s['status'] = 'done';
@@ -194,7 +222,7 @@ class Cowboy_MCP_Placeholder_Repair {
 			return;
 		}
 		Cowboy_MCP_Rollback::$batch_id = $s['batch_id'];
-		Cowboy_MCP_Rollback::insert_row( [
+		$jid = Cowboy_MCP_Rollback::insert_row( [
 			'tool'         => 'placeholder_repair',
 			'action'       => 'update',
 			'object_type'  => 'db_rows',
@@ -205,8 +233,36 @@ class Cowboy_MCP_Placeholder_Repair {
 			'after_hash'   => Cowboy_MCP_Rollback::state_hash( [ 'values' => array_column( $journal, 'new' ) ] ),
 		] );
 		Cowboy_MCP_Rollback::$batch_id = null;
+		$journal_row = $jid ? Cowboy_MCP_Rollback::get_row( $jid ) : null;
+		if ( ! $journal_row || Cowboy_MCP_Rollback::STATUS_ACTIVE !== ( $journal_row['status'] ?? '' ) ) {
+			// No undo point for this batch: put every value back and stop.
+			self::revert( $journal );
+			if ( $jid ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				$wpdb->delete( $wpdb->prefix . 'cowboy_mcp_undo_journal', [ 'id' => $jid ], [ '%d' ] );
+			}
+			$s['status'] = 'found';
+			$s['error']  = 'journal_failed';
+			$s['at']     = time();
+			self::save( $s );
+			Cowboy_MCP_Auth::log( 'placeholder_repair_failed', [ 'key_id' => 'admin', 'tool' => 'placeholder_repair', 'args' => [ 'reason' => $jid ? 'undo point not recorded (before-state too large)' : 'undo journal write failed: ' . $wpdb->last_error, 'reverted' => count( $journal ), 'repaired' => (int) $s['repaired'] ] ] );
+			return;
+		}
 		$s['repaired'] = (int) $s['repaired'] + count( $journal );
 		self::save( $s );
 		wp_schedule_single_event( time() + 5, self::REPAIR_HOOK );
+	}
+
+	/** Write the captured old values back (a batch whose undo point could not be recorded). */
+	private static function revert( array $journal ): void {
+		global $wpdb;
+		foreach ( $journal as $j ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$wpdb->update( $j['table'], [ $j['col'] => $j['old'] ], [ $j['pk_col'] => $j['pk_val'] ] );
+			if ( $j['table'] === $wpdb->posts ) {
+				clean_post_cache( (int) $j['pk_val'] );
+			}
+		}
+		wp_cache_flush();
 	}
 }
