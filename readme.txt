@@ -277,7 +277,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 = 1.7.1 =
 * Fix: resolved a bug where restoring a checkpoint could alter values containing % signs (permalinks, page-builder data). Restores now keep every value exactly as saved and are verified against the checkpoint before they replace your data.
-* Fix: more reliable media uploads that work on every site, whatever other plugins are installed.
+* Fix: media uploads are more robust and reliable, on every site and whatever other plugins are installed.
 * New: Cowboy MCP checks values restored by earlier versions and offers a one-click repair where needed (checkpointed and undoable).
 * New: the Connections tab shows when an app such as ChatGPT tries to connect while new connections are off, with the switch right there.
 * New: Add to Claude turns the connector on in the same click, a new Open ChatGPT button copies your link and opens ChatGPT, and the page confirms live when the app is connected.
