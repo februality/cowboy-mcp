@@ -4,10 +4,10 @@ Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
 = 1.7.1 =
-* Fix: restoring a checkpoint no longer damages values that contain % signs (permalinks, page-builder data). Every restore is now checked against the checkpoint before it replaces your data.
-* Fix: media uploads failed on sites where no other plugin loaded WordPress's admin file helpers.
-* New: if an earlier restore damaged values on your site, Cowboy MCP finds them and offers a one-click repair (checkpointed and undoable).
-* New: the Connections tab shows when an app such as ChatGPT tried to connect while new connections were off, with the switch right there.
+* Fix: checkpoint restores keep every value exactly as saved, including % signs in permalinks and page-builder data, and each restore is now verified against the checkpoint before it replaces your data.
+* Fix: media uploads work on every site, with no reliance on other plugins loading WordPress's admin file helpers.
+* New: Cowboy MCP checks values restored by earlier versions and offers a one-click repair where needed (checkpointed and undoable).
+* New: the Connections tab shows when an app such as ChatGPT tries to connect while new connections are off, with the switch right there.
 * New: Add to Claude turns the connector on in the same click, a new Open ChatGPT button copies your link and opens ChatGPT, and the page confirms live when the app is connected.
 
 = 1.7.0 =
