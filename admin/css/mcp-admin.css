@@ -367,3 +367,4 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 	.cmcp-tab { padding-inline: 8px; font-size: 13.5px; }
 	.cmcp-tab[aria-current="page"]::after { left: 8px; right: 8px; }
 }
+.wrap.cmcp .cmcp-copy-note { margin: 8px 0; color: var(--cmcp-ok); font-weight: 600; }

@@ -801,13 +801,33 @@ document.addEventListener( 'click', function( e ) {
 } );
 
 // "Open ChatGPT": copy the connection link during the click (user gesture), then let the form open the new tab.
-document.addEventListener( 'submit', function( e ) {
-	var form = e.target;
-	if ( ! form.matches || ! form.matches( 'form[data-cmcp-copy]' ) ) { return; }
-	var note = form.parentNode.querySelector( '[data-cmcp-copy-note]' );
-	if ( navigator.clipboard && window.isSecureContext !== false ) {
-		navigator.clipboard.writeText( form.getAttribute( 'data-cmcp-copy' ) ).then( function() {
-			if ( note ) { note.hidden = false; }
-		}, function() {} );
+// The page reloads ~1.5 s later (refresh-after-submit), so a success flag carries the "copied" note across it;
+// on failure the "Copy the link yourself" details opens instead.
+( function() {
+	function flag( set ) {
+		try {
+			if ( set === true ) { window.sessionStorage.setItem( 'cmcpCopied', '1' ); return true; }
+			if ( set === false ) { window.sessionStorage.removeItem( 'cmcpCopied' ); return false; }
+			return window.sessionStorage.getItem( 'cmcpCopied' ) === '1';
+		} catch ( err ) { return false; }
 	}
-} );
+	function showNote( note ) { if ( note ) { note.hidden = false; } }
+	function openFallback( form ) {
+		var d = form.parentNode.querySelector( 'details' );
+		if ( d ) { d.open = true; }
+	}
+	function restore() {
+		var note = document.querySelector( '[data-cmcp-copy-note]' );
+		if ( note && flag() ) { flag( false ); showNote( note ); }
+	}
+	if ( document.readyState === 'loading' ) { document.addEventListener( 'DOMContentLoaded', restore ); } else { restore(); }
+	document.addEventListener( 'submit', function( e ) {
+		var form = e.target;
+		if ( ! form.matches || ! form.matches( 'form[data-cmcp-copy]' ) ) { return; }
+		var note = form.parentNode.querySelector( '[data-cmcp-copy-note]' );
+		if ( ! navigator.clipboard || window.isSecureContext === false ) { openFallback( form ); return; }
+		var p;
+		try { p = navigator.clipboard.writeText( form.getAttribute( 'data-cmcp-copy' ) ); } catch ( err ) { openFallback( form ); return; }
+		p.then( function() { flag( true ); showNote( note ); }, function() { openFallback( form ); } );
+	} );
+} )();
