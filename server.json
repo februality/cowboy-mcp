@@ -3,7 +3,7 @@
   "name": "io.github.februality/cowboy-mcp",
   "title": "Cowboy MCP",
   "description": "Self-hosted WordPress MCP server with per-change undo and 203 tools. Free, no relay, no Pro tier.",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "websiteUrl": "https://cowboymcp.com",
   "repository": {
     "url": "https://github.com/februality/cowboy-mcp",
