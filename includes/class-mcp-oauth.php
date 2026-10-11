@@ -274,13 +274,13 @@ class Cowboy_MCP_OAuth {
         Cowboy_MCP_Auth::store_client_info( 'oauth', $cid, $info );
     }
 
-    /** Slug from an MCP initialize clientInfo (names verified from each client's source, 2026-10-07). */
+    /** Slug from an MCP initialize clientInfo (names verified from each client's source, 2026-10-07; n8n 2.42.6 MCP Client Tool node, observed 2026-10-10). */
     public static function client_slug_for_info( $info ): ?string {
         if ( ! is_array( $info ) || empty( $info['name'] ) ) {
             return null;
         }
         $name = (string) $info['name'];
-        $map  = [ 'claude-code' => 'claude-code', 'codex-mcp-client' => 'codex', 'gemini-cli-mcp-client' => 'gemini-cli', 'cursor-vscode' => 'cursor', 'opencode' => 'opencode' ];
+        $map  = [ 'claude-code' => 'claude-code', 'codex-mcp-client' => 'codex', 'gemini-cli-mcp-client' => 'gemini-cli', 'cursor-vscode' => 'cursor', 'opencode' => 'opencode', '@n8n/n8n-nodes-langchain.mcpClientTool' => 'n8n' ];
         if ( isset( $map[ $name ] ) ) {
             return $map[ $name ];
         }

@@ -851,10 +851,6 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
-    /**
-     * Step 2 for every OAuth terminal/IDE client: one sentence. The New-connections window is opened by
-     * the Copy / Add / Install click itself, so it is not mentioned here (see render_connections_first()).
-     */
     /** n8n: MCP Client Tool node. Bearer first (works everywhere), OAuth2 second (n8n registers itself). */
     private static function render_n8n_panel( string $slug, array $def, array $keys, string $endpoint, $new_key, bool $is_local ): void {
         $settings = get_option( 'cowboy_mcp_settings', [] );
@@ -887,6 +883,10 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
+    /**
+     * Step 2 for every OAuth terminal/IDE client: one sentence. The New-connections window is opened by
+     * the Copy / Add / Install click itself, so it is not mentioned here (see render_connections_first()).
+     */
     private static function render_approve_step( bool $oauth_on, string $slug = '' ): void {
         ?>
         <?php self::step_open( '2', __( 'Approve access', 'cowboy-mcp' ), '' ); ?>
