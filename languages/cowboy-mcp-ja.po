@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-10 18:18-0700\n"
+"POT-Creation-Date: 2026-10-10 23:01-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Japanese\n"
@@ -191,7 +191,7 @@ msgid "Create checkpoint now"
 msgstr "今すぐチェックポイントを作成"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1290
+#: admin/class-mcp-admin-connections.php:1468
 msgid "Created"
 msgstr "作成日"
 
@@ -208,7 +208,7 @@ msgid "Size"
 msgstr "サイズ"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1292
+#: admin/class-mcp-admin-connections.php:1470
 msgid "Actions"
 msgstr "操作"
 
@@ -299,25 +299,25 @@ msgid "Turn off"
 msgstr "オフにする"
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:222
+#: admin/class-mcp-admin-connections.php:231
 #, php-format
 msgid "New connections are on (%s left)."
 msgstr "新しい接続はオンです（残り %s）。"
 
-#: admin/class-mcp-admin-connections.php:230
+#: admin/class-mcp-admin-connections.php:239
 msgid "Turn on new connections first:"
 msgstr "まず新しい接続をオンにしてください:"
 
-#: admin/class-mcp-admin-connections.php:231
-#: admin/class-mcp-admin-connections.php:1082
+#: admin/class-mcp-admin-connections.php:240
+#: admin/class-mcp-admin-connections.php:1254
 msgid "Enable for 30 minutes"
 msgstr "30 分間有効にする"
 
-#: admin/class-mcp-admin-connections.php:232
+#: admin/class-mcp-admin-connections.php:241
 msgid "It switches itself off after 30 minutes."
 msgstr "30 分後に自動的にオフになります。"
 
-#: admin/class-mcp-admin-connections.php:249
+#: admin/class-mcp-admin-connections.php:258
 msgid ""
 "This site does not appear to be on a public HTTPS address, so ChatGPT cannot "
 "reach it from OpenAI's cloud. Use a terminal tool from the sidebar instead, "
@@ -327,7 +327,16 @@ msgstr ""
 "から到達できません。代わりにサイドバーのターミナルツールを使うか、WordPress "
 "のサイトアドレスをトンネルまたはステージング URL に設定してください。"
 
-#: admin/class-mcp-admin-connections.php:250
+#. translators: %s: AI app name, e.g. Perplexity
+#: admin/class-mcp-admin-connections.php:262
+#, php-format
+msgid ""
+"This site does not appear to be on a public HTTPS address, so %s cannot "
+"reach it from the vendor's cloud. Use a terminal tool from the sidebar "
+"instead, or set the WordPress Site Address to a tunnel or staging URL."
+msgstr "このサイトは公開HTTPSアドレスにないようで、%s はベンダーのクラウドから到達できません。代わりにサイドバーのターミナルツールを使うか、WordPressのサイトアドレスをトンネルまたはステージングURLに設定してください。"
+
+#: admin/class-mcp-admin-connections.php:264
 msgid ""
 "This site does not appear to be on a public HTTPS address, so the Claude "
 "apps cannot reach it from Anthropic's cloud. Use a terminal tool or Claude "
@@ -339,11 +348,11 @@ msgstr ""
 "Desktop を使うか、WordPress のサイトアドレスをトンネルまたはステージング URL "
 "に設定してください。"
 
-#: admin/class-mcp-admin-connections.php:260
+#: admin/class-mcp-admin-connections.php:275
 msgid "Already added, or on a Team or Enterprise plan?"
 msgstr "追加済み、または Team / Enterprise プランをご利用ですか？"
 
-#: admin/class-mcp-admin-connections.php:263
+#: admin/class-mcp-admin-connections.php:278
 msgid ""
 "Already added? Claude reports that a connector with this URL already exists. "
 "Find it under <strong>Customize → Connectors</strong> and click "
@@ -353,7 +362,7 @@ msgstr ""
 "す。<strong>Customize → Connectors</strong> でそのコネクタを開き、"
 "<strong>Connect</strong> をクリックしてください。"
 
-#: admin/class-mcp-admin-connections.php:264
+#: admin/class-mcp-admin-connections.php:279
 msgid ""
 "Custom connectors work on every Claude plan (Free is limited to one). On "
 "Team and Enterprise, an organization owner adds the connector first under "
@@ -365,22 +374,22 @@ msgstr ""
 "Connectors</strong> でコネクタを追加し、メンバーはその後 <strong>Connect</"
 "strong> をクリックします。"
 
-#: admin/class-mcp-admin-connections.php:266
+#: admin/class-mcp-admin-connections.php:281
 msgid "Organization owner on Team or Enterprise?"
 msgstr "Team または Enterprise の組織のオーナーですか？"
 
-#: admin/class-mcp-admin-connections.php:267
+#: admin/class-mcp-admin-connections.php:282
 msgid "Add it for your organization"
 msgstr "組織に追加する"
 
-#: admin/class-mcp-admin-connections.php:282
+#: admin/class-mcp-admin-connections.php:297
 msgid ""
 "Site actually on a public HTTPS address? Use the cloud connector instead"
 msgstr ""
 "サイトが実際には公開HTTPSアドレスにある場合は、代わりにクラウドコネクタを使用"
 "してください"
 
-#: admin/class-mcp-admin-connections.php:312
+#: admin/class-mcp-admin-connections.php:327
 msgid ""
 "This opens a secure sign-in so ChatGPT can connect without a terminal. No "
 "access is granted until you approve it in your browser."
@@ -388,7 +397,7 @@ msgstr ""
 "安全なサインインが開き、ターミナルなしで ChatGPT を接続できます。ブラウザで承"
 "認するまでアクセスは許可されません。"
 
-#: admin/class-mcp-admin-connections.php:313
+#: admin/class-mcp-admin-connections.php:328
 msgid ""
 "This opens a secure sign-in so the Claude apps can connect without a "
 "terminal. No access is granted until you approve it in your browser."
@@ -396,19 +405,19 @@ msgstr ""
 "安全なサインインが開き、ターミナルなしで Claude アプリを接続できます。ブラウ"
 "ザで承認するまでアクセスは許可されません。"
 
-#: admin/class-mcp-admin-connections.php:315
+#: admin/class-mcp-admin-connections.php:330
 msgid "Add it in ChatGPT"
 msgstr "ChatGPT に追加"
 
-#: admin/class-mcp-admin-connections.php:316
+#: admin/class-mcp-admin-connections.php:331
 msgid "Add it in the Claude app"
 msgstr "Claude アプリに追加"
 
-#: admin/class-mcp-admin-connections.php:317
+#: admin/class-mcp-admin-connections.php:332
 msgid "Add it on claude.ai"
 msgstr "claude.ai で追加"
 
-#: admin/class-mcp-admin-connections.php:320
+#: admin/class-mcp-admin-connections.php:335
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Click "
 "<strong>Approve</strong>, then pick your site under <strong>+ → Developer "
@@ -418,7 +427,7 @@ msgstr ""
 "<strong>承認</strong>をクリックし、チャットの <strong>+ → 開発者モード</"
 "strong> からサイトを選択してください。"
 
-#: admin/class-mcp-admin-connections.php:321
+#: admin/class-mcp-admin-connections.php:336
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Click "
 "<strong>Approve</strong>, then switch the connector on under <strong>+ → "
@@ -428,21 +437,23 @@ msgstr ""
 "<strong>承認</strong>をクリックし、チャットの <strong>+ → コネクター</"
 "strong> でコネクターをオンにしてください。"
 
-#: admin/class-mcp-admin-connections.php:335
-#: admin/class-mcp-admin-connections.php:339
-#: admin/class-mcp-admin-connections.php:432
+#: admin/class-mcp-admin-connections.php:350
+#: admin/class-mcp-admin-connections.php:354
+#: admin/class-mcp-admin-connections.php:493
+#: admin/class-mcp-admin-connections.php:500
+#: admin/class-mcp-admin-connections.php:572
 msgid "Turn on browser sign-in"
 msgstr "ブラウザーサインインをオンにする"
 
-#: admin/class-mcp-admin-connections.php:348
+#: admin/class-mcp-admin-connections.php:363
 msgid "Add it to Claude"
 msgstr "Claude に追加"
 
-#: admin/class-mcp-admin-connections.php:349
+#: admin/class-mcp-admin-connections.php:364
 msgid "Add to Claude"
 msgstr "Claude に追加"
 
-#: admin/class-mcp-admin-connections.php:353
+#: admin/class-mcp-admin-connections.php:368
 msgid ""
 "Opens claude.ai with this site filled in. Check the address, then click "
 "<strong>Continue</strong> and <strong>Add</strong>. The connector shows up "
@@ -452,7 +463,7 @@ msgstr ""
 "続行</strong>、<strong>追加</strong>の順にクリックしてください。コネクターは "
 "Claude アプリにも表示されます。"
 
-#: admin/class-mcp-admin-connections.php:354
+#: admin/class-mcp-admin-connections.php:369
 msgid ""
 "Opens claude.ai with this site filled in. Check the address, then click "
 "<strong>Continue</strong> and <strong>Add</strong>."
@@ -460,64 +471,72 @@ msgstr ""
 "このサイトが入力済みの状態で claude.ai を開きます。アドレスを確認し、<strong>"
 "続行</strong>、<strong>追加</strong>の順にクリックしてください。"
 
-#: admin/class-mcp-admin-connections.php:359
+#: admin/class-mcp-admin-connections.php:374
 msgid "Add it by hand instead"
 msgstr "手動で追加する"
 
-#: admin/class-mcp-admin-connections.php:362
-#: admin/class-mcp-admin-connections.php:389
-#: admin/class-mcp-admin-connections.php:395
+#: admin/class-mcp-admin-connections.php:377
+#: admin/class-mcp-admin-connections.php:404
+#: admin/class-mcp-admin-connections.php:410
+#: admin/class-mcp-admin-connections.php:529
+#: admin/class-mcp-admin-connections.php:536
 msgid "Connection link"
 msgstr "接続リンク"
 
-#: admin/class-mcp-admin-connections.php:362
-#: admin/class-mcp-admin-connections.php:389
-#: admin/class-mcp-admin-connections.php:395
+#: admin/class-mcp-admin-connections.php:377
+#: admin/class-mcp-admin-connections.php:404
+#: admin/class-mcp-admin-connections.php:410
+#: admin/class-mcp-admin-connections.php:529
+#: admin/class-mcp-admin-connections.php:536
 msgid "Copy connector URL"
 msgstr "コネクタ URL をコピー"
 
-#: admin/class-mcp-admin-connections.php:368
-#: admin/class-mcp-admin-connections.php:412
-#: admin/class-mcp-admin-connections.php:720
+#: admin/class-mcp-admin-connections.php:383
+#: admin/class-mcp-admin-connections.php:427
+#: admin/class-mcp-admin-connections.php:548
+#: admin/class-mcp-admin-connections.php:892
 msgid "Approve access"
 msgstr "アクセスを承認"
 
-#: admin/class-mcp-admin-connections.php:377
-#: admin/class-mcp-admin-connections.php:381
+#: admin/class-mcp-admin-connections.php:392
+#: admin/class-mcp-admin-connections.php:396
 msgid "Open ChatGPT"
 msgstr "ChatGPT を開く"
 
-#: admin/class-mcp-admin-connections.php:383
-#: admin/class-mcp-admin-connections.php:473
+#: admin/class-mcp-admin-connections.php:398
+#: admin/class-mcp-admin-connections.php:517
+#: admin/class-mcp-admin-connections.php:613
 msgid "(opens in a new tab)"
 msgstr "（新しいタブで開きます）"
 
-#: admin/class-mcp-admin-connections.php:385
+#: admin/class-mcp-admin-connections.php:400
 msgid "Connection link copied — paste it into ChatGPT as the MCP server URL."
 msgstr ""
 "接続リンクをコピーしました — MCP サーバー URL として ChatGPT に貼り付けてくだ"
 "さい。"
 
-#: admin/class-mcp-admin-connections.php:386
+#: admin/class-mcp-admin-connections.php:401
 msgid "Copies your connection link and opens ChatGPT in a new tab."
 msgstr "接続リンクをコピーし、新しいタブで ChatGPT を開きます。"
 
-#: admin/class-mcp-admin-connections.php:388
+#: admin/class-mcp-admin-connections.php:403
+#: admin/class-mcp-admin-connections.php:528
 msgid "Copy the link yourself"
 msgstr "リンクを自分でコピー"
 
-#: admin/class-mcp-admin-connections.php:393
+#: admin/class-mcp-admin-connections.php:408
+#: admin/class-mcp-admin-connections.php:534
 msgid "Copy your connection link"
 msgstr "接続リンクをコピー"
 
-#: admin/class-mcp-admin-connections.php:402
+#: admin/class-mcp-admin-connections.php:417
 msgid ""
 "Go to <code>chatgpt.com</code> and sign in (MCP apps work on the web only)."
 msgstr ""
 "<code>chatgpt.com</code> を開いてサインインします（MCP アプリはウェブ版のみ対"
 "応）。"
 
-#: admin/class-mcp-admin-connections.php:403
+#: admin/class-mcp-admin-connections.php:418
 msgid ""
 "Under <code>Settings → Security and login</code>, turn on <strong>Developer "
 "mode</strong> (once)."
@@ -525,7 +544,7 @@ msgstr ""
 "<code>設定 → セキュリティとログイン</code> で<strong>開発者モード</strong>を"
 "オンにします（初回のみ）。"
 
-#: admin/class-mcp-admin-connections.php:404
+#: admin/class-mcp-admin-connections.php:419
 msgid ""
 "Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add "
 "custom MCP server</strong>."
@@ -533,7 +552,7 @@ msgstr ""
 "<code>Plugins</code> を開き、<strong>+</strong> をクリックして <strong>Add "
 "custom MCP server</strong> を選択します。"
 
-#: admin/class-mcp-admin-connections.php:405
+#: admin/class-mcp-admin-connections.php:420
 msgid ""
 "Name it, paste the link as the <strong>MCP server URL</strong>, set "
 "Authentication to <strong>OAuth</strong> and create it."
@@ -541,11 +560,11 @@ msgstr ""
 "名前を付け、リンクを <strong>MCP サーバー URL</strong> として貼り付け、認証"
 "を <strong>OAuth</strong> に設定して作成します。"
 
-#: admin/class-mcp-admin-connections.php:416
+#: admin/class-mcp-admin-connections.php:431
 msgid "Which ChatGPT plans work?"
 msgstr "対応している ChatGPT のプランは？"
 
-#: admin/class-mcp-admin-connections.php:417
+#: admin/class-mcp-admin-connections.php:432
 msgid ""
 "Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
 "plan, on the web. On Business and Enterprise workspaces an admin has to "
@@ -555,11 +574,130 @@ msgstr ""
 "が必要で、Web 版のみ対応です。Business と Enterprise のワークスペースでは、先"
 "に管理者が Developer mode を許可する必要があります。"
 
-#: admin/class-mcp-admin-connections.php:431
+#: admin/class-mcp-admin-connections.php:450
+msgid "Go to <code>perplexity.ai</code> in your browser and sign in."
+msgstr "ブラウザーで <code>perplexity.ai</code> を開き、サインインします。"
+
+#: admin/class-mcp-admin-connections.php:451
+msgid ""
+"Open <strong>Account settings → Connectors</strong> and click <strong>+ "
+"Custom connector</strong>."
+msgstr "<strong>Account settings → Connectors</strong> を開き、<strong>+ Custom connector</strong> をクリックします。"
+
+#: admin/class-mcp-admin-connections.php:452
+msgid ""
+"Choose <strong>Remote</strong>, give it a name, paste the link from step 1 "
+"as the server URL, set Authentication to <strong>OAuth</strong> and the "
+"transport to <strong>Streamable HTTP</strong>, then save."
+msgstr "<strong>Remote</strong> を選び、名前を付け、手順1のリンクをサーバーURLとして貼り付け、Authentication を <strong>OAuth</strong>、トランスポートを <strong>Streamable HTTP</strong> に設定して保存します。"
+
+#: admin/class-mcp-admin-connections.php:454
+msgid "Requires a Perplexity <strong>Pro, Max or Enterprise</strong> plan."
+msgstr "Perplexity の <strong>Pro、Max、Enterprise</strong> プランが必要です。"
+
+#: admin/class-mcp-admin-connections.php:458
+msgid "Go to <code>grok.com/connectors</code> and sign in."
+msgstr "<code>grok.com/connectors</code> を開き、サインインします。"
+
+#: admin/class-mcp-admin-connections.php:459
+msgid ""
+"Click <strong>New Connector</strong>, choose <strong>Custom</strong> and "
+"paste the link from step 1 as the server URL (Streamable HTTP)."
+msgstr "<strong>New Connector</strong> をクリックし、<strong>Custom</strong> を選び、手順1のリンクをサーバーURLとして貼り付けます（Streamable HTTP）。"
+
+#: admin/class-mcp-admin-connections.php:460
+msgid "Save — Grok starts the sign-in right away."
+msgstr "保存すると、Grok がすぐにサインインを開始します。"
+
+#: admin/class-mcp-admin-connections.php:462
+msgid ""
+"Custom connectors are available on Grok's paid plans. On Business and "
+"Enterprise workspaces an admin provisions the connector first."
+msgstr "カスタムコネクターは Grok の有料プランで利用できます。Business と Enterprise のワークスペースでは、先に管理者がコネクターを用意する必要があります。"
+
+#: admin/class-mcp-admin-connections.php:466
+msgid ""
+"Go to <code>gemini.google.com</code> and sign in with a <strong>personal</"
+"strong> Google account."
+msgstr "<code>gemini.google.com</code> を開き、<strong>個人用</strong>の Google アカウントでサインインします。"
+
+#: admin/class-mcp-admin-connections.php:467
+msgid ""
+"Open <strong>Settings → Connected apps → Custom apps</strong> and click "
+"<strong>Add a custom app</strong>."
+msgstr "<strong>Settings → Connected apps → Custom apps</strong> を開き、<strong>Add a custom app</strong> をクリックします。"
+
+#: admin/class-mcp-admin-connections.php:468
+msgid ""
+"Paste the link from step 1 as the MCP server URL and continue — Gemini opens "
+"the sign-in page."
+msgstr "手順1のリンクをMCPサーバーURLとして貼り付けて続行します。Gemini がサインインページを開きます。"
+
+#: admin/class-mcp-admin-connections.php:470
+msgid ""
+"Free. Custom apps are a Google beta: United States only, personal accounts, "
+"18+, English, with Gemini Apps Activity turned on."
+msgstr "無料。カスタムアプリは Google のベータ版です。米国のみ、個人アカウント、18歳以上、英語、Gemini アプリのアクティビティがオンの場合に限ります。"
+
+#: admin/class-mcp-admin-connections.php:471
+msgid ""
+"Google is still rolling this out; if the sign-in page opens but Gemini "
+"reports an error afterwards, that is on Google's side — try again later or "
+"use another app."
+msgstr "Google は段階的に展開中です。サインインページは開くのに、その後 Gemini がエラーを表示する場合は Google 側の問題です。しばらくしてからやり直すか、別のアプリをお使いください。"
+
+#. translators: %s: AI app name, e.g. Perplexity
+#: admin/class-mcp-admin-connections.php:496
+#, php-format
+msgid ""
+"This opens a secure sign-in so %s can connect without a terminal. No access "
+"is granted until you approve it in your browser."
+msgstr "安全なサインインが開き、%s がターミナルなしで接続できるようになります。ブラウザーで承認するまで、アクセスは許可されません。"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:509
+#: admin/class-mcp-admin-connections.php:515
+#, php-format
+msgid "Open %s"
+msgstr "%s を開く"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:521
+#, php-format
+msgid "Connection link copied — paste it into %s as the server URL."
+msgstr "接続リンクをコピーしました。%s にサーバーURLとして貼り付けてください。"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:525
+#, php-format
+msgid "Copies your connection link and opens %s in a new tab."
+msgstr "接続リンクをコピーし、%s を新しいタブで開きます。"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:541
+#, php-format
+msgid "Add it in %s"
+msgstr "%s に追加する"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:552
+#, php-format
+msgid ""
+"%s opens a sign-in page on <strong>your site</strong>. Review what it is "
+"asking for and click <strong>Approve</strong>."
+msgstr "%s があなたの<strong>サイト</strong>でサインインページを開きます。要求内容を確認して<strong>承認</strong>をクリックしてください。"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:558
+#, php-format
+msgid "Which %s plans work?"
+msgstr "%s のどのプランで使えますか？"
+
+#: admin/class-mcp-admin-connections.php:571
 msgid "Turn on sign-in first:"
 msgstr "まずサインインをオンにしてください:"
 
-#: admin/class-mcp-admin-connections.php:444
+#: admin/class-mcp-admin-connections.php:584
 msgid ""
 "In the <strong>Claude</strong> desktop app, go to <code>Customize → "
 "Connectors</code>."
@@ -567,19 +705,19 @@ msgstr ""
 "<strong>Claude</strong> デスクトップアプリで <code>カスタマイズ → コネクター"
 "</code> を開きます。"
 
-#: admin/class-mcp-admin-connections.php:445
+#: admin/class-mcp-admin-connections.php:585
 msgid "On <code>claude.ai</code>, go to <code>Customize → Connectors</code>."
 msgstr ""
 "<code>claude.ai</code> で <code>カスタマイズ → コネクター</code> を開きます。"
 
-#: admin/class-mcp-admin-connections.php:449
+#: admin/class-mcp-admin-connections.php:589
 msgid ""
 "Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
 msgstr ""
 "<strong>+ Add</strong> をクリックし、続けて <strong>Add custom connector</"
 "strong> をクリックします。"
 
-#: admin/class-mcp-admin-connections.php:453
+#: admin/class-mcp-admin-connections.php:593
 msgid ""
 "Name it, paste the link above, click <strong>Continue</strong> and then "
 "<strong>Add</strong>. If Claude asks which OAuth client to use, choose "
@@ -589,7 +727,7 @@ msgstr ""
 "strong>の順にクリックします。使用する OAuth クライアントを Claude に尋ねられ"
 "たら、<strong>自動登録</strong>を選択してください。"
 
-#: admin/class-mcp-admin-connections.php:454
+#: admin/class-mcp-admin-connections.php:594
 msgid ""
 "Name it, paste the link from step 1, click <strong>Continue</strong> and "
 "then <strong>Add</strong>. If Claude asks which OAuth client to use, choose "
@@ -599,7 +737,7 @@ msgstr ""
 "strong>の順にクリックします。使用する OAuth クライアントを Claude に尋ねられ"
 "たら、<strong>自動登録</strong>を選択してください。"
 
-#: admin/class-mcp-admin-connections.php:511
+#: admin/class-mcp-admin-connections.php:651
 msgid ""
 "This site runs on your computer, so the cloud connector cannot reach it. "
 "Claude Desktop connects through a <strong>local bridge</strong> instead: the "
@@ -613,11 +751,11 @@ msgstr ""
 "<code>npx</code> で起動します（Node.js が必要）。サインインはブラウザーで行わ"
 "れ、インターネットには何も公開されません。"
 
-#: admin/class-mcp-admin-connections.php:513
+#: admin/class-mcp-admin-connections.php:653
 msgid "Add the bridge to Claude Desktop"
 msgstr "Claude Desktop にブリッジを追加"
 
-#: admin/class-mcp-admin-connections.php:514
+#: admin/class-mcp-admin-connections.php:654
 msgid ""
 "Run this in Terminal (macOS) or PowerShell (Windows), then fully quit and "
 "reopen the Claude app."
@@ -625,34 +763,34 @@ msgstr ""
 "ターミナル（macOS）または PowerShell（Windows）で実行し、Claude アプリを完全"
 "に終了してから開き直してください。"
 
-#: admin/class-mcp-admin-connections.php:515
-#: admin/class-mcp-admin-connections.php:526
-#: admin/class-mcp-admin-connections.php:539
-#: admin/class-mcp-admin-connections.php:597
-#: admin/class-mcp-admin-connections.php:636
-#: admin/class-mcp-admin-connections.php:677
-#: admin/class-mcp-admin-connections.php:708
-#: admin/class-mcp-admin-connections.php:748
-#: admin/class-mcp-admin-connections.php:801
+#: admin/class-mcp-admin-connections.php:655
+#: admin/class-mcp-admin-connections.php:666
+#: admin/class-mcp-admin-connections.php:679
+#: admin/class-mcp-admin-connections.php:737
+#: admin/class-mcp-admin-connections.php:776
+#: admin/class-mcp-admin-connections.php:817
+#: admin/class-mcp-admin-connections.php:848
+#: admin/class-mcp-admin-connections.php:920
+#: admin/class-mcp-admin-connections.php:973
 msgid "Copy setup command"
 msgstr "セットアップコマンドをコピー"
 
-#: admin/class-mcp-admin-connections.php:515
-#: admin/class-mcp-admin-connections.php:518
-#: admin/class-mcp-admin-connections.php:539
-#: admin/class-mcp-admin-connections.php:543
-#: admin/class-mcp-admin-connections.php:636
-#: admin/class-mcp-admin-connections.php:677
-#: admin/class-mcp-admin-connections.php:815
+#: admin/class-mcp-admin-connections.php:655
+#: admin/class-mcp-admin-connections.php:658
+#: admin/class-mcp-admin-connections.php:679
+#: admin/class-mcp-admin-connections.php:683
+#: admin/class-mcp-admin-connections.php:776
+#: admin/class-mcp-admin-connections.php:817
+#: admin/class-mcp-admin-connections.php:987
 msgid "terminal"
 msgstr "ターミナル"
 
-#: admin/class-mcp-admin-connections.php:523
-#: admin/class-mcp-admin-connections.php:705
+#: admin/class-mcp-admin-connections.php:663
+#: admin/class-mcp-admin-connections.php:845
 msgid "Edit the config file instead"
 msgstr "代わりに設定ファイルを編集する"
 
-#: admin/class-mcp-admin-connections.php:525
+#: admin/class-mcp-admin-connections.php:665
 msgid ""
 "Add this to <code>claude_desktop_config.json</code>, then fully quit and "
 "reopen the Claude app."
@@ -660,7 +798,7 @@ msgstr ""
 "これを <code>claude_desktop_config.json</code> に追加し、Claude アプリを完全"
 "に終了してから開き直してください。"
 
-#: admin/class-mcp-admin-connections.php:528
+#: admin/class-mcp-admin-connections.php:668
 msgid ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
@@ -668,25 +806,25 @@ msgstr ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:529
+#: admin/class-mcp-admin-connections.php:669
 msgid "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 msgstr "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:534
-#: admin/class-mcp-admin-connections.php:743
+#: admin/class-mcp-admin-connections.php:674
+#: admin/class-mcp-admin-connections.php:915
 msgid "Use an API key instead"
 msgstr "代わりに API キーを使う"
 
-#: admin/class-mcp-admin-connections.php:536
-#: admin/class-mcp-admin-connections.php:745
+#: admin/class-mcp-admin-connections.php:676
+#: admin/class-mcp-admin-connections.php:917
 msgid "For headless setups, CI, or a tool that cannot open a browser."
 msgstr "ヘッドレス環境、CI、ブラウザーを開けないツール向けです。"
 
-#: admin/class-mcp-admin-connections.php:538
+#: admin/class-mcp-admin-connections.php:678
 msgid "Then run this instead, with the key in a header:"
 msgstr "次に、代わりにヘッダーにキーを入れたこのコマンドを実行します:"
 
-#: admin/class-mcp-admin-connections.php:540
+#: admin/class-mcp-admin-connections.php:680
 msgid ""
 "The key is stored in plain text in that file, so prefer a <strong>read-only</"
 "strong> key unless this connection needs to make changes, and revoke it here "
@@ -696,13 +834,14 @@ msgstr ""
 "<strong>読み取り専用</strong>キーを選び、使わなくなったらここで失効させてくだ"
 "さい。"
 
-#: admin/class-mcp-admin-connections.php:551
-#: admin/class-mcp-admin-connections.php:936
+#: admin/class-mcp-admin-connections.php:691
+#: admin/class-mcp-admin-connections.php:880
+#: admin/class-mcp-admin-connections.php:1108
 msgid "Check it worked"
 msgstr "動作を確認"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:554
+#: admin/class-mcp-admin-connections.php:694
 #, php-format
 msgid ""
 "Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> "
@@ -712,11 +851,11 @@ msgstr ""
 "<code>%s</code> が一覧に表示されるはずです。初回起動時はブリッジのダウンロー"
 "ドに少し時間がかかります。"
 
-#: admin/class-mcp-admin-connections.php:594
+#: admin/class-mcp-admin-connections.php:734
 msgid "Getting a certificate error?"
 msgstr "証明書エラーが出ますか？"
 
-#: admin/class-mcp-admin-connections.php:596
+#: admin/class-mcp-admin-connections.php:736
 msgid ""
 "Local sites usually use a self-signed certificate that AI tools reject. "
 "Since this site runs on this computer, use the plain <code>http://</code> "
@@ -730,20 +869,20 @@ msgstr ""
 "ん。<code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> という回避策は避けてくださ"
 "い。そのツールが接続するすべての相手で証明書チェックが無効になります。"
 
-#: admin/class-mcp-admin-connections.php:626
+#: admin/class-mcp-admin-connections.php:766
 msgid ""
 "Run these in your terminal. The second line opens your browser to sign in."
 msgstr ""
 "ターミナルで次のコマンドを実行します。2 行目でブラウザが開き、サインインでき"
 "ます。"
 
-#: admin/class-mcp-admin-connections.php:627
+#: admin/class-mcp-admin-connections.php:767
 msgid "Run this in your terminal. Codex opens your browser to sign in."
 msgstr ""
 "ターミナルで次を実行します。Codex がブラウザを開き、サインインできます。"
 
 #. translators: %s: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:629
+#: admin/class-mcp-admin-connections.php:769
 #, php-format
 msgid ""
 "Run this in your terminal, then start <code>gemini</code>: it opens your "
@@ -753,7 +892,7 @@ msgstr ""
 "が開いてサインインできます（開かない場合は <code>/mcp auth %s</code> を実"
 "行）。"
 
-#: admin/class-mcp-admin-connections.php:630
+#: admin/class-mcp-admin-connections.php:770
 msgid ""
 "Run this in your terminal. Opencode opens your browser to sign in the first "
 "time it connects."
@@ -761,11 +900,11 @@ msgstr ""
 "ターミナルでこれを実行してください。Opencode は最初の接続時にブラウザーを開い"
 "てサインインします。"
 
-#: admin/class-mcp-admin-connections.php:634
+#: admin/class-mcp-admin-connections.php:774
 msgid "Add the server"
 msgstr "サーバーを追加"
 
-#: admin/class-mcp-admin-connections.php:638
+#: admin/class-mcp-admin-connections.php:778
 msgid ""
 "Over SSH? Add <code>--no-browser</code> to the second line and open the "
 "printed URL in a local browser."
@@ -773,7 +912,7 @@ msgstr ""
 "SSH 経由ですか？ 2 行目に <code>--no-browser</code> を追加し、表示された URL "
 "をローカルのブラウザーで開いてください。"
 
-#: admin/class-mcp-admin-connections.php:641
+#: admin/class-mcp-admin-connections.php:781
 msgid ""
 "Local https sites usually use a self-signed certificate that these tools "
 "reject: trust it in your tool, or set the WordPress Site Address to the "
@@ -783,30 +922,30 @@ msgstr ""
 "います。ツール側で証明書を信頼するか、WordPress のサイトアドレスを "
 "<code>http://</code> の URL に設定してください。"
 
-#: admin/class-mcp-admin-connections.php:660
+#: admin/class-mcp-admin-connections.php:800
 msgid "Add to Cursor"
 msgstr "Cursor に追加"
 
-#: admin/class-mcp-admin-connections.php:660
+#: admin/class-mcp-admin-connections.php:800
 msgid "Install in VS Code"
 msgstr "VS Code にインストール"
 
-#: admin/class-mcp-admin-connections.php:662
+#: admin/class-mcp-admin-connections.php:802
 msgid "Accept in Cursor. It opens your browser to sign in."
 msgstr "Cursor で承認します。サインインのためにブラウザーが開きます。"
 
-#: admin/class-mcp-admin-connections.php:663
+#: admin/class-mcp-admin-connections.php:803
 msgid ""
 "Confirm in VS Code and trust the server. It opens your browser to sign in."
 msgstr ""
 "VS Code で確認し、サーバーを信頼します。サインインのためにブラウザーが開きま"
 "す。"
 
-#: admin/class-mcp-admin-connections.php:674
+#: admin/class-mcp-admin-connections.php:814
 msgid "Use a command instead"
 msgstr "代わりにコマンドを使う"
 
-#: admin/class-mcp-admin-connections.php:676
+#: admin/class-mcp-admin-connections.php:816
 msgid ""
 "Run this in your terminal (the <code>code</code> command ships with VS "
 "Code), then open Copilot Chat. It signs in on first use."
@@ -815,7 +954,7 @@ msgstr ""
 "Copilot Chat を開いてください。初回使用時にサインインします。"
 
 #. translators: %s: path of the client's config file.
-#: admin/class-mcp-admin-connections.php:683
+#: admin/class-mcp-admin-connections.php:823
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart Cursor. It signs in on first use."
@@ -824,7 +963,7 @@ msgstr ""
 "インインします。"
 
 #. translators: %s: config file path
-#: admin/class-mcp-admin-connections.php:701
+#: admin/class-mcp-admin-connections.php:841
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart the app. It signs in on first use."
@@ -832,7 +971,74 @@ msgstr ""
 "これを <code>%s</code> に追加し、アプリを再起動してください。初回使用時にサイ"
 "ンインします。"
 
-#: admin/class-mcp-admin-connections.php:721
+#: admin/class-mcp-admin-connections.php:859
+msgid ""
+"n8n cloud connects from n8n's servers and cannot reach a local site; a self-"
+"hosted n8n on this machine works."
+msgstr "n8n cloud は n8n のサーバーから接続するため、ローカルサイトには到達できません。このマシン上のセルフホスト n8n なら使えます。"
+
+#: admin/class-mcp-admin-connections.php:861
+msgid "Add an MCP Client Tool node"
+msgstr "MCP Client Tool ノードを追加する"
+
+#: admin/class-mcp-admin-connections.php:862
+msgid ""
+"In your workflow, add the <strong>MCP Client Tool</strong> node to your "
+"agent and fill in:"
+msgstr "ワークフローで、エージェントに <strong>MCP Client Tool</strong> ノードを追加し、次を入力します。"
+
+#: admin/class-mcp-admin-connections.php:864
+#: admin/class-mcp-admin-connections.php:872
+#: admin/class-mcp-admin-connections.php:1398
+msgid "Copy endpoint URL"
+msgstr "エンドポイント URL をコピー"
+
+#: admin/class-mcp-admin-connections.php:864
+#: admin/class-mcp-admin-connections.php:872
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: admin/class-mcp-admin-connections.php:865
+msgid "Server Transport"
+msgstr "Server Transport"
+
+#: admin/class-mcp-admin-connections.php:866
+msgid ""
+"<strong>Bearer Auth</strong> — create a Bearer Auth credential and paste the "
+"API key below."
+msgstr "<strong>Bearer Auth</strong> — Bearer Auth の認証情報を作成し、下の API キーを貼り付けます。"
+
+#: admin/class-mcp-admin-connections.php:866
+msgid "Authentication"
+msgstr "Authentication"
+
+#: admin/class-mcp-admin-connections.php:869
+msgid "Prefer OAuth2?"
+msgstr "OAuth2 を使いたい場合"
+
+#: admin/class-mcp-admin-connections.php:871
+msgid ""
+"Set Authentication to <strong>OAuth2</strong> and create a new OAuth2 "
+"credential: n8n registers itself with this site and opens the sign-in when "
+"you connect. Click Copy on the endpoint above first — it turns on new "
+"connections for 30 minutes."
+msgstr "Authentication を <strong>OAuth2</strong> に設定し、新しい OAuth2 認証情報を作成します。接続時に n8n がこのサイトに自身を登録し、サインインを開きます。先に上の endpoint の「コピー」をクリックしてください。新規接続が30分間オンになります。"
+
+#. translators: %s: URL of the Settings tab
+#: admin/class-mcp-admin-connections.php:875
+#, php-format
+msgid ""
+"Self-hosted n8n: add your n8n host under <a href=\"%s\">Settings → "
+"Additional allowed hosts</a> first. n8n cloud is already allowed."
+msgstr "セルフホストの n8n：先に <a href=\"%s\">設定 → 追加で許可するホスト</a> に n8n のホストを追加してください。n8n cloud はすでに許可されています。"
+
+#: admin/class-mcp-admin-connections.php:881
+msgid ""
+"Execute the node once — its Tools output lists <code>cowboy_discover</code> "
+"and <code>cowboy_run</code>."
+msgstr "ノードを一度実行します。Tools の出力に <code>cowboy_discover</code> と <code>cowboy_run</code> が表示されます。"
+
+#: admin/class-mcp-admin-connections.php:893
 msgid ""
 "A sign-in page opens on <strong>your site</strong>. Pick the access level "
 "and click <strong>Approve</strong>."
@@ -840,11 +1046,11 @@ msgstr ""
 "<strong>あなたのサイト</strong>上でサインインページが開きます。アクセスレベル"
 "を選び、<strong>承認</strong>をクリックしてください。"
 
-#: admin/class-mcp-admin-connections.php:747
+#: admin/class-mcp-admin-connections.php:919
 msgid "Then add the server with the key in a header:"
 msgstr "次に、キーをヘッダーに指定してサーバーを追加します:"
 
-#: admin/class-mcp-admin-connections.php:750
+#: admin/class-mcp-admin-connections.php:922
 msgid ""
 "Codex reads the key each time it starts, so also add the <code>export</code> "
 "line to your shell profile (e.g. <code>~/.zshrc</code>)."
@@ -852,53 +1058,53 @@ msgstr ""
 "Codex は起動のたびにキーを読み込むため、<code>export</code> の行をシェルのプ"
 "ロファイル（例: <code>~/.zshrc</code>）にも追加してください。"
 
-#: admin/class-mcp-admin-connections.php:764
+#: admin/class-mcp-admin-connections.php:936
 msgid "Create an API key"
 msgstr "API キーを作成"
 
-#: admin/class-mcp-admin-connections.php:767
+#: admin/class-mcp-admin-connections.php:939
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr ""
 "<strong>今すぐキーをコピーしてください</strong> — セキュリティのため、二度と"
 "表示されません。"
 
-#: admin/class-mcp-admin-connections.php:768
-#: admin/class-mcp-admin-connections.php:1303
+#: admin/class-mcp-admin-connections.php:940
+#: admin/class-mcp-admin-connections.php:1481
 msgid "API key"
 msgstr "APIキー"
 
-#: admin/class-mcp-admin-connections.php:768
+#: admin/class-mcp-admin-connections.php:940
 msgid "Copy API key"
 msgstr "API キーをコピー"
 
-#: admin/class-mcp-admin-connections.php:769
+#: admin/class-mcp-admin-connections.php:941
 msgid "I've saved my key"
 msgstr "キーを保存しました"
 
-#: admin/class-mcp-admin-connections.php:772
+#: admin/class-mcp-admin-connections.php:944
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "後で識別できるように名前を付けてから生成します。"
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:777
+#: admin/class-mcp-admin-connections.php:949
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "例: ノートパソコンの %s"
 
-#: admin/class-mcp-admin-connections.php:780
+#: admin/class-mcp-admin-connections.php:952
 msgid "Generate API key"
 msgstr "API キーを生成"
 
-#: admin/class-mcp-admin-connections.php:780
+#: admin/class-mcp-admin-connections.php:952
 msgid "Generate another key"
 msgstr "別のキーを生成"
 
-#: admin/class-mcp-admin-connections.php:793
+#: admin/class-mcp-admin-connections.php:965
 msgid "Run this in your terminal:"
 msgstr "ターミナルで次を実行します:"
 
-#: admin/class-mcp-admin-connections.php:794
+#: admin/class-mcp-admin-connections.php:966
 msgid ""
 "Run these in your terminal. Codex reads the key each time it starts, so also "
 "add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
@@ -908,7 +1114,7 @@ msgstr ""
 "め、<code>export</code> の行をシェルのプロファイル（例: <code>~/.zshrc</"
 "code>）にも追加してください:"
 
-#: admin/class-mcp-admin-connections.php:795
+#: admin/class-mcp-admin-connections.php:967
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then restart Cursor:"
@@ -916,12 +1122,12 @@ msgstr ""
 "これを <code>~/.cursor/mcp.json</code> に追加し（ファイルがなければ作成）、"
 "Cursor を再起動します:"
 
-#: admin/class-mcp-admin-connections.php:799
+#: admin/class-mcp-admin-connections.php:971
 msgid "Add the server to your tool"
 msgstr "サーバーをツールに追加"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:922
+#: admin/class-mcp-admin-connections.php:1094
 #, php-format
 msgid ""
 "Run <code>/mcp</code> in a new Claude Code session — <code>%s</code> should "
@@ -931,7 +1137,7 @@ msgstr ""
 "code> が接続済みとして表示されるはずです。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:924
+#: admin/class-mcp-admin-connections.php:1096
 #, php-format
 msgid ""
 "Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
@@ -941,7 +1147,7 @@ msgstr ""
 "一緒に表示されるはずです。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:926
+#: admin/class-mcp-admin-connections.php:1098
 #, php-format
 msgid ""
 "Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
@@ -951,7 +1157,7 @@ msgstr ""
 "て表示されるはずです。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:928
+#: admin/class-mcp-admin-connections.php:1100
 #, php-format
 msgid ""
 "Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
@@ -962,7 +1168,7 @@ msgstr ""
 "code> に表示されます。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:930
+#: admin/class-mcp-admin-connections.php:1102
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
@@ -971,7 +1177,7 @@ msgstr ""
 "表示されるはずです。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:932
+#: admin/class-mcp-admin-connections.php:1104
 #, php-format
 msgid ""
 "Open Copilot Chat in agent mode and click the tools icon — <code>%s</code> "
@@ -981,16 +1187,16 @@ msgstr ""
 "<code>%s</code> が表示されるはずです。エラーは <code>Output → MCP</code> に表"
 "示されます。"
 
-#: admin/class-mcp-admin-connections.php:937
+#: admin/class-mcp-admin-connections.php:1109
 msgid "Then try:"
 msgstr "次に試してみてください:"
 
-#: admin/class-mcp-admin-connections.php:940
+#: admin/class-mcp-admin-connections.php:1112
 msgid "Copy prompt"
 msgstr "プロンプトをコピー"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:940
+#: admin/class-mcp-admin-connections.php:1112
 #, php-format
 msgid ""
 "Using %s, tell me this site's name and WordPress version. Don't change "
@@ -999,21 +1205,21 @@ msgstr ""
 "%s を使って、このサイトの名前と WordPress のバージョンを教えて。何も変更しな"
 "いで。"
 
-#: admin/class-mcp-admin-connections.php:970
+#: admin/class-mcp-admin-connections.php:1142
 msgid "Select all"
 msgstr "すべて選択"
 
-#: admin/class-mcp-admin-connections.php:972
+#: admin/class-mcp-admin-connections.php:1144
 msgid "Deselect all"
 msgstr "すべて選択解除"
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin-connections.php:980
+#: admin/class-mcp-admin-connections.php:1152
 #, php-format
 msgid "Select all %s tools"
 msgstr "%s のすべてのツールを選択"
 
-#: admin/class-mcp-admin-connections.php:994
+#: admin/class-mcp-admin-connections.php:1166
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -1021,54 +1227,54 @@ msgstr ""
 "注: 読み取り専用のMCPリソース（サイト情報、ユーザー一覧、最近の投稿など）は、"
 "ツールのスコープに関係なく、すべてのキーおよび接続で常に利用できます。"
 
-#: admin/class-mcp-admin-connections.php:1005
+#: admin/class-mcp-admin-connections.php:1177
 msgid "Custom…"
 msgstr "カスタム…"
 
-#: admin/class-mcp-admin-connections.php:1005
-#: admin/class-mcp-admin-connections.php:1021
-#: admin/class-mcp-admin-connections.php:1032
+#: admin/class-mcp-admin-connections.php:1177
+#: admin/class-mcp-admin-connections.php:1193
+#: admin/class-mcp-admin-connections.php:1204
 msgid "Full access"
 msgstr "フルアクセス"
 
-#: admin/class-mcp-admin-connections.php:1005
-#: admin/class-mcp-admin-connections.php:1025
+#: admin/class-mcp-admin-connections.php:1177
+#: admin/class-mcp-admin-connections.php:1197
 msgid "Read-only"
 msgstr "読み取り専用"
 
-#: admin/class-mcp-admin-connections.php:1008 includes/class-mcp-oauth.php:1801
+#: admin/class-mcp-admin-connections.php:1180 includes/class-mcp-oauth.php:1801
 msgid "Access level"
 msgstr "アクセスレベル"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin-connections.php:1029
+#: admin/class-mcp-admin-connections.php:1201
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "カスタム（%d ツール）"
 
-#: admin/class-mcp-admin-connections.php:1036
+#: admin/class-mcp-admin-connections.php:1208
 msgid "Unknown (blocked)"
 msgstr "不明(ブロック済み)"
 
-#: admin/class-mcp-admin-connections.php:1052
+#: admin/class-mcp-admin-connections.php:1224
 msgid "Dismiss"
 msgstr "閉じる"
 
 #. translators: 1: app name such as ChatGPT, 2: relative time such as "4 minutes"
-#: admin/class-mcp-admin-connections.php:1056
+#: admin/class-mcp-admin-connections.php:1228
 #, php-format
 msgid "%1$s tried to connect %2$s ago, but new connections were off."
 msgstr "%1$s が %2$s前に接続を試みましたが、新規接続がオフになっていました。"
 
 #. translators: %d: number of attempts
-#: admin/class-mcp-admin-connections.php:1059
+#: admin/class-mcp-admin-connections.php:1231
 #, php-format
 msgid "(%d attempt)"
 msgid_plural "(%d attempts)"
 msgstr[0] "（%d 回の試行）"
 
 #. translators: %s: host name
-#: admin/class-mcp-admin-connections.php:1064
+#: admin/class-mcp-admin-connections.php:1236
 #, php-format
 msgid ""
 "Its sign-in address (%s) is not on the allowed list either — add it to the "
@@ -1078,24 +1284,24 @@ msgstr ""
 "ストに追加してください。"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1071
+#: admin/class-mcp-admin-connections.php:1243
 #, php-format
 msgid "New connections are on — try again in %s now."
 msgstr "新規接続がオンになりました — 今すぐ %s でもう一度お試しください。"
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:1075
+#: admin/class-mcp-admin-connections.php:1247
 #, php-format
 msgid "%s left"
 msgstr "残り %s"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1085
+#: admin/class-mcp-admin-connections.php:1257
 #, php-format
 msgid "Then add the app again in %s."
 msgstr "その後、%s でアプリをもう一度追加してください。"
 
-#: admin/class-mcp-admin-connections.php:1110
+#: admin/class-mcp-admin-connections.php:1282
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1105,30 +1311,30 @@ msgstr ""
 "どの AI エージェントを、Model Context Protocol 経由でこの WordPress サイトに"
 "接続します。"
 
-#: admin/class-mcp-admin-connections.php:1137
-#: admin/class-mcp-admin-connections.php:1279
+#: admin/class-mcp-admin-connections.php:1309
+#: admin/class-mcp-admin-connections.php:1457
 msgid "Connect another app"
 msgstr "別のアプリを接続"
 
-#: admin/class-mcp-admin-connections.php:1137
+#: admin/class-mcp-admin-connections.php:1309
 msgid "Connect your first app"
 msgstr "最初のアプリを接続"
 
-#: admin/class-mcp-admin-connections.php:1138
+#: admin/class-mcp-admin-connections.php:1310
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr ""
 "AIアプリまたはコーディングツールを選択してください。設定は1分ほどで完了しま"
 "す。"
 
-#: admin/class-mcp-admin-connections.php:1140
+#: admin/class-mcp-admin-connections.php:1312
 msgid "Close"
 msgstr "閉じる"
 
-#: admin/class-mcp-admin-connections.php:1148
+#: admin/class-mcp-admin-connections.php:1320
 msgid "Which app do you want to connect?"
 msgstr "どのアプリを接続しますか？"
 
-#: admin/class-mcp-admin-connections.php:1149
+#: admin/class-mcp-admin-connections.php:1321
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -1137,137 +1343,141 @@ msgstr ""
 "が表示されます。"
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1160
+#: admin/class-mcp-admin-connections.php:1332
 #, php-format
 msgid "Connect %s"
 msgstr "%s を接続"
 
-#: admin/class-mcp-admin-connections.php:1181
+#: admin/class-mcp-admin-connections.php:1355
 msgid "No terminal needed"
 msgstr "ターミナル不要"
 
-#: admin/class-mcp-admin-connections.php:1182
+#: admin/class-mcp-admin-connections.php:1356
 msgid "Terminal & IDE tools"
 msgstr "ターミナル・IDE ツール"
 
-#: admin/class-mcp-admin-connections.php:1187
+#: admin/class-mcp-admin-connections.php:1357
+msgid "Automation & developers"
+msgstr "自動化と開発者"
+
+#: admin/class-mcp-admin-connections.php:1362
 msgid "AI clients"
 msgstr "AI クライアント"
 
-#: admin/class-mcp-admin-connections.php:1207
+#: admin/class-mcp-admin-connections.php:1382
 msgid "Needs public URL"
 msgstr "公開URLが必要"
 
-#: admin/class-mcp-admin-connections.php:1209
+#: admin/class-mcp-admin-connections.php:1384
 msgid "Works locally"
 msgstr "ローカルで動作"
 
-#: admin/class-mcp-admin-connections.php:1217
+#: admin/class-mcp-admin-connections.php:1388
+msgid "Beta"
+msgstr "ベータ"
+
+#: admin/class-mcp-admin-connections.php:1395
 msgid "Another MCP client? Use this endpoint:"
 msgstr "別の MCP クライアントですか？このエンドポイントを使用してください："
 
-#: admin/class-mcp-admin-connections.php:1220
-msgid "Copy endpoint URL"
-msgstr "エンドポイント URL をコピー"
-
-#: admin/class-mcp-admin-connections.php:1261
+#: admin/class-mcp-admin-connections.php:1439
 msgid "Copy"
 msgstr "コピー"
 
-#: admin/class-mcp-admin-connections.php:1274
+#: admin/class-mcp-admin-connections.php:1452
 msgid "Connected apps"
 msgstr "接続済みアプリ"
 
-#: admin/class-mcp-admin-connections.php:1287
+#: admin/class-mcp-admin-connections.php:1465
 msgid "Name"
 msgstr "名前"
 
-#: admin/class-mcp-admin-connections.php:1288
+#: admin/class-mcp-admin-connections.php:1466
 msgid "Type"
 msgstr "種類"
 
-#: admin/class-mcp-admin-connections.php:1289
+#: admin/class-mcp-admin-connections.php:1467
 msgid "Access"
 msgstr "アクセス"
 
-#: admin/class-mcp-admin-connections.php:1291
+#: admin/class-mcp-admin-connections.php:1469
 msgid "Last used"
 msgstr "最終使用"
 
-#: admin/class-mcp-admin-connections.php:1311
+#: admin/class-mcp-admin-connections.php:1489
 msgid "Revoke this key? Any client using it will lose access."
 msgstr ""
 "このキーを無効化しますか？これを使用しているクライアントはアクセスできなくな"
 "ります。"
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1318
+#: admin/class-mcp-admin-connections.php:1496
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · %2$s が承認"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1321
+#: admin/class-mcp-admin-connections.php:1499
 #, php-format
 msgid "approved by %s"
 msgstr "%s が承認"
 
-#: admin/class-mcp-admin-connections.php:1327
+#: admin/class-mcp-admin-connections.php:1505
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1335
+#: admin/class-mcp-admin-connections.php:1513
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "この接続を無効化しますか？アプリは直ちにアクセスできなくなります。"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1361
+#: admin/class-mcp-admin-connections.php:1539
 #, php-format
 msgid "%s ago"
 msgstr "%s前"
 
-#: admin/class-mcp-admin-connections.php:1363
+#: admin/class-mcp-admin-connections.php:1541
 msgid "Never"
 msgstr "なし"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1370
+#: admin/class-mcp-admin-connections.php:1548
 #, php-format
 msgid "Actions for %s"
 msgstr "%s の操作"
 
-#: admin/class-mcp-admin-connections.php:1373
+#: admin/class-mcp-admin-connections.php:1551
 msgid "Edit access…"
 msgstr "アクセスを編集…"
 
-#: admin/class-mcp-admin-connections.php:1374
+#: admin/class-mcp-admin-connections.php:1552
 msgid "Revoke"
 msgstr "無効化"
 
-#: admin/class-mcp-admin-connections.php:1377
+#: admin/class-mcp-admin-connections.php:1555
 msgid "Revoke…"
 msgstr "無効化…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1390
+#: admin/class-mcp-admin-connections.php:1568
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "<strong>%s</strong> のアクセス"
 
-#: admin/class-mcp-admin-connections.php:1394
+#: admin/class-mcp-admin-connections.php:1572
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:220
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: admin/class-mcp-admin-connections.php:1395
+#: admin/class-mcp-admin-connections.php:1573
 msgid "Save access"
 msgstr "アクセスを保存"
 
-#: admin/class-mcp-admin-connections.php:1408
+#: admin/class-mcp-admin-connections.php:1586
 msgid "Connection Doctor"
 msgstr "接続診断"
 
-#: admin/class-mcp-admin-connections.php:1410
+#: admin/class-mcp-admin-connections.php:1588
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -1275,15 +1485,15 @@ msgstr ""
 "AI クライアントがこのサイトに到達できるかをテストし、問題があればコピペ可能な"
 "診断結果を取得できます。"
 
-#: admin/class-mcp-admin-connections.php:1412
+#: admin/class-mcp-admin-connections.php:1590
 msgid "Run checks"
 msgstr "チェックを実行"
 
-#: admin/class-mcp-admin-connections.php:1413
+#: admin/class-mcp-admin-connections.php:1591
 msgid "Copy report"
 msgstr "レポートをコピー"
 
-#: admin/class-mcp-admin-connections.php:1414
+#: admin/class-mcp-admin-connections.php:1592
 msgid "Get help on WordPress.org"
 msgstr "WordPress.org でサポートを受ける"
 
@@ -1594,14 +1804,23 @@ msgid ""
 "admin-level user management. Many real jobs need exactly this. The audit "
 "log, the undo journal, and automatic checkpoints before WP-CLI writes all "
 "stay on."
-msgstr "パワーモードは、サーバーアクセスを持つシニア開発者と同じ範囲を AI エージェントに与えます。WP-CLI の <code>eval</code> と <code>shell</code>、スキーマを変更する SQL、インストール内の任意の場所への書き込み、内部サービスへのリクエスト、管理者レベルのユーザー管理です。実際の作業の多くはまさにこれを必要とします。監査ログ、取り消しジャーナル、WP-CLI 書き込み前の自動チェックポイントはすべて有効のままです。"
+msgstr ""
+"パワーモードは、サーバーアクセスを持つシニア開発者と同じ範囲を AI エージェン"
+"トに与えます。WP-CLI の <code>eval</code> と <code>shell</code>、スキーマを変"
+"更する SQL、インストール内の任意の場所への書き込み、内部サービスへのリクエス"
+"ト、管理者レベルのユーザー管理です。実際の作業の多くはまさにこれを必要としま"
+"す。監査ログ、取り消しジャーナル、WP-CLI 書き込み前の自動チェックポイントはす"
+"べて有効のままです。"
 
 #: admin/class-mcp-admin-settings.php:104
 msgid ""
 "<strong>Potential risk:</strong> with these limits lifted, anyone holding an "
 "API key can run code on this server. Turn it on for sites you control, with "
 "credentials you trust, and turn it off again when the job is done."
-msgstr "<strong>潜在的なリスク:</strong> これらの制限が解除されると、API キーを持つ誰もがこのサーバーでコードを実行できます。自分が管理するサイトで、信頼できる認証情報とともにオンにし、作業が終わったら再びオフにしてください。"
+msgstr ""
+"<strong>潜在的なリスク:</strong> これらの制限が解除されると、API キーを持つ誰"
+"もがこのサーバーでコードを実行できます。自分が管理するサイトで、信頼できる認"
+"証情報とともにオンにし、作業が終わったら再びオフにしてください。"
 
 #: admin/class-mcp-admin-settings.php:110
 msgid "What you gain"
@@ -1609,7 +1828,8 @@ msgstr "できるようになること"
 
 #: admin/class-mcp-admin-settings.php:112
 msgid "Fix a fatal or run a one-off migration from the agent"
-msgstr "エージェントから致命的エラーを修正したり、単発のマイグレーションを実行する"
+msgstr ""
+"エージェントから致命的エラーを修正したり、単発のマイグレーションを実行する"
 
 #: admin/class-mcp-admin-settings.php:113
 msgid "Alter tables and clean up orphaned data"
@@ -1713,7 +1933,7 @@ msgid "Save Settings"
 msgstr "設定を保存"
 
 #: admin/class-mcp-admin.php:33 admin/class-mcp-admin.php:34
-#: admin/class-mcp-admin.php:604
+#: admin/class-mcp-admin.php:618
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -1913,38 +2133,38 @@ msgstr ""
 msgid "Could not update connection scope."
 msgstr "接続のスコープを更新できませんでした。"
 
-#: admin/class-mcp-admin.php:401
+#: admin/class-mcp-admin.php:415
 msgid "Browser sign-in enabled."
 msgstr "ブラウザーサインインを有効にしました。"
 
-#: admin/class-mcp-admin.php:435
+#: admin/class-mcp-admin.php:449
 msgid "Settings saved."
 msgstr "設定を保存しました。"
 
-#: admin/class-mcp-admin.php:442
+#: admin/class-mcp-admin.php:456
 msgid "Audit log cleared."
 msgstr "監査ログを消去しました。"
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:460
+#: admin/class-mcp-admin.php:474
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "変更 #%1$d を取り消しました。%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:475
+#: admin/class-mcp-admin.php:489
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%2$d 件中 %1$d 件のバッチエントリを取り消しました。"
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:491
+#: admin/class-mcp-admin.php:505
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "チェックポイント #%1$d を作成しました（%2$s）。"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:504
+#: admin/class-mcp-admin.php:518
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -1954,7 +2174,7 @@ msgstr ""
 "行、検証済み。復元前の安全チェックポイント: #%4$d。"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:507
+#: admin/class-mcp-admin.php:521
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -1963,101 +2183,101 @@ msgstr ""
 "チェックポイント #%1$d からデータベースを復元しました — %2$d テーブル、%3$s "
 "行を確認。復元前の安全チェックポイント: #%4$d。"
 
-#: admin/class-mcp-admin.php:520
+#: admin/class-mcp-admin.php:534
 msgid "Checkpoint deleted."
 msgstr "チェックポイントを削除しました。"
 
-#: admin/class-mcp-admin.php:593
+#: admin/class-mcp-admin.php:607
 msgid "Connections"
 msgstr "接続"
 
-#: admin/class-mcp-admin.php:594
+#: admin/class-mcp-admin.php:608
 msgid "Activity"
 msgstr "アクティビティ"
 
-#: admin/class-mcp-admin.php:595
+#: admin/class-mcp-admin.php:609
 msgid "Logs"
 msgstr "ログ"
 
-#: admin/class-mcp-admin.php:596
+#: admin/class-mcp-admin.php:610
 msgid "Settings"
 msgstr "設定"
 
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:611
 msgid "About"
 msgstr "概要"
 
-#: admin/class-mcp-admin.php:608
+#: admin/class-mcp-admin.php:622
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP のセクション"
 
-#: admin/class-mcp-admin.php:641
+#: admin/class-mcp-admin.php:655
 msgid "Power mode is on. Open Power mode settings."
 msgstr "パワーモードはオンです。パワーモードの設定を開きます。"
 
-#: admin/class-mcp-admin.php:641
+#: admin/class-mcp-admin.php:655
 msgid "Power mode on"
 msgstr "パワーモード オン"
 
-#: admin/class-mcp-admin.php:643
+#: admin/class-mcp-admin.php:657
 msgid "Power mode is off. Open Power mode settings."
 msgstr "パワーモードはオフです。パワーモードの設定を開きます。"
 
-#: admin/class-mcp-admin.php:643
+#: admin/class-mcp-admin.php:657
 msgid "Power mode off"
 msgstr "パワーモード オフ"
 
-#: admin/class-mcp-admin.php:646
+#: admin/class-mcp-admin.php:660
 msgid "Safe mode off"
 msgstr "セーフモード オフ"
 
-#: admin/class-mcp-admin.php:669
+#: admin/class-mcp-admin.php:683
 msgid "Every request from AI apps is rejected."
 msgstr "AIアプリからのリクエストはすべて拒否されます。"
 
-#: admin/class-mcp-admin.php:669
+#: admin/class-mcp-admin.php:683
 msgid "MCP server is off."
 msgstr "MCP サーバーはオフです。"
 
-#: admin/class-mcp-admin.php:670
+#: admin/class-mcp-admin.php:684
 msgid "Turn on in Settings"
 msgstr "設定でオンにする"
 
-#: admin/class-mcp-admin.php:698
+#: admin/class-mcp-admin.php:712
 msgid "Pagination"
 msgstr "ページ送り"
 
-#: admin/class-mcp-admin.php:699
+#: admin/class-mcp-admin.php:713
 msgid "Previous"
 msgstr "前へ"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:702
+#: admin/class-mcp-admin.php:716
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "%2$d ページ中 %1$d ページ目"
 
-#: admin/class-mcp-admin.php:704
+#: admin/class-mcp-admin.php:718
 msgid "Next"
 msgstr "次へ"
 
-#: admin/class-mcp-admin.php:713
+#: admin/class-mcp-admin.php:727
 msgid "Project home, guides, and news."
 msgstr "プロジェクトのホーム、ガイド、ニュース。"
 
-#: admin/class-mcp-admin.php:713
+#: admin/class-mcp-admin.php:727
 msgid "Website"
 msgstr "ウェブサイト"
 
-#: admin/class-mcp-admin.php:714
+#: admin/class-mcp-admin.php:728
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:714
+#: admin/class-mcp-admin.php:728
 msgid "Source, issues & releases."
 msgstr "ソースコード、課題、リリース。"
 
-#: admin/class-mcp-admin.php:715
+#: admin/class-mcp-admin.php:729
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2065,11 +2285,11 @@ msgstr ""
 "WordPress.org のサポートフォーラムで質問してください。接続診断のレポートを貼"
 "り付けると、より早く回答が得られます。"
 
-#: admin/class-mcp-admin.php:715
+#: admin/class-mcp-admin.php:729
 msgid "Get help"
 msgstr "サポートを受ける"
 
-#: admin/class-mcp-admin.php:716
+#: admin/class-mcp-admin.php:730
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2077,12 +2297,12 @@ msgstr ""
 "Cowboy MCP は便利ですか？WordPress.org にレビューを投稿すると、他のサイト所有"
 "者がこのプラグインを見つけやすくなります。"
 
-#: admin/class-mcp-admin.php:716 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:730 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "レビューを書く"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:724
+#: admin/class-mcp-admin.php:738
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -2361,386 +2581,3 @@ msgstr "承認"
 #, php-format
 msgid "Redirects to: %s"
 msgstr "リダイレクト先: %s"
-
-#~ msgid "Lift safety restrictions for advanced operations"
-#~ msgstr "高度な操作のために安全制限を解除する"
-
-#~ msgid ""
-#~ "<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, "
-#~ "dangerous SQL, writing files anywhere, and requests to internal "
-#~ "addresses. This grants effective <strong>remote code execution</strong> "
-#~ "to anyone holding an API key. Only enable on a trusted, locked-down site "
-#~ "you control. Your MCP API keys and the plugin&#8217;s own settings stay "
-#~ "protected."
-#~ msgstr ""
-#~ "<strong>危険:</strong> <code>eval</code>/<code>shell</code>、危険な SQL、"
-#~ "任意の場所へのファイル書き込み、内部アドレスへのリクエストを許可します。こ"
-#~ "れは API キーを持つ誰にでも実質的な<strong>リモートコード実行</strong>を許"
-#~ "可します。信頼できる、自分が管理する厳重に保護されたサイトでのみ有効にして"
-#~ "ください。MCP API キーとプラグイン自身の設定は保護されたままです。"
-
-#~ msgid "Turning it on allows"
-#~ msgstr "オンにすると許可されること"
-
-#~ msgid "Dangerous SQL"
-#~ msgstr "危険な SQL"
-
-#~ msgid "New connections: disabled"
-#~ msgstr "新しい接続: 無効"
-
-#~ msgid "New connections: enabled"
-#~ msgstr "新しい接続: 有効"
-
-#~ msgid "Disable now"
-#~ msgstr "今すぐ無効にする"
-
-#~ msgid ""
-#~ "The Copy or Add button above turns this on for you. Adding it by hand? "
-#~ "Enable it first. It switches itself off after 30 minutes, and connections "
-#~ "that already exist keep working either way."
-#~ msgstr ""
-#~ "上の「コピー」または「追加」ボタンを使うと、これは自動的に有効になります。"
-#~ "手動で追加する場合は、先にこれを有効にしてください。30 分後に自動的にオフ"
-#~ "になり、既存の接続はどちらの状態でも動作し続けます。"
-
-#~ msgid ""
-#~ "Add to Claude below turns this on for you. Adding it by hand? Enable it "
-#~ "first. It switches itself off after 30 minutes, and connections that "
-#~ "already exist keep working either way."
-#~ msgstr ""
-#~ "下の「Claude に追加」を使うと、これは自動的に有効になります。手動で追加す"
-#~ "る場合は、先にこれを有効にしてください。30 分後に自動的にオフになり、既存"
-#~ "の接続はどちらの状態でも動作し続けます。"
-
-#~ msgid ""
-#~ "Step one when adding ChatGPT or a Claude app: enable this, then add the "
-#~ "app. It switches itself off after 30 minutes. API keys do not use it, and "
-#~ "connections that already exist keep working either way."
-#~ msgstr ""
-#~ "ChatGPT や Claude アプリを追加するときの最初のステップです。これを有効にし"
-#~ "てからアプリを追加してください。30 分後に自動的にオフになります。API キー"
-#~ "には不要で、既存の接続はどちらの状態でも動作し続けます。"
-
-#~ msgid ""
-#~ "<strong>Heads up:</strong> this site does not appear to be on a public "
-#~ "HTTPS address. ChatGPT connects from OpenAI's cloud, so it cannot reach "
-#~ "local, private, or non-HTTPS sites. A terminal tool works here instead, "
-#~ "or connect through a tunnel/staging URL."
-#~ msgstr ""
-#~ "<strong>ご注意:</strong> このサイトは公開 HTTPS アドレスにないようです。"
-#~ "ChatGPT は OpenAI のクラウドから接続するため、ローカル・プライベート・非 "
-#~ "HTTPS のサイトには到達できません。代わりにターミナルツールを使うか、トンネ"
-#~ "ルやステージング URL を通じて接続してください。"
-
-#~ msgid ""
-#~ "<strong>Heads up:</strong> this site does not appear to be on a public "
-#~ "HTTPS address. The Claude apps connect from Anthropic's cloud, so they "
-#~ "cannot reach local, private, or non-HTTPS sites. A terminal tool works "
-#~ "here instead, or connect through a tunnel/staging URL."
-#~ msgstr ""
-#~ "<strong>ご注意:</strong> このサイトは公開 HTTPS アドレスにないようです。"
-#~ "Claude アプリは Anthropic のクラウドから接続するため、ローカル・プライベー"
-#~ "ト・非 HTTPS のサイトには到達できません。代わりにターミナルツールを使う"
-#~ "か、トンネルやステージング URL を通じて接続してください。"
-
-#~ msgid "You'll paste this into ChatGPT in the next step."
-#~ msgstr "次のステップでこれを ChatGPT に貼り付けます。"
-
-#~ msgid "You'll paste this into Claude in the next step."
-#~ msgstr "次のステップでこれを Claude に貼り付けます。"
-
-#~ msgid ""
-#~ "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what "
-#~ "it is asking for and click <strong>Approve</strong>. To use it, open the "
-#~ "<strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> "
-#~ "and select your site."
-#~ msgstr ""
-#~ "ChatGPT が <strong>あなたのサイト</strong>でサインインページを開きます。要"
-#~ "求される内容を確認し、<strong>承認</strong> をクリックしてください。使うと"
-#~ "きは、チャットで <strong>+</strong> メニューを開き、<strong>Developer "
-#~ "mode</strong> を選んでサイトを選択します。"
-
-#~ msgid ""
-#~ "Claude opens a sign-in page on <strong>your site</strong>. Review what it "
-#~ "is asking for and click <strong>Approve</strong>. To use it, click "
-#~ "<strong>+</strong> in a chat, open <strong>Connectors</strong> and make "
-#~ "sure your site is switched on."
-#~ msgstr ""
-#~ "Claude が <strong>あなたのサイト</strong>でサインインページを開きます。要"
-#~ "求される内容を確認し、<strong>承認</strong> をクリックしてください。使うと"
-#~ "きは、チャットで <strong>+</strong> をクリックし、<strong>Connectors</"
-#~ "strong> を開いてサイトがオンになっていることを確認します。"
-
-#, php-format
-#~ msgid ""
-#~ "Opens claude.ai in a new tab with this site filled in, and turns on new "
-#~ "connections for 30 minutes. Check the address is <code>%s</code>, then "
-#~ "click <strong>Continue</strong> and <strong>Add</strong>. The connector "
-#~ "then shows up in the Claude app too."
-#~ msgstr ""
-#~ "このサイトが入力済みの状態で claude.ai を新しいタブで開き、新しい接続を "
-#~ "30 分間有効にします。アドレスが <code>%s</code> であることを確認し、"
-#~ "<strong>Continue</strong>、続いて <strong>Add</strong> をクリックします。"
-#~ "追加したコネクタは Claude アプリにも表示されます。"
-
-#, php-format
-#~ msgid ""
-#~ "Opens claude.ai in a new tab with this site filled in, and turns on new "
-#~ "connections for 30 minutes. Check the address is <code>%s</code>, then "
-#~ "click <strong>Continue</strong> and <strong>Add</strong>."
-#~ msgstr ""
-#~ "このサイトが入力済みの状態で claude.ai を新しいタブで開き、新しい接続を "
-#~ "30 分間有効にします。アドレスが <code>%s</code> であることを確認し、"
-#~ "<strong>Continue</strong>、続いて <strong>Add</strong> をクリックします。"
-
-#~ msgid ""
-#~ "Copies your connection link, turns on new connections for 30 minutes and "
-#~ "opens ChatGPT in a new tab."
-#~ msgstr ""
-#~ "接続リンクをコピーし、新規接続を 30 分間オンにして、新しいタブで ChatGPT "
-#~ "を開きます。"
-
-#~ msgid ""
-#~ "Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work "
-#~ "on the web only)."
-#~ msgstr ""
-#~ "ブラウザで <code>chatgpt.com</code> を開いてサインインします（MCP アプリ"
-#~ "は Web 版のみ対応）。"
-
-#~ msgid ""
-#~ "Go to <code>Settings → Security and login</code> and turn on "
-#~ "<strong>Developer mode</strong> (one-time)."
-#~ msgstr ""
-#~ "<code>Settings → Security and login</code> に移動し、<strong>Developer "
-#~ "mode</strong> をオンにします（初回のみ）。"
-
-#~ msgid ""
-#~ "Give it a name, paste the link from step 1 as the <strong>MCP server URL</"
-#~ "strong>, set Authentication to <strong>OAuth</strong>, and create it."
-#~ msgstr ""
-#~ "名前を付け、手順 1 のリンクを <strong>MCP server URL</strong> に貼り付け、"
-#~ "認証を <strong>OAuth</strong> に設定して作成します。"
-
-#~ msgid "Open the <strong>Claude</strong> desktop app and sign in."
-#~ msgstr ""
-#~ "<strong>Claude</strong> デスクトップアプリを開いてサインインします。"
-
-#~ msgid "Go to <code>claude.ai</code> in your browser and sign in."
-#~ msgstr "ブラウザで <code>claude.ai</code> にアクセスしてサインインします。"
-
-#~ msgid "Go to <code>Customize → Connectors</code>."
-#~ msgstr "<code>Customize → Connectors</code> に移動します。"
-
-#~ msgid ""
-#~ "Give it a name, paste the link above, click <strong>Continue</strong> and "
-#~ "then <strong>Add</strong>. If Claude asks which OAuth client to use, "
-#~ "choose <strong>Register automatically</strong>."
-#~ msgstr ""
-#~ "名前を付けて上のリンクを貼り付け、<strong>Continue</strong>、続いて "
-#~ "<strong>Add</strong> をクリックします。使用する OAuth クライアントを尋ねら"
-#~ "れたら <strong>Register automatically</strong> を選びます。"
-
-#~ msgid ""
-#~ "Give it a name, paste the link from step 1, click <strong>Continue</"
-#~ "strong> and then <strong>Add</strong>. If Claude asks which OAuth client "
-#~ "to use, choose <strong>Register automatically</strong>."
-#~ msgstr ""
-#~ "名前を付けて手順 1 のリンクを貼り付け、<strong>Continue</strong>、続いて "
-#~ "<strong>Add</strong> をクリックします。使用する OAuth クライアントを尋ねら"
-#~ "れたら <strong>Register automatically</strong> を選びます。"
-
-#~ msgid "What works on a local site:"
-#~ msgstr "ローカルサイトで使えるもの:"
-
-#~ msgid ""
-#~ "<strong>Terminal and IDE tools</strong> (Claude Code, Codex, Cursor, VS "
-#~ "Code, Gemini CLI) — connect right now; the sign-in opens in your browser "
-#~ "on this computer. Pick one in the sidebar."
-#~ msgstr ""
-#~ "<strong>ターミナルと IDE のツール</strong>（Claude Code、Codex、Cursor、"
-#~ "VS Code、Gemini CLI）— 今すぐ接続できます。サインインはこのコンピューター"
-#~ "のブラウザで開きます。サイドバーから選んでください。"
-
-#~ msgid ""
-#~ "<strong>Claude Desktop</strong> — connects through a local bridge that "
-#~ "runs on this computer. Pick it in the sidebar for instructions."
-#~ msgstr ""
-#~ "<strong>Claude Desktop</strong> — このコンピューター上で動くローカルブリッ"
-#~ "ジ経由で接続します。手順はサイドバーで選択してください。"
-
-#~ msgid ""
-#~ "<strong>claude.ai and ChatGPT</strong> — cloud-only: they need a public "
-#~ "HTTPS address. A tunnel (e.g. ngrok or Cloudflare Tunnel) works "
-#~ "temporarily, but it exposes your entire dev site to the internet while it "
-#~ "runs, and the WordPress Site Address must be set to the tunnel URL for "
-#~ "the sign-in to work."
-#~ msgstr ""
-#~ "<strong>claude.ai と ChatGPT</strong> — クラウド専用のため公開HTTPSアドレ"
-#~ "スが必要です。トンネル（ngrok や Cloudflare Tunnel など）は一時的に使えま"
-#~ "すが、稼働中は開発サイト全体がインターネットに公開され、サインインを機能さ"
-#~ "せるには WordPress のサイトアドレスをトンネルの URL に変更する必要がありま"
-#~ "す。"
-
-#~ msgid ""
-#~ "This site runs on your computer, so the cloud connector cannot reach it. "
-#~ "Connect Claude Desktop through a <strong>local bridge</strong> instead: a "
-#~ "small helper that runs on this computer and forwards Claude Desktop to "
-#~ "the site. It signs in in your browser like the terminal tools — no key to "
-#~ "paste — and nothing is exposed to the internet."
-#~ msgstr ""
-#~ "このサイトはお使いのコンピューター上で動作しているため、クラウドコネクター"
-#~ "からは到達できません。代わりに<strong>ローカルブリッジ</strong>で Claude "
-#~ "Desktop を接続してください。これはこのコンピューター上で動作し、Claude "
-#~ "Desktop をサイトへ中継する小さなヘルパーです。ターミナルツールと同様にブラ"
-#~ "ウザーでサインインするので、キーを貼り付ける必要はなく、インターネットに公"
-#~ "開されるものもありません。"
-
-#~ msgid ""
-#~ "Run this in Terminal (macOS) or PowerShell (Windows), then fully quit and "
-#~ "reopen the Claude app. It opens your browser to sign in the first time it "
-#~ "connects."
-#~ msgstr ""
-#~ "ターミナル（macOS）または PowerShell（Windows）でこれを実行し、Claude アプ"
-#~ "リを完全に終了してから開き直してください。最初の接続時にブラウザーが開き、"
-#~ "サインインできます。"
-
-#~ msgid ""
-#~ "Requires Node.js on this computer — the bridge is the standard open-"
-#~ "source <code>mcp-remote</code> package, started on demand via <code>npx</"
-#~ "code>. It connects only from your computer to this site."
-#~ msgstr ""
-#~ "このコンピューターに Node.js が必要です — ブリッジは標準的なオープンソース"
-#~ "パッケージ <code>mcp-remote</code> で、必要時に <code>npx</code> から起動"
-#~ "します。接続はお使いのコンピューターからこのサイトへのみ行われます。"
-
-#~ msgid "Prefer to edit the config file?"
-#~ msgstr "設定ファイルを直接編集しますか？"
-
-#~ msgid ""
-#~ "Add this to <code>claude_desktop_config.json</code> (create the file if "
-#~ "it does not exist), then fully quit and restart the Claude app:"
-#~ msgstr ""
-#~ "これを <code>claude_desktop_config.json</code> に追加し（ファイルがなけれ"
-#~ "ば作成）、Claude アプリを完全に終了してから再起動してください:"
-
-#~ msgid ""
-#~ "Headless, CI, or a tool that can't open a browser? Use an API key instead"
-#~ msgstr ""
-#~ "ヘッドレス、CI、またはブラウザを開けないツールの場合は、代わりに API キー"
-#~ "を使用します"
-
-#~ msgid ""
-#~ "Your API key is stored in plain text in that file, so prefer a "
-#~ "<strong>read-only</strong> key unless this connection needs to make "
-#~ "changes — and revoke it here when you no longer use it."
-#~ msgstr ""
-#~ "API キーはそのファイルに平文で保存されます。この接続で変更を行う必要がない"
-#~ "限り<strong>読み取り専用</strong>キーを推奨します。使わなくなったらここで"
-#~ "失効させてください。"
-
-#, php-format
-#~ msgid ""
-#~ "Open a new chat in Claude Desktop and click the tools icon — <code>%s</"
-#~ "code> should be listed. The first start can take a moment while the "
-#~ "bridge downloads."
-#~ msgstr ""
-#~ "Claude Desktop で新しいチャットを開き、ツールアイコンをクリックしてくださ"
-#~ "い — <code>%s</code> が一覧に表示されるはずです。初回起動はブリッジのダウ"
-#~ "ンロードのため少し時間がかかることがあります。"
-
-#~ msgid ""
-#~ "Local sites usually use a self-signed certificate that AI tools reject. "
-#~ "Since this site runs on this same computer, you can use the plain "
-#~ "<code>http://</code> address instead — the connection never leaves your "
-#~ "machine. Avoid the <code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> workaround "
-#~ "you may see online: it disables certificate checks for everything that "
-#~ "tool connects to."
-#~ msgstr ""
-#~ "ローカルサイトは通常、AI ツールが拒否する自己署名証明書を使用しています。"
-#~ "このサイトは同じコンピューター上で動作しているため、代わりにプレーンな "
-#~ "<code>http://</code> アドレスを使用できます — 通信がマシンの外に出ることは"
-#~ "ありません。ネット上で見かける <code>NODE_TLS_REJECT_UNAUTHORIZED=0</"
-#~ "code> という回避策は避けてください。そのツールのすべての接続で証明書検証が"
-#~ "無効になります。"
-
-#~ msgid ""
-#~ "Working over SSH? Add <code>--no-browser</code> to the second line and "
-#~ "open the printed URL in a local browser."
-#~ msgstr ""
-#~ "SSH 経由で作業していますか？2 行目に <code>--no-browser</code> を追加し、"
-#~ "表示された URL をローカルのブラウザで開いてください。"
-
-#~ msgid ""
-#~ "Local https sites usually use a self-signed certificate that these tools "
-#~ "reject. Either trust the certificate in your tool, or set the WordPress "
-#~ "Site Address to the <code>http://</code> URL — the sign-in discovery "
-#~ "addresses are built from it."
-#~ msgstr ""
-#~ "ローカルの https サイトは通常、これらのツールが拒否する自己署名証明書を"
-#~ "使っています。ツール側で証明書を信頼するか、WordPress のサイトアドレスを "
-#~ "<code>http://</code> の URL に設定してください — サインイン用のディスカバ"
-#~ "リーアドレスはこの値から作られます。"
-
-#~ msgid ""
-#~ "Opens Cursor and asks you to add this site. Accept, then Cursor opens "
-#~ "your browser to sign in."
-#~ msgstr ""
-#~ "Cursor が開き、このサイトを追加するか尋ねられます。承諾すると、Cursor がブ"
-#~ "ラウザを開いてサインインします。"
-
-#~ msgid ""
-#~ "Opens VS Code and asks you to add this site. Confirm, trust the server "
-#~ "when asked, then VS Code opens your browser to sign in."
-#~ msgstr ""
-#~ "VS Code が開き、このサイトを追加するか尋ねられます。確認し、求められたら"
-#~ "サーバーを信頼すると、VS Code がブラウザを開いてサインインします。"
-
-#, php-format
-#~ msgid ""
-#~ "Add this to <code>%s</code> (create the file if it does not exist), then "
-#~ "restart the editor. It signs in on first use."
-#~ msgstr ""
-#~ "これを <code>%s</code> に追加し（ファイルがなければ作成）、エディターを再"
-#~ "起動します。初回使用時にサインインします。"
-
-#~ msgid "Prefer a command?"
-#~ msgstr "コマンドの方がよいですか？"
-
-#, php-format
-#~ msgid ""
-#~ "Add this to <code>%s</code> (create the file if it does not exist), then "
-#~ "restart the app. It signs in on first use."
-#~ msgstr ""
-#~ "これを <code>%s</code> に追加し（ファイルがなければ作成）、アプリを再起動"
-#~ "してください。初回使用時にサインインします。"
-
-#~ msgid ""
-#~ "A sign-in page opens on <strong>your site</strong>. Review what it is "
-#~ "asking for, pick the access level and click <strong>Approve</strong>. You "
-#~ "are back in your tool a moment later."
-#~ msgstr ""
-#~ "<strong>あなたのサイト</strong>でサインインページが開きます。要求される内"
-#~ "容を確認し、アクセスレベルを選んで <strong>承認</strong> をクリックしてく"
-#~ "ださい。すぐにツールに戻ります。"
-
-#, php-format
-#~ msgid ""
-#~ "%1$s identifies itself with a document published by %2$s, so it needs no "
-#~ "\"New connections\" switch — the sign-in page shows that identity."
-#~ msgstr ""
-#~ "%1$s は %2$s が公開するドキュメントで身元を示すため、「新しい接続」スイッ"
-#~ "チは不要です。サインインページにその身元が表示されます。"
-
-#, php-format
-#~ msgid ""
-#~ "Open a new Claude Code session and run <code>/mcp</code> — <code>%s</"
-#~ "code> should be listed as connected."
-#~ msgstr ""
-#~ "新しい Claude Code セッションを開いて <code>/mcp</code> を実行します — "
-#~ "<code>%s</code> が接続済みとして表示されるはずです。"
-
-#~ msgid "Then try a read-only prompt:"
-#~ msgstr "次に、読み取り専用のプロンプトを試してください:"
-
-#~ msgid "prompt"
-#~ msgstr "プロンプト"

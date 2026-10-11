@@ -3,6 +3,10 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.7.3 =
+* New: connect Perplexity, Grok and the Gemini app (beta) from the Connections tab: one click copies the link and opens the app; the live Connected confirmation names the app once it signs in.
+* New: n8n panel: the MCP Client Tool node's fields ready to copy, with an API key or OAuth2.
+
 = 1.7.2 =
 * New: Claude Code, Codex, Gemini CLI, Opencode, Cursor and VS Code now connect with a one-click sign-in - no API key to copy. Keys still work for scripts and CI.
 * UI updates: Add to Cursor and Install in VS Code buttons, one copy-and-run command per setup panel (config files are the fallback), a shorter Connections tab that confirms live when an app connects, "Desktop Connector" renamed to "Browser sign-in", and Select all / Deselect all for Custom access.

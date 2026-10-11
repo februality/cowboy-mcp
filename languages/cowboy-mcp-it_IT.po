@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-10 18:18-0700\n"
+"POT-Creation-Date: 2026-10-10 23:01-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Italian\n"
@@ -194,7 +194,7 @@ msgid "Create checkpoint now"
 msgstr "Crea checkpoint ora"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1290
+#: admin/class-mcp-admin-connections.php:1468
 msgid "Created"
 msgstr "Creazione"
 
@@ -211,7 +211,7 @@ msgid "Size"
 msgstr "Dimensione"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1292
+#: admin/class-mcp-admin-connections.php:1470
 msgid "Actions"
 msgstr "Azioni"
 
@@ -303,25 +303,25 @@ msgid "Turn off"
 msgstr "Disattiva"
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:222
+#: admin/class-mcp-admin-connections.php:231
 #, php-format
 msgid "New connections are on (%s left)."
 msgstr "Le nuove connessioni sono attive (%s rimanenti)."
 
-#: admin/class-mcp-admin-connections.php:230
+#: admin/class-mcp-admin-connections.php:239
 msgid "Turn on new connections first:"
 msgstr "Attivare prima le nuove connessioni:"
 
-#: admin/class-mcp-admin-connections.php:231
-#: admin/class-mcp-admin-connections.php:1082
+#: admin/class-mcp-admin-connections.php:240
+#: admin/class-mcp-admin-connections.php:1254
 msgid "Enable for 30 minutes"
 msgstr "Attiva per 30 minuti"
 
-#: admin/class-mcp-admin-connections.php:232
+#: admin/class-mcp-admin-connections.php:241
 msgid "It switches itself off after 30 minutes."
 msgstr "Si disattiva da sola dopo 30 minuti."
 
-#: admin/class-mcp-admin-connections.php:249
+#: admin/class-mcp-admin-connections.php:258
 msgid ""
 "This site does not appear to be on a public HTTPS address, so ChatGPT cannot "
 "reach it from OpenAI's cloud. Use a terminal tool from the sidebar instead, "
@@ -332,7 +332,16 @@ msgstr ""
 "da terminale dalla barra laterale, oppure impostare l’indirizzo del sito "
 "WordPress su un URL di tunnel o di staging."
 
-#: admin/class-mcp-admin-connections.php:250
+#. translators: %s: AI app name, e.g. Perplexity
+#: admin/class-mcp-admin-connections.php:262
+#, php-format
+msgid ""
+"This site does not appear to be on a public HTTPS address, so %s cannot "
+"reach it from the vendor's cloud. Use a terminal tool from the sidebar "
+"instead, or set the WordPress Site Address to a tunnel or staging URL."
+msgstr "Questo sito non sembra avere un indirizzo HTTPS pubblico, quindi %s non può raggiungerlo dal cloud del fornitore. Usa invece uno strumento da terminale dalla barra laterale, oppure imposta l’indirizzo del sito WordPress su un tunnel o un URL di staging."
+
+#: admin/class-mcp-admin-connections.php:264
 msgid ""
 "This site does not appear to be on a public HTTPS address, so the Claude "
 "apps cannot reach it from Anthropic's cloud. Use a terminal tool or Claude "
@@ -344,11 +353,11 @@ msgstr ""
 "strumento da terminale o Claude Desktop dalla barra laterale, oppure "
 "impostare l’indirizzo del sito WordPress su un URL di tunnel o di staging."
 
-#: admin/class-mcp-admin-connections.php:260
+#: admin/class-mcp-admin-connections.php:275
 msgid "Already added, or on a Team or Enterprise plan?"
 msgstr "Già aggiunto, o con un piano Team o Enterprise?"
 
-#: admin/class-mcp-admin-connections.php:263
+#: admin/class-mcp-admin-connections.php:278
 msgid ""
 "Already added? Claude reports that a connector with this URL already exists. "
 "Find it under <strong>Customize → Connectors</strong> and click "
@@ -358,7 +367,7 @@ msgstr ""
 "si trova in <strong>Customize → Connectors</strong>: fare clic su "
 "<strong>Connect</strong>."
 
-#: admin/class-mcp-admin-connections.php:264
+#: admin/class-mcp-admin-connections.php:279
 msgid ""
 "Custom connectors work on every Claude plan (Free is limited to one). On "
 "Team and Enterprise, an organization owner adds the connector first under "
@@ -370,22 +379,22 @@ msgstr ""
 "aggiunge prima il connettore in <strong>Organization settings → Connectors</"
 "strong>; i membri fanno poi clic su <strong>Connect</strong>."
 
-#: admin/class-mcp-admin-connections.php:266
+#: admin/class-mcp-admin-connections.php:281
 msgid "Organization owner on Team or Enterprise?"
 msgstr "Proprietario di un’organizzazione Team o Enterprise?"
 
-#: admin/class-mcp-admin-connections.php:267
+#: admin/class-mcp-admin-connections.php:282
 msgid "Add it for your organization"
 msgstr "Aggiungilo per la tua organizzazione"
 
-#: admin/class-mcp-admin-connections.php:282
+#: admin/class-mcp-admin-connections.php:297
 msgid ""
 "Site actually on a public HTTPS address? Use the cloud connector instead"
 msgstr ""
 "Il sito è in realtà su un indirizzo HTTPS pubblico? Usa invece il connettore "
 "cloud"
 
-#: admin/class-mcp-admin-connections.php:312
+#: admin/class-mcp-admin-connections.php:327
 msgid ""
 "This opens a secure sign-in so ChatGPT can connect without a terminal. No "
 "access is granted until you approve it in your browser."
@@ -394,7 +403,7 @@ msgstr ""
 "terminale. Nessun accesso viene concesso finché non viene approvato nel "
 "browser."
 
-#: admin/class-mcp-admin-connections.php:313
+#: admin/class-mcp-admin-connections.php:328
 msgid ""
 "This opens a secure sign-in so the Claude apps can connect without a "
 "terminal. No access is granted until you approve it in your browser."
@@ -403,19 +412,19 @@ msgstr ""
 "senza terminale. Nessun accesso viene concesso finché non viene approvato "
 "nel browser."
 
-#: admin/class-mcp-admin-connections.php:315
+#: admin/class-mcp-admin-connections.php:330
 msgid "Add it in ChatGPT"
 msgstr "Aggiungerlo in ChatGPT"
 
-#: admin/class-mcp-admin-connections.php:316
+#: admin/class-mcp-admin-connections.php:331
 msgid "Add it in the Claude app"
 msgstr "Aggiungerlo nell'app Claude"
 
-#: admin/class-mcp-admin-connections.php:317
+#: admin/class-mcp-admin-connections.php:332
 msgid "Add it on claude.ai"
 msgstr "Aggiungerlo su claude.ai"
 
-#: admin/class-mcp-admin-connections.php:320
+#: admin/class-mcp-admin-connections.php:335
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Click "
 "<strong>Approve</strong>, then pick your site under <strong>+ → Developer "
@@ -425,7 +434,7 @@ msgstr ""
 "su <strong>Approva</strong>, poi scegliere il sito in <strong>+ → Modalità "
 "sviluppatore</strong> in una chat."
 
-#: admin/class-mcp-admin-connections.php:321
+#: admin/class-mcp-admin-connections.php:336
 msgid ""
 "Claude opens a sign-in page on <strong>your site</strong>. Click "
 "<strong>Approve</strong>, then switch the connector on under <strong>+ → "
@@ -435,21 +444,23 @@ msgstr ""
 "su <strong>Approva</strong>, poi attivare il connettore in <strong>+ → "
 "Connettori</strong> in una chat."
 
-#: admin/class-mcp-admin-connections.php:335
-#: admin/class-mcp-admin-connections.php:339
-#: admin/class-mcp-admin-connections.php:432
+#: admin/class-mcp-admin-connections.php:350
+#: admin/class-mcp-admin-connections.php:354
+#: admin/class-mcp-admin-connections.php:493
+#: admin/class-mcp-admin-connections.php:500
+#: admin/class-mcp-admin-connections.php:572
 msgid "Turn on browser sign-in"
 msgstr "Attiva l’accesso dal browser"
 
-#: admin/class-mcp-admin-connections.php:348
+#: admin/class-mcp-admin-connections.php:363
 msgid "Add it to Claude"
 msgstr "Aggiungi a Claude"
 
-#: admin/class-mcp-admin-connections.php:349
+#: admin/class-mcp-admin-connections.php:364
 msgid "Add to Claude"
 msgstr "Aggiungi a Claude"
 
-#: admin/class-mcp-admin-connections.php:353
+#: admin/class-mcp-admin-connections.php:368
 msgid ""
 "Opens claude.ai with this site filled in. Check the address, then click "
 "<strong>Continue</strong> and <strong>Add</strong>. The connector shows up "
@@ -459,7 +470,7 @@ msgstr ""
 "fare clic su <strong>Continua</strong> e <strong>Aggiungi</strong>. Il "
 "connettore compare anche nell’app Claude."
 
-#: admin/class-mcp-admin-connections.php:354
+#: admin/class-mcp-admin-connections.php:369
 msgid ""
 "Opens claude.ai with this site filled in. Check the address, then click "
 "<strong>Continue</strong> and <strong>Add</strong>."
@@ -467,63 +478,71 @@ msgstr ""
 "Apre claude.ai con questo sito già compilato. Controllare l’indirizzo, poi "
 "fare clic su <strong>Continua</strong> e <strong>Aggiungi</strong>."
 
-#: admin/class-mcp-admin-connections.php:359
+#: admin/class-mcp-admin-connections.php:374
 msgid "Add it by hand instead"
 msgstr "Aggiungerlo a mano"
 
-#: admin/class-mcp-admin-connections.php:362
-#: admin/class-mcp-admin-connections.php:389
-#: admin/class-mcp-admin-connections.php:395
+#: admin/class-mcp-admin-connections.php:377
+#: admin/class-mcp-admin-connections.php:404
+#: admin/class-mcp-admin-connections.php:410
+#: admin/class-mcp-admin-connections.php:529
+#: admin/class-mcp-admin-connections.php:536
 msgid "Connection link"
 msgstr "Link di connessione"
 
-#: admin/class-mcp-admin-connections.php:362
-#: admin/class-mcp-admin-connections.php:389
-#: admin/class-mcp-admin-connections.php:395
+#: admin/class-mcp-admin-connections.php:377
+#: admin/class-mcp-admin-connections.php:404
+#: admin/class-mcp-admin-connections.php:410
+#: admin/class-mcp-admin-connections.php:529
+#: admin/class-mcp-admin-connections.php:536
 msgid "Copy connector URL"
 msgstr "Copia URL del connettore"
 
-#: admin/class-mcp-admin-connections.php:368
-#: admin/class-mcp-admin-connections.php:412
-#: admin/class-mcp-admin-connections.php:720
+#: admin/class-mcp-admin-connections.php:383
+#: admin/class-mcp-admin-connections.php:427
+#: admin/class-mcp-admin-connections.php:548
+#: admin/class-mcp-admin-connections.php:892
 msgid "Approve access"
 msgstr "Approvare l'accesso"
 
-#: admin/class-mcp-admin-connections.php:377
-#: admin/class-mcp-admin-connections.php:381
+#: admin/class-mcp-admin-connections.php:392
+#: admin/class-mcp-admin-connections.php:396
 msgid "Open ChatGPT"
 msgstr "Apri ChatGPT"
 
-#: admin/class-mcp-admin-connections.php:383
-#: admin/class-mcp-admin-connections.php:473
+#: admin/class-mcp-admin-connections.php:398
+#: admin/class-mcp-admin-connections.php:517
+#: admin/class-mcp-admin-connections.php:613
 msgid "(opens in a new tab)"
 msgstr "(si apre in una nuova scheda)"
 
-#: admin/class-mcp-admin-connections.php:385
+#: admin/class-mcp-admin-connections.php:400
 msgid "Connection link copied — paste it into ChatGPT as the MCP server URL."
 msgstr ""
 "Link di connessione copiato — incollalo in ChatGPT come URL del server MCP."
 
-#: admin/class-mcp-admin-connections.php:386
+#: admin/class-mcp-admin-connections.php:401
 msgid "Copies your connection link and opens ChatGPT in a new tab."
 msgstr "Copia il link di connessione e apre ChatGPT in una nuova scheda."
 
-#: admin/class-mcp-admin-connections.php:388
+#: admin/class-mcp-admin-connections.php:403
+#: admin/class-mcp-admin-connections.php:528
 msgid "Copy the link yourself"
 msgstr "Copia il link manualmente"
 
-#: admin/class-mcp-admin-connections.php:393
+#: admin/class-mcp-admin-connections.php:408
+#: admin/class-mcp-admin-connections.php:534
 msgid "Copy your connection link"
 msgstr "Copiare il link di connessione"
 
-#: admin/class-mcp-admin-connections.php:402
+#: admin/class-mcp-admin-connections.php:417
 msgid ""
 "Go to <code>chatgpt.com</code> and sign in (MCP apps work on the web only)."
 msgstr ""
 "Andare su <code>chatgpt.com</code> e accedere (le app MCP funzionano solo "
 "sul web)."
 
-#: admin/class-mcp-admin-connections.php:403
+#: admin/class-mcp-admin-connections.php:418
 msgid ""
 "Under <code>Settings → Security and login</code>, turn on <strong>Developer "
 "mode</strong> (once)."
@@ -531,7 +550,7 @@ msgstr ""
 "In <code>Impostazioni → Sicurezza e accesso</code>, attivare la "
 "<strong>Modalità sviluppatore</strong> (una sola volta)."
 
-#: admin/class-mcp-admin-connections.php:404
+#: admin/class-mcp-admin-connections.php:419
 msgid ""
 "Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add "
 "custom MCP server</strong>."
@@ -539,7 +558,7 @@ msgstr ""
 "Vai a <code>Plugins</code>, fai clic su <strong>+</strong> e scegli "
 "<strong>Aggiungi server MCP personalizzato</strong>."
 
-#: admin/class-mcp-admin-connections.php:405
+#: admin/class-mcp-admin-connections.php:420
 msgid ""
 "Name it, paste the link as the <strong>MCP server URL</strong>, set "
 "Authentication to <strong>OAuth</strong> and create it."
@@ -547,11 +566,11 @@ msgstr ""
 "Assegnare un nome, incollare il link come <strong>URL del server MCP</"
 "strong>, impostare l’autenticazione su <strong>OAuth</strong> e crearlo."
 
-#: admin/class-mcp-admin-connections.php:416
+#: admin/class-mcp-admin-connections.php:431
 msgid "Which ChatGPT plans work?"
 msgstr "Quali piani ChatGPT funzionano?"
 
-#: admin/class-mcp-admin-connections.php:417
+#: admin/class-mcp-admin-connections.php:432
 msgid ""
 "Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
 "plan, on the web. On Business and Enterprise workspaces an admin has to "
@@ -561,11 +580,130 @@ msgstr ""
 "strong>, sul web. Negli spazi di lavoro Business ed Enterprise un "
 "amministratore deve prima consentire Developer mode."
 
-#: admin/class-mcp-admin-connections.php:431
+#: admin/class-mcp-admin-connections.php:450
+msgid "Go to <code>perplexity.ai</code> in your browser and sign in."
+msgstr "Vai su <code>perplexity.ai</code> nel browser e accedi."
+
+#: admin/class-mcp-admin-connections.php:451
+msgid ""
+"Open <strong>Account settings → Connectors</strong> and click <strong>+ "
+"Custom connector</strong>."
+msgstr "Apri <strong>Account settings → Connectors</strong> e fai clic su <strong>+ Custom connector</strong>."
+
+#: admin/class-mcp-admin-connections.php:452
+msgid ""
+"Choose <strong>Remote</strong>, give it a name, paste the link from step 1 "
+"as the server URL, set Authentication to <strong>OAuth</strong> and the "
+"transport to <strong>Streamable HTTP</strong>, then save."
+msgstr "Scegli <strong>Remote</strong>, assegna un nome, incolla il link del passaggio 1 come URL del server, imposta Authentication su <strong>OAuth</strong> e il trasporto su <strong>Streamable HTTP</strong>, poi salva."
+
+#: admin/class-mcp-admin-connections.php:454
+msgid "Requires a Perplexity <strong>Pro, Max or Enterprise</strong> plan."
+msgstr "Richiede un piano Perplexity <strong>Pro, Max o Enterprise</strong>."
+
+#: admin/class-mcp-admin-connections.php:458
+msgid "Go to <code>grok.com/connectors</code> and sign in."
+msgstr "Vai su <code>grok.com/connectors</code> e accedi."
+
+#: admin/class-mcp-admin-connections.php:459
+msgid ""
+"Click <strong>New Connector</strong>, choose <strong>Custom</strong> and "
+"paste the link from step 1 as the server URL (Streamable HTTP)."
+msgstr "Fai clic su <strong>New Connector</strong>, scegli <strong>Custom</strong> e incolla il link del passaggio 1 come URL del server (Streamable HTTP)."
+
+#: admin/class-mcp-admin-connections.php:460
+msgid "Save — Grok starts the sign-in right away."
+msgstr "Salva: Grok avvia subito l’accesso."
+
+#: admin/class-mcp-admin-connections.php:462
+msgid ""
+"Custom connectors are available on Grok's paid plans. On Business and "
+"Enterprise workspaces an admin provisions the connector first."
+msgstr "I connettori personalizzati sono disponibili nei piani a pagamento di Grok. Negli spazi di lavoro Business ed Enterprise un amministratore deve prima predisporre il connettore."
+
+#: admin/class-mcp-admin-connections.php:466
+msgid ""
+"Go to <code>gemini.google.com</code> and sign in with a <strong>personal</"
+"strong> Google account."
+msgstr "Vai su <code>gemini.google.com</code> e accedi con un account Google <strong>personale</strong>."
+
+#: admin/class-mcp-admin-connections.php:467
+msgid ""
+"Open <strong>Settings → Connected apps → Custom apps</strong> and click "
+"<strong>Add a custom app</strong>."
+msgstr "Apri <strong>Settings → Connected apps → Custom apps</strong> e fai clic su <strong>Add a custom app</strong>."
+
+#: admin/class-mcp-admin-connections.php:468
+msgid ""
+"Paste the link from step 1 as the MCP server URL and continue — Gemini opens "
+"the sign-in page."
+msgstr "Incolla il link del passaggio 1 come URL del server MCP e continua: Gemini apre la pagina di accesso."
+
+#: admin/class-mcp-admin-connections.php:470
+msgid ""
+"Free. Custom apps are a Google beta: United States only, personal accounts, "
+"18+, English, with Gemini Apps Activity turned on."
+msgstr "Gratis. Le app personalizzate sono una beta di Google: solo Stati Uniti, account personali, 18+, inglese, con Attività nelle app di Gemini attiva."
+
+#: admin/class-mcp-admin-connections.php:471
+msgid ""
+"Google is still rolling this out; if the sign-in page opens but Gemini "
+"reports an error afterwards, that is on Google's side — try again later or "
+"use another app."
+msgstr "Google sta ancora distribuendo la funzione; se la pagina di accesso si apre ma poi Gemini segnala un errore, dipende da Google: riprova più tardi o usa un’altra app."
+
+#. translators: %s: AI app name, e.g. Perplexity
+#: admin/class-mcp-admin-connections.php:496
+#, php-format
+msgid ""
+"This opens a secure sign-in so %s can connect without a terminal. No access "
+"is granted until you approve it in your browser."
+msgstr "Questo apre un accesso sicuro così che %s possa connettersi senza terminale. Nessun accesso viene concesso finché non lo approvi nel browser."
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:509
+#: admin/class-mcp-admin-connections.php:515
+#, php-format
+msgid "Open %s"
+msgstr "Apri %s"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:521
+#, php-format
+msgid "Connection link copied — paste it into %s as the server URL."
+msgstr "Link di connessione copiato: incollalo in %s come URL del server."
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:525
+#, php-format
+msgid "Copies your connection link and opens %s in a new tab."
+msgstr "Copia il tuo link di connessione e apre %s in una nuova scheda."
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:541
+#, php-format
+msgid "Add it in %s"
+msgstr "Aggiungilo in %s"
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:552
+#, php-format
+msgid ""
+"%s opens a sign-in page on <strong>your site</strong>. Review what it is "
+"asking for and click <strong>Approve</strong>."
+msgstr "%s apre una pagina di accesso sul <strong>tuo sito</strong>. Controlla cosa richiede e fai clic su <strong>Approva</strong>."
+
+#. translators: %s: AI app name
+#: admin/class-mcp-admin-connections.php:558
+#, php-format
+msgid "Which %s plans work?"
+msgstr "Quali piani %s funzionano?"
+
+#: admin/class-mcp-admin-connections.php:571
 msgid "Turn on sign-in first:"
 msgstr "Attiva prima l’accesso:"
 
-#: admin/class-mcp-admin-connections.php:444
+#: admin/class-mcp-admin-connections.php:584
 msgid ""
 "In the <strong>Claude</strong> desktop app, go to <code>Customize → "
 "Connectors</code>."
@@ -573,19 +711,19 @@ msgstr ""
 "Nell’app desktop <strong>Claude</strong>, andare in <code>Personalizza → "
 "Connettori</code>."
 
-#: admin/class-mcp-admin-connections.php:445
+#: admin/class-mcp-admin-connections.php:585
 msgid "On <code>claude.ai</code>, go to <code>Customize → Connectors</code>."
 msgstr ""
 "Su <code>claude.ai</code>, andare in <code>Personalizza → Connettori</code>."
 
-#: admin/class-mcp-admin-connections.php:449
+#: admin/class-mcp-admin-connections.php:589
 msgid ""
 "Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
 msgstr ""
 "Fare clic su <strong>+ Add</strong>, quindi su <strong>Add custom connector</"
 "strong>."
 
-#: admin/class-mcp-admin-connections.php:453
+#: admin/class-mcp-admin-connections.php:593
 msgid ""
 "Name it, paste the link above, click <strong>Continue</strong> and then "
 "<strong>Add</strong>. If Claude asks which OAuth client to use, choose "
@@ -596,7 +734,7 @@ msgstr ""
 "chiede quale client OAuth usare, scegliere <strong>Registra automaticamente</"
 "strong>."
 
-#: admin/class-mcp-admin-connections.php:454
+#: admin/class-mcp-admin-connections.php:594
 msgid ""
 "Name it, paste the link from step 1, click <strong>Continue</strong> and "
 "then <strong>Add</strong>. If Claude asks which OAuth client to use, choose "
@@ -607,7 +745,7 @@ msgstr ""
 "chiede quale client OAuth usare, scegliere <strong>Registra automaticamente</"
 "strong>."
 
-#: admin/class-mcp-admin-connections.php:511
+#: admin/class-mcp-admin-connections.php:651
 msgid ""
 "This site runs on your computer, so the cloud connector cannot reach it. "
 "Claude Desktop connects through a <strong>local bridge</strong> instead: the "
@@ -621,11 +759,11 @@ msgstr ""
 "con <code>npx</code> (richiede Node.js). L’accesso avviene nel browser e "
 "nulla viene esposto su internet."
 
-#: admin/class-mcp-admin-connections.php:513
+#: admin/class-mcp-admin-connections.php:653
 msgid "Add the bridge to Claude Desktop"
 msgstr "Aggiungi il ponte a Claude Desktop"
 
-#: admin/class-mcp-admin-connections.php:514
+#: admin/class-mcp-admin-connections.php:654
 msgid ""
 "Run this in Terminal (macOS) or PowerShell (Windows), then fully quit and "
 "reopen the Claude app."
@@ -633,34 +771,34 @@ msgstr ""
 "Eseguire questo nel Terminale (macOS) o in PowerShell (Windows), poi "
 "chiudere completamente l’app Claude e riaprirla."
 
-#: admin/class-mcp-admin-connections.php:515
-#: admin/class-mcp-admin-connections.php:526
-#: admin/class-mcp-admin-connections.php:539
-#: admin/class-mcp-admin-connections.php:597
-#: admin/class-mcp-admin-connections.php:636
-#: admin/class-mcp-admin-connections.php:677
-#: admin/class-mcp-admin-connections.php:708
-#: admin/class-mcp-admin-connections.php:748
-#: admin/class-mcp-admin-connections.php:801
+#: admin/class-mcp-admin-connections.php:655
+#: admin/class-mcp-admin-connections.php:666
+#: admin/class-mcp-admin-connections.php:679
+#: admin/class-mcp-admin-connections.php:737
+#: admin/class-mcp-admin-connections.php:776
+#: admin/class-mcp-admin-connections.php:817
+#: admin/class-mcp-admin-connections.php:848
+#: admin/class-mcp-admin-connections.php:920
+#: admin/class-mcp-admin-connections.php:973
 msgid "Copy setup command"
 msgstr "Copia comando di configurazione"
 
-#: admin/class-mcp-admin-connections.php:515
-#: admin/class-mcp-admin-connections.php:518
-#: admin/class-mcp-admin-connections.php:539
-#: admin/class-mcp-admin-connections.php:543
-#: admin/class-mcp-admin-connections.php:636
-#: admin/class-mcp-admin-connections.php:677
-#: admin/class-mcp-admin-connections.php:815
+#: admin/class-mcp-admin-connections.php:655
+#: admin/class-mcp-admin-connections.php:658
+#: admin/class-mcp-admin-connections.php:679
+#: admin/class-mcp-admin-connections.php:683
+#: admin/class-mcp-admin-connections.php:776
+#: admin/class-mcp-admin-connections.php:817
+#: admin/class-mcp-admin-connections.php:987
 msgid "terminal"
 msgstr "terminale"
 
-#: admin/class-mcp-admin-connections.php:523
-#: admin/class-mcp-admin-connections.php:705
+#: admin/class-mcp-admin-connections.php:663
+#: admin/class-mcp-admin-connections.php:845
 msgid "Edit the config file instead"
 msgstr "Modificare invece il file di configurazione"
 
-#: admin/class-mcp-admin-connections.php:525
+#: admin/class-mcp-admin-connections.php:665
 msgid ""
 "Add this to <code>claude_desktop_config.json</code>, then fully quit and "
 "reopen the Claude app."
@@ -668,7 +806,7 @@ msgstr ""
 "Aggiungere questo a <code>claude_desktop_config.json</code>, poi chiudere "
 "completamente l’app Claude e riaprirla."
 
-#: admin/class-mcp-admin-connections.php:528
+#: admin/class-mcp-admin-connections.php:668
 msgid ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
@@ -676,27 +814,27 @@ msgstr ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:529
+#: admin/class-mcp-admin-connections.php:669
 msgid "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 msgstr "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:534
-#: admin/class-mcp-admin-connections.php:743
+#: admin/class-mcp-admin-connections.php:674
+#: admin/class-mcp-admin-connections.php:915
 msgid "Use an API key instead"
 msgstr "Usare invece una chiave API"
 
-#: admin/class-mcp-admin-connections.php:536
-#: admin/class-mcp-admin-connections.php:745
+#: admin/class-mcp-admin-connections.php:676
+#: admin/class-mcp-admin-connections.php:917
 msgid "For headless setups, CI, or a tool that cannot open a browser."
 msgstr ""
 "Per configurazioni headless, CI o uno strumento che non può aprire un "
 "browser."
 
-#: admin/class-mcp-admin-connections.php:538
+#: admin/class-mcp-admin-connections.php:678
 msgid "Then run this instead, with the key in a header:"
 msgstr "Poi esegui invece questo, con la chiave in un header:"
 
-#: admin/class-mcp-admin-connections.php:540
+#: admin/class-mcp-admin-connections.php:680
 msgid ""
 "The key is stored in plain text in that file, so prefer a <strong>read-only</"
 "strong> key unless this connection needs to make changes, and revoke it here "
@@ -706,13 +844,14 @@ msgstr ""
 "<strong>sola lettura</strong> a meno che questa connessione debba apportare "
 "modifiche, e revocarla qui quando non serve più."
 
-#: admin/class-mcp-admin-connections.php:551
-#: admin/class-mcp-admin-connections.php:936
+#: admin/class-mcp-admin-connections.php:691
+#: admin/class-mcp-admin-connections.php:880
+#: admin/class-mcp-admin-connections.php:1108
 msgid "Check it worked"
 msgstr "Verificare il funzionamento"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:554
+#: admin/class-mcp-admin-connections.php:694
 #, php-format
 msgid ""
 "Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> "
@@ -722,11 +861,11 @@ msgstr ""
 "strumenti: <code>%s</code> dovrebbe comparire nell’elenco. Il primo avvio "
 "richiede qualche istante per scaricare il ponte."
 
-#: admin/class-mcp-admin-connections.php:594
+#: admin/class-mcp-admin-connections.php:734
 msgid "Getting a certificate error?"
 msgstr "Ricevi un errore di certificato?"
 
-#: admin/class-mcp-admin-connections.php:596
+#: admin/class-mcp-admin-connections.php:736
 msgid ""
 "Local sites usually use a self-signed certificate that AI tools reject. "
 "Since this site runs on this computer, use the plain <code>http://</code> "
@@ -741,20 +880,20 @@ msgstr ""
 "disattiva il controllo dei certificati per tutto ciò a cui quello strumento "
 "si collega."
 
-#: admin/class-mcp-admin-connections.php:626
+#: admin/class-mcp-admin-connections.php:766
 msgid ""
 "Run these in your terminal. The second line opens your browser to sign in."
 msgstr ""
 "Esegui questi comandi nel terminale. La seconda riga apre il browser per "
 "l’accesso."
 
-#: admin/class-mcp-admin-connections.php:627
+#: admin/class-mcp-admin-connections.php:767
 msgid "Run this in your terminal. Codex opens your browser to sign in."
 msgstr ""
 "Esegui questo comando nel terminale. Codex apre il browser per l’accesso."
 
 #. translators: %s: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:629
+#: admin/class-mcp-admin-connections.php:769
 #, php-format
 msgid ""
 "Run this in your terminal, then start <code>gemini</code>: it opens your "
@@ -763,7 +902,7 @@ msgstr ""
 "Esegui questo nel terminale, poi avvia <code>gemini</code>: apre il browser "
 "per accedere (se non lo fa, esegui <code>/mcp auth %s</code>)."
 
-#: admin/class-mcp-admin-connections.php:630
+#: admin/class-mcp-admin-connections.php:770
 msgid ""
 "Run this in your terminal. Opencode opens your browser to sign in the first "
 "time it connects."
@@ -771,11 +910,11 @@ msgstr ""
 "Esegui questo nel terminale. Opencode apre il browser per accedere alla "
 "prima connessione."
 
-#: admin/class-mcp-admin-connections.php:634
+#: admin/class-mcp-admin-connections.php:774
 msgid "Add the server"
 msgstr "Aggiungi il server"
 
-#: admin/class-mcp-admin-connections.php:638
+#: admin/class-mcp-admin-connections.php:778
 msgid ""
 "Over SSH? Add <code>--no-browser</code> to the second line and open the "
 "printed URL in a local browser."
@@ -783,7 +922,7 @@ msgstr ""
 "Via SSH? Aggiungere <code>--no-browser</code> alla seconda riga e aprire "
 "l’URL stampato in un browser locale."
 
-#: admin/class-mcp-admin-connections.php:641
+#: admin/class-mcp-admin-connections.php:781
 msgid ""
 "Local https sites usually use a self-signed certificate that these tools "
 "reject: trust it in your tool, or set the WordPress Site Address to the "
@@ -793,30 +932,30 @@ msgstr ""
 "strumenti rifiutano: fidarsi del certificato nello strumento, oppure "
 "impostare l’indirizzo del sito WordPress sull’URL <code>http://</code>."
 
-#: admin/class-mcp-admin-connections.php:660
+#: admin/class-mcp-admin-connections.php:800
 msgid "Add to Cursor"
 msgstr "Aggiungi a Cursor"
 
-#: admin/class-mcp-admin-connections.php:660
+#: admin/class-mcp-admin-connections.php:800
 msgid "Install in VS Code"
 msgstr "Installa in VS Code"
 
-#: admin/class-mcp-admin-connections.php:662
+#: admin/class-mcp-admin-connections.php:802
 msgid "Accept in Cursor. It opens your browser to sign in."
 msgstr "Accettare in Cursor. Apre il browser per l’accesso."
 
-#: admin/class-mcp-admin-connections.php:663
+#: admin/class-mcp-admin-connections.php:803
 msgid ""
 "Confirm in VS Code and trust the server. It opens your browser to sign in."
 msgstr ""
 "Confermare in VS Code e considerare attendibile il server. Apre il browser "
 "per l’accesso."
 
-#: admin/class-mcp-admin-connections.php:674
+#: admin/class-mcp-admin-connections.php:814
 msgid "Use a command instead"
 msgstr "Usare invece un comando"
 
-#: admin/class-mcp-admin-connections.php:676
+#: admin/class-mcp-admin-connections.php:816
 msgid ""
 "Run this in your terminal (the <code>code</code> command ships with VS "
 "Code), then open Copilot Chat. It signs in on first use."
@@ -825,7 +964,7 @@ msgstr ""
 "Code), poi apri Copilot Chat. Accede al primo utilizzo."
 
 #. translators: %s: path of the client's config file.
-#: admin/class-mcp-admin-connections.php:683
+#: admin/class-mcp-admin-connections.php:823
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart Cursor. It signs in on first use."
@@ -834,7 +973,7 @@ msgstr ""
 "al primo utilizzo."
 
 #. translators: %s: config file path
-#: admin/class-mcp-admin-connections.php:701
+#: admin/class-mcp-admin-connections.php:841
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart the app. It signs in on first use."
@@ -842,7 +981,74 @@ msgstr ""
 "Aggiungere questo a <code>%s</code>, poi riavviare l’app. L’accesso avviene "
 "al primo utilizzo."
 
-#: admin/class-mcp-admin-connections.php:721
+#: admin/class-mcp-admin-connections.php:859
+msgid ""
+"n8n cloud connects from n8n's servers and cannot reach a local site; a self-"
+"hosted n8n on this machine works."
+msgstr "n8n cloud si connette dai server di n8n e non può raggiungere un sito locale; un n8n self-hosted su questo computer funziona."
+
+#: admin/class-mcp-admin-connections.php:861
+msgid "Add an MCP Client Tool node"
+msgstr "Aggiungi un nodo MCP Client Tool"
+
+#: admin/class-mcp-admin-connections.php:862
+msgid ""
+"In your workflow, add the <strong>MCP Client Tool</strong> node to your "
+"agent and fill in:"
+msgstr "Nel tuo workflow aggiungi il nodo <strong>MCP Client Tool</strong> al tuo agente e compila:"
+
+#: admin/class-mcp-admin-connections.php:864
+#: admin/class-mcp-admin-connections.php:872
+#: admin/class-mcp-admin-connections.php:1398
+msgid "Copy endpoint URL"
+msgstr "Copia URL dell'endpoint"
+
+#: admin/class-mcp-admin-connections.php:864
+#: admin/class-mcp-admin-connections.php:872
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: admin/class-mcp-admin-connections.php:865
+msgid "Server Transport"
+msgstr "Server Transport"
+
+#: admin/class-mcp-admin-connections.php:866
+msgid ""
+"<strong>Bearer Auth</strong> — create a Bearer Auth credential and paste the "
+"API key below."
+msgstr "<strong>Bearer Auth</strong>: crea una credenziale Bearer Auth e incolla qui sotto la chiave API."
+
+#: admin/class-mcp-admin-connections.php:866
+msgid "Authentication"
+msgstr "Authentication"
+
+#: admin/class-mcp-admin-connections.php:869
+msgid "Prefer OAuth2?"
+msgstr "Preferisci OAuth2?"
+
+#: admin/class-mcp-admin-connections.php:871
+msgid ""
+"Set Authentication to <strong>OAuth2</strong> and create a new OAuth2 "
+"credential: n8n registers itself with this site and opens the sign-in when "
+"you connect. Click Copy on the endpoint above first — it turns on new "
+"connections for 30 minutes."
+msgstr "Imposta Authentication su <strong>OAuth2</strong> e crea una nuova credenziale OAuth2: n8n si registra su questo sito e apre l’accesso quando ti connetti. Prima fai clic su Copia accanto all’endpoint qui sopra: attiva le nuove connessioni per 30 minuti."
+
+#. translators: %s: URL of the Settings tab
+#: admin/class-mcp-admin-connections.php:875
+#, php-format
+msgid ""
+"Self-hosted n8n: add your n8n host under <a href=\"%s\">Settings → "
+"Additional allowed hosts</a> first. n8n cloud is already allowed."
+msgstr "n8n self-hosted: aggiungi prima il tuo host n8n in <a href=\"%s\">Impostazioni → Host consentiti aggiuntivi</a>. n8n cloud è già consentito."
+
+#: admin/class-mcp-admin-connections.php:881
+msgid ""
+"Execute the node once — its Tools output lists <code>cowboy_discover</code> "
+"and <code>cowboy_run</code>."
+msgstr "Esegui il nodo una volta: il suo output Tools elenca <code>cowboy_discover</code> e <code>cowboy_run</code>."
+
+#: admin/class-mcp-admin-connections.php:893
 msgid ""
 "A sign-in page opens on <strong>your site</strong>. Pick the access level "
 "and click <strong>Approve</strong>."
@@ -850,11 +1056,11 @@ msgstr ""
 "Si apre una pagina di accesso sul <strong>tuo sito</strong>. Scegliere il "
 "livello di accesso e fare clic su <strong>Approva</strong>."
 
-#: admin/class-mcp-admin-connections.php:747
+#: admin/class-mcp-admin-connections.php:919
 msgid "Then add the server with the key in a header:"
 msgstr "Poi aggiungi il server con la chiave in un header:"
 
-#: admin/class-mcp-admin-connections.php:750
+#: admin/class-mcp-admin-connections.php:922
 msgid ""
 "Codex reads the key each time it starts, so also add the <code>export</code> "
 "line to your shell profile (e.g. <code>~/.zshrc</code>)."
@@ -862,53 +1068,53 @@ msgstr ""
 "Codex legge la chiave a ogni avvio, quindi aggiungi la riga <code>export</"
 "code> anche al profilo della shell (ad es. <code>~/.zshrc</code>)."
 
-#: admin/class-mcp-admin-connections.php:764
+#: admin/class-mcp-admin-connections.php:936
 msgid "Create an API key"
 msgstr "Creare una chiave API"
 
-#: admin/class-mcp-admin-connections.php:767
+#: admin/class-mcp-admin-connections.php:939
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr ""
 "<strong>Copiare subito la chiave</strong> — per motivi di sicurezza non "
 "verrà più mostrata."
 
-#: admin/class-mcp-admin-connections.php:768
-#: admin/class-mcp-admin-connections.php:1303
+#: admin/class-mcp-admin-connections.php:940
+#: admin/class-mcp-admin-connections.php:1481
 msgid "API key"
 msgstr "Chiave API"
 
-#: admin/class-mcp-admin-connections.php:768
+#: admin/class-mcp-admin-connections.php:940
 msgid "Copy API key"
 msgstr "Copia chiave API"
 
-#: admin/class-mcp-admin-connections.php:769
+#: admin/class-mcp-admin-connections.php:941
 msgid "I've saved my key"
 msgstr "Ho salvato la chiave"
 
-#: admin/class-mcp-admin-connections.php:772
+#: admin/class-mcp-admin-connections.php:944
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "Assegnare un nome per riconoscerla in seguito, quindi generarla."
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:777
+#: admin/class-mcp-admin-connections.php:949
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "es. %s sul mio portatile"
 
-#: admin/class-mcp-admin-connections.php:780
+#: admin/class-mcp-admin-connections.php:952
 msgid "Generate API key"
 msgstr "Genera chiave API"
 
-#: admin/class-mcp-admin-connections.php:780
+#: admin/class-mcp-admin-connections.php:952
 msgid "Generate another key"
 msgstr "Genera un'altra chiave"
 
-#: admin/class-mcp-admin-connections.php:793
+#: admin/class-mcp-admin-connections.php:965
 msgid "Run this in your terminal:"
 msgstr "Eseguire questo comando nel terminale:"
 
-#: admin/class-mcp-admin-connections.php:794
+#: admin/class-mcp-admin-connections.php:966
 msgid ""
 "Run these in your terminal. Codex reads the key each time it starts, so also "
 "add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
@@ -918,7 +1124,7 @@ msgstr ""
 "quindi aggiungere la riga <code>export</code> anche al profilo della shell "
 "(ad es. <code>~/.zshrc</code>):"
 
-#: admin/class-mcp-admin-connections.php:795
+#: admin/class-mcp-admin-connections.php:967
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then restart Cursor:"
@@ -926,12 +1132,12 @@ msgstr ""
 "Aggiungere quanto segue a <code>~/.cursor/mcp.json</code> (creare il file se "
 "non esiste), quindi riavviare Cursor:"
 
-#: admin/class-mcp-admin-connections.php:799
+#: admin/class-mcp-admin-connections.php:971
 msgid "Add the server to your tool"
 msgstr "Aggiungere il server allo strumento"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:922
+#: admin/class-mcp-admin-connections.php:1094
 #, php-format
 msgid ""
 "Run <code>/mcp</code> in a new Claude Code session — <code>%s</code> should "
@@ -941,7 +1147,7 @@ msgstr ""
 "code> dovrebbe risultare connesso."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:924
+#: admin/class-mcp-admin-connections.php:1096
 #, php-format
 msgid ""
 "Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
@@ -951,7 +1157,7 @@ msgstr ""
 "comparire insieme ai suoi strumenti."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:926
+#: admin/class-mcp-admin-connections.php:1098
 #, php-format
 msgid ""
 "Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
@@ -961,7 +1167,7 @@ msgstr ""
 "connesso."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:928
+#: admin/class-mcp-admin-connections.php:1100
 #, php-format
 msgid ""
 "Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
@@ -972,7 +1178,7 @@ msgstr ""
 "<code>Output → MCP Logs</code>."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:930
+#: admin/class-mcp-admin-connections.php:1102
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
@@ -981,7 +1187,7 @@ msgstr ""
 "connesso."
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:932
+#: admin/class-mcp-admin-connections.php:1104
 #, php-format
 msgid ""
 "Open Copilot Chat in agent mode and click the tools icon — <code>%s</code> "
@@ -991,16 +1197,16 @@ msgstr ""
 "<code>%s</code> dovrebbe comparire nell’elenco. Gli errori sono in "
 "<code>Output → MCP</code>."
 
-#: admin/class-mcp-admin-connections.php:937
+#: admin/class-mcp-admin-connections.php:1109
 msgid "Then try:"
 msgstr "Poi provare:"
 
-#: admin/class-mcp-admin-connections.php:940
+#: admin/class-mcp-admin-connections.php:1112
 msgid "Copy prompt"
 msgstr "Copia prompt"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:940
+#: admin/class-mcp-admin-connections.php:1112
 #, php-format
 msgid ""
 "Using %s, tell me this site's name and WordPress version. Don't change "
@@ -1009,21 +1215,21 @@ msgstr ""
 "Usando %s, dimmi il nome di questo sito e la versione di WordPress. Non "
 "modificare nulla."
 
-#: admin/class-mcp-admin-connections.php:970
+#: admin/class-mcp-admin-connections.php:1142
 msgid "Select all"
 msgstr "Seleziona tutto"
 
-#: admin/class-mcp-admin-connections.php:972
+#: admin/class-mcp-admin-connections.php:1144
 msgid "Deselect all"
 msgstr "Deseleziona tutto"
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin-connections.php:980
+#: admin/class-mcp-admin-connections.php:1152
 #, php-format
 msgid "Select all %s tools"
 msgstr "Seleziona tutti gli strumenti di %s"
 
-#: admin/class-mcp-admin-connections.php:994
+#: admin/class-mcp-admin-connections.php:1166
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -1032,41 +1238,41 @@ msgstr ""
 "recenti, ecc.) sono sempre disponibili per ogni chiave e connessione, "
 "indipendentemente dall'ambito degli strumenti."
 
-#: admin/class-mcp-admin-connections.php:1005
+#: admin/class-mcp-admin-connections.php:1177
 msgid "Custom…"
 msgstr "Personalizzato…"
 
-#: admin/class-mcp-admin-connections.php:1005
-#: admin/class-mcp-admin-connections.php:1021
-#: admin/class-mcp-admin-connections.php:1032
+#: admin/class-mcp-admin-connections.php:1177
+#: admin/class-mcp-admin-connections.php:1193
+#: admin/class-mcp-admin-connections.php:1204
 msgid "Full access"
 msgstr "Accesso completo"
 
-#: admin/class-mcp-admin-connections.php:1005
-#: admin/class-mcp-admin-connections.php:1025
+#: admin/class-mcp-admin-connections.php:1177
+#: admin/class-mcp-admin-connections.php:1197
 msgid "Read-only"
 msgstr "Sola lettura"
 
-#: admin/class-mcp-admin-connections.php:1008 includes/class-mcp-oauth.php:1801
+#: admin/class-mcp-admin-connections.php:1180 includes/class-mcp-oauth.php:1801
 msgid "Access level"
 msgstr "Livello di accesso"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin-connections.php:1029
+#: admin/class-mcp-admin-connections.php:1201
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "Personalizzato (%d strumenti)"
 
-#: admin/class-mcp-admin-connections.php:1036
+#: admin/class-mcp-admin-connections.php:1208
 msgid "Unknown (blocked)"
 msgstr "Sconosciuto (bloccato)"
 
-#: admin/class-mcp-admin-connections.php:1052
+#: admin/class-mcp-admin-connections.php:1224
 msgid "Dismiss"
 msgstr "Chiudi"
 
 #. translators: 1: app name such as ChatGPT, 2: relative time such as "4 minutes"
-#: admin/class-mcp-admin-connections.php:1056
+#: admin/class-mcp-admin-connections.php:1228
 #, php-format
 msgid "%1$s tried to connect %2$s ago, but new connections were off."
 msgstr ""
@@ -1074,7 +1280,7 @@ msgstr ""
 "disattivate."
 
 #. translators: %d: number of attempts
-#: admin/class-mcp-admin-connections.php:1059
+#: admin/class-mcp-admin-connections.php:1231
 #, php-format
 msgid "(%d attempt)"
 msgid_plural "(%d attempts)"
@@ -1082,7 +1288,7 @@ msgstr[0] "(%d tentativo)"
 msgstr[1] "(%d tentativi)"
 
 #. translators: %s: host name
-#: admin/class-mcp-admin-connections.php:1064
+#: admin/class-mcp-admin-connections.php:1236
 #, php-format
 msgid ""
 "Its sign-in address (%s) is not on the allowed list either — add it to the "
@@ -1092,24 +1298,24 @@ msgstr ""
 "aggiungilo agli host di accesso aggiuntivi nella scheda Impostazioni."
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1071
+#: admin/class-mcp-admin-connections.php:1243
 #, php-format
 msgid "New connections are on — try again in %s now."
 msgstr "Le nuove connessioni sono attive — riprova ora in %s."
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:1075
+#: admin/class-mcp-admin-connections.php:1247
 #, php-format
 msgid "%s left"
 msgstr "%s rimanenti"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1085
+#: admin/class-mcp-admin-connections.php:1257
 #, php-format
 msgid "Then add the app again in %s."
 msgstr "Poi aggiungi di nuovo l’app in %s."
 
-#: admin/class-mcp-admin-connections.php:1110
+#: admin/class-mcp-admin-connections.php:1282
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1119,30 +1325,30 @@ msgstr ""
 "o <strong>Codex</strong> a questo sito WordPress tramite il Model Context "
 "Protocol."
 
-#: admin/class-mcp-admin-connections.php:1137
-#: admin/class-mcp-admin-connections.php:1279
+#: admin/class-mcp-admin-connections.php:1309
+#: admin/class-mcp-admin-connections.php:1457
 msgid "Connect another app"
 msgstr "Collega un'altra app"
 
-#: admin/class-mcp-admin-connections.php:1137
+#: admin/class-mcp-admin-connections.php:1309
 msgid "Connect your first app"
 msgstr "Collega la tua prima app"
 
-#: admin/class-mcp-admin-connections.php:1138
+#: admin/class-mcp-admin-connections.php:1310
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr ""
 "Scegli la tua app di IA o il tuo strumento di programmazione: la "
 "configurazione richiede circa un minuto."
 
-#: admin/class-mcp-admin-connections.php:1140
+#: admin/class-mcp-admin-connections.php:1312
 msgid "Close"
 msgstr "Chiudi"
 
-#: admin/class-mcp-admin-connections.php:1148
+#: admin/class-mcp-admin-connections.php:1320
 msgid "Which app do you want to connect?"
 msgstr "Quale app connettere?"
 
-#: admin/class-mcp-admin-connections.php:1149
+#: admin/class-mcp-admin-connections.php:1321
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -1151,137 +1357,141 @@ msgstr ""
 "visualizzare le istruzioni di configurazione passo passo."
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1160
+#: admin/class-mcp-admin-connections.php:1332
 #, php-format
 msgid "Connect %s"
 msgstr "Collega %s"
 
-#: admin/class-mcp-admin-connections.php:1181
+#: admin/class-mcp-admin-connections.php:1355
 msgid "No terminal needed"
 msgstr "Nessun terminale necessario"
 
-#: admin/class-mcp-admin-connections.php:1182
+#: admin/class-mcp-admin-connections.php:1356
 msgid "Terminal & IDE tools"
 msgstr "Strumenti da terminale e IDE"
 
-#: admin/class-mcp-admin-connections.php:1187
+#: admin/class-mcp-admin-connections.php:1357
+msgid "Automation & developers"
+msgstr "Automazione e sviluppatori"
+
+#: admin/class-mcp-admin-connections.php:1362
 msgid "AI clients"
 msgstr "Client IA"
 
-#: admin/class-mcp-admin-connections.php:1207
+#: admin/class-mcp-admin-connections.php:1382
 msgid "Needs public URL"
 msgstr "Richiede URL pubblico"
 
-#: admin/class-mcp-admin-connections.php:1209
+#: admin/class-mcp-admin-connections.php:1384
 msgid "Works locally"
 msgstr "Funziona in locale"
 
-#: admin/class-mcp-admin-connections.php:1217
+#: admin/class-mcp-admin-connections.php:1388
+msgid "Beta"
+msgstr "Beta"
+
+#: admin/class-mcp-admin-connections.php:1395
 msgid "Another MCP client? Use this endpoint:"
 msgstr "Un altro client MCP? Usa questo endpoint:"
 
-#: admin/class-mcp-admin-connections.php:1220
-msgid "Copy endpoint URL"
-msgstr "Copia URL dell'endpoint"
-
-#: admin/class-mcp-admin-connections.php:1261
+#: admin/class-mcp-admin-connections.php:1439
 msgid "Copy"
 msgstr "Copia"
 
-#: admin/class-mcp-admin-connections.php:1274
+#: admin/class-mcp-admin-connections.php:1452
 msgid "Connected apps"
 msgstr "App connesse"
 
-#: admin/class-mcp-admin-connections.php:1287
+#: admin/class-mcp-admin-connections.php:1465
 msgid "Name"
 msgstr "Nome"
 
-#: admin/class-mcp-admin-connections.php:1288
+#: admin/class-mcp-admin-connections.php:1466
 msgid "Type"
 msgstr "Tipo"
 
-#: admin/class-mcp-admin-connections.php:1289
+#: admin/class-mcp-admin-connections.php:1467
 msgid "Access"
 msgstr "Accesso"
 
-#: admin/class-mcp-admin-connections.php:1291
+#: admin/class-mcp-admin-connections.php:1469
 msgid "Last used"
 msgstr "Ultimo utilizzo"
 
-#: admin/class-mcp-admin-connections.php:1311
+#: admin/class-mcp-admin-connections.php:1489
 msgid "Revoke this key? Any client using it will lose access."
 msgstr ""
 "Revocare questa chiave? Tutti i client che la utilizzano perderanno "
 "l'accesso."
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1318
+#: admin/class-mcp-admin-connections.php:1496
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · approvato da %2$s"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1321
+#: admin/class-mcp-admin-connections.php:1499
 #, php-format
 msgid "approved by %s"
 msgstr "approvato da %s"
 
-#: admin/class-mcp-admin-connections.php:1327
+#: admin/class-mcp-admin-connections.php:1505
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1335
+#: admin/class-mcp-admin-connections.php:1513
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "Revocare questa connessione? L'app perderà immediatamente l'accesso."
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1361
+#: admin/class-mcp-admin-connections.php:1539
 #, php-format
 msgid "%s ago"
 msgstr "%s fa"
 
-#: admin/class-mcp-admin-connections.php:1363
+#: admin/class-mcp-admin-connections.php:1541
 msgid "Never"
 msgstr "Mai"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1370
+#: admin/class-mcp-admin-connections.php:1548
 #, php-format
 msgid "Actions for %s"
 msgstr "Azioni per %s"
 
-#: admin/class-mcp-admin-connections.php:1373
+#: admin/class-mcp-admin-connections.php:1551
 msgid "Edit access…"
 msgstr "Modifica accesso…"
 
-#: admin/class-mcp-admin-connections.php:1374
+#: admin/class-mcp-admin-connections.php:1552
 msgid "Revoke"
 msgstr "Revoca"
 
-#: admin/class-mcp-admin-connections.php:1377
+#: admin/class-mcp-admin-connections.php:1555
 msgid "Revoke…"
 msgstr "Revoca…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1390
+#: admin/class-mcp-admin-connections.php:1568
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "Accesso per <strong>%s</strong>"
 
-#: admin/class-mcp-admin-connections.php:1394
+#: admin/class-mcp-admin-connections.php:1572
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:220
 msgid "Cancel"
 msgstr "Indietro"
 
-#: admin/class-mcp-admin-connections.php:1395
+#: admin/class-mcp-admin-connections.php:1573
 msgid "Save access"
 msgstr "Salva accesso"
 
-#: admin/class-mcp-admin-connections.php:1408
+#: admin/class-mcp-admin-connections.php:1586
 msgid "Connection Doctor"
 msgstr "Diagnostica della connessione"
 
-#: admin/class-mcp-admin-connections.php:1410
+#: admin/class-mcp-admin-connections.php:1588
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -1289,15 +1499,15 @@ msgstr ""
 "Verifica se i client IA riescono a raggiungere questo sito e ottieni una "
 "diagnosi copiabile di eventuali problemi."
 
-#: admin/class-mcp-admin-connections.php:1412
+#: admin/class-mcp-admin-connections.php:1590
 msgid "Run checks"
 msgstr "Esegui controlli"
 
-#: admin/class-mcp-admin-connections.php:1413
+#: admin/class-mcp-admin-connections.php:1591
 msgid "Copy report"
 msgstr "Copia report"
 
-#: admin/class-mcp-admin-connections.php:1414
+#: admin/class-mcp-admin-connections.php:1592
 msgid "Get help on WordPress.org"
 msgstr "Ottieni aiuto su WordPress.org"
 
@@ -1620,14 +1830,25 @@ msgid ""
 "admin-level user management. Many real jobs need exactly this. The audit "
 "log, the undo journal, and automatic checkpoints before WP-CLI writes all "
 "stay on."
-msgstr "La Power mode dà al tuo agente IA la portata di uno sviluppatore senior con accesso al server: <code>eval</code> e <code>shell</code> di WP-CLI, SQL che modifica lo schema, scrittura ovunque nell'installazione, richieste a servizi interni e gestione degli utenti a livello amministratore. Molti lavori reali richiedono esattamente questo. Il log di audit, il diario di annullamento e i checkpoint automatici prima delle scritture WP-CLI restano tutti attivi."
+msgstr ""
+"La Power mode dà al tuo agente IA la portata di uno sviluppatore senior con "
+"accesso al server: <code>eval</code> e <code>shell</code> di WP-CLI, SQL che "
+"modifica lo schema, scrittura ovunque nell'installazione, richieste a "
+"servizi interni e gestione degli utenti a livello amministratore. Molti "
+"lavori reali richiedono esattamente questo. Il log di audit, il diario di "
+"annullamento e i checkpoint automatici prima delle scritture WP-CLI restano "
+"tutti attivi."
 
 #: admin/class-mcp-admin-settings.php:104
 msgid ""
 "<strong>Potential risk:</strong> with these limits lifted, anyone holding an "
 "API key can run code on this server. Turn it on for sites you control, with "
 "credentials you trust, and turn it off again when the job is done."
-msgstr "<strong>Rischio potenziale:</strong> una volta rimossi questi limiti, chiunque possieda una chiave API può eseguire codice su questo server. Attivala su siti che controlli, con credenziali di cui ti fidi, e disattivala di nuovo a lavoro finito."
+msgstr ""
+"<strong>Rischio potenziale:</strong> una volta rimossi questi limiti, "
+"chiunque possieda una chiave API può eseguire codice su questo server. "
+"Attivala su siti che controlli, con credenziali di cui ti fidi, e "
+"disattivala di nuovo a lavoro finito."
 
 #: admin/class-mcp-admin-settings.php:110
 msgid "What you gain"
@@ -1635,7 +1856,8 @@ msgstr "Cosa ottieni"
 
 #: admin/class-mcp-admin-settings.php:112
 msgid "Fix a fatal or run a one-off migration from the agent"
-msgstr "Correggere un errore fatale o eseguire una migrazione una tantum dall'agente"
+msgstr ""
+"Correggere un errore fatale o eseguire una migrazione una tantum dall'agente"
 
 #: admin/class-mcp-admin-settings.php:113
 msgid "Alter tables and clean up orphaned data"
@@ -1643,7 +1865,8 @@ msgstr "Modificare tabelle e ripulire dati orfani"
 
 #: admin/class-mcp-admin-settings.php:114
 msgid "Ship must-use plugins and edit any install file"
-msgstr "Distribuire plugin must-use e modificare qualsiasi file dell'installazione"
+msgstr ""
+"Distribuire plugin must-use e modificare qualsiasi file dell'installazione"
 
 #: admin/class-mcp-admin-settings.php:115
 msgid "Reach local, staging, and Docker-sibling services"
@@ -1741,7 +1964,7 @@ msgid "Save Settings"
 msgstr "Salva le impostazioni"
 
 #: admin/class-mcp-admin.php:33 admin/class-mcp-admin.php:34
-#: admin/class-mcp-admin.php:604
+#: admin/class-mcp-admin.php:618
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -1941,38 +2164,38 @@ msgstr ""
 msgid "Could not update connection scope."
 msgstr "Impossibile aggiornare l'ambito della connessione."
 
-#: admin/class-mcp-admin.php:401
+#: admin/class-mcp-admin.php:415
 msgid "Browser sign-in enabled."
 msgstr "Accesso dal browser attivato."
 
-#: admin/class-mcp-admin.php:435
+#: admin/class-mcp-admin.php:449
 msgid "Settings saved."
 msgstr "Impostazioni salvate."
 
-#: admin/class-mcp-admin.php:442
+#: admin/class-mcp-admin.php:456
 msgid "Audit log cleared."
 msgstr "Registro di controllo svuotato."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:460
+#: admin/class-mcp-admin.php:474
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Modifica n. %1$d annullata.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:475
+#: admin/class-mcp-admin.php:489
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%1$d di %2$d voci del batch annullate."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:491
+#: admin/class-mcp-admin.php:505
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Checkpoint n. %1$d creato (%2$s)."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:504
+#: admin/class-mcp-admin.php:518
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -1982,7 +2205,7 @@ msgstr ""
 "verificato. Checkpoint di sicurezza precedente al ripristino: #%4$d."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:507
+#: admin/class-mcp-admin.php:521
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -1991,101 +2214,101 @@ msgstr ""
 "Database ripristinato dal checkpoint #%1$d — %2$d tabelle, %3$s righe "
 "controllate. Checkpoint di sicurezza precedente al ripristino: #%4$d."
 
-#: admin/class-mcp-admin.php:520
+#: admin/class-mcp-admin.php:534
 msgid "Checkpoint deleted."
 msgstr "Checkpoint eliminato."
 
-#: admin/class-mcp-admin.php:593
+#: admin/class-mcp-admin.php:607
 msgid "Connections"
 msgstr "Connessioni"
 
-#: admin/class-mcp-admin.php:594
+#: admin/class-mcp-admin.php:608
 msgid "Activity"
 msgstr "Attività"
 
-#: admin/class-mcp-admin.php:595
+#: admin/class-mcp-admin.php:609
 msgid "Logs"
 msgstr "Registri"
 
-#: admin/class-mcp-admin.php:596
+#: admin/class-mcp-admin.php:610
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:611
 msgid "About"
 msgstr "Informazioni"
 
-#: admin/class-mcp-admin.php:608
+#: admin/class-mcp-admin.php:622
 msgid "Cowboy MCP sections"
 msgstr "Sezioni di Cowboy MCP"
 
-#: admin/class-mcp-admin.php:641
+#: admin/class-mcp-admin.php:655
 msgid "Power mode is on. Open Power mode settings."
 msgstr "Power mode è attiva. Apri le impostazioni della Power mode."
 
-#: admin/class-mcp-admin.php:641
+#: admin/class-mcp-admin.php:655
 msgid "Power mode on"
 msgstr "Power mode attiva"
 
-#: admin/class-mcp-admin.php:643
+#: admin/class-mcp-admin.php:657
 msgid "Power mode is off. Open Power mode settings."
 msgstr "Power mode è disattivata. Apri le impostazioni della Power mode."
 
-#: admin/class-mcp-admin.php:643
+#: admin/class-mcp-admin.php:657
 msgid "Power mode off"
 msgstr "Power mode disattivata"
 
-#: admin/class-mcp-admin.php:646
+#: admin/class-mcp-admin.php:660
 msgid "Safe mode off"
 msgstr "Safe mode disattivata"
 
-#: admin/class-mcp-admin.php:669
+#: admin/class-mcp-admin.php:683
 msgid "Every request from AI apps is rejected."
 msgstr "Ogni richiesta delle app di IA viene rifiutata."
 
-#: admin/class-mcp-admin.php:669
+#: admin/class-mcp-admin.php:683
 msgid "MCP server is off."
 msgstr "Il server MCP è disattivato."
 
-#: admin/class-mcp-admin.php:670
+#: admin/class-mcp-admin.php:684
 msgid "Turn on in Settings"
 msgstr "Attiva nelle Impostazioni"
 
-#: admin/class-mcp-admin.php:698
+#: admin/class-mcp-admin.php:712
 msgid "Pagination"
 msgstr "Paginazione"
 
-#: admin/class-mcp-admin.php:699
+#: admin/class-mcp-admin.php:713
 msgid "Previous"
 msgstr "Precedente"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:702
+#: admin/class-mcp-admin.php:716
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Pagina %1$d di %2$d"
 
-#: admin/class-mcp-admin.php:704
+#: admin/class-mcp-admin.php:718
 msgid "Next"
 msgstr "Successivo"
 
-#: admin/class-mcp-admin.php:713
+#: admin/class-mcp-admin.php:727
 msgid "Project home, guides, and news."
 msgstr "Home del progetto, guide e novità."
 
-#: admin/class-mcp-admin.php:713
+#: admin/class-mcp-admin.php:727
 msgid "Website"
 msgstr "Sito web"
 
-#: admin/class-mcp-admin.php:714
+#: admin/class-mcp-admin.php:728
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:714
+#: admin/class-mcp-admin.php:728
 msgid "Source, issues & releases."
 msgstr "Codice sorgente, issue e release."
 
-#: admin/class-mcp-admin.php:715
+#: admin/class-mcp-admin.php:729
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2093,11 +2316,11 @@ msgstr ""
 "Chiedi nel forum di supporto di WordPress.org. Incolla il report della "
 "Diagnostica della connessione per ottenere una risposta più rapida."
 
-#: admin/class-mcp-admin.php:715
+#: admin/class-mcp-admin.php:729
 msgid "Get help"
 msgstr "Ottieni aiuto"
 
-#: admin/class-mcp-admin.php:716
+#: admin/class-mcp-admin.php:730
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2105,12 +2328,12 @@ msgstr ""
 "Ti piace Cowboy MCP? Una recensione su WordPress.org aiuta altri proprietari "
 "di siti a trovarlo."
 
-#: admin/class-mcp-admin.php:716 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:730 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "Lascia una recensione"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:724
+#: admin/class-mcp-admin.php:738
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -2393,398 +2616,3 @@ msgstr "Approva"
 #, php-format
 msgid "Redirects to: %s"
 msgstr "Reindirizza a: %s"
-
-#~ msgid "Lift safety restrictions for advanced operations"
-#~ msgstr "Rimuovere le restrizioni di sicurezza per le operazioni avanzate"
-
-#~ msgid ""
-#~ "<strong>Danger:</strong> allows <code>eval</code>/<code>shell</code>, "
-#~ "dangerous SQL, writing files anywhere, and requests to internal "
-#~ "addresses. This grants effective <strong>remote code execution</strong> "
-#~ "to anyone holding an API key. Only enable on a trusted, locked-down site "
-#~ "you control. Your MCP API keys and the plugin&#8217;s own settings stay "
-#~ "protected."
-#~ msgstr ""
-#~ "<strong>Pericolo:</strong> consente <code>eval</code>/<code>shell</code>, "
-#~ "SQL pericoloso, la scrittura di file ovunque e richieste a indirizzi "
-#~ "interni. Concede di fatto l'<strong>esecuzione di codice remoto</strong> "
-#~ "a chiunque possieda una chiave API. Abilitare solo su un sito attendibile "
-#~ "e protetto, sotto il proprio controllo. Le chiavi API MCP e le "
-#~ "impostazioni del plugin restano protette."
-
-#~ msgid "Turning it on allows"
-#~ msgstr "Attivarla consente"
-
-#~ msgid "Dangerous SQL"
-#~ msgstr "SQL pericoloso"
-
-#~ msgid "New connections: disabled"
-#~ msgstr "Nuove connessioni: disattivate"
-
-#~ msgid "New connections: enabled"
-#~ msgstr "Nuove connessioni: attivate"
-
-#~ msgid "Disable now"
-#~ msgstr "Disattiva ora"
-
-#~ msgid ""
-#~ "The Copy or Add button above turns this on for you. Adding it by hand? "
-#~ "Enable it first. It switches itself off after 30 minutes, and connections "
-#~ "that already exist keep working either way."
-#~ msgstr ""
-#~ "Il pulsante «Copia» o «Aggiungi», qui sopra, lo attiva per te. Lo "
-#~ "aggiungi a mano? Attivalo prima. Si disattiva da solo dopo 30 minuti e le "
-#~ "connessioni esistenti continuano a funzionare in ogni caso."
-
-#~ msgid ""
-#~ "Add to Claude below turns this on for you. Adding it by hand? Enable it "
-#~ "first. It switches itself off after 30 minutes, and connections that "
-#~ "already exist keep working either way."
-#~ msgstr ""
-#~ "«Aggiungi a Claude», qui sotto, lo attiva per te. Lo aggiungi a mano? "
-#~ "Attivalo prima. Si disattiva da solo dopo 30 minuti e le connessioni "
-#~ "esistenti continuano a funzionare in ogni caso."
-
-#~ msgid ""
-#~ "Step one when adding ChatGPT or a Claude app: enable this, then add the "
-#~ "app. It switches itself off after 30 minutes. API keys do not use it, and "
-#~ "connections that already exist keep working either way."
-#~ msgstr ""
-#~ "Primo passo quando aggiungi ChatGPT o un’app Claude: attiva questo, poi "
-#~ "aggiungi l’app. Si disattiva da solo dopo 30 minuti. Le chiavi API non lo "
-#~ "usano e le connessioni esistenti continuano a funzionare in ogni caso."
-
-#~ msgid ""
-#~ "<strong>Heads up:</strong> this site does not appear to be on a public "
-#~ "HTTPS address. ChatGPT connects from OpenAI's cloud, so it cannot reach "
-#~ "local, private, or non-HTTPS sites. A terminal tool works here instead, "
-#~ "or connect through a tunnel/staging URL."
-#~ msgstr ""
-#~ "<strong>Attenzione:</strong> questo sito non sembra trovarsi a un "
-#~ "indirizzo HTTPS pubblico. ChatGPT si connette dal cloud di OpenAI, quindi "
-#~ "non può raggiungere siti locali, privati o senza HTTPS. In alternativa, "
-#~ "qui funziona uno strumento da terminale, oppure connettersi tramite un "
-#~ "tunnel o un URL di staging."
-
-#~ msgid ""
-#~ "<strong>Heads up:</strong> this site does not appear to be on a public "
-#~ "HTTPS address. The Claude apps connect from Anthropic's cloud, so they "
-#~ "cannot reach local, private, or non-HTTPS sites. A terminal tool works "
-#~ "here instead, or connect through a tunnel/staging URL."
-#~ msgstr ""
-#~ "<strong>Attenzione:</strong> questo sito non sembra trovarsi a un "
-#~ "indirizzo HTTPS pubblico. Le app Claude si connettono dal cloud di "
-#~ "Anthropic, quindi non possono raggiungere siti locali, privati o senza "
-#~ "HTTPS. In alternativa, qui funziona uno strumento da terminale, oppure "
-#~ "connettersi tramite un tunnel o un URL di staging."
-
-#~ msgid "You'll paste this into ChatGPT in the next step."
-#~ msgstr "Questo andrà incollato in ChatGPT nel passaggio successivo."
-
-#~ msgid "You'll paste this into Claude in the next step."
-#~ msgstr "Questo andrà incollato in Claude nel passaggio successivo."
-
-#~ msgid ""
-#~ "ChatGPT opens a sign-in page on <strong>your site</strong>. Review what "
-#~ "it is asking for and click <strong>Approve</strong>. To use it, open the "
-#~ "<strong>+</strong> menu in a chat, choose <strong>Developer mode</strong> "
-#~ "and select your site."
-#~ msgstr ""
-#~ "ChatGPT apre una pagina di accesso sul <strong>proprio sito</strong>. "
-#~ "Esaminare le autorizzazioni richieste e fare clic su <strong>Approva</"
-#~ "strong>. Per usarlo, aprire il menu <strong>+</strong> in una chat, "
-#~ "scegliere <strong>Developer mode</strong> e selezionare il sito."
-
-#~ msgid ""
-#~ "Claude opens a sign-in page on <strong>your site</strong>. Review what it "
-#~ "is asking for and click <strong>Approve</strong>. To use it, click "
-#~ "<strong>+</strong> in a chat, open <strong>Connectors</strong> and make "
-#~ "sure your site is switched on."
-#~ msgstr ""
-#~ "Claude apre una pagina di accesso sul <strong>proprio sito</strong>. "
-#~ "Esaminare le autorizzazioni richieste e fare clic su <strong>Approva</"
-#~ "strong>. Per usarlo, fare clic su <strong>+</strong> in una chat, aprire "
-#~ "<strong>Connectors</strong> e verificare che il sito sia attivo."
-
-#, php-format
-#~ msgid ""
-#~ "Opens claude.ai in a new tab with this site filled in, and turns on new "
-#~ "connections for 30 minutes. Check the address is <code>%s</code>, then "
-#~ "click <strong>Continue</strong> and <strong>Add</strong>. The connector "
-#~ "then shows up in the Claude app too."
-#~ msgstr ""
-#~ "Apre claude.ai in una nuova scheda con questo sito già compilato e attiva "
-#~ "le nuove connessioni per 30 minuti. Verificare che l’indirizzo sia "
-#~ "<code>%s</code>, poi fare clic su <strong>Continue</strong> e "
-#~ "<strong>Add</strong>. Il connettore compare poi anche nell’app Claude."
-
-#, php-format
-#~ msgid ""
-#~ "Opens claude.ai in a new tab with this site filled in, and turns on new "
-#~ "connections for 30 minutes. Check the address is <code>%s</code>, then "
-#~ "click <strong>Continue</strong> and <strong>Add</strong>."
-#~ msgstr ""
-#~ "Apre claude.ai in una nuova scheda con questo sito già compilato e attiva "
-#~ "le nuove connessioni per 30 minuti. Verificare che l’indirizzo sia "
-#~ "<code>%s</code>, poi fare clic su <strong>Continue</strong> e "
-#~ "<strong>Add</strong>."
-
-#~ msgid ""
-#~ "Copies your connection link, turns on new connections for 30 minutes and "
-#~ "opens ChatGPT in a new tab."
-#~ msgstr ""
-#~ "Copia il tuo link di connessione, attiva le nuove connessioni per 30 "
-#~ "minuti e apre ChatGPT in una nuova scheda."
-
-#~ msgid ""
-#~ "Go to <code>chatgpt.com</code> in your browser and sign in (MCP apps work "
-#~ "on the web only)."
-#~ msgstr ""
-#~ "Andare su <code>chatgpt.com</code> nel browser ed effettuare l'accesso "
-#~ "(le app MCP funzionano solo sul web)."
-
-#~ msgid ""
-#~ "Go to <code>Settings → Security and login</code> and turn on "
-#~ "<strong>Developer mode</strong> (one-time)."
-#~ msgstr ""
-#~ "Andare in <code>Settings → Security and login</code> e attivare "
-#~ "<strong>Developer mode</strong> (una sola volta)."
-
-#~ msgid ""
-#~ "Give it a name, paste the link from step 1 as the <strong>MCP server URL</"
-#~ "strong>, set Authentication to <strong>OAuth</strong>, and create it."
-#~ msgstr ""
-#~ "Assegnare un nome, incollare il link del passaggio 1 come <strong>MCP "
-#~ "server URL</strong>, impostare l'autenticazione su <strong>OAuth</strong> "
-#~ "e crearla."
-
-#~ msgid "Open the <strong>Claude</strong> desktop app and sign in."
-#~ msgstr ""
-#~ "Aprire l'app desktop di <strong>Claude</strong> ed effettuare l'accesso."
-
-#~ msgid "Go to <code>claude.ai</code> in your browser and sign in."
-#~ msgstr ""
-#~ "Andare su <code>claude.ai</code> nel browser ed effettuare l'accesso."
-
-#~ msgid "Go to <code>Customize → Connectors</code>."
-#~ msgstr "Andare in <code>Customize → Connectors</code>."
-
-#~ msgid ""
-#~ "Give it a name, paste the link above, click <strong>Continue</strong> and "
-#~ "then <strong>Add</strong>. If Claude asks which OAuth client to use, "
-#~ "choose <strong>Register automatically</strong>."
-#~ msgstr ""
-#~ "Assegnare un nome, incollare il link qui sopra, fare clic su "
-#~ "<strong>Continue</strong> e poi su <strong>Add</strong>. Se Claude chiede "
-#~ "quale client OAuth usare, scegliere <strong>Register automatically</"
-#~ "strong>."
-
-#~ msgid ""
-#~ "Give it a name, paste the link from step 1, click <strong>Continue</"
-#~ "strong> and then <strong>Add</strong>. If Claude asks which OAuth client "
-#~ "to use, choose <strong>Register automatically</strong>."
-#~ msgstr ""
-#~ "Assegnare un nome, incollare il link del passaggio 1, fare clic su "
-#~ "<strong>Continue</strong> e poi su <strong>Add</strong>. Se Claude chiede "
-#~ "quale client OAuth usare, scegliere <strong>Register automatically</"
-#~ "strong>."
-
-#~ msgid "What works on a local site:"
-#~ msgstr "Cosa funziona su un sito locale:"
-
-#~ msgid ""
-#~ "<strong>Terminal and IDE tools</strong> (Claude Code, Codex, Cursor, VS "
-#~ "Code, Gemini CLI) — connect right now; the sign-in opens in your browser "
-#~ "on this computer. Pick one in the sidebar."
-#~ msgstr ""
-#~ "<strong>Strumenti da terminale e IDE</strong> (Claude Code, Codex, "
-#~ "Cursor, VS Code, Gemini CLI) — collegali subito; l’accesso si apre nel "
-#~ "browser su questo computer. Scegline uno nella barra laterale."
-
-#~ msgid ""
-#~ "<strong>Claude Desktop</strong> — connects through a local bridge that "
-#~ "runs on this computer. Pick it in the sidebar for instructions."
-#~ msgstr ""
-#~ "<strong>Claude Desktop</strong> — si collega tramite un ponte locale in "
-#~ "esecuzione su questo computer. Selezionalo nella barra laterale per le "
-#~ "istruzioni."
-
-#~ msgid ""
-#~ "<strong>claude.ai and ChatGPT</strong> — cloud-only: they need a public "
-#~ "HTTPS address. A tunnel (e.g. ngrok or Cloudflare Tunnel) works "
-#~ "temporarily, but it exposes your entire dev site to the internet while it "
-#~ "runs, and the WordPress Site Address must be set to the tunnel URL for "
-#~ "the sign-in to work."
-#~ msgstr ""
-#~ "<strong>claude.ai e ChatGPT</strong> — solo cloud: richiedono un "
-#~ "indirizzo HTTPS pubblico. Un tunnel (es. ngrok o Cloudflare Tunnel) "
-#~ "funziona temporaneamente, ma espone l'intero sito di sviluppo a internet "
-#~ "finché è attivo, e l'indirizzo del sito WordPress deve essere impostato "
-#~ "sull'URL del tunnel perché l'accesso funzioni."
-
-#~ msgid ""
-#~ "This site runs on your computer, so the cloud connector cannot reach it. "
-#~ "Connect Claude Desktop through a <strong>local bridge</strong> instead: a "
-#~ "small helper that runs on this computer and forwards Claude Desktop to "
-#~ "the site. It signs in in your browser like the terminal tools — no key to "
-#~ "paste — and nothing is exposed to the internet."
-#~ msgstr ""
-#~ "Questo sito gira sul tuo computer, quindi il connettore cloud non può "
-#~ "raggiungerlo. Collega Claude Desktop tramite un <strong>ponte locale</"
-#~ "strong>: un piccolo programma che gira su questo computer e inoltra "
-#~ "Claude Desktop al sito. Accede dal browser come gli strumenti da "
-#~ "terminale, senza chiavi da incollare, e nulla viene esposto a internet."
-
-#~ msgid ""
-#~ "Run this in Terminal (macOS) or PowerShell (Windows), then fully quit and "
-#~ "reopen the Claude app. It opens your browser to sign in the first time it "
-#~ "connects."
-#~ msgstr ""
-#~ "Esegui questo nel Terminale (macOS) o in PowerShell (Windows), poi chiudi "
-#~ "completamente e riapri l’app Claude. Alla prima connessione apre il "
-#~ "browser per accedere."
-
-#~ msgid ""
-#~ "Requires Node.js on this computer — the bridge is the standard open-"
-#~ "source <code>mcp-remote</code> package, started on demand via <code>npx</"
-#~ "code>. It connects only from your computer to this site."
-#~ msgstr ""
-#~ "Richiede Node.js su questo computer — il ponte è il pacchetto open source "
-#~ "standard <code>mcp-remote</code>, avviato su richiesta tramite <code>npx</"
-#~ "code>. Si collega solo dal tuo computer a questo sito."
-
-#~ msgid "Prefer to edit the config file?"
-#~ msgstr "Preferisci modificare il file di configurazione?"
-
-#~ msgid ""
-#~ "Add this to <code>claude_desktop_config.json</code> (create the file if "
-#~ "it does not exist), then fully quit and restart the Claude app:"
-#~ msgstr ""
-#~ "Aggiungi questo a <code>claude_desktop_config.json</code> (crea il file "
-#~ "se non esiste), poi chiudi completamente e riavvia l’app Claude:"
-
-#~ msgid ""
-#~ "Headless, CI, or a tool that can't open a browser? Use an API key instead"
-#~ msgstr ""
-#~ "Headless, CI o uno strumento che non può aprire un browser? Usa invece "
-#~ "una chiave API"
-
-#~ msgid ""
-#~ "Your API key is stored in plain text in that file, so prefer a "
-#~ "<strong>read-only</strong> key unless this connection needs to make "
-#~ "changes — and revoke it here when you no longer use it."
-#~ msgstr ""
-#~ "La tua chiave API è salvata in chiaro in quel file: preferisci una chiave "
-#~ "in <strong>sola lettura</strong> a meno che questa connessione non debba "
-#~ "apportare modifiche — e revocala qui quando non la usi più."
-
-#, php-format
-#~ msgid ""
-#~ "Open a new chat in Claude Desktop and click the tools icon — <code>%s</"
-#~ "code> should be listed. The first start can take a moment while the "
-#~ "bridge downloads."
-#~ msgstr ""
-#~ "Apri una nuova chat in Claude Desktop e fai clic sull'icona degli "
-#~ "strumenti — <code>%s</code> dovrebbe comparire nell'elenco. Il primo "
-#~ "avvio può richiedere qualche istante mentre il ponte viene scaricato."
-
-#~ msgid ""
-#~ "Local sites usually use a self-signed certificate that AI tools reject. "
-#~ "Since this site runs on this same computer, you can use the plain "
-#~ "<code>http://</code> address instead — the connection never leaves your "
-#~ "machine. Avoid the <code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> workaround "
-#~ "you may see online: it disables certificate checks for everything that "
-#~ "tool connects to."
-#~ msgstr ""
-#~ "I siti locali di solito usano un certificato autofirmato che gli "
-#~ "strumenti IA rifiutano. Poiché questo sito è in esecuzione sullo stesso "
-#~ "computer, puoi usare l'indirizzo <code>http://</code> semplice — la "
-#~ "connessione non lascia mai la tua macchina. Evita il workaround "
-#~ "<code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> che si trova online: "
-#~ "disattiva i controlli dei certificati per tutto ciò a cui quello "
-#~ "strumento si collega."
-
-#~ msgid ""
-#~ "Working over SSH? Add <code>--no-browser</code> to the second line and "
-#~ "open the printed URL in a local browser."
-#~ msgstr ""
-#~ "Lavori via SSH? Aggiungi <code>--no-browser</code> alla seconda riga e "
-#~ "apri l’URL mostrato in un browser locale."
-
-#~ msgid ""
-#~ "Local https sites usually use a self-signed certificate that these tools "
-#~ "reject. Either trust the certificate in your tool, or set the WordPress "
-#~ "Site Address to the <code>http://</code> URL — the sign-in discovery "
-#~ "addresses are built from it."
-#~ msgstr ""
-#~ "I siti https locali di solito usano un certificato autofirmato che questi "
-#~ "strumenti rifiutano. Considera attendibile il certificato nel tuo "
-#~ "strumento oppure imposta l’Indirizzo sito di WordPress sull’URL "
-#~ "<code>http://</code> — gli indirizzi di discovery dell’accesso vengono "
-#~ "costruiti da questo."
-
-#~ msgid ""
-#~ "Opens Cursor and asks you to add this site. Accept, then Cursor opens "
-#~ "your browser to sign in."
-#~ msgstr ""
-#~ "Apre Cursor e ti chiede di aggiungere questo sito. Accetta, poi Cursor "
-#~ "apre il browser per l’accesso."
-
-#~ msgid ""
-#~ "Opens VS Code and asks you to add this site. Confirm, trust the server "
-#~ "when asked, then VS Code opens your browser to sign in."
-#~ msgstr ""
-#~ "Apre VS Code e ti chiede di aggiungere questo sito. Conferma, considera "
-#~ "attendibile il server quando richiesto, poi VS Code apre il browser per "
-#~ "l’accesso."
-
-#, php-format
-#~ msgid ""
-#~ "Add this to <code>%s</code> (create the file if it does not exist), then "
-#~ "restart the editor. It signs in on first use."
-#~ msgstr ""
-#~ "Aggiungi questo a <code>%s</code> (crea il file se non esiste), poi "
-#~ "riavvia l’editor. L’accesso avviene al primo utilizzo."
-
-#~ msgid "Prefer a command?"
-#~ msgstr "Preferisci un comando?"
-
-#, php-format
-#~ msgid ""
-#~ "Add this to <code>%s</code> (create the file if it does not exist), then "
-#~ "restart the app. It signs in on first use."
-#~ msgstr ""
-#~ "Aggiungi questo a <code>%s</code> (crea il file se non esiste), poi "
-#~ "riavvia l’app. Accede al primo utilizzo."
-
-#~ msgid ""
-#~ "A sign-in page opens on <strong>your site</strong>. Review what it is "
-#~ "asking for, pick the access level and click <strong>Approve</strong>. You "
-#~ "are back in your tool a moment later."
-#~ msgstr ""
-#~ "Sul <strong>tuo sito</strong> si apre una pagina di accesso. Controlla "
-#~ "cosa viene richiesto, scegli il livello di accesso e fai clic su "
-#~ "<strong>Approva</strong>. Un attimo dopo torni al tuo strumento."
-
-#, php-format
-#~ msgid ""
-#~ "%1$s identifies itself with a document published by %2$s, so it needs no "
-#~ "\"New connections\" switch — the sign-in page shows that identity."
-#~ msgstr ""
-#~ "%1$s si identifica con un documento pubblicato da %2$s, quindi non ha "
-#~ "bisogno dell’interruttore «Nuove connessioni»: la pagina di accesso "
-#~ "mostra quell’identità."
-
-#, php-format
-#~ msgid ""
-#~ "Open a new Claude Code session and run <code>/mcp</code> — <code>%s</"
-#~ "code> should be listed as connected."
-#~ msgstr ""
-#~ "Aprire una nuova sessione di Claude Code ed eseguire <code>/mcp</code> — "
-#~ "<code>%s</code> dovrebbe risultare connesso."
-
-#~ msgid "Then try a read-only prompt:"
-#~ msgstr "Poi prova un prompt di sola lettura:"
-
-#~ msgid "prompt"
-#~ msgstr "prompt"
