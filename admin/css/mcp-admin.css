@@ -168,6 +168,11 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .wrap.cmcp .cmcp-step-title { margin: 2px 0; font-size: 14px; font-weight: 600; }
 /* Instructions read in the full text colour; .description lines (asides) and collapsed options stay quieter. */
 .cmcp-step-body > p { margin: 0 0 10px; color: var(--cmcp-text); }
+.wrap.cmcp .cmcp-fields { margin: 8px 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; align-items: baseline; }
+.wrap.cmcp .cmcp-fields dt { font-weight: 600; }
+.wrap.cmcp .cmcp-fields dd { margin: 0; min-width: 0; }
+.wrap.cmcp .cmcp-beta-note { color: var(--cmcp-warn); }
+@media (max-width: 600px) { .wrap.cmcp .cmcp-fields { grid-template-columns: minmax(0, 1fr); gap: 2px; } .wrap.cmcp .cmcp-fields dd { margin-bottom: 8px; } }
 .wrap.cmcp .cmcp-step-body > p.description { color: var(--cmcp-muted); font-size: 13px; }
 .cmcp-step-body p code, .cmcp-step-body li code, .cmcp-callout code { font-size: 12.5px; background: #efefeb; border-radius: 4px; padding: 1px 5px; }
 .cmcp-term-wrap { border-radius: var(--cmcp-radius-sm); overflow: hidden; background: var(--cmcp-code-bg); margin: 4px 0 8px; }

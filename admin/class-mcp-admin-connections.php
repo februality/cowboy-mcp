@@ -870,14 +870,14 @@ class Cowboy_MCP_Admin_Connections {
                 <div class="mcp-local-details-body">
                     <p><?php echo wp_kses( __( 'Set Authentication to <strong>OAuth2</strong> and create a new OAuth2 credential: n8n registers itself with this site and opens the sign-in when you connect. Click Copy on the endpoint above first — it turns on new connections for 30 minutes.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
                     <?php self::render_code( 'mcp-n8n-ep-oauth', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?>
+                    <p><?php echo wp_kses( __( 'A sign-in page opens on <strong>your site</strong>. Pick the access level and click <strong>Approve</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
                     <p class="description"><?php
                         /* translators: %s: URL of the Settings tab */
                         echo wp_kses( sprintf( __( 'Self-hosted n8n: add your n8n host under <a href="%s">Settings → Additional allowed hosts</a> first. n8n cloud is already allowed.', 'cowboy-mcp' ), esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'settings' ] ) . '#cowboy_mcp_oauth_extra_redirect_hosts' ) ), [ 'a' => [ 'href' => [] ] ] );
                     ?></p>
                 </div></details>
         <?php self::step_close(); ?>
-        <?php self::render_approve_step( $oauth_on ); ?>
-        <?php self::step_open( '3', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
+        <?php self::step_open( '2', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
             <p><?php echo wp_kses( __( 'Execute the node once — its Tools output lists <code>cowboy_discover</code> and <code>cowboy_run</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
         <?php self::step_close(); ?>
         <?php
