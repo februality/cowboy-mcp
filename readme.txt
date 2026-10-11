@@ -101,7 +101,7 @@ ChatGPT connects with the same one-click sign-in. You need ChatGPT on the web wi
 
 = Connect Perplexity, Grok and Gemini =
 
-All three add a custom MCP server by URL and sign in with OAuth: click **Open <app>** on the Connections tab (it copies your connection link and turns on new connections for 30 minutes), paste the link where the app asks for a server URL, then approve the sign-in on your own site.
+All three add a custom MCP server by URL and sign in with OAuth: click your app's **Open** button on the Connections tab (it copies your connection link and turns on new connections for 30 minutes), paste the link where the app asks for a server URL, then approve the sign-in on your own site.
 
 * **Perplexity** (Pro, Max or Enterprise plans): Account settings → Connectors → + Custom connector → Remote, Authentication OAuth, Streamable HTTP.
 * **Grok** (paid plans): grok.com/connectors → New Connector → Custom.
