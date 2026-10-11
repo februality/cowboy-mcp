@@ -176,6 +176,7 @@ class Cowboy_MCP_Admin_Connections {
             'vscode'         => [ 'label' => 'VS Code',        'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'vscode',      'local' => 'works' ],
             'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'gemini-cli',  'local' => 'works' ],
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'opencode',    'local' => 'works' ],
+            'n8n'            => [ 'label' => 'n8n',            'group' => 'automation',  'type' => 'n8n',        'watch' => 'n8n',         'local' => 'works' ],
         ];
     }
 
@@ -186,7 +187,7 @@ class Cowboy_MCP_Admin_Connections {
 
     /**
      * Echo the inline SVG logo for a client (monochrome, fill = currentColor).
-     * Marks: Claude, Cursor, Google Gemini, Perplexity and OpenCode from Simple Icons 16.34.0 (CC0 vectors of the
+     * Marks: Claude, Cursor, Google Gemini, Perplexity, OpenCode and n8n from Simple Icons 16.34.0 (CC0 vectors of the
      * brands' own marks); OpenAI's blossom from OpenAI's official logo pack (cdn.openai.com/brand),
      * which also stands for Codex. VS Code: a neutral code-brackets glyph and Grok a neutral spark glyph (no brand marks). Used only to identify the app being connected; no endorsement.
      */
@@ -205,6 +206,7 @@ class Cowboy_MCP_Admin_Connections {
             'perplexity'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.3977 7.0896h-2.3106V.0676l-7.5094 6.3542V.1577h-1.1554v6.1966L4.4904 0v7.0896H1.6023v10.3976h2.8882V24l6.932-6.3591v6.2005h1.1554v-6.0469l6.9318 6.1807v-6.4879h2.8882V7.0896zm-3.4657-4.531v4.531h-5.355l5.355-4.531zm-13.2862.0676 4.8691 4.4634H5.6458V2.6262zM2.7576 16.332V8.245h7.8476l-6.1149 6.1147v1.9723H2.7576zm2.8882 5.0404v-3.8852h.0001v-2.6488l5.7763-5.7764v7.0111l-5.7764 5.2993zm12.7086.0248-5.7766-5.1509V9.0618l5.7766 5.7766v6.5588zm2.8882-5.0652h-1.733v-1.9723L13.3948 8.245h7.8478v8.087z"></path></svg>',
             'grok'           => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg>',
             'gemini-app'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
+            'n8n'            => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.4737 5.6842c-1.1772 0-2.1663.8051-2.4468 1.8947h-2.8955c-1.235 0-2.289.893-2.492 2.111l-.1038.623a1.263 1.263 0 0 1-1.246 1.0555H11.289c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947s-2.1663.8051-2.4467 1.8947H4.973c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947C1.1311 9.4737 0 10.6047 0 12s1.131 2.5263 2.5263 2.5263c1.1772 0 2.1663-.8051 2.4468-1.8947h1.4223c.2804 1.0896 1.2696 1.8947 2.4467 1.8947 1.1772 0 2.1663-.8051 2.4468-1.8947h1.0008a1.263 1.263 0 0 1 1.2459 1.0555l.1038.623c.203 1.218 1.257 2.111 2.492 2.111h.3692c.2804 1.0895 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263c-1.1772 0-2.1664.805-2.4468 1.8947h-.3692a1.263 1.263 0 0 1-1.246-1.0555l-.1037-.623A2.52 2.52 0 0 0 13.9607 12a2.52 2.52 0 0 0 .821-1.4794l.1038-.623a1.263 1.263 0 0 1 1.2459-1.0555h2.8955c.2805 1.0896 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263m0 1.2632a1.263 1.263 0 0 1 1.2631 1.2631 1.263 1.263 0 0 1-1.2631 1.2632 1.263 1.263 0 0 1-1.2632-1.2632 1.263 1.263 0 0 1 1.2632-1.2631M2.5263 10.7368A1.263 1.263 0 0 1 3.7895 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 1.2632 12a1.263 1.263 0 0 1 1.2631-1.2632m6.3158 0A1.263 1.263 0 0 1 10.1053 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 7.579 12a1.263 1.263 0 0 1 1.2632-1.2632m10.1053 3.7895a1.263 1.263 0 0 1 1.2631 1.2632 1.263 1.263 0 0 1-1.2631 1.2631 1.263 1.263 0 0 1-1.2632-1.2631 1.263 1.263 0 0 1 1.2632-1.2632"/></svg>',
             'gemini-cli'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
         ];
         echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
@@ -853,6 +855,38 @@ class Cowboy_MCP_Admin_Connections {
      * Step 2 for every OAuth terminal/IDE client: one sentence. The New-connections window is opened by
      * the Copy / Add / Install click itself, so it is not mentioned here (see render_connections_first()).
      */
+    /** n8n: MCP Client Tool node. Bearer first (works everywhere), OAuth2 second (n8n registers itself). */
+    private static function render_n8n_panel( string $slug, array $def, array $keys, string $endpoint, $new_key, bool $is_local ): void {
+        $settings = get_option( 'cowboy_mcp_settings', [] );
+        $oauth_on = class_exists( 'Cowboy_MCP_OAuth' ) && ! empty( $settings['enabled'] ) && ! empty( $settings['oauth_enabled'] );
+        if ( $is_local ) : ?>
+            <div class="cmcp-callout cmcp-callout--info"><p><?php esc_html_e( "n8n cloud connects from n8n's servers and cannot reach a local site; a self-hosted n8n on this machine works.", 'cowboy-mcp' ); ?></p></div>
+        <?php endif; ?>
+        <?php self::step_open( '1', __( 'Add an MCP Client Tool node', 'cowboy-mcp' ), '' ); ?>
+            <p><?php echo wp_kses( __( 'In your workflow, add the <strong>MCP Client Tool</strong> node to your agent and fill in:', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+            <dl class="cmcp-fields">
+                <dt><?php esc_html_e( 'Endpoint', 'cowboy-mcp' ); ?></dt><dd><?php self::render_code( 'mcp-n8n-ep', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'key' ] ); ?></dd>
+                <dt><?php esc_html_e( 'Server Transport', 'cowboy-mcp' ); ?></dt><dd><code>HTTP Streamable</code></dd>
+                <dt><?php esc_html_e( 'Authentication', 'cowboy-mcp' ); ?></dt><dd><?php echo wp_kses( __( '<strong>Bearer Auth</strong> — create a Bearer Auth credential and paste the API key below.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></dd>
+            </dl>
+            <?php self::render_key_step( 'n8n', 'n8n', $new_key, ! empty( $keys ), 'a' ); ?>
+            <details class="mcp-local-details"><summary><?php esc_html_e( 'Prefer OAuth2?', 'cowboy-mcp' ); ?></summary>
+                <div class="mcp-local-details-body">
+                    <p><?php echo wp_kses( __( 'Set Authentication to <strong>OAuth2</strong> and create a new OAuth2 credential: n8n registers itself with this site and opens the sign-in when you connect. Click Copy on the endpoint above first — it turns on new connections for 30 minutes.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                    <?php self::render_code( 'mcp-n8n-ep-oauth', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?>
+                    <p class="description"><?php
+                        /* translators: %s: URL of the Settings tab */
+                        echo wp_kses( sprintf( __( 'Self-hosted n8n: add your n8n host under <a href="%s">Settings → Additional allowed hosts</a> first. n8n cloud is already allowed.', 'cowboy-mcp' ), esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'settings' ] ) . '#cowboy_mcp_oauth_extra_redirect_hosts' ) ), [ 'a' => [ 'href' => [] ] ] );
+                    ?></p>
+                </div></details>
+        <?php self::step_close(); ?>
+        <?php self::render_approve_step( $oauth_on ); ?>
+        <?php self::step_open( '3', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
+            <p><?php echo wp_kses( __( 'Execute the node once — its Tools output lists <code>cowboy_discover</code> and <code>cowboy_run</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+        <?php self::step_close(); ?>
+        <?php
+    }
+
     private static function render_approve_step( bool $oauth_on, string $slug = '' ): void {
         ?>
         <?php self::step_open( '2', __( 'Approve access', 'cowboy-mcp' ), '' ); ?>
@@ -1302,6 +1336,7 @@ class Cowboy_MCP_Admin_Connections {
                             match ( $client['type'] ) {
                                 'oauth'      => self::render_oauth_client_panel( $slug, $endpoint, $is_local, $keys, $new_key ),
                                 'oauth-cloud' => self::render_cloud_connector_panel( $slug, $client, $endpoint, $is_local ),
+                                'n8n'        => self::render_n8n_panel( $slug, $client, $keys, $endpoint, $new_key, $is_local ),
                                 'oauth-cli'  => self::render_oauth_cli_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local ),
                                 'oauth-link' => self::render_oauth_link_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local ),
                                 default      => self::render_api_client_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local ),
@@ -1319,6 +1354,7 @@ class Cowboy_MCP_Admin_Connections {
         $groups = [
             'no-terminal' => __( 'No terminal needed', 'cowboy-mcp' ),
             'terminal'    => __( 'Terminal & IDE tools', 'cowboy-mcp' ),
+            'automation'  => __( 'Automation & developers', 'cowboy-mcp' ),
         ];
         $first  = array_key_first( $registry );
         ?>

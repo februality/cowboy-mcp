@@ -240,7 +240,7 @@ class Cowboy_MCP_OAuth {
             return null;
         }
         $name = strtolower( trim( (string) ( $row['client_name'] ?? '' ) ) );
-        foreach ( [ 'claude code' => 'claude-code', 'codex' => 'codex', 'gemini cli' => 'gemini-cli', 'visual studio code' => 'vscode', 'cursor' => 'cursor', 'opencode' => 'opencode', 'mcp cli' => 'mcp-remote', 'zed' => 'zed', 'cline' => 'cline', 'goose' => 'goose', 'amp' => 'amp', 'kiro' => 'kiro', 'qwen code' => 'qwen-code', 'kilo' => 'kilo', 'raycast' => 'raycast', 'windsurf' => 'windsurf', 'devin' => 'windsurf' ] as $prefix => $slug ) {
+        foreach ( [ 'claude code' => 'claude-code', 'codex' => 'codex', 'gemini cli' => 'gemini-cli', 'visual studio code' => 'vscode', 'cursor' => 'cursor', 'opencode' => 'opencode', 'mcp cli' => 'mcp-remote', 'zed' => 'zed', 'cline' => 'cline', 'goose' => 'goose', 'amp' => 'amp', 'kiro' => 'kiro', 'qwen code' => 'qwen-code', 'kilo' => 'kilo', 'raycast' => 'raycast', 'windsurf' => 'windsurf', 'devin' => 'windsurf', 'n8n' => 'n8n' ] as $prefix => $slug ) {
             if ( str_starts_with( $name, $prefix ) ) {
                 return $slug;
             }
