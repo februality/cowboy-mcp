@@ -164,6 +164,10 @@ class Cowboy_MCP_Admin_Connections {
             'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'tunnel' ],
             'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'bridge' ],
             'chatgpt'        => [ 'label' => 'ChatGPT',        'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'chatgpt',     'local' => 'tunnel' ],
+            // open_url: Grok verified from docs.x.ai 2026-10-07; the other two are candidates until Task 4 verifies them live (record URL + date here).
+            'perplexity'     => [ 'label' => 'Perplexity',     'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'perplexity',  'local' => 'tunnel', 'open_url' => 'https://www.perplexity.ai/account/connectors', 'open_host' => 'www.perplexity.ai' ],
+            'grok'           => [ 'label' => 'Grok',           'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'grok',        'local' => 'tunnel', 'open_url' => 'https://grok.com/connectors',                  'open_host' => 'grok.com' ],
+            'gemini-app'     => [ 'label' => 'Gemini',         'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'gemini-app',  'local' => 'tunnel', 'open_url' => 'https://gemini.google.com/',                   'open_host' => 'gemini.google.com', 'beta' => true ],
             // 'cimd': the client identifies itself with a Client ID Metadata Document, so it never
             // registers and the "New connections" window is irrelevant to it (verified 2026-10-09).
             'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'claude-code', 'local' => 'works', 'cimd' => true ],
@@ -182,9 +186,9 @@ class Cowboy_MCP_Admin_Connections {
 
     /**
      * Echo the inline SVG logo for a client (monochrome, fill = currentColor).
-     * Marks: Claude, Cursor, Google Gemini and OpenCode from Simple Icons 16.34.0 (CC0 vectors of the
+     * Marks: Claude, Cursor, Google Gemini, Perplexity and OpenCode from Simple Icons 16.34.0 (CC0 vectors of the
      * brands' own marks); OpenAI's blossom from OpenAI's official logo pack (cdn.openai.com/brand),
-     * which also stands for Codex. VS Code: a neutral code-brackets glyph (no brand mark). Used only to identify the app being connected; no endorsement.
+     * which also stands for Codex. VS Code: a neutral code-brackets glyph and Grok a neutral spark glyph (no brand marks). Used only to identify the app being connected; no endorsement.
      */
     private static function render_client_icon( string $slug ): void {
         $claude = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"></path></svg>';
@@ -198,6 +202,9 @@ class Cowboy_MCP_Admin_Connections {
             'opencode'       => '<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M22 24H2V0h20zM17 4.8H7v14.4h10z"></path></svg>',
             'cursor'         => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"></path></svg>',
             'vscode'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6 2 12l6 6M16 6l6 6-6 6M14 4l-4 16"/></svg>',
+            'perplexity'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.3977 7.0896h-2.3106V.0676l-7.5094 6.3542V.1577h-1.1554v6.1966L4.4904 0v7.0896H1.6023v10.3976h2.8882V24l6.932-6.3591v6.2005h1.1554v-6.0469l6.9318 6.1807v-6.4879h2.8882V7.0896zm-3.4657-4.531v4.531h-5.355l5.355-4.531zm-13.2862.0676 4.8691 4.4634H5.6458V2.6262zM2.7576 16.332V8.245h7.8476l-6.1149 6.1147v1.9723H2.7576zm2.8882 5.0404v-3.8852h.0001v-2.6488l5.7763-5.7764v7.0111l-5.7764 5.2993zm12.7086.0248-5.7766-5.1509V9.0618l5.7766 5.7766v6.5588zm2.8882-5.0652h-1.733v-1.9723L13.3948 8.245h7.8478v8.087z"></path></svg>',
+            'grok'           => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg>',
+            'gemini-app'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
             'gemini-cli'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
         ];
         echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
@@ -245,9 +252,15 @@ class Cowboy_MCP_Admin_Connections {
 
     /** One callout for sites the cloud apps cannot reach (local, private or plain http); the sidebar hints already say which clients work locally. */
     private static function render_unreachable_callout( string $slug ): void {
-        $text = ( 'chatgpt' === $slug )
-            ? __( 'This site does not appear to be on a public HTTPS address, so ChatGPT cannot reach it from OpenAI\'s cloud. Use a terminal tool from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' )
-            : __( 'This site does not appear to be on a public HTTPS address, so the Claude apps cannot reach it from Anthropic\'s cloud. Use a terminal tool or Claude Desktop from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' );
+        if ( 'chatgpt' === $slug ) {
+            $text = __( 'This site does not appear to be on a public HTTPS address, so ChatGPT cannot reach it from OpenAI\'s cloud. Use a terminal tool from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' );
+        } elseif ( 'oauth-cloud' === ( self::client_registry()[ $slug ]['type'] ?? '' ) ) {
+            $label = (string) ( self::client_registry()[ $slug ]['label'] ?? $slug );
+            /* translators: %s: AI app name, e.g. Perplexity */
+            $text = sprintf( __( 'This site does not appear to be on a public HTTPS address, so %s cannot reach it from the vendor\'s cloud. Use a terminal tool from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' ), $label );
+        } else {
+            $text = __( 'This site does not appear to be on a public HTTPS address, so the Claude apps cannot reach it from Anthropic\'s cloud. Use a terminal tool or Claude Desktop from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' );
+        }
         ?>
         <div class="cmcp-callout"><p><?php echo esc_html( $text ); ?></p></div>
         <?php
@@ -421,6 +434,131 @@ class Cowboy_MCP_Admin_Connections {
                 <?php endif; ?>
         <?php self::step_close(); ?>
         <?php
+    }
+
+    /**
+     * Per-app sentences for the cloud-connector panels. Whole sentences; %s is only ever the app name elsewhere.
+     * 'plan' = tier note. The wording below (research 2026-10-07) is a PLACEHOLDER: Task 4 rewrites the
+     * 'plan' strings from the free-tier and paid-tier sign-ins.
+     */
+    private static function cloud_copy( string $slug ): array {
+        return match ( $slug ) {
+            'perplexity' => [
+                'steps' => [
+                    wp_kses( __( 'Go to <code>perplexity.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ),
+                    wp_kses( __( 'Open <strong>Account settings → Connectors</strong> and click <strong>+ Custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Choose <strong>Remote</strong>, give it a name, paste the link from step 1 as the server URL, set Authentication to <strong>OAuth</strong> and the transport to <strong>Streamable HTTP</strong>, then save.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                ],
+                'plan'  => wp_kses( __( 'Requires a Perplexity <strong>Pro, Max or Enterprise</strong> plan.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+            ],
+            'grok' => [
+                'steps' => [
+                    wp_kses( __( 'Go to <code>grok.com/connectors</code> and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ),
+                    wp_kses( __( 'Click <strong>New Connector</strong>, choose <strong>Custom</strong> and paste the link from step 1 as the server URL (Streamable HTTP).', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    esc_html__( 'Save — Grok starts the sign-in right away.', 'cowboy-mcp' ),
+                ],
+                'plan'  => esc_html__( "Custom connectors are available on Grok's paid plans. On Business and Enterprise workspaces an admin provisions the connector first.", 'cowboy-mcp' ),
+            ],
+            'gemini-app' => [
+                'steps' => [
+                    wp_kses( __( 'Go to <code>gemini.google.com</code> and sign in with a <strong>personal</strong> Google account.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ),
+                    wp_kses( __( 'Open <strong>Settings → Connected apps → Custom apps</strong> and click <strong>Add a custom app</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    esc_html__( 'Paste the link from step 1 as the MCP server URL and continue — Gemini opens the sign-in page.', 'cowboy-mcp' ),
+                ],
+                'plan'  => esc_html__( 'Free. Custom apps are a Google beta: United States only, personal accounts, 18+, English, with Gemini Apps Activity turned on.', 'cowboy-mcp' ),
+                'beta'  => esc_html__( "Google is still rolling this out; if the sign-in page opens but Gemini reports an error afterwards, that is on Google's side — try again later or use another app.", 'cowboy-mcp' ),
+            ],
+            default => [ 'steps' => [], 'plan' => '' ],
+        };
+    }
+
+    /** Cloud assistants (Perplexity, Grok, Gemini): Open button → add-it steps → Approve. $is_local is accepted for signature parity and unused. */
+    private static function render_cloud_connector_panel( string $slug, array $def, string $endpoint, bool $is_local ): void {
+        $label       = (string) $def['label'];
+        $oauth_avail = class_exists( 'Cowboy_MCP_OAuth' );
+        // Read the option directly: Cowboy_MCP_OAuth::is_enabled() memoizes settings at request start (see render_oauth_connector_flow()).
+        $settings    = get_option( 'cowboy_mcp_settings', [] );
+        $oauth_on    = $oauth_avail && ! empty( $settings['enabled'] ) && ! empty( $settings['oauth_enabled'] );
+        $reachable   = $oauth_avail && Cowboy_MCP_OAuth::site_is_publicly_reachable();
+        $copy        = self::cloud_copy( $slug );
+
+        if ( ! $reachable ) {
+            self::render_unreachable_callout( $slug );
+        }
+        if ( ! $oauth_on && ! $reachable ) :
+            // Browsing never flips settings — enabling the connector is an explicit click.
+            ?>
+            <?php self::step_open( '1', __( 'Turn on browser sign-in', 'cowboy-mcp' ), '' ); ?>
+                    <p><?php
+                        /* translators: %s: AI app name, e.g. Perplexity */
+                        echo esc_html( sprintf( __( 'This opens a secure sign-in so %s can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' ), $label ) );
+                    ?></p>
+                    <form method="post" class="mcp-inline-form">
+                        <?php wp_nonce_field( 'cowboy_mcp_enable_oauth' ); ?>
+                        <button type="submit" name="cowboy_mcp_enable_oauth" class="cmcp-btn cmcp-btn--primary"><?php esc_html_e( 'Turn on browser sign-in', 'cowboy-mcp' ); ?></button>
+                    </form>
+            <?php self::step_close(); ?>
+            <?php
+            return;
+        endif;
+
+        if ( $reachable ) :
+            /* translators: %s: AI app name */
+            self::step_open( '1', sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ), '' );
+            ?>
+                <form method="post" target="_blank" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
+                    <?php wp_nonce_field( 'cowboy_mcp_open_app' ); ?>
+                    <button type="submit" name="cowboy_mcp_open_app" value="<?php echo esc_attr( $slug ); ?>" class="cmcp-btn cmcp-btn--primary"><?php
+                        /* translators: %s: AI app name */
+                        echo esc_html( sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ) );
+                        echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+                    ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
+                </form>
+                <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php
+                    /* translators: %s: AI app name */
+                    echo esc_html( sprintf( __( 'Connection link copied — paste it into %s as the server URL.', 'cowboy-mcp' ), $label ) );
+                ?></p>
+                <p><?php
+                    /* translators: %s: AI app name */
+                    echo esc_html( sprintf( __( 'Copies your connection link and opens %s in a new tab.', 'cowboy-mcp' ), $label ) );
+                ?></p>
+                <details class="mcp-local-details">
+                    <summary><?php esc_html_e( 'Copy the link yourself', 'cowboy-mcp' ); ?></summary>
+                    <div class="mcp-local-details-body"><?php self::render_manual_prereq( $oauth_on ); ?><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
+                </details>
+            <?php
+            self::step_close();
+        else :
+            self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' );
+            self::render_manual_prereq( $oauth_on );
+            self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) );
+            self::step_close();
+        endif;
+
+        /* translators: %s: AI app name */
+        self::step_open( '2', sprintf( __( 'Add it in %s', 'cowboy-mcp' ), $label ), '' );
+        ?>
+                <ol class="mcp-substeps">
+                    <?php foreach ( $copy['steps'] as $step ) : ?><li><?php echo $step; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></li><?php endforeach; ?>
+                </ol>
+        <?php
+        self::step_close();
+        self::step_open( '3', __( 'Approve access', 'cowboy-mcp' ), '' );
+        ?>
+                <p><?php
+                    /* translators: %s: AI app name */
+                    echo wp_kses( sprintf( __( '%s opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>.', 'cowboy-mcp' ), esc_html( $label ) ), [ 'strong' => [] ] );
+                ?></p>
+                <?php if ( ! empty( $copy['beta'] ) ) : ?><p class="description cmcp-beta-note"><?php echo $copy['beta']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php endif; ?>
+                <details class="mcp-local-details">
+                    <summary><?php
+                        /* translators: %s: AI app name */
+                        echo esc_html( sprintf( __( 'Which %s plans work?', 'cowboy-mcp' ), $label ) );
+                    ?></summary>
+                    <div class="mcp-local-details-body"><p><?php echo $copy['plan']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p></div>
+                </details>
+        <?php
+        self::step_close();
     }
 
     /** Manual connect paths with the connector off: the same Enable form, so a hand-added connector can sign in. */
@@ -1163,6 +1301,7 @@ class Cowboy_MCP_Admin_Connections {
                             <?php
                             match ( $client['type'] ) {
                                 'oauth'      => self::render_oauth_client_panel( $slug, $endpoint, $is_local, $keys, $new_key ),
+                                'oauth-cloud' => self::render_cloud_connector_panel( $slug, $client, $endpoint, $is_local ),
                                 'oauth-cli'  => self::render_oauth_cli_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local ),
                                 'oauth-link' => self::render_oauth_link_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local ),
                                 default      => self::render_api_client_panel( $slug, $client['label'], $keys, $endpoint, $new_key, $is_local ),
@@ -1208,6 +1347,9 @@ class Cowboy_MCP_Admin_Connections {
                                 <?php else : ?>
                                     <span class="cmcp-hint"><?php esc_html_e( 'Works locally', 'cowboy-mcp' ); ?></span>
                                 <?php endif; ?>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $client['beta'] ) ) : ?>
+                                <span class="cmcp-hint cmcp-hint--beta"><?php esc_html_e( 'Beta', 'cowboy-mcp' ); ?></span>
                             <?php endif; ?>
                         </button>
                     <?php endforeach; ?>

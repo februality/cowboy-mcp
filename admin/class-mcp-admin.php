@@ -397,6 +397,20 @@ class Cowboy_MCP_Admin {
             exit;
         }
 
+        // Cloud assistants (1.7.3): connector on + window open + watch, then a new tab to the app's connectors page.
+        if ( isset( $_POST['cowboy_mcp_open_app'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_open_app' ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
+            $app_slug = sanitize_key( wp_unslash( $_POST['cowboy_mcp_open_app'] ) );
+            $app_def  = Cowboy_MCP_Admin_Connections::client_registry()[ $app_slug ] ?? null;
+            if ( is_array( $app_def ) && 'oauth-cloud' === ( $app_def['type'] ?? '' ) ) {
+                self::enable_oauth_connector();
+                Cowboy_MCP_OAuth::open_registration_window();
+                Cowboy_MCP_Admin_Connections::set_connect_watch( (string) $app_def['watch'] );
+                add_filter( 'allowed_redirect_hosts', static fn( $hosts ) => array_merge( (array) $hosts, [ (string) $app_def['open_host'] ] ) );
+                wp_safe_redirect( (string) $app_def['open_url'] );
+                exit;
+            }
+        }
+
         if ( isset( $_POST['cowboy_mcp_enable_oauth'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_enable_oauth' ) ) {
             self::enable_oauth_connector( __( 'Browser sign-in enabled.', 'cowboy-mcp' ) );
         }

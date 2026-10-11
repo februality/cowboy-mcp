@@ -148,6 +148,7 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-client-ic svg { width: 18px; height: 18px; color: var(--cmcp-muted); display: block; }
 .cmcp-hint { grid-column: 2; font-size: 12px; color: var(--cmcp-ok); line-height: 1.3; }
 .cmcp-hint--pub { color: var(--cmcp-warn); }
+.wrap.cmcp .cmcp-hint--beta { color: var(--cmcp-warn); }
 .wrap.cmcp .cmcp-client:hover { background: #efefeb; }
 .wrap.cmcp .cmcp-client.mcp-conn-item--active { background: var(--cmcp-surface); border-color: var(--cmcp-border-strong); box-shadow: 0 1px 2px rgba(0,0,0,.05); font-weight: 600; }
 .cmcp-ep { margin-top: auto; padding: 14px 10px 0; border-top: 1px solid var(--cmcp-border); font-size: 12.5px; color: var(--cmcp-muted); }
