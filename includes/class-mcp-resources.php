@@ -363,7 +363,7 @@ class Cowboy_MCP_Resources {
         }
 
         global $wpdb;
-        $issues_table = $wpdb->base_prefix . 'wfIssues';
+        $issues_table = Cowboy_MCP_Compat::wordfence_table( 'wfIssues' );
         $open_count   = 0;
         if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $issues_table ) ) === $issues_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $open_count = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -401,7 +401,7 @@ class Cowboy_MCP_Resources {
 
         $seven_days_ago = time() - ( 7 * DAY_IN_SECONDS );
 
-        $hits_table = $wpdb->base_prefix . 'wfHits';
+        $hits_table = Cowboy_MCP_Compat::wordfence_table( 'wfHits' );
         if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $hits_table ) ) === $hits_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $result['attacks_blocked'] = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 "SELECT COUNT(*) FROM %i WHERE action LIKE %s AND attackLogTime > %f",
@@ -411,7 +411,7 @@ class Cowboy_MCP_Resources {
             ) );
         }
 
-        $logins_table = $wpdb->base_prefix . 'wfLogins';
+        $logins_table = Cowboy_MCP_Compat::wordfence_table( 'wfLogins' );
         if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $logins_table ) ) === $logins_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $result['failed_logins'] = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 "SELECT COUNT(*) FROM %i WHERE fail = 1 AND ctime > %f",

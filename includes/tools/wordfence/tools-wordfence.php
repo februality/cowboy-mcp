@@ -470,7 +470,7 @@ return [
 
             // Count open issues.
             global $wpdb;
-            $issues_table = $wpdb->base_prefix . 'wfIssues';
+            $issues_table = Cowboy_MCP_Compat::wordfence_table( 'wfIssues' );
             $open_count   = 0;
             if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $issues_table ) ) === $issues_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 $open_count = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -501,7 +501,7 @@ return [
 
         'wp_wordfence_list_scan_issues' => function ( array $a ): array|WP_Error {
             global $wpdb;
-            $table = $wpdb->base_prefix . 'wfIssues';
+            $table = Cowboy_MCP_Compat::wordfence_table( 'wfIssues' );
 
             if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) !== $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 return new WP_Error( 'wordfence_error', 'Wordfence issues table not found.' );
@@ -545,7 +545,7 @@ return [
 
         'wp_wordfence_resolve_scan_issue' => function ( array $a ): array|WP_Error {
             global $wpdb;
-            $table = $wpdb->base_prefix . 'wfIssues';
+            $table = Cowboy_MCP_Compat::wordfence_table( 'wfIssues' );
 
             $issue_id = (int) ( $a['issue_id'] ?? 0 );
             $action   = $a['action'] ?? '';
@@ -578,7 +578,7 @@ return [
 
         'wp_wordfence_delete_scan_issues' => function ( array $a ): array|WP_Error {
             global $wpdb;
-            $table = $wpdb->base_prefix . 'wfIssues';
+            $table = Cowboy_MCP_Compat::wordfence_table( 'wfIssues' );
 
             $status = $a['status'] ?? '';
             if ( ! in_array( $status, [ 'ignoreP', 'ignoreC' ], true ) ) {
@@ -873,7 +873,7 @@ return [
 
         'wp_wordfence_get_live_traffic' => function ( array $a ): array|WP_Error {
             global $wpdb;
-            $table = $wpdb->base_prefix . 'wfHits';
+            $table = Cowboy_MCP_Compat::wordfence_table( 'wfHits' );
 
             if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) !== $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 return new WP_Error( 'wordfence_error', 'Wordfence hits table not found. Live traffic may be disabled.' );
@@ -918,7 +918,7 @@ return [
 
         'wp_wordfence_get_login_attempts' => function ( array $a ): array|WP_Error {
             global $wpdb;
-            $table = $wpdb->base_prefix . 'wfLogins';
+            $table = Cowboy_MCP_Compat::wordfence_table( 'wfLogins' );
 
             if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) !== $table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 return new WP_Error( 'wordfence_error', 'Wordfence logins table not found.' );
@@ -1000,7 +1000,7 @@ return [
             $result = [];
 
             // Blocked attacks in last 7 days from wfHits.
-            $hits_table = $wpdb->base_prefix . 'wfHits';
+            $hits_table = Cowboy_MCP_Compat::wordfence_table( 'wfHits' );
             if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $hits_table ) ) === $hits_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 $seven_days_ago = time() - ( 7 * DAY_IN_SECONDS );
                 $result['attacks_blocked_7d'] = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1031,7 +1031,7 @@ return [
             }
 
             // Failed logins in last 7 days from wfLogins.
-            $logins_table = $wpdb->base_prefix . 'wfLogins';
+            $logins_table = Cowboy_MCP_Compat::wordfence_table( 'wfLogins' );
             if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $logins_table ) ) === $logins_table ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
                 $seven_days_ago = time() - ( 7 * DAY_IN_SECONDS );
                 $result['failed_logins_7d'] = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching

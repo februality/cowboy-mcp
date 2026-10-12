@@ -913,4 +913,19 @@ class Cowboy_MCP_Compat {
 			],
 		];
 	}
+
+	/**
+	 * Real name of a Wordfence table. Wordfence creates lowercase tables on current
+	 * installs (wfDB::networkTable() lowercases when wfSchema::usingLowercase()), so a
+	 * hard-coded camelCase name misses them on case-sensitive MySQL — the Linux default.
+	 *
+	 * @param string $name Wordfence's logical name, e.g. 'wfIssues', 'wfHits', 'wfLogins'.
+	 */
+	public static function wordfence_table( string $name ): string {
+		if ( class_exists( 'wfDB' ) && method_exists( 'wfDB', 'networkTable' ) ) {
+			return (string) wfDB::networkTable( $name );
+		}
+		global $wpdb;
+		return $wpdb->base_prefix . $name;
+	}
 }
