@@ -215,6 +215,13 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-seg-opt:first-child span { border-inline-start: 0; }
 .cmcp-seg-opt input:checked + span { background: #efefeb; color: var(--cmcp-text); font-weight: 600; }
 .cmcp-seg-opt input:focus-visible + span { outline: 2px solid var(--cmcp-ink); outline-offset: -2px; }
+.cmcp-seg-opt span { white-space: nowrap; }
+@media (max-width: 600px) {
+	/* Narrow panels: let whole options wrap to a second row instead of breaking a label mid-word. */
+	.cmcp-seg { flex-wrap: wrap; height: auto; min-height: 34px; max-width: 100%; }
+	.cmcp-seg-opt { flex: 1 1 auto; }
+	.cmcp-seg-opt span { flex: 1 1 auto; justify-content: center; min-height: 32px; padding: 0 10px; }
+}
 .cmcp-scope-select { margin: 0 0 10px; }
 /* In a field row the margin would lift the selector off the row's centre line. */
 .cmcp-formrow .cmcp-scope-select { margin: 0; }
