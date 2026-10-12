@@ -479,6 +479,11 @@ return [
 						return new WP_Error( 'invalid_params', 'Transient name is required for delete action.' );
 					}
 					$name    = sanitize_key( $name );
+					// Cowboy's own transients (sign-in window, auth codes, sessions, rate
+					// limits, one-time keys) are off limits, as in the wp_cli gate.
+					if ( str_starts_with( $name, 'cowboy_mcp_' ) ) {
+						return new WP_Error( 'protected_transient', "Transient '{$name}' belongs to Cowboy MCP (sign-in window, sessions, rate limits, one-time keys) and cannot be deleted through this tool." );
+					}
 					$existed = get_transient( $name );
 					$deleted = delete_transient( $name );
 
