@@ -1493,6 +1493,9 @@ class Cowboy_MCP_Admin_Connections {
                     }
                     foreach ( $connections as $c ) {
                         $who = class_exists( 'Cowboy_MCP_OAuth' ) ? Cowboy_MCP_OAuth::client_display_name( $c['client_info'] ?? null ) : null;
+                        if ( null === $who && ! empty( $c['slug'] ) && isset( Cowboy_MCP_OAuth::CLIENT_LABELS[ $c['slug'] ] ) ) {
+                            $who = Cowboy_MCP_OAuth::CLIENT_LABELS[ $c['slug'] ]; // identity from the verified redirect host, e.g. "Gemini" on Google's "Google" row
+                        }
                         if ( $who && $who !== (string) $c['client_name'] ) {
                             /* translators: 1: app name detected from its first request, 2: WordPress username of the approving admin */
                             $sub = sprintf( __( '%1$s · approved by %2$s', 'cowboy-mcp' ), $who, $c['user'] );

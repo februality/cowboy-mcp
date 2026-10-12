@@ -290,7 +290,10 @@ class Cowboy_MCP_OAuth {
         return str_starts_with( $name, 'Visual Studio Code' ) ? 'vscode' : null;
     }
 
-    /** Human name for a clientInfo: the registry label, else the client's own title/name (capped). */
+    /** clientInfo names that carry no identity (SDK defaults): the Gemini app sends `mcp` / `0.1.0` (verified 2026-10-11). */
+    const GENERIC_CLIENT_NAMES = [ 'mcp', 'mcp-client', 'example-client', 'client', 'connectors-manager' ]; // `connectors-manager` / `0.1.0` = Grok (verified 2026-10-12)
+
+    /** Human name for a clientInfo: the registry label, else the client's own title/name (capped); null for a generic name. */
     public static function client_display_name( $info ): ?string {
         if ( ! is_array( $info ) || empty( $info['name'] ) ) {
             return null;
@@ -299,7 +302,11 @@ class Cowboy_MCP_OAuth {
         if ( null !== $slug ) {
             return self::CLIENT_LABELS[ $slug ];
         }
-        return mb_substr( (string) ( $info['title'] ?? $info['name'] ), 0, 40 );
+        $name = (string) ( $info['title'] ?? $info['name'] );
+        if ( in_array( strtolower( trim( $name ) ), self::GENERIC_CLIENT_NAMES, true ) ) {
+            return null;
+        }
+        return mb_substr( $name, 0, 40 );
     }
 
     /** Closed-window DCR: remember who tried (throttled, because this endpoint is unauthenticated). */
@@ -1083,6 +1090,7 @@ class Cowboy_MCP_OAuth {
                 'last_used'   => $info['last_used'],
                 'tool_scope'  => ( isset( $clients[ $cid ]['tool_scope'] ) && is_array( $clients[ $cid ]['tool_scope'] ) ) ? $clients[ $cid ]['tool_scope'] : null,
                 'client_info' => Cowboy_MCP_Auth::client_info_for( 'oauth', (string) $cid ),
+                'slug'        => is_array( $clients[ $cid ] ) ? self::client_slug_for_row( $clients[ $cid ] ) : null,
             ];
         }
         return $out;
