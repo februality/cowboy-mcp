@@ -291,7 +291,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Screenshots ==
 
-1. Connections tab - pick your AI tool (claude.ai, ChatGPT, Claude Code, Claude Desktop, Codex, Cursor, VS Code, and more): one click adds the site to Claude or ChatGPT, terminal tools get a ready-made command, and every app then signs in through your browser. Connected apps - API keys and app connections - are listed in one table with when each was created and last used, and can be limited to chosen tools or revoked.
+1. Connections tab - pick your AI tool (claude.ai, ChatGPT, Gemini, Grok, Perplexity, Claude Code, Codex, Cursor, VS Code, n8n, and more): one click adds the site to Claude or opens the other AI apps with your link copied, terminal tools get a ready-made command, and every app then signs in through your browser. Connected apps - API keys and app connections - are listed in one table with when each was created and last used, and can be limited to chosen tools or revoked.
 2. Settings tab - turn the server on or off, require Safe Mode confirmation for destructive actions, turn on Browser sign-in (OAuth) for apps that connect without a key, set a per-key rate limit, tune the undo journal and database checkpoints, and opt in to advanced Power Mode.
 3. Activity tab - a per-change undo journal: review every change your agents made and roll any of them back individually, plus one-click database checkpoints you can restore the whole site to.
 4. Logs tab - a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
@@ -301,16 +301,16 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 == Changelog ==
 
 = 1.7.3 =
-* New: connect Perplexity, Grok and the Gemini app from the Connections tab: one click copies the link and opens the app; the live Connected confirmation names the app once it signs in.
-* New: `wp_search_replace` takes an optional `post_id` to scope a replacement to one post or page; the dry-run preview then reports the matched occurrences in that post (contributed by dandry, PR #4).
-* New: n8n panel: the MCP Client Tool node's fields ready to copy, with an API key or OAuth2.
-* Fix: ChatGPT connects again. ChatGPT now identifies itself with a client metadata document that offers both `private_key_jwt` and `none`; 1.7.2 read only the first and refused it ("the app's identity document on chatgpt.com is invalid", log code `cimd_auth_method`). Documents that list `none` are accepted as public clients, as before with PKCE.
+* New: connect Perplexity, Grok and the Gemini app from the Connections tab. One click copies your site link and opens the app, and the page confirms when the app has signed in. There is also an n8n panel with the MCP Client Tool fields ready to copy.
+* New: `wp_search_replace` takes an optional `post_id` to limit a replacement to one post or page (contributed by dandry, PR #4).
+* Fix: ChatGPT connects again. 1.7.2 refused ChatGPT's new sign-in identity with "the app's identity document on chatgpt.com is invalid".
 * Fix: restoring a database checkpoint no longer runs out of memory on larger sites.
-* Fix: Wordfence scan issues, live traffic, login attempts and the activity report work again on current Wordfence installs (lowercase table names).
-* Fix: an agent can no longer deactivate Cowboy MCP itself, which dropped the connection with no way back except wp-admin.
-* Hardening: `wp_cli` refuses commands that would print credentials and redacts password hashes and secrets from its output; Cowboy MCP's own transients cannot be deleted through `wp_get_transients`.
-* Fix: protocol conformance — the `completions` capability is advertised under its MCP name, and malformed requests get JSON-RPC error responses.
-* Fix: the access-level selector no longer breaks its labels on phones.
+* Fix: the Wordfence tools work again on current Wordfence installs, and the activity report shows readable IP addresses.
+* Fix: the WooCommerce customer report lists top spenders.
+* Fix: an agent can no longer deactivate Cowboy MCP and cut off its own connection.
+* Improved: "Last used" on the Connections tab stays accurate after an app's sign-in expires, and reconnecting an app you removed points you to the New connections switch.
+* Security: `wp_cli` refuses commands that would print passwords, salts or keys and redacts them from its output; agents can no longer delete Cowboy MCP's own transients.
+* Fixes: MCP protocol conformance (`completions` capability, JSON-RPC errors for malformed requests), PHP warnings when an agent creates a comment without an author name, and the access-level selector on phones.
 
 = Earlier versions =
 
