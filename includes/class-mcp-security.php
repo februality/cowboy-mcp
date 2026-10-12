@@ -442,13 +442,30 @@ class Cowboy_MCP_Security {
             }
             return null;
         }
-        if ( 'option' === $noun && in_array( $verb, [ 'get', 'pluck', 'list' ], true ) ) {
+        if ( 'option' === $noun && 'list' === $verb ) {
+            // `option list` prints option_value for every match (secrets of any plugin
+            // included, under any name or --search pattern). Names only are fine.
+            $fields = null;
+            foreach ( $tokens as $tok ) {
+                if ( preg_match( '/^--fields?=(.*)$/i', (string) $tok, $m ) ) {
+                    $fields = strtolower( $m[1] );
+                }
+                if ( preg_match( '/^--format=(count|total_bytes)$/i', (string) $tok ) ) {
+                    $fields = 'option_name';
+                }
+            }
+            if ( null === $fields || preg_match( '/(^|,)\s*(option_)?value\s*(,|$)/', $fields ) ) {
+                return 'option list prints every matching option value. List names with --field=option_name, then option get the ones you need.';
+            }
+            return null;
+        }
+        if ( 'option' === $noun && in_array( $verb, [ 'get', 'pluck' ], true ) ) {
             // Confidentiality only: write-protected but public options (siteurl, home,
             // active_plugins…) stay readable.
             foreach ( array_slice( $words, 2 ) as $w ) {
-                $name = strtolower( rtrim( $w, '*%' ) );
+                $name = strtolower( $w );
                 if ( self::is_hard_protected_option( $name )
-                    || preg_match( '/secret|token|api_key|_key$|password|nonce|^woocommerce_.+_settings$/', $name ) ) {
+                    || preg_match( '/secret|token|api_key|_key$|_salt$|password|nonce|^woocommerce_.+_settings$/', $name ) ) {
                     return "Option {$w} holds a credential or Cowboy MCP internals.";
                 }
             }
@@ -456,8 +473,13 @@ class Cowboy_MCP_Security {
         }
         if ( 'transient' === $noun ) {
             foreach ( array_slice( $words, 2 ) as $w ) {
-                if ( str_starts_with( strtolower( $w ), 'cowboy_mcp_' ) || preg_match( '/^(_site)?_transient_(timeout_)?cowboy_mcp_/i', $w ) ) {
-                    return "Transient {$w} belongs to Cowboy MCP (sign-in codes, one-time keys).";
+                // A --search pattern (`cowboy*`, `%mcp%`) counts when it could match one of ours.
+                $re = '/^' . strtr( preg_quote( strtolower( $w ), '/' ), [ '\\*' => '.*', '%' => '.*', '\\?' => '.' ] ) . '$/';
+                foreach ( [ 'cowboy_mcp_new_key_1', '_transient_cowboy_mcp_oauth_reg_open' ] as $ours ) {
+                    if ( str_starts_with( strtolower( $w ), 'cowboy_mcp_' ) || preg_match( '/^(_site)?_transient_(timeout_)?cowboy_mcp_/i', $w )
+                        || ( strpbrk( $w, '*%?' ) && preg_match( $re, $ours ) ) ) {
+                        return "Transient {$w} belongs to Cowboy MCP (sign-in codes, one-time keys).";
+                    }
                 }
             }
         }
@@ -757,7 +779,7 @@ class Cowboy_MCP_Security {
                         $hits_self = true;
                     }
                 }
-                if ( ! $hits_self && in_array( '--all', array_map( 'strtolower', $t['flags'] ), true ) ) {
+                if ( ! $hits_self && preg_grep( '/^--all(=.*)?$/i', $t['flags'] ) ) {
                     $hits_self = true;
                     foreach ( $t['flags'] as $flag ) {
                         if ( preg_match( '/^--exclude=(.*)$/i', $flag, $m ) ) {
@@ -916,7 +938,7 @@ class Cowboy_MCP_Security {
                 '/\$wp\$2[aby]\$\d{2}\$[^\s"\',]+/',
                 '/\$2[aby]\$\d{2}\$[^\s"\',]+/',
                 '/\$[PH]\$[^\s"\',]{31,}/',
-                '/\$argon2(?:id|i|d)\$[^\s"\',]+/',
+                '/\$argon2(?:id|i|d)\$v=\d+\$[^\s"\']+/',
                 '/\$generic\$[^\s"\',]+/',
                 '/\bcmcp_(?:at|rt)_[A-Za-z0-9_\-]{16,}/',
             ],
@@ -925,10 +947,14 @@ class Cowboy_MCP_Security {
         );
         foreach ( self::SECRET_CONSTANTS as $c ) {
             $v = defined( $c ) ? (string) constant( $c ) : '';
-            if ( strlen( $v ) < 8 ) {
+            // Skip short and all-letter values: a dev DB_PASSWORD such as "password" or
+            // "wordpress" would otherwise be cut out of slugs, URLs and prose.
+            if ( strlen( $v ) < 8 || preg_match( '/^[a-z]+$/i', $v ) ) {
                 continue;
             }
-            $text = str_replace( [ $v, substr( (string) wp_json_encode( $v ), 1, -1 ) ], '[REDACTED]', $text );
+            foreach ( array_unique( [ $v, substr( (string) wp_json_encode( $v ), 1, -1 ) ] ) as $needle ) {
+                $text = (string) preg_replace( '/(?<![\w-])' . preg_quote( $needle, '/' ) . '(?![\w-])/', '[REDACTED]', $text );
+            }
         }
         return $text;
     }
