@@ -1399,22 +1399,6 @@ class Cowboy_MCP_Admin_Connections {
                     <?php endforeach; ?>
                 <?php endforeach; ?>
             </nav>
-            <div class="cmcp-ep">
-                <?php esc_html_e( 'Another MCP client? Use this endpoint:', 'cowboy-mcp' ); ?>
-                <div class="cmcp-ep-row">
-                    <code id="cmcp-endpoint"><?php echo esc_html( $endpoint ); ?></code>
-                    <button type="button" class="cmcp-icon-btn mcp-copy-btn" data-copy-target="cmcp-endpoint" data-cmcp-icon aria-label="<?php esc_attr_e( 'Copy endpoint URL', 'cowboy-mcp' ); ?>"><?php
-                        echo Cowboy_MCP_Admin::icon( 'copy' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literal.
-                    ?></button>
-                </div>
-                <?php
-                // A client added by hand signs in like the listed ones, so it needs sign-in on too.
-                $s = get_option( 'cowboy_mcp_settings', [] );
-                if ( class_exists( 'Cowboy_MCP_OAuth' ) && ! empty( $s['enabled'] ) && empty( $s['oauth_enabled'] ) ) {
-                    self::render_enable_first();
-                }
-                ?>
-            </div>
         </div>
         <?php
     }
