@@ -442,8 +442,9 @@ class Cowboy_MCP_Admin_Connections {
 
     /**
      * Per-app sentences for the cloud-connector panels. Whole sentences; %s is only ever the app name elsewhere.
-     * 'plan' = tier note. The wording below (research 2026-10-07) is a PLACEHOLDER: Task 4 rewrites the
-     * 'plan' strings from the free-tier and paid-tier sign-ins.
+     * 'top' = short hard requirement shown as a callout above step 1 (Perplexity's paid plan); 'plan' = tier note; 'after' = what the app shows once the admin clicks Approve (optional).
+     * Gemini verified live 2026-10-11 (personal Google account on Google AI Plus; a Workspace account has no
+     * Custom apps section). Perplexity/Grok wording is from the 2026-10-07 research until their live sign-ins.
      */
     private static function cloud_copy( string $slug ): array {
         return match ( $slug ) {
@@ -465,12 +466,12 @@ class Cowboy_MCP_Admin_Connections {
             ],
             'gemini-app' => [
                 'steps' => [
-                    wp_kses( __( 'Go to <code>gemini.google.com</code> and sign in with a <strong>personal</strong> Google account.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ),
-                    wp_kses( __( 'Open <strong>Settings → Connected apps → Custom apps</strong> and click <strong>Add a custom app</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    esc_html__( 'Paste the link from step 1 as the MCP server URL and continue — Gemini opens the sign-in page.', 'cowboy-mcp' ),
+                    wp_kses( __( 'Sign in to Gemini with a <strong>personal</strong> Google account — work and school accounts do not get Custom apps.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Under <strong>Settings → Connected Apps → Custom apps</strong>, paste the link from step 1 into <strong>Add a custom app link</strong> and click <strong>Next</strong> twice.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Tick the acknowledgement, click <strong>Connect</strong>, then <strong>Agree and continue</strong> — Gemini opens the sign-in page.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 ],
-                'plan'  => esc_html__( 'Free. Custom apps are a Google beta: United States only, personal accounts, 18+, English, with Gemini Apps Activity turned on.', 'cowboy-mcp' ),
-                'beta'  => esc_html__( "Google is still rolling this out; if the sign-in page opens but Gemini reports an error afterwards, that is on Google's side — try again later or use another app.", 'cowboy-mcp' ),
+                'plan'  => esc_html__( 'Google lists no plan requirement (verified on a Google AI Plus account). You need a personal Google account in the United States, 18 or over, with Gemini in English and Keep Activity on; work and school accounts do not get Custom apps.', 'cowboy-mcp' ),
+                'after' => wp_kses( __( 'Back in Gemini, click <strong>Connect</strong> on the “Save your custom app” card. In a chat, type <code>@</code> to pick the app; Gemini asks you to allow its first tool run.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
             default => [ 'steps' => [], 'plan' => '' ],
         };
@@ -553,7 +554,7 @@ class Cowboy_MCP_Admin_Connections {
                     /* translators: %s: AI app name */
                     echo wp_kses( sprintf( __( '%s opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>.', 'cowboy-mcp' ), esc_html( $label ) ), [ 'strong' => [] ] );
                 ?></p>
-                <?php if ( ! empty( $copy['beta'] ) ) : ?><p class="description cmcp-beta-note"><?php echo $copy['beta']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php endif; ?>
+                <?php if ( ! empty( $copy['after'] ) ) : ?><p><?php echo $copy['after']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php endif; ?>
                 <details class="mcp-local-details">
                     <summary><?php
                         /* translators: %s: AI app name */
@@ -1385,9 +1386,6 @@ class Cowboy_MCP_Admin_Connections {
                                 <?php else : ?>
                                     <span class="cmcp-hint"><?php esc_html_e( 'Works locally', 'cowboy-mcp' ); ?></span>
                                 <?php endif; ?>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $client['beta'] ) ) : ?>
-                                <span class="cmcp-hint cmcp-hint--beta"><?php esc_html_e( 'Beta', 'cowboy-mcp' ); ?></span>
                             <?php endif; ?>
                         </button>
                     <?php endforeach; ?>

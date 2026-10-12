@@ -301,7 +301,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 == Changelog ==
 
 = 1.7.3 =
-* New: connect Perplexity, Grok and the Gemini app (beta) from the Connections tab: one click copies the link and opens the app; the live Connected confirmation names the app once it signs in.
+* New: connect Perplexity, Grok and the Gemini app from the Connections tab: one click copies the link and opens the app; the live Connected confirmation names the app once it signs in.
 * New: n8n panel: the MCP Client Tool node's fields ready to copy, with an API key or OAuth2.
 
 = Earlier versions =
