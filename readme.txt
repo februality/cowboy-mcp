@@ -305,6 +305,12 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * New: `wp_search_replace` takes an optional `post_id` to scope a replacement to one post or page; the dry-run preview then reports the matched occurrences in that post (contributed by dandry, PR #4).
 * New: n8n panel: the MCP Client Tool node's fields ready to copy, with an API key or OAuth2.
 * Fix: ChatGPT connects again. ChatGPT now identifies itself with a client metadata document that offers both `private_key_jwt` and `none`; 1.7.2 read only the first and refused it ("the app's identity document on chatgpt.com is invalid", log code `cimd_auth_method`). Documents that list `none` are accepted as public clients, as before with PKCE.
+* Fix: restoring a database checkpoint no longer runs out of memory on larger sites.
+* Fix: Wordfence scan issues, live traffic, login attempts and the activity report work again on current Wordfence installs (lowercase table names).
+* Fix: an agent can no longer deactivate Cowboy MCP itself, which dropped the connection with no way back except wp-admin.
+* Hardening: `wp_cli` refuses commands that would print credentials and redacts password hashes and secrets from its output; Cowboy MCP's own transients cannot be deleted through `wp_get_transients`.
+* Fix: protocol conformance — the `completions` capability is advertised under its MCP name, and malformed requests get JSON-RPC error responses.
+* Fix: the access-level selector no longer breaks its labels on phones.
 
 = Earlier versions =
 
