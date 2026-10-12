@@ -1531,12 +1531,25 @@ class Cowboy_MCP_OAuth {
                 && $client_id !== '' && strlen( $client_id ) <= self::SIGNED_MAX_ID && preg_match( '/^[A-Za-z0-9._~-]+$/', $client_id )
                 && $redirect_uri !== '';
             if ( ! $adoptable ) {
-                self::authorize_fatal( __( 'This site has no record of this app. That usually means the site\'s database was restored or copied from another site. To let the app connect again: under Settings > Cowboy MCP > Connections, pick the app ("Connect another app" if the list is not shown) and click "Enable for 30 minutes", then use Reconnect in the app and approve it here.', 'cowboy-mcp' ) );
+                // Same throttled note a closed-window registration leaves, so the Connections tab
+                // shows "<App> tried to connect" with the Enable button this page tells the admin
+                // to click (verified live 2026-10-12: Gemini reconnects with its old client_id
+                // after a revoke, so no DCR call ever records the attempt).
+                if ( '' !== $redirect_uri && ! self::registration_open() ) {
+                    self::record_blocked_registration( [ 'client_name' => '', 'redirect_uris' => [ $redirect_uri ] ] );
+                }
+                self::authorize_fatal( __( 'This site has no record of this app — it was revoked here, or the site\'s database was restored or copied from another site. To let it connect again: open Settings > Cowboy MCP > Connections in WordPress and click "Enable for 30 minutes" in the notice about this app, then reconnect in the app and approve it here.', 'cowboy-mcp' ) );
             }
             $adopting = true;
             $client   = [
                 'client_id'                  => $client_id,
-                'client_name'                => sprintf( 'App at %s', (string) wp_parse_url( $redirect_uri, PHP_URL_HOST ) ),
+                // The redirect host is allowlisted and verified, so a known host names the app
+                // ("Gemini"); anything else keeps the neutral "App at <host>".
+                'client_name'                => ( static function () use ( $redirect_uri ): string {
+                    $host = (string) wp_parse_url( $redirect_uri, PHP_URL_HOST );
+                    $slug = self::client_slug_for_row( [ 'client_name' => '', 'redirect_uris' => [ $redirect_uri ] ] );
+                    return null !== $slug ? self::CLIENT_LABELS[ $slug ] : sprintf( 'App at %s', $host );
+                } )(),
                 'redirect_uris'              => [ $redirect_uri ],
                 'created'                    => time(),
                 'last_used'                  => null,
@@ -1624,6 +1637,7 @@ class Cowboy_MCP_OAuth {
                 }
                 $clients[ $client_id ] = $client;
                 update_option( self::CLIENTS_OPTION, $clients, false );
+                self::clear_blocked_attempts(); // the "<App> tried to connect" notice is answered, same as after a registration
                 Cowboy_MCP_Auth::log( 'oauth_client_adopted', [ 'redirect_host' => (string) wp_parse_url( $redirect_uri, PHP_URL_HOST ) ] );
             }
             if ( $cimd ) {
@@ -1788,13 +1802,18 @@ wp_print_styles( 'cowboy-mcp-oauth-consent' );
     /* translators: %s: host name the identity document was fetched from, e.g. claude.ai */
     printf( esc_html__( 'Identity published by %s. Approve only if you just started this connection yourself.', 'cowboy-mcp' ), '<strong>' . esc_html( (string) wp_parse_url( (string) $client['client_id'], PHP_URL_HOST ) ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
  ?></p>
+ <?php elseif ( ! empty( $client['adopted'] ) && null !== self::client_slug_for_row( $client ) ) : ?>
+ <p class="muted note"><?php
+    /* translators: %s: the app's sign-in host, e.g. oauth-redirect.googleusercontent.com */
+    printf( esc_html__( 'The app is named after its sign-in address (%s). Approve only if you just started this connection yourself.', 'cowboy-mcp' ), '<strong>' . esc_html( (string) wp_parse_url( (string) ( $client['redirect_uris'][0] ?? '' ), PHP_URL_HOST ) ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+ ?></p>
  <?php else : ?>
  <p class="muted note"><?php esc_html_e( 'The app name above is supplied by the app and is not verified. Approve only if you just started this connection yourself.', 'cowboy-mcp' ); ?></p>
  <?php endif; ?>
  <?php if ( ! empty( $client['rehydrated'] ) ) : ?>
  <p class="muted note"><?php esc_html_e( 'This site has no stored record of this connection. That is normal after a database restore or a staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
  <?php elseif ( ! empty( $client['adopted'] ) && empty( get_option( self::CLIENTS_OPTION, [] )[ $client['client_id'] ] ) ) : ?>
- <p class="muted note"><?php esc_html_e( 'This site has no record of this app. Approving registers it here and sends you to the address above. That is expected after a database restore or a staging sync for a connection made before Cowboy MCP 1.6.8. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
+ <p class="muted note"><?php esc_html_e( 'This site has no record of this app. Approving registers it here and sends you to the address above. That is expected after you revoked the app on this site, or after a database restore or staging sync. If you did not just start this from your AI app, choose Deny.', 'cowboy-mcp' ); ?></p>
  <?php endif; ?>
  <form method="post" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url above ?>">
     <?php wp_nonce_field( 'cowboy_mcp_oauth_consent' ); ?>
