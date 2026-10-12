@@ -619,9 +619,19 @@ class Cowboy_MCP_OAuth {
         if ( ( $doc['client_id'] ?? null ) !== $url ) {
             return new WP_Error( 'cimd_id_mismatch', 'client_id in the document does not match its URL.' );
         }
-        $method = (string) ( $doc['token_endpoint_auth_method'] ?? 'none' );
-        if ( $method !== 'none' || isset( $doc['client_secret'] ) || isset( $doc['client_secret_expires_at'] ) ) {
-            return new WP_Error( 'cimd_auth_method', 'Only public clients (token_endpoint_auth_method "none") are supported.' );
+        // This server authenticates no client at the token endpoint (AS metadata advertises only
+        // "none"; PKCE + the redirect host are the binding). A document qualifies when "none" is a
+        // method the client can use: the singular `token_endpoint_auth_method` (draft §4.1), or the
+        // list `token_endpoint_auth_methods_supported` that ChatGPT publishes since 2026-10 — there
+        // the singular field is only a transitional preference ("private_key_jwt") and the client
+        // picks from the intersection with the server's list, which here is {none}. A document
+        // that cannot do "none" (draft §6.2 confidential client) is refused, as are shared secrets.
+        $methods = [ (string) ( $doc['token_endpoint_auth_method'] ?? 'none' ) ];
+        if ( isset( $doc['token_endpoint_auth_methods_supported'] ) && is_array( $doc['token_endpoint_auth_methods_supported'] ) ) {
+            $methods = array_merge( $methods, array_filter( $doc['token_endpoint_auth_methods_supported'], 'is_string' ) );
+        }
+        if ( ! in_array( 'none', $methods, true ) || isset( $doc['client_secret'] ) || isset( $doc['client_secret_expires_at'] ) ) {
+            return new WP_Error( 'cimd_auth_method', 'Only public clients (token_endpoint_auth_method "none", or "none" among token_endpoint_auth_methods_supported) are supported.' );
         }
         $uris = [];
         foreach ( (array) ( $doc['redirect_uris'] ?? [] ) as $u ) {

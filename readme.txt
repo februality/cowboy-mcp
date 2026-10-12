@@ -304,6 +304,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * New: connect Perplexity, Grok and the Gemini app from the Connections tab: one click copies the link and opens the app; the live Connected confirmation names the app once it signs in.
 * New: `wp_search_replace` takes an optional `post_id` to scope a replacement to one post or page; the dry-run preview then reports the matched occurrences in that post (contributed by dandry, PR #4).
 * New: n8n panel: the MCP Client Tool node's fields ready to copy, with an API key or OAuth2.
+* Fix: ChatGPT connects again. ChatGPT now identifies itself with a client metadata document that offers both `private_key_jwt` and `none`; 1.7.2 read only the first and refused it ("the app's identity document on chatgpt.com is invalid", log code `cimd_auth_method`). Documents that list `none` are accepted as public clients, as before with PKCE.
 
 = Earlier versions =
 
