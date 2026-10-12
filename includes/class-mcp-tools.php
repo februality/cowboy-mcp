@@ -329,6 +329,14 @@ class Cowboy_MCP_Tools {
             }
         }
 
+        // The dry-run and safe-mode previews bypass the handler's validation.
+        if ( $name === 'wp_search_replace' && function_exists( 'cowboy_mcp_search_replace_normalize_args' ) ) {
+            $args = cowboy_mcp_search_replace_normalize_args( $args );
+            if ( is_wp_error( $args ) ) {
+                return $args;
+            }
+        }
+
         // Dry-run intercept: preview what the tool would do without executing.
         if ( ! empty( $args['dry_run'] ) ) {
             $annotations = self::$tool_map[ $name ]['annotations'] ?? [];
@@ -573,6 +581,15 @@ class Cowboy_MCP_Tools {
             'description' => $description,
             'parameters'  => $filtered_args,
         ];
+        // wp_search_replace scoped to one post: count the real matches in its
+        // post_content. Global previews keep the generic echo.
+        if ( $name === 'wp_search_replace' && array_key_exists( 'post_id', $filtered_args ) ) {
+            self::boot_domains();
+            if ( function_exists( 'cowboy_mcp_search_replace_plan' ) ) {
+                $preview['plan']        = cowboy_mcp_search_replace_plan( $filtered_args );
+                $preview['description'] = "Would search and replace text in post_content of post #{$filtered_args['post_id']}.";
+            }
+        }
         // Inbound abilities: Cowboy has no model of a third-party ability's effect.
         if ( ( self::$tool_categories[ $name ] ?? '' ) === 'abilities' ) {
             $preview['description'] = "Would run ability {$name} with the provided parameters.";
