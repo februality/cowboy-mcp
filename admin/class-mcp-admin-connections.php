@@ -451,10 +451,12 @@ class Cowboy_MCP_Admin_Connections {
             'perplexity' => [
                 'steps' => [
                     wp_kses( __( 'Go to <code>perplexity.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ),
-                    wp_kses( __( 'Open <strong>Account settings → Connectors</strong> and click <strong>+ Custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    wp_kses( __( 'Choose <strong>Remote</strong>, give it a name, paste the link from step 1 as the server URL, set Authentication to <strong>OAuth</strong> and the transport to <strong>Streamable HTTP</strong>, then save.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Open <strong>Customize → Connectors</strong>, click <strong>+ Custom connector</strong> and choose <strong>Add MCP connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Give it a name, paste the link from step 1 as the <strong>MCP server URL</strong> (Advanced already says OAuth and Streamable HTTP), tick the acknowledgement and click <strong>Add</strong>. Open the new connector and click <strong>Add connector</strong> — Perplexity opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 ],
-                'plan'  => wp_kses( __( 'Requires a Perplexity <strong>Pro, Max or Enterprise</strong> plan.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'top'   => wp_kses( __( '<strong>Needs Perplexity Pro, Max or Enterprise.</strong> The free plan has no custom connectors.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'plan'  => esc_html__( 'Verified on Pro (2026-10-12). On Enterprise, an admin has to allow member custom connectors first.', 'cowboy-mcp' ),
+                'after' => wp_kses( __( 'Back in Perplexity, the connector shows a check mark. Ask a question that names it; Perplexity asks you to reply <code>yes</code> before its first tool run.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             ],
             'grok' => [
                 'steps' => [
@@ -491,6 +493,11 @@ class Cowboy_MCP_Admin_Connections {
         if ( ! $reachable ) {
             self::render_unreachable_callout( $slug );
         }
+        if ( ! empty( $copy['top'] ) ) : // a hard requirement the admin must know before step 1 (owner ask 2026-10-12: Perplexity's paid plan)
+            ?>
+            <div class="cmcp-callout cmcp-callout--warn"><p><?php echo $copy['top']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p></div>
+            <?php
+        endif;
         if ( ! $oauth_on && ! $reachable ) :
             // Browsing never flips settings — enabling the connector is an explicit click.
             ?>

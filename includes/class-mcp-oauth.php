@@ -43,7 +43,7 @@ class Cowboy_MCP_OAuth {
      * via the cowboy_mcp_oauth_redirect_hosts filter; oauth_redirect_allowlist=false
      * restores the old any-host behaviour.
      */
-    const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'claude.com', 'anthropic.com', 'vscode.dev', 'cursor.com', 'perplexity.ai', 'n8n.cloud', 'grok.com', 'mistral.ai', 'antigravity.google', 'oauth-redirect.googleusercontent.com' ]; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- OAuth redirect-host allowlist entry (Gemini app callback), not an asset URL.
+    const DEFAULT_REDIRECT_HOSTS = [ 'chatgpt.com', 'openai.com', 'claude.ai', 'claude.com', 'anthropic.com', 'vscode.dev', 'cursor.com', 'perplexity.ai', 'perplexity.com', 'n8n.cloud', 'grok.com', 'mistral.ai', 'antigravity.google', 'oauth-redirect.googleusercontent.com' ]; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- OAuth redirect-host allowlist entry (Gemini app callback), not an asset URL.
     const LOOPBACK_HOSTS         = [ 'localhost', '127.0.0.1', '::1' ];
     /**
      * Private-use redirect URIs accepted verbatim (RFC 8252 §7.1), mapped to the client slug.
@@ -451,7 +451,7 @@ class Cowboy_MCP_OAuth {
      * a JSON document claiming to be "Claude Code". Administrators extend it with the same
      * extra-hosts setting as redirects, or via the cowboy_mcp_oauth_cimd_hosts filter.
      */
-    const CIMD_DOCUMENT_HOSTS = [ 'claude.ai', 'claude.com', 'anthropic.com', 'chatgpt.com', 'openai.com' ];
+    const CIMD_DOCUMENT_HOSTS = [ 'claude.ai', 'claude.com', 'anthropic.com', 'chatgpt.com', 'openai.com', 'perplexity.ai', 'perplexity.com' ]; // Perplexity: https://www.perplexity.ai/.well-known/mcp-client.json (verified live 2026-10-12; no DCR any more)
 
     /**
      * Whether a client_id is a Client ID Metadata Document URL
