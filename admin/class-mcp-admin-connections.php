@@ -1129,7 +1129,7 @@ class Cowboy_MCP_Admin_Connections {
     /** One-line copyable text (the test prompt) — lighter than a terminal block. */
     private static function render_chip( string $id, string $text, string $copy_label ): void {
         ?>
-        <div class="cmcp-chip"><code id="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $text ); ?></code><button type="button" class="cmcp-icon-btn mcp-copy-btn" data-copy-target="<?php echo esc_attr( $id ); ?>" data-cmcp-icon aria-label="<?php echo esc_attr( $copy_label ); ?>"><?php
+        <div class="cmcp-prompt"><code id="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $text ); ?></code><button type="button" class="cmcp-icon-btn mcp-copy-btn" data-copy-target="<?php echo esc_attr( $id ); ?>" data-cmcp-icon aria-label="<?php echo esc_attr( $copy_label ); ?>"><?php
             echo Cowboy_MCP_Admin::icon( 'copy' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literal.
         ?></button></div>
         <?php

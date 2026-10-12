@@ -186,8 +186,13 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .wrap.cmcp .cmcp-conn-first p { margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .wrap.cmcp .cmcp-conn-first [data-mcp-lock-until] { font-variant-numeric: tabular-nums; }
 /* The test prompt: a copyable line instead of a terminal block. */
-.cmcp-chip { display: flex; align-items: flex-start; gap: 8px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface-2); padding: 6px 6px 6px 10px; margin: 6px 0 0; max-width: 72ch; }
-.wrap.cmcp .cmcp-chip code { display: block; flex: 1 1 auto; min-width: 0; font-size: 12.5px; line-height: 1.5; background: none; padding: 1px 0; color: var(--cmcp-text); overflow-wrap: anywhere; }
+/* Example prompt: reads as a quote, not as code (owner ask 2026-10-12). */
+.cmcp-prompt { display: flex; align-items: center; gap: 12px; border: 1px solid var(--cmcp-border); border-left: 3px solid var(--cmcp-ink); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface); padding: 10px 10px 10px 14px; margin: 8px 0 0; max-width: 64ch; }
+.wrap.cmcp .cmcp-prompt code { display: block; flex: 1 1 auto; min-width: 0; font-family: inherit; font-style: italic; font-size: 13.5px; line-height: 1.5; background: none; padding: 0; color: var(--cmcp-text); overflow-wrap: normal; }
+.wrap.cmcp .cmcp-prompt code::before { content: "\201C"; color: var(--cmcp-faint); margin-right: 2px; }
+.wrap.cmcp .cmcp-prompt code::after { content: "\201D"; color: var(--cmcp-faint); margin-left: 2px; }
+.wrap.cmcp .cmcp-prompt .cmcp-icon-btn { width: 30px; height: 30px; border-radius: 6px; }
+.wrap.cmcp .cmcp-prompt .cmcp-icon-btn:hover, .wrap.cmcp .cmcp-prompt .cmcp-icon-btn:focus-visible { background: var(--cmcp-ink); border-color: var(--cmcp-ink); color: #fff; }
 /* The "… instead" options sit on one row; an open one takes the full width. */
 .cmcp-inline-sum { display: flex; gap: 12px; flex-wrap: wrap; }
 .wrap.cmcp .cmcp-inline-sum .mcp-local-details { margin: 6px 0 0; }
