@@ -153,9 +153,14 @@ return [
                 return new WP_Error( 'invalid_param', 'author_email is not a valid email address.' );
             }
 
+            // wp_new_comment() reads every author field unguarded (PHP warnings when one is
+            // missing) — default them to '' the way wp_handle_comment_submission() does.
             $comment_data = [
-                'comment_post_ID' => $post_id,
-                'comment_content' => wp_kses_post( $a['content'] ),
+                'comment_post_ID'      => $post_id,
+                'comment_content'      => wp_kses_post( $a['content'] ),
+                'comment_author'       => '',
+                'comment_author_email' => '',
+                'comment_author_url'   => '',
             ];
 
             if ( isset( $a['author'] ) )       $comment_data['comment_author']       = sanitize_text_field( $a['author'] );
