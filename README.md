@@ -7,8 +7,7 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
 ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)
-
-<a href="https://glama.ai/mcp/servers/februality/cowboy-mcp"><img width="380" height="200" src="https://glama.ai/mcp/servers/februality/cowboy-mcp/badge" alt="Cowboy MCP server on Glama" /></a>
+[![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
 
 **Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/) (one click, auto-updates) · **Try it in your browser:** [Live Preview](https://wordpress.org/plugins/cowboy-mcp/?preview=1) · **Website & guides:** [cowboymcp.com](https://cowboymcp.com) · **Questions:** [support forum](https://wordpress.org/support/plugin/cowboy-mcp/) · **Bugs:** [issues](https://github.com/februality/cowboy-mcp/issues)
 
