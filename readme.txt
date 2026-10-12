@@ -9,7 +9,7 @@ Stable tag: 1.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Connect Claude, ChatGPT, Cursor & any AI agent to your site. Free, secure WordPress MCP server (Model Context Protocol). Undo any change.
+Connect Claude, ChatGPT, Gemini, Cursor & any AI agent to your site. Free, secure WordPress MCP server (Model Context Protocol). Undo any change.
 
 == Description ==
 
@@ -23,7 +23,7 @@ Cowboy MCP connects your WordPress site to Claude, ChatGPT, Cursor, Gemini or an
 * 🛡️ **Secure by default** - safe mode confirms before anything destructive, you can preview any change before it runs, every key can be scoped to read-only, and every action is written to an audit log.
 * 🆓 **Free and open source** - every tool included, with deep WooCommerce, Gutenberg, ACF, Elementor, Beaver Builder, SiteOrigin, Wordfence and SEO support. No Pro tier, no credits, no usage meter.
 * 🔒 **Your data stays yours** - self-hosted, no accounts, no relay, no phone-home. Your agent connects to your site; nothing leaves your server.
-* 🔌 **One-click sign-in** - Claude, ChatGPT, Cursor, VS Code, Codex, Gemini, Claude Code and any MCP client connect through your browser; no API key to paste. About two minutes, on a live site or a local one.
+* 🔌 **One-click sign-in** - Claude, ChatGPT, Gemini, Grok, Perplexity, Cursor, VS Code, Claude Code, Codex, n8n and any MCP client connect through your browser; no API key to paste. About two minutes, on a live site or a local one.
 
 > "More access than any other MCP offers, easy to use, LOVE the change journal and the checkpoints - safe if you break something, without having to run back ups on the host or yet another plugin." - a WordPress.org reviewer
 
