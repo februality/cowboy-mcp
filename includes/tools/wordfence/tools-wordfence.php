@@ -31,6 +31,32 @@ function cowboy_mcp_wordfence_is_own_ip( string $ip ): bool {
 }
 
 /**
+ * Decode Wordfence's binary IP columns (16-byte IPv6-mapped values) to text,
+ * recursively, in rows returned by Wordfence's own APIs (e.g. wfActivityReport).
+ */
+function cowboy_mcp_wordfence_decode_ips( mixed $data ): mixed {
+    if ( is_object( $data ) ) {
+        $data = get_object_vars( $data );
+    }
+    if ( ! is_array( $data ) ) {
+        return $data;
+    }
+    foreach ( $data as $key => $value ) {
+        if ( is_array( $value ) || is_object( $value ) ) {
+            $data[ $key ] = cowboy_mcp_wordfence_decode_ips( $value );
+        } elseif ( is_string( $key ) && strcasecmp( $key, 'IP' ) === 0 && is_string( $value )
+            && in_array( strlen( $value ), [ 4, 16 ], true ) && filter_var( $value, FILTER_VALIDATE_IP ) === false
+            && class_exists( 'wfUtils' ) && method_exists( 'wfUtils', 'inet_ntop' ) ) {
+            $decoded = @wfUtils::inet_ntop( $value );
+            if ( is_string( $decoded ) && $decoded !== '' ) {
+                $data[ $key ] = $decoded;
+            }
+        }
+    }
+    return $data;
+}
+
+/**
  * Standardize a block row for output.
  */
 function cowboy_mcp_wordfence_format_block( object $block ): array {
@@ -988,7 +1014,7 @@ return [
                     $report = new wfActivityReport();
                     if ( method_exists( $report, 'getFullReport' ) ) {
                         $full = $report->getFullReport();
-                        return is_array( $full ) ? $full : [ 'report' => $full ];
+                        return is_array( $full ) ? cowboy_mcp_wordfence_decode_ips( $full ) : [ 'report' => $full ];
                     }
                 } catch ( \Throwable $e ) {
                     // Fall through to manual aggregation.
