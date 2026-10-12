@@ -198,7 +198,7 @@ return [
 
             $response = [
                 'command' => 'wp ' . $command,
-                'output'  => $output ?: '(no output)',
+                'output'  => Cowboy_MCP_Security::scrub_cli_output( (string) ( $output ?: '(no output)' ) ),
             ];
             if ( $checkpoint_id !== null ) {
                 $response['checkpoint_id']   = $checkpoint_id;

@@ -386,6 +386,84 @@ class Cowboy_MCP_Security {
         'widget',
     ];
 
+    /** wp-config constants that hold secrets (salts, DB password, anything named like a secret). */
+    private const CLI_SECRET_CONSTANTS = '/^(DB_PASSWORD|(AUTH|SECURE_AUTH|LOGGED_IN|NONCE)_(KEY|SALT))$|SECRET|PASSWORD|TOKEN|_API_KEY$/i';
+
+    /**
+     * Why a WP-CLI command would print a credential, or null. Pure (no WP calls).
+     * Scans every word the command carries — positionals AND flag values
+     * (`--fields=ID,user_pass`, `--constant=AUTH_KEY`) — so flag placement and
+     * quoting cannot hide the secret's name. Read-shaped commands only: user writes
+     * (`user update --user_pass=…`) are not credential reads and stay with the rest of
+     * the wp_cli escape hatch.
+     */
+    public static function cli_secret_read_reason( array $positionals, array $tokens ): ?string {
+        $noun  = isset( $positionals[0] ) ? strtolower( $positionals[0] ) : '';
+        $verb  = isset( $positionals[1] ) ? strtolower( $positionals[1] ) : '';
+        $words = [];
+        foreach ( $tokens as $tok ) {
+            foreach ( preg_split( '/[=,\s]+/', (string) $tok ) as $w ) {
+                $w = ltrim( $w, '-' );
+                if ( '' !== $w ) {
+                    $words[] = $w;
+                }
+            }
+        }
+        if ( 'config' === $noun ) {
+            if ( 'list' === $verb ) {
+                return 'config list prints every wp-config constant, including the salts and DB_PASSWORD.';
+            }
+            if ( 'get' === $verb ) {
+                foreach ( $words as $w ) {
+                    if ( preg_match( self::CLI_SECRET_CONSTANTS, $w ) ) {
+                        return "config get {$w} would print a secret wp-config constant.";
+                    }
+                }
+            }
+            return null;
+        }
+        if ( 'user' === $noun ) {
+            if ( 'application-password' === $verb ) {
+                $sub = isset( $positionals[2] ) ? strtolower( $positionals[2] ) : '';
+                if ( 'create' === $sub ) {
+                    return 'application-password create prints a new plaintext credential.';
+                }
+                if ( in_array( 'password', array_map( 'strtolower', $words ), true ) ) {
+                    return 'The application password field holds a credential hash.';
+                }
+                return null;
+            }
+            if ( in_array( $verb, [ 'list', 'get', 'meta' ], true ) ) {
+                foreach ( $words as $w ) {
+                    if ( in_array( strtolower( $w ), [ 'user_pass', 'user_activation_key', 'session_tokens' ], true ) ) {
+                        return "The {$w} field holds a credential.";
+                    }
+                }
+            }
+            return null;
+        }
+        if ( 'option' === $noun && in_array( $verb, [ 'get', 'pluck', 'list' ], true ) ) {
+            // Confidentiality only: write-protected but public options (siteurl, home,
+            // active_plugins…) stay readable.
+            foreach ( array_slice( $words, 2 ) as $w ) {
+                $name = strtolower( rtrim( $w, '*%' ) );
+                if ( self::is_hard_protected_option( $name )
+                    || preg_match( '/secret|token|api_key|_key$|password|nonce|^woocommerce_.+_settings$/', $name ) ) {
+                    return "Option {$w} holds a credential or Cowboy MCP internals.";
+                }
+            }
+            return null;
+        }
+        if ( 'transient' === $noun ) {
+            foreach ( array_slice( $words, 2 ) as $w ) {
+                if ( str_starts_with( strtolower( $w ), 'cowboy_mcp_' ) || preg_match( '/^(_site)?_transient_(timeout_)?cowboy_mcp_/i', $w ) ) {
+                    return "Transient {$w} belongs to Cowboy MCP (sign-in codes, one-time keys).";
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Tokenize a WP-CLI command the way a POSIX shell would before it reaches
      * shell_exec() (i.e. /bin/sh -c). This is required because every wp_cli
@@ -700,6 +778,18 @@ class Cowboy_MCP_Security {
             }
         }
 
+        // 2b. Commands that would print a credential (salts, DB password, password
+        //     hashes, API keys, Cowboy's one-time keys and sign-in codes). Never lifted
+        //     by Power mode — same footing as sql_touches_secret() in step 4.
+        $secret = self::cli_secret_read_reason( $positionals, $t['tokens'] );
+        if ( null !== $secret ) {
+            return [
+                'blocked' => true,
+                'code'    => 'secret_read',
+                'message' => "Blocked: this command would print a credential. {$secret}",
+            ];
+        }
+
         // 3. Always-blocked subcommand paths.
         if ( ! $power_mode ) {
             foreach ( self::CLI_BLOCKED_PATHS as $path ) {
@@ -807,6 +897,40 @@ class Cowboy_MCP_Security {
         $text = preg_replace( '/\bBearer\s+[A-Za-z0-9._\-]+/i', 'Bearer [REDACTED]', $text );
         $text = preg_replace( '/\bmcp_[0-9a-f]{16,}\b/i', '[REDACTED]', (string) $text );
         return (string) $text;
+    }
+
+    /** wp-config constants whose exact values are redacted from WP-CLI output. */
+    private const SECRET_CONSTANTS = [ 'DB_PASSWORD', 'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT' ];
+
+    /**
+     * Backstop for wp_cli output: redact what the gate cannot predict from the
+     * command line (e.g. `user application-password list` prints hashes by default).
+     * Covers password hashes (WordPress bcrypt, bcrypt, phpass, argon2, the 6.8+
+     * `$generic$` fast hash — raw or JSON-escaped), Cowboy tokens/keys, and the exact
+     * values of the wp-config secrets.
+     */
+    public static function scrub_cli_output( string $text ): string {
+        $text = self::scrub_secrets( $text );
+        $text = (string) preg_replace(
+            [
+                '/\$wp\$2[aby]\$\d{2}\$[^\s"\',]+/',
+                '/\$2[aby]\$\d{2}\$[^\s"\',]+/',
+                '/\$[PH]\$[^\s"\',]{31,}/',
+                '/\$argon2(?:id|i|d)\$[^\s"\',]+/',
+                '/\$generic\$[^\s"\',]+/',
+                '/\bcmcp_(?:at|rt)_[A-Za-z0-9_\-]{16,}/',
+            ],
+            '[REDACTED]',
+            $text
+        );
+        foreach ( self::SECRET_CONSTANTS as $c ) {
+            $v = defined( $c ) ? (string) constant( $c ) : '';
+            if ( strlen( $v ) < 8 ) {
+                continue;
+            }
+            $text = str_replace( [ $v, substr( (string) wp_json_encode( $v ), 1, -1 ) ], '[REDACTED]', $text );
+        }
+        return $text;
     }
 
     /* ── SSRF URL validation ───────────────────────────────── */
