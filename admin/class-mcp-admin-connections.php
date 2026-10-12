@@ -459,10 +459,11 @@ class Cowboy_MCP_Admin_Connections {
             'grok' => [
                 'steps' => [
                     wp_kses( __( 'Go to <code>grok.com/connectors</code> and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ),
-                    wp_kses( __( 'Click <strong>New Connector</strong>, choose <strong>Custom</strong> and paste the link from step 1 as the server URL (Streamable HTTP).', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    esc_html__( 'Save — Grok starts the sign-in right away.', 'cowboy-mcp' ),
+                    wp_kses( __( 'Click <strong>New Connector</strong>, choose <strong>Custom</strong>, give it a name and paste the link from step 1 as the <strong>Server URL</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Click <strong>Add Connector</strong> — Grok opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 ],
-                'plan'  => esc_html__( "Custom connectors are available on Grok's paid plans. On Business and Enterprise workspaces an admin provisions the connector first.", 'cowboy-mcp' ),
+                'plan'  => esc_html__( 'Works on the free plan (verified 2026-10-12) as well as SuperGrok and X Premium+. On Business and Enterprise workspaces an admin provisions the connector first.', 'cowboy-mcp' ),
+                'after' => wp_kses( __( 'Back in Grok, the connector shows as <strong>Added</strong>. In a chat, type <code>@</code> to pick it.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
             'gemini-app' => [
                 'steps' => [
