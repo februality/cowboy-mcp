@@ -392,7 +392,7 @@ class Cowboy_MCP_Admin_Connections {
         ?>
         <?php if ( $chatgpt_quick ) : ?>
         <?php self::step_open( '1', __( 'Open ChatGPT', 'cowboy-mcp' ), '' ); ?>
-                <form method="post" target="_blank" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
+                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
                     <?php wp_nonce_field( 'cowboy_mcp_open_chatgpt' ); ?>
                     <button type="submit" name="cowboy_mcp_open_chatgpt" value="1" class="cmcp-btn cmcp-btn--primary"><?php
                         esc_html_e( 'Open ChatGPT', 'cowboy-mcp' );
@@ -512,7 +512,7 @@ class Cowboy_MCP_Admin_Connections {
             /* translators: %s: AI app name */
             self::step_open( '1', sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ), '' );
             ?>
-                <form method="post" target="_blank" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
+                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
                     <?php wp_nonce_field( 'cowboy_mcp_open_app' ); ?>
                     <button type="submit" name="cowboy_mcp_open_app" value="<?php echo esc_attr( $slug ); ?>" class="cmcp-btn cmcp-btn--primary"><?php
                         /* translators: %s: AI app name */
@@ -609,7 +609,7 @@ class Cowboy_MCP_Admin_Connections {
      */
     private static function render_add_to_claude_form( string $target, string $class, string $label ): void {
         ?>
-        <form method="post" target="_blank" class="mcp-inline-form cmcp-add-claude" data-cmcp-refresh-after-submit>
+        <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form cmcp-add-claude" data-cmcp-refresh-after-submit>
             <?php wp_nonce_field( 'cowboy_mcp_add_to_claude' ); ?>
             <button type="submit" name="cowboy_mcp_add_to_claude" value="<?php echo esc_attr( $target ); ?>" class="<?php echo esc_attr( $class ); ?>"><?php
                 echo esc_html( $label );

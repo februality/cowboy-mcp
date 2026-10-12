@@ -405,6 +405,11 @@ class Cowboy_MCP_Admin {
                 self::enable_oauth_connector();
                 Cowboy_MCP_OAuth::open_registration_window();
                 Cowboy_MCP_Admin_Connections::set_connect_watch( (string) $app_def['watch'] );
+                // Remember the panel server-side: the page behind this new tab reloads itself
+                // without its #hash, and a deep-linked panel was never persisted (seen live
+                // 2026-10-12: Open Grok reloaded onto the Gemini panel).
+                update_user_meta( get_current_user_id(), 'cowboy_mcp_conn_client', $app_slug );
+                delete_user_meta( get_current_user_id(), 'cowboy_mcp_conn_method' );
                 add_filter( 'allowed_redirect_hosts', static fn( $hosts ) => array_merge( (array) $hosts, [ (string) $app_def['open_host'] ] ) );
                 wp_safe_redirect( (string) $app_def['open_url'] );
                 exit;
