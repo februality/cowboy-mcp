@@ -623,6 +623,11 @@ class Cowboy_MCP_Tools {
                 ];
             }
         }
+        // wp_deactivate_plugin on this plugin: the real call refuses (self_target).
+        if ( $name === 'wp_deactivate_plugin' && Cowboy_MCP_Security::is_own_plugin( (string) ( $filtered_args['plugin_file'] ?? '' ) ) ) {
+            $preview['plan']        = [ 'would_fail' => 'self_target', 'reason' => 'Cowboy MCP cannot deactivate itself.' ];
+            $preview['description'] = 'Would be refused (self_target): Cowboy MCP cannot deactivate itself.';
+        }
         // wp_write_file: run the real path guards + PHP lint so a preview of a
         // write that would be refused (mu-plugins, uploads, syntax error) says so.
         if ( $name === 'wp_write_file' ) {

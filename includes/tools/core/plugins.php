@@ -21,7 +21,7 @@ return [
             'openWorldHint'   => false,
         ] ),
 
-        Cowboy_MCP_Tools::tool( 'wp_deactivate_plugin', '[Plugins] Deactivate an active plugin.', [
+        Cowboy_MCP_Tools::tool( 'wp_deactivate_plugin', '[Plugins] Deactivate an active plugin. Cannot deactivate Cowboy MCP itself.', [
             'plugin_file' => [ 'type' => 'string', 'description' => 'Plugin file path relative to plugins directory (e.g. "akismet/akismet.php" or "hello.php")', 'required' => true ],
         ], [
             'readOnlyHint'    => false,
@@ -139,6 +139,9 @@ return [
             }
 
             $plugin_file = sanitize_text_field( $a['plugin_file'] );
+            if ( Cowboy_MCP_Security::is_own_plugin( $plugin_file ) ) {
+                return new WP_Error( 'self_target', 'Refusing to deactivate Cowboy MCP itself: this connection would drop and only wp-admin could bring it back.' );
+            }
 
             // Verify plugin exists.
             $all_plugins = Cowboy_MCP_Compat::get_plugins();

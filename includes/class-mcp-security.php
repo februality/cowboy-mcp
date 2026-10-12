@@ -197,6 +197,21 @@ class Cowboy_MCP_Security {
         return ! empty( Cowboy_MCP_Tools::get_settings()['power_mode'] );
     }
 
+    /**
+     * Whether a plugin slug or folder/file.php names this plugin — under its own
+     * folder name too, for installs unzipped into a renamed folder.
+     */
+    public static function is_own_plugin( string $slug_or_file ): bool {
+        $given = strtolower( trim( $slug_or_file ) );
+        if ( '' === $given ) {
+            return false;
+        }
+        $own        = strtolower( plugin_basename( COWBOY_MCP_PATH . 'cowboy-mcp.php' ) );
+        $own_folder = strstr( $own, '/', true ) ?: $own;
+        $folder     = strstr( $given, '/', true ) ?: $given;
+        return $given === $own || $folder === $own_folder || $folder === 'cowboy-mcp';
+    }
+
     /* ── Meta safety ───────────────────────────────────────── */
 
     /**
@@ -647,6 +662,41 @@ class Cowboy_MCP_Security {
                     'code'    => 'blocked',
                     'message' => 'WP-CLI writes to the plugin\'s own cowboy_mcp_ options are blocked for safety and cannot be lifted by Power mode.',
                 ];
+            }
+        }
+
+        // 2c. Never let the agent switch this plugin off, Power mode included: the
+        //     connection drops mid-call and only a human in wp-admin can bring it back.
+        //     Pure-function rule: matches the `cowboy-mcp` folder slug (a renamed-folder
+        //     install is still covered by the wp_deactivate_plugin handler guard).
+        if ( 'plugin' === $noun ) {
+            $pverb = isset( $positionals[1] ) ? strtolower( $positionals[1] ) : '';
+            if ( in_array( $pverb, [ 'deactivate', 'delete', 'uninstall', 'toggle' ], true ) ) {
+                $hits_self = false;
+                foreach ( array_slice( $positionals, 2 ) as $p ) {
+                    $first = strtolower( strstr( $p, '/', true ) ?: $p );
+                    if ( 'cowboy-mcp' === $first ) {
+                        $hits_self = true;
+                    }
+                }
+                if ( ! $hits_self && in_array( '--all', array_map( 'strtolower', $t['flags'] ), true ) ) {
+                    $hits_self = true;
+                    foreach ( $t['flags'] as $flag ) {
+                        if ( preg_match( '/^--exclude=(.*)$/i', $flag, $m ) ) {
+                            $excluded = array_map( fn( $s ) => strtolower( trim( $s ) ), explode( ',', $m[1] ) );
+                            if ( in_array( 'cowboy-mcp', $excluded, true ) ) {
+                                $hits_self = false;
+                            }
+                        }
+                    }
+                }
+                if ( $hits_self ) {
+                    return [
+                        'blocked' => true,
+                        'code'    => 'self_target',
+                        'message' => 'Refusing to deactivate or remove Cowboy MCP itself: this connection would drop and only wp-admin could bring it back. Use --exclude=cowboy-mcp with --all.',
+                    ];
+                }
             }
         }
 
