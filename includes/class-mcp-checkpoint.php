@@ -485,10 +485,12 @@ class Cowboy_MCP_Checkpoint {
 		}
 
 		while ( ! gzeof( $gz ) ) {
-			// Statements are single-line; MAX_STMT bounds multi-row INSERTs but a single
-			// oversized value can exceed it. If a line ever exceeds this buffer, the split
-			// fragment fails as invalid SQL below — a caught error, not silent corruption.
-			$line = gzgets( $gz, 64 * 1024 * 1024 );
+			// Statements are single-line. Read WITHOUT a length: gzgets() with a length
+			// pre-allocates a buffer of that size on every call (64 MB per line made
+			// restores fatal at a 128 MB memory_limit on heavier sites). Without one it
+			// reads to the next newline and allocates only what the line needs, so an
+			// oversized single row (> MAX_STMT) still arrives whole.
+			$line = gzgets( $gz );
 			if ( $line === false ) {
 				break;
 			}
