@@ -837,14 +837,35 @@ class Cowboy_MCP_OAuth {
 
         $tokens  = get_option( self::TOKENS_OPTION, [] );
         $changed = false;
+        $carry   = []; // client_id => last use recorded on an access token that is about to be dropped
         foreach ( $tokens as $id => $t ) {
             if ( (int) ( $t['expires'] ?? 0 ) < $now ) {
+                $cid = (string) ( $t['client_id'] ?? '' );
+                if ( '' !== $cid && ! empty( $t['last_used'] ) ) {
+                    $carry[ $cid ] = max( (int) ( $carry[ $cid ] ?? 0 ), (int) $t['last_used'] );
+                }
                 unset( $tokens[ $id ] );
                 $changed = true;
             }
         }
         if ( $changed ) {
             update_option( self::TOKENS_OPTION, $tokens, false );
+        }
+        if ( $carry ) {
+            // Keep "Last used" on the Connections tab truthful after the hour-long access token
+            // expires: the row remembers the last call until the client refreshes (seen live
+            // 2026-10-12 — Gemini read "Never" an hour after its last tool run).
+            $clients = get_option( self::CLIENTS_OPTION, [] );
+            $touched = false;
+            foreach ( $carry as $cid => $ts ) {
+                if ( isset( $clients[ $cid ] ) && is_array( $clients[ $cid ] ) && (int) ( $clients[ $cid ]['last_call'] ?? 0 ) < $ts ) {
+                    $clients[ $cid ]['last_call'] = $ts; // not `last_used`: that one is the grant time and must keep reading "Never" until a real call
+                    $touched                      = true;
+                }
+            }
+            if ( $touched ) {
+                update_option( self::CLIENTS_OPTION, $clients, false );
+            }
         }
 
         $refresh = get_option( self::REFRESH_OPTION, [] );
@@ -1087,7 +1108,9 @@ class Cowboy_MCP_OAuth {
                 'client_name' => $clients[ $cid ]['client_name'] ?? __( 'Unknown client', 'cowboy-mcp' ),
                 'user'        => $user ? $user->user_login : '—',
                 'created'     => (int) ( $clients[ $cid ]['created'] ?? $info['created'] ),
-                'last_used'   => $info['last_used'],
+                // `last_call` is carried over from an expired access token by prune_expired(); a
+                // just-approved connection still reads "Never" (the row's own `last_used` is the grant).
+                'last_used'   => max( (int) $info['last_used'], (int) ( $clients[ $cid ]['last_call'] ?? 0 ) ),
                 'tool_scope'  => ( isset( $clients[ $cid ]['tool_scope'] ) && is_array( $clients[ $cid ]['tool_scope'] ) ) ? $clients[ $cid ]['tool_scope'] : null,
                 'client_info' => Cowboy_MCP_Auth::client_info_for( 'oauth', (string) $cid ),
                 'slug'        => is_array( $clients[ $cid ] ) ? self::client_slug_for_row( $clients[ $cid ] ) : null,
