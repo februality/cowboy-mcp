@@ -438,60 +438,53 @@ return [
                 );
             }
 
-            // Top spenders — use WC Analytics lookup table (indexed total_spend).
-            $lookup_table  = $wpdb->prefix . 'wc_customer_lookup';
-            $has_lookup    = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $lookup_table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-
-            if ( $has_lookup ) {
-                $rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-                    'SELECT user_id, first_name, last_name, email, total_spend, orders_count
+            // Top spenders — summed from paid orders. wc_customer_lookup has no spend
+            // columns, and wc_order_stats is filled asynchronously (can lag or be empty).
+            $paid = array_map(
+                static fn( $s ) => 'wc-' . $s,
+                function_exists( 'wc_get_is_paid_statuses' ) ? wc_get_is_paid_statuses() : [ 'processing', 'completed' ]
+            );
+            $in   = implode( ',', array_fill( 0, count( $paid ), '%s' ) );
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,PluginCheck.Security.DirectDB.UnescapedDBParameter
+            if ( cowboy_mcp_woo_is_hpos_enabled() ) {
+                $rows = $wpdb->get_results( $wpdb->prepare(
+                    "SELECT customer_id AS user_id, SUM( total_amount ) AS spent, COUNT(*) AS orders
                      FROM %i
-                     WHERE user_id > 0
-                     ORDER BY total_spend DESC
-                     LIMIT %d',
-                    $lookup_table,
-                    $limit
-                ) );
-
-                $top_spenders = [];
-                foreach ( $rows as $row ) {
-                    $top_spenders[] = [
-                        'id'           => (int) $row->user_id,
-                        'name'         => trim( $row->first_name . ' ' . $row->last_name ),
-                        'email'        => $row->email,
-                        'total_spent'  => round( (float) $row->total_spend, 2 ),
-                        'orders_count' => (int) $row->orders_count,
-                    ];
-                }
-            } else {
-                // Fallback for very old WC without analytics tables — direct SQL avoids meta_key PHPCS flag.
-                $rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-                    "SELECT u.ID AS user_id
-                     FROM {$wpdb->users} u
-                     INNER JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = '_money_spent'
-                     INNER JOIN {$wpdb->usermeta} cap ON u.ID = cap.user_id AND cap.meta_key = %s AND cap.meta_value LIKE %s
-                     ORDER BY um.meta_value + 0 DESC
+                     WHERE type = 'shop_order' AND customer_id > 0 AND status IN ( {$in} )
+                     GROUP BY customer_id
+                     ORDER BY spent DESC
                      LIMIT %d",
-                    $wpdb->prefix . 'capabilities',
-                    '%"customer"%',
-                    $limit
+                    array_merge( [ $wpdb->prefix . 'wc_orders' ], $paid, [ $limit ] )
                 ) );
+            } else {
+                $rows = $wpdb->get_results( $wpdb->prepare(
+                    "SELECT cu.meta_value AS user_id, SUM( tot.meta_value + 0 ) AS spent, COUNT(*) AS orders
+                     FROM {$wpdb->posts} p
+                     INNER JOIN {$wpdb->postmeta} cu ON cu.post_id = p.ID AND cu.meta_key = '_customer_user'
+                     INNER JOIN {$wpdb->postmeta} tot ON tot.post_id = p.ID AND tot.meta_key = '_order_total'
+                     WHERE p.post_type = 'shop_order' AND p.post_status IN ( {$in} ) AND cu.meta_value > 0
+                     GROUP BY cu.meta_value
+                     ORDER BY spent DESC
+                     LIMIT %d",
+                    array_merge( $paid, [ $limit ] )
+                ) );
+            }
+            // phpcs:enable
 
-                $top_spenders = [];
-                foreach ( $rows as $row ) {
-                    try {
-                        $customer       = new WC_Customer( (int) $row->user_id );
-                        $top_spenders[] = [
-                            'id'           => (int) $row->user_id,
-                            'name'         => $customer->get_first_name() . ' ' . $customer->get_last_name(),
-                            'email'        => $customer->get_email(),
-                            'total_spent'  => (float) $customer->get_total_spent(),
-                            'orders_count' => (int) $customer->get_order_count(),
-                        ];
-                    } catch ( \Exception $e ) {
-                        continue;
-                    }
+            $top_spenders = [];
+            foreach ( $rows ?: [] as $row ) {
+                $user = get_userdata( (int) $row->user_id );
+                if ( ! $user ) {
+                    continue;
                 }
+                $name = trim( get_user_meta( $user->ID, 'first_name', true ) . ' ' . get_user_meta( $user->ID, 'last_name', true ) );
+                $top_spenders[] = [
+                    'id'           => (int) $user->ID,
+                    'name'         => $name !== '' ? $name : $user->display_name,
+                    'email'        => $user->user_email,
+                    'total_spent'  => round( (float) $row->spent, 2 ),
+                    'orders_count' => (int) $row->orders,
+                ];
             }
 
             return [
