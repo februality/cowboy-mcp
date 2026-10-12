@@ -28,6 +28,7 @@ class Cowboy_MCP_Transport {
     public static function init(): void {
         add_action( 'rest_api_init', [ __CLASS__, 'register_routes' ] );
         add_filter( 'rest_pre_serve_request', [ __CLASS__, 'maybe_serve_sse' ], 10, 4 );
+        add_filter( 'rest_request_before_callbacks', [ __CLASS__, 'let_handler_parse' ], 10, 3 );
     }
 
     /* ── REST Routes ──────────────────────────────────────── */
@@ -64,8 +65,17 @@ class Cowboy_MCP_Transport {
             $body = $request->get_json_params();
         }
 
-        if ( empty( $body ) || ! isset( $body['jsonrpc'] ) ) {
-            return new WP_Error( 'invalid_jsonrpc', 'Invalid JSON-RPC request.', [ 'status' => 400 ] );
+        // Streamable HTTP: input the server cannot accept gets HTTP 400 with a
+        // JSON-RPC error object that has no id (MCP 2025-06-18 transports §2.1).
+        if ( ! is_array( $body ) ) {
+            return self::jsonrpc_error( null, -32700, 'Parse error: the request body is not valid JSON.', 400 );
+        }
+        if ( isset( $body[0] ) ) {
+            return self::jsonrpc_error( null, -32600, 'Invalid Request: JSON-RPC batches are not supported (MCP 2025-06-18).', 400 );
+        }
+        if ( ! isset( $body['jsonrpc'] ) ) {
+            $bad_id = isset( $body['id'] ) && ( is_int( $body['id'] ) || is_string( $body['id'] ) ) ? $body['id'] : null;
+            return self::jsonrpc_error( $bad_id, -32600, 'Invalid Request: missing "jsonrpc": "2.0".', 400 );
         }
 
         // Validate JSON-RPC version.
@@ -189,11 +199,11 @@ class Cowboy_MCP_Transport {
         return [
             'protocolVersion' => '2025-06-18',
             'capabilities'    => [
-                'tools'      => [ 'listChanged' => false ],
-                'resources'  => [ 'subscribe' => false, 'listChanged' => false ],
-                'prompts'    => [ 'listChanged' => false ],
-                'completion' => (object) [],
-                'logging'    => (object) [],
+                'tools'       => [ 'listChanged' => false ],
+                'resources'   => [ 'subscribe' => false, 'listChanged' => false ],
+                'prompts'     => [ 'listChanged' => false ],
+                'completions' => (object) [],
+                'logging'     => (object) [],
             ],
             'serverInfo' => [
                 'name'    => wp_parse_url( home_url(), PHP_URL_HOST ),
@@ -373,11 +383,25 @@ class Cowboy_MCP_Transport {
 
     /* ── JSON-RPC error helper ────────────────────────────── */
 
-    private static function jsonrpc_error( $id, int $code, string $message ): WP_REST_Response {
+    private static function jsonrpc_error( $id, int $code, string $message, int $status = 200 ): WP_REST_Response {
         return new WP_REST_Response( [
             'jsonrpc' => '2.0',
             'id'      => $id,
             'error'   => compact( 'code', 'message' ),
-        ], 200 );
+        ], $status );
+    }
+
+    /**
+     * Core rejects an unparsable JSON body (rest_invalid_json) before the permission
+     * check and our handler run. For the MCP endpoint, clear that error so auth still
+     * applies and handle_post() answers with a JSON-RPC -32700 instead.
+     */
+    public static function let_handler_parse( $response, $handler, $request ) {
+        if ( is_wp_error( $response ) && 'rest_invalid_json' === $response->get_error_code()
+            && $request instanceof WP_REST_Request
+            && 0 === strpos( $request->get_route(), '/' . self::NS . '/endpoint' ) ) {
+            return null;
+        }
+        return $response;
     }
 }
