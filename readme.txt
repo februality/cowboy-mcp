@@ -17,7 +17,7 @@ Cowboy MCP connects your WordPress site to Claude, ChatGPT, Cursor, Gemini or an
 
 **Stop clicking around wp-admin. Just tell your AI what you want.**
 
-https://www.youtube.com/watch?v=iRCj5V7dAM8
+https://www.youtube.com/watch?v=poFkhBgzq-s
 
 * 💬 **Do everything by chat** - create and edit posts and pages, run your WooCommerce shop, manage users and menus, tidy the media library, change settings, and fix errors when they crop up.
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
