@@ -55,18 +55,10 @@
 		setTimeout( function() { live.textContent = text; }, 50 );
 	}
 
-	/**
-	 * Show copy feedback on a button for 2 s, then restore it. Icon buttons keep their SVG
-	 * (a class carries the state); text buttons swap their label.
-	 */
+	/** Show copy feedback on a button for 2 s (its label swaps), then restore it. */
 	function copyFeedback( btn, ok ) {
 		var text = ok ? ( l10n.copied || 'Copied!' ) : ( l10n.copyFailed || 'Failed to copy' );
 		announce( text );
-		if ( btn.hasAttribute( 'data-cmcp-icon' ) ) {
-			btn.classList.add( ok ? 'is-copied' : 'is-failed' );
-			setTimeout( function() { btn.classList.remove( 'is-copied', 'is-failed' ); }, 2000 );
-			return;
-		}
 		if ( ! btn.hasAttribute( 'data-cmcp-label' ) ) {
 			btn.setAttribute( 'data-cmcp-label', btn.textContent );
 		}

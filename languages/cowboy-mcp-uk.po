@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-16 15:11-0700\n"
+"POT-Creation-Date: 2026-10-16 15:46-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Ukrainian\n"
@@ -194,7 +194,7 @@ msgid "Create checkpoint now"
 msgstr "Створити контрольну точку зараз"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1538
+#: admin/class-mcp-admin-connections.php:1541
 msgid "Created"
 msgstr "Створено"
 
@@ -211,7 +211,7 @@ msgid "Size"
 msgstr "Розмір"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1540
+#: admin/class-mcp-admin-connections.php:1543
 msgid "Actions"
 msgstr "Дії"
 
@@ -746,7 +746,7 @@ msgstr "Відкрити %s"
 
 #: admin/class-mcp-admin-connections.php:571
 #: admin/class-mcp-admin-connections.php:621
-#: admin/class-mcp-admin-connections.php:1665
+#: admin/class-mcp-admin-connections.php:1668
 msgid "(opens in a new tab)"
 msgstr "(відкривається в новій вкладці)"
 
@@ -1186,7 +1186,7 @@ msgstr ""
 "буде показано."
 
 #: admin/class-mcp-admin-connections.php:969
-#: admin/class-mcp-admin-connections.php:1551
+#: admin/class-mcp-admin-connections.php:1554
 msgid "API key"
 msgstr "API-ключ"
 
@@ -1314,7 +1314,7 @@ msgstr ""
 "має відображатися разом зі своїми інструментами."
 
 #. translators: %s: the MCP server name or the site's address.
-#: admin/class-mcp-admin-connections.php:1186
+#: admin/class-mcp-admin-connections.php:1184
 #, php-format
 msgid ""
 "Using %s, tell me this site's name and WordPress version. Don't change "
@@ -1323,45 +1323,38 @@ msgstr ""
 "За допомогою %s назви назву цього сайту та версію WordPress. Нічого не "
 "змінюй."
 
-#. translators: %s: the MCP server name or the site's address.
-#: admin/class-mcp-admin-connections.php:1188
-#, php-format
-msgid "Using %s, list my five most recent posts."
-msgstr "За допомогою %s перелічи п’ять моїх останніх записів."
-
-#. translators: %s: the MCP server name or the site's address.
-#: admin/class-mcp-admin-connections.php:1190
-#, php-format
-msgid "Using %s, which plugins are active on this site?"
-msgstr "За допомогою %s скажи, які плагіни активні на цьому сайті?"
-
-#: admin/class-mcp-admin-connections.php:1193
+#: admin/class-mcp-admin-connections.php:1185
 msgid "Copy prompt"
 msgstr "Копіювати запит"
 
-#: admin/class-mcp-admin-connections.php:1199
+#: admin/class-mcp-admin-connections.php:1190
 msgid "Try it"
 msgstr "Спробуйте"
 
-#: admin/class-mcp-admin-connections.php:1201
+#: admin/class-mcp-admin-connections.php:1192
 msgid "In a new chat, ask:"
 msgstr "У новому чаті запитайте:"
 
-#: admin/class-mcp-admin-connections.php:1231
+#: admin/class-mcp-admin-connections.php:1213
+#: admin/class-mcp-admin-connections.php:1512
+msgid "Copy"
+msgstr "Копіювати"
+
+#: admin/class-mcp-admin-connections.php:1234
 msgid "Select all"
 msgstr "Вибрати всі"
 
-#: admin/class-mcp-admin-connections.php:1233
+#: admin/class-mcp-admin-connections.php:1236
 msgid "Deselect all"
 msgstr "Зняти всі"
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin-connections.php:1241
+#: admin/class-mcp-admin-connections.php:1244
 #, php-format
 msgid "Select all %s tools"
 msgstr "Вибрати всі інструменти категорії «%s»"
 
-#: admin/class-mcp-admin-connections.php:1255
+#: admin/class-mcp-admin-connections.php:1258
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -1370,48 +1363,48 @@ msgstr ""
 "користувачів, останні дописи тощо) завжди доступні для будь-якого ключа чи "
 "підключення незалежно від області інструментів."
 
-#: admin/class-mcp-admin-connections.php:1266
+#: admin/class-mcp-admin-connections.php:1269
 msgid "Custom…"
 msgstr "Настроюваний…"
 
-#: admin/class-mcp-admin-connections.php:1266
-#: admin/class-mcp-admin-connections.php:1282
-#: admin/class-mcp-admin-connections.php:1293
+#: admin/class-mcp-admin-connections.php:1269
+#: admin/class-mcp-admin-connections.php:1285
+#: admin/class-mcp-admin-connections.php:1296
 msgid "Full access"
 msgstr "Повний доступ"
 
-#: admin/class-mcp-admin-connections.php:1266
-#: admin/class-mcp-admin-connections.php:1286
+#: admin/class-mcp-admin-connections.php:1269
+#: admin/class-mcp-admin-connections.php:1289
 msgid "Read-only"
 msgstr "Лише читання"
 
-#: admin/class-mcp-admin-connections.php:1269 includes/class-mcp-oauth.php:1864
+#: admin/class-mcp-admin-connections.php:1272 includes/class-mcp-oauth.php:1864
 msgid "Access level"
 msgstr "Рівень доступу"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin-connections.php:1290
+#: admin/class-mcp-admin-connections.php:1293
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "Настроюваний (%d інструментів)"
 
-#: admin/class-mcp-admin-connections.php:1297
+#: admin/class-mcp-admin-connections.php:1300
 msgid "Unknown (blocked)"
 msgstr "Невідомо (заблоковано)"
 
-#: admin/class-mcp-admin-connections.php:1313
+#: admin/class-mcp-admin-connections.php:1316
 msgid "Dismiss"
 msgstr "Закрити"
 
 #. translators: 1: app name such as ChatGPT, 2: relative time such as "4 minutes"
-#: admin/class-mcp-admin-connections.php:1317
+#: admin/class-mcp-admin-connections.php:1320
 #, php-format
 msgid "%1$s tried to connect %2$s ago, but new connections were off."
 msgstr ""
 "%1$s намагався підключитися %2$s тому, але нові підключення були вимкнені."
 
 #. translators: %d: number of attempts
-#: admin/class-mcp-admin-connections.php:1320
+#: admin/class-mcp-admin-connections.php:1323
 #, php-format
 msgid "(%d attempt)"
 msgid_plural "(%d attempts)"
@@ -1420,7 +1413,7 @@ msgstr[1] "(%d спроби)"
 msgstr[2] "(%d спроб)"
 
 #. translators: %s: host name
-#: admin/class-mcp-admin-connections.php:1325
+#: admin/class-mcp-admin-connections.php:1328
 #, php-format
 msgid ""
 "Its sign-in address (%s) is not on the allowed list either — add it to the "
@@ -1430,28 +1423,28 @@ msgstr ""
 "додаткових хостів входу на вкладці «Налаштування»."
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1332
+#: admin/class-mcp-admin-connections.php:1335
 #, php-format
 msgid "New connections are on — try again in %s now."
 msgstr "Нові підключення ввімкнено — повторіть спробу в %s просто зараз."
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:1336
+#: admin/class-mcp-admin-connections.php:1339
 #, php-format
 msgid "%s left"
 msgstr "залишилося %s"
 
-#: admin/class-mcp-admin-connections.php:1343
+#: admin/class-mcp-admin-connections.php:1346
 msgid "Enable for 30 minutes"
 msgstr "Увімкнути на 30 хвилин"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1346
+#: admin/class-mcp-admin-connections.php:1349
 #, php-format
 msgid "Then add the app again in %s."
 msgstr "Потім додайте застосунок знову в %s."
 
-#: admin/class-mcp-admin-connections.php:1371
+#: admin/class-mcp-admin-connections.php:1374
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1461,30 +1454,30 @@ msgstr ""
 "strong> чи <strong>Codex</strong>, до цього сайту WordPress через протокол "
 "Model Context Protocol."
 
-#: admin/class-mcp-admin-connections.php:1398
-#: admin/class-mcp-admin-connections.php:1527
+#: admin/class-mcp-admin-connections.php:1401
+#: admin/class-mcp-admin-connections.php:1530
 msgid "Connect another app"
 msgstr "Підключити ще один застосунок"
 
-#: admin/class-mcp-admin-connections.php:1398
+#: admin/class-mcp-admin-connections.php:1401
 msgid "Connect your first app"
 msgstr "Підключіть перший застосунок"
 
-#: admin/class-mcp-admin-connections.php:1399
+#: admin/class-mcp-admin-connections.php:1402
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr ""
 "Виберіть ШІ-застосунок або інструмент для розробки — налаштування займе "
 "близько хвилини."
 
-#: admin/class-mcp-admin-connections.php:1401
+#: admin/class-mcp-admin-connections.php:1404
 msgid "Close"
 msgstr "Закрити"
 
-#: admin/class-mcp-admin-connections.php:1409
+#: admin/class-mcp-admin-connections.php:1412
 msgid "Which app do you want to connect?"
 msgstr "Який застосунок ви хочете підключити?"
 
-#: admin/class-mcp-admin-connections.php:1410
+#: admin/class-mcp-admin-connections.php:1413
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -1493,132 +1486,128 @@ msgstr ""
 "побачити покрокові інструкції з налаштування."
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1421
+#: admin/class-mcp-admin-connections.php:1424
 #, php-format
 msgid "Connect %s"
 msgstr "Підключити %s"
 
-#: admin/class-mcp-admin-connections.php:1444
+#: admin/class-mcp-admin-connections.php:1447
 msgid "No terminal needed"
 msgstr "Термінал не потрібен"
 
-#: admin/class-mcp-admin-connections.php:1445
+#: admin/class-mcp-admin-connections.php:1448
 msgid "Terminal & IDE tools"
 msgstr "Інструменти термінала та IDE"
 
-#: admin/class-mcp-admin-connections.php:1446
+#: admin/class-mcp-admin-connections.php:1449
 msgid "Automation & developers"
 msgstr "Автоматизація та розробники"
 
-#: admin/class-mcp-admin-connections.php:1451
+#: admin/class-mcp-admin-connections.php:1454
 msgid "AI clients"
 msgstr "ШІ-клієнти"
 
-#: admin/class-mcp-admin-connections.php:1471
+#: admin/class-mcp-admin-connections.php:1474
 msgid "Needs public URL"
 msgstr "Потрібен публічний URL"
 
-#: admin/class-mcp-admin-connections.php:1473
+#: admin/class-mcp-admin-connections.php:1476
 msgid "Works locally"
 msgstr "Працює локально"
 
-#: admin/class-mcp-admin-connections.php:1509
-msgid "Copy"
-msgstr "Копіювати"
-
-#: admin/class-mcp-admin-connections.php:1522
+#: admin/class-mcp-admin-connections.php:1525
 msgid "Connected apps"
 msgstr "Підключені застосунки"
 
-#: admin/class-mcp-admin-connections.php:1535
+#: admin/class-mcp-admin-connections.php:1538
 msgid "Name"
 msgstr "Назва"
 
-#: admin/class-mcp-admin-connections.php:1536
+#: admin/class-mcp-admin-connections.php:1539
 msgid "Type"
 msgstr "Тип"
 
-#: admin/class-mcp-admin-connections.php:1537
+#: admin/class-mcp-admin-connections.php:1540
 msgid "Access"
 msgstr "Доступ"
 
-#: admin/class-mcp-admin-connections.php:1539
+#: admin/class-mcp-admin-connections.php:1542
 msgid "Last used"
 msgstr "Останнє використання"
 
-#: admin/class-mcp-admin-connections.php:1559
+#: admin/class-mcp-admin-connections.php:1562
 msgid "Revoke this key? Any client using it will lose access."
 msgstr ""
 "Відкликати цей ключ? Усі клієнти, що його використовують, втратять доступ."
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1569
+#: admin/class-mcp-admin-connections.php:1572
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · схвалив %2$s"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1572
+#: admin/class-mcp-admin-connections.php:1575
 #, php-format
 msgid "approved by %s"
 msgstr "схвалено користувачем %s"
 
-#: admin/class-mcp-admin-connections.php:1578
+#: admin/class-mcp-admin-connections.php:1581
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1586
+#: admin/class-mcp-admin-connections.php:1589
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "Відкликати це підключення? Застосунок негайно втратить доступ."
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1612
+#: admin/class-mcp-admin-connections.php:1615
 #, php-format
 msgid "%s ago"
 msgstr "%s тому"
 
-#: admin/class-mcp-admin-connections.php:1614
+#: admin/class-mcp-admin-connections.php:1617
 msgid "Never"
 msgstr "Ніколи"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1621
+#: admin/class-mcp-admin-connections.php:1624
 #, php-format
 msgid "Actions for %s"
 msgstr "Дії для %s"
 
-#: admin/class-mcp-admin-connections.php:1624
+#: admin/class-mcp-admin-connections.php:1627
 msgid "Edit access…"
 msgstr "Змінити доступ…"
 
-#: admin/class-mcp-admin-connections.php:1625
+#: admin/class-mcp-admin-connections.php:1628
 msgid "Revoke"
 msgstr "Відкликати"
 
-#: admin/class-mcp-admin-connections.php:1628
+#: admin/class-mcp-admin-connections.php:1631
 msgid "Revoke…"
 msgstr "Відкликати…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1641
+#: admin/class-mcp-admin-connections.php:1644
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "Доступ для <strong>%s</strong>"
 
-#: admin/class-mcp-admin-connections.php:1645
+#: admin/class-mcp-admin-connections.php:1648
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:220
 msgid "Cancel"
 msgstr "Назад"
 
-#: admin/class-mcp-admin-connections.php:1646
+#: admin/class-mcp-admin-connections.php:1649
 msgid "Save access"
 msgstr "Зберегти доступ"
 
-#: admin/class-mcp-admin-connections.php:1659
+#: admin/class-mcp-admin-connections.php:1662
 msgid "Connection Doctor"
 msgstr "Діагностика підключення"
 
-#: admin/class-mcp-admin-connections.php:1661
+#: admin/class-mcp-admin-connections.php:1664
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -1626,7 +1615,7 @@ msgstr ""
 "Перевірте, чи можуть ШІ-клієнти отримати доступ до цього сайту, і отримайте "
 "готову для копіювання діагностику будь-яких несправностей."
 
-#: admin/class-mcp-admin-connections.php:1664
+#: admin/class-mcp-admin-connections.php:1667
 msgid ""
 "<strong>This site is behind Cloudflare.</strong> Some Cloudflare security "
 "settings, such as Browser Integrity Check and Bot Fight Mode, can block AI "
@@ -1637,19 +1626,19 @@ msgstr ""
 "можуть блокувати ШІ-застосунки ще до WordPress. Запустіть перевірку, щоб це "
 "з’ясувати."
 
-#: admin/class-mcp-admin-connections.php:1665
+#: admin/class-mcp-admin-connections.php:1668
 msgid "How to let AI apps through Cloudflare"
 msgstr "Як пропустити ШІ-застосунки через Cloudflare"
 
-#: admin/class-mcp-admin-connections.php:1668
+#: admin/class-mcp-admin-connections.php:1671
 msgid "Run checks"
 msgstr "Запустити перевірку"
 
-#: admin/class-mcp-admin-connections.php:1669
+#: admin/class-mcp-admin-connections.php:1672
 msgid "Copy report"
 msgstr "Скопіювати звіт"
 
-#: admin/class-mcp-admin-connections.php:1670
+#: admin/class-mcp-admin-connections.php:1673
 msgid "Get help on WordPress.org"
 msgstr "Отримати допомогу на WordPress.org"
 

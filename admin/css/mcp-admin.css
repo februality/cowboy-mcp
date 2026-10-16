@@ -97,10 +97,6 @@
 .wrap.cmcp select.cmcp-input { line-height: normal; padding-inline-end: 24px; }
 .wrap.cmcp textarea.cmcp-input { height: auto; padding: 8px 10px; font-family: var(--cmcp-mono); font-size: 13px; width: 100%; resize: vertical; }
 .cmcp-formrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.cmcp-icon-btn { border: 1px solid var(--cmcp-border); background: var(--cmcp-surface); border-radius: 5px; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; color: var(--cmcp-muted); padding: 0; }
-.cmcp-icon-btn svg { width: 14px; height: 14px; }
-.cmcp-icon-btn.is-copied { color: var(--cmcp-ok); border-color: var(--cmcp-ok-border); }
-.cmcp-icon-btn.is-failed { color: var(--cmcp-danger); border-color: var(--cmcp-danger-border); }
 .cmcp-callout { padding: 10px 12px; border-radius: var(--cmcp-radius-sm); background: var(--cmcp-warn-bg); border: 1px solid var(--cmcp-warn-border); color: #5c3a00; font-size: 13px; margin: 8px 0; }
 .cmcp-callout p { margin: 0; }
 .cmcp-callout--warn { background: var(--cmcp-warn-bg); border-color: var(--cmcp-warn-border); }
@@ -170,6 +166,13 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 @media (max-width: 600px) { .wrap.cmcp .cmcp-fields { grid-template-columns: minmax(0, 1fr); gap: 2px; } .wrap.cmcp .cmcp-fields dd { margin-bottom: 8px; } }
 .wrap.cmcp .cmcp-step-body > p.description { color: var(--cmcp-muted); font-size: 13px; }
 .cmcp-step-body p code, .cmcp-step-body li code, .cmcp-callout code { font-size: 12.5px; background: #efefeb; border-radius: 4px; padding: 1px 5px; }
+/* Paste field: everything the admin pastes into another app (links, chat messages, endpoint, the example prompt). */
+.wrap.cmcp .cmcp-paste { margin: 6px 0 8px; max-width: 76ch; }
+.wrap.cmcp .cmcp-paste-label { display: block; margin: 0 0 4px; font-size: 12px; color: var(--cmcp-muted); }
+.wrap.cmcp .cmcp-paste-field { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--cmcp-border); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface); padding: 6px 6px 6px 12px; }
+.wrap.cmcp .cmcp-paste-text { flex: 1 1 auto; min-width: 0; padding: 4px 0; font-size: 13.5px; line-height: 1.5; color: var(--cmcp-text); white-space: pre-wrap; overflow-wrap: break-word; }
+.wrap.cmcp .cmcp-paste-copy { flex: none; }
+.wrap.cmcp .cmcp-paste-copy.mcp-copy-btn--copied { color: var(--cmcp-ok); border-color: var(--cmcp-ok-border); }
 .cmcp-term-wrap { border-radius: var(--cmcp-radius-sm); overflow: hidden; background: var(--cmcp-code-bg); margin: 4px 0 8px; }
 .cmcp-term-bar { display: flex; align-items: center; gap: 8px; height: 32px; padding-block: 0; padding-inline: 12px 6px; border-bottom: 1px solid #1d2a20; font-size: 12px; color: var(--cmcp-code-dim); font-family: var(--cmcp-mono); }
 .cmcp-lamp { width: 7px; height: 7px; border-radius: 50%; background: var(--cmcp-code-green); box-shadow: 0 0 6px rgba(60,240,122,.6); }
@@ -187,12 +190,6 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .wrap.cmcp .cmcp-conn-first [data-mcp-lock-until] { font-variant-numeric: tabular-nums; }
 /* The test prompt: a copyable line instead of a terminal block. */
 /* Example prompt: reads as a quote, not as code (owner ask 2026-10-12). */
-.cmcp-prompt { display: flex; align-items: center; gap: 12px; border: 1px solid var(--cmcp-border); border-left: 3px solid var(--cmcp-ink); border-radius: var(--cmcp-radius-sm); background: var(--cmcp-surface); padding: 10px 10px 10px 14px; margin: 8px 0 0; max-width: 64ch; }
-.wrap.cmcp .cmcp-prompt code { display: block; flex: 1 1 auto; min-width: 0; font-family: inherit; font-style: italic; font-size: 13.5px; line-height: 1.5; background: none; padding: 0; color: var(--cmcp-text); overflow-wrap: normal; }
-.wrap.cmcp .cmcp-prompt code::before { content: "\201C"; color: var(--cmcp-faint); margin-right: 2px; }
-.wrap.cmcp .cmcp-prompt code::after { content: "\201D"; color: var(--cmcp-faint); margin-left: 2px; }
-.wrap.cmcp .cmcp-prompt .cmcp-icon-btn { width: 30px; height: 30px; border-radius: 6px; }
-.wrap.cmcp .cmcp-prompt .cmcp-icon-btn:hover, .wrap.cmcp .cmcp-prompt .cmcp-icon-btn:focus-visible { background: var(--cmcp-ink); border-color: var(--cmcp-ink); color: #fff; }
 /* The "… instead" options sit on one row; an open one takes the full width. */
 .cmcp-inline-sum { display: flex; gap: 12px; flex-wrap: wrap; }
 .wrap.cmcp .cmcp-inline-sum .mcp-local-details { margin: 6px 0 0; }

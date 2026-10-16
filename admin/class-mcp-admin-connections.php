@@ -548,12 +548,12 @@ class Cowboy_MCP_Admin_Connections {
             __( 'Message for %s', 'cowboy-mcp' ),
             $label
         );
-        self::render_code( 'mcp-oauth-msg-' . $slug, $message, $title, __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
+        self::render_paste_field( 'mcp-oauth-msg-' . $slug, $message, $title, __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
     }
 
     /** The connection link the admin pastes into a cloud app. Copying it starts a watched connection (sign-in on, window open). */
     private static function render_link_code( string $slug, string $endpoint ): void {
-        self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
+        self::render_paste_field( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
     }
 
     /**
@@ -701,7 +701,7 @@ class Cowboy_MCP_Admin_Connections {
                     /* translators: %s: the MCP server name shown in the client. */
                     echo wp_kses( sprintf( __( 'Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> should be listed. The first start takes a moment while the bridge downloads.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
                 ?> <?php esc_html_e( 'Then try:', 'cowboy-mcp' ); ?></p>
-                <?php self::render_example_prompts( 'claude-desktop-bridge', $domain ); ?>
+                <?php self::render_example_prompt( 'claude-desktop-bridge', $domain ); ?>
         <?php self::step_close(); ?>
         <?php
     }
@@ -790,7 +790,7 @@ class Cowboy_MCP_Admin_Connections {
                         __( 'Message for %s', 'cowboy-mcp' ),
                         $label
                     );
-                    self::render_code( 'mcp-oauth-msg-' . $slug, self::muse_code_message( $domain, $endpoint ), $msg_title, __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
+                    self::render_paste_field( 'mcp-oauth-msg-' . $slug, self::muse_code_message( $domain, $endpoint ), $msg_title, __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
                     ?>
                     <p><?php esc_html_e( 'Then quit Muse and run this. It opens your browser to sign in:', 'cowboy-mcp' ); ?></p>
                     <?php self::render_code( 'mcp-oauth-cmd-' . $slug, self::oauth_snippet( $slug, $domain, $endpoint ), __( 'terminal', 'cowboy-mcp' ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
@@ -889,7 +889,7 @@ class Cowboy_MCP_Admin_Connections {
         <?php self::step_open( '1', __( 'Add an MCP Client Tool node', 'cowboy-mcp' ), '' ); ?>
             <p><?php echo wp_kses( __( 'In your workflow, add the <strong>MCP Client Tool</strong> node to your agent and fill in:', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
             <dl class="cmcp-fields">
-                <dt><?php esc_html_e( 'Endpoint', 'cowboy-mcp' ); ?></dt><dd><?php self::render_code( 'mcp-n8n-ep', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'key' ] ); ?></dd>
+                <dt><?php esc_html_e( 'Endpoint', 'cowboy-mcp' ); ?></dt><dd><?php self::render_paste_field( 'mcp-n8n-ep', $endpoint, '', __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'key' ] ); ?></dd>
                 <dt><?php esc_html_e( 'Server Transport', 'cowboy-mcp' ); ?></dt><dd><code>HTTP Streamable</code></dd>
                 <dt><?php esc_html_e( 'Authentication', 'cowboy-mcp' ); ?></dt><dd><?php echo wp_kses( __( '<strong>Bearer Auth</strong> — create a Bearer Auth credential and paste the API key below.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></dd>
             </dl>
@@ -897,7 +897,7 @@ class Cowboy_MCP_Admin_Connections {
             <details class="mcp-local-details"><summary><?php esc_html_e( 'Prefer OAuth2?', 'cowboy-mcp' ); ?></summary>
                 <div class="mcp-local-details-body">
                     <p><?php echo wp_kses( __( 'Set Authentication to <strong>OAuth2</strong> and create a new OAuth2 credential: n8n registers itself with this site and opens the sign-in when you connect. Click Copy on the endpoint above first — it turns on new connections for 30 minutes.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
-                    <?php self::render_code( 'mcp-n8n-ep-oauth', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?>
+                    <?php self::render_paste_field( 'mcp-n8n-ep-oauth', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?>
                     <p><?php echo wp_kses( __( 'A sign-in page opens on <strong>your site</strong>. Pick the access level and click <strong>Approve</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
                     <p class="description"><?php
                         /* translators: %s: URL of the Settings tab */
@@ -907,7 +907,7 @@ class Cowboy_MCP_Admin_Connections {
         <?php self::step_close(); ?>
         <?php self::step_open( '2', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
             <p><?php echo wp_kses( __( 'Execute the node once — its Tools output lists <code>cowboy_discover</code> and <code>cowboy_run</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?> <?php esc_html_e( 'Then ask your agent:', 'cowboy-mcp' ); ?></p>
-            <?php self::render_example_prompts( 'n8n', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>
+            <?php self::render_example_prompt( 'n8n', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>
         <?php self::step_close(); ?>
         <?php
     }
@@ -1169,29 +1169,20 @@ class Cowboy_MCP_Admin_Connections {
         ?>
         <?php self::step_open( '3', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
                 <p><?php echo wp_kses( $text, [ 'code' => [] ] ); ?> <?php esc_html_e( 'Then try:', 'cowboy-mcp' ); ?></p>
-                <?php self::render_example_prompts( $slug, $domain ); ?>
+                <?php self::render_example_prompt( $slug, $domain ); ?>
         <?php self::step_close(); ?>
         <?php
     }
 
     /**
-     * Example prompts, one copyable chip each: short and read-only (owner, 2026-10-16) — they show how it works and
-     * prove the connection, and they also work on a read-only credential (wp_site_info, wp_list_posts, wp_list_plugins).
-     * $name is how the prompt points the app at this site: the server name for terminal/IDE clients, the host for
-     * cloud apps (their connector is whatever the admin named it). The first chip keeps its old id (mcp-prompt-<slug>).
+     * The one example prompt: short and read-only (owner, 2026-10-16) — it shows how it works and proves the
+     * connection, and it also works on a read-only credential (wp_site_info). $name points the app at this site:
+     * the server name for terminal/IDE clients, the host for cloud apps (their connector is whatever the admin named it).
      */
-    private static function render_example_prompts( string $slug, string $name ): void {
-        $prompts = [
-            /* translators: %s: the MCP server name or the site's address. */
-            sprintf( __( "Using %s, tell me this site's name and WordPress version. Don't change anything.", 'cowboy-mcp' ), $name ),
-            /* translators: %s: the MCP server name or the site's address. */
-            sprintf( __( 'Using %s, list my five most recent posts.', 'cowboy-mcp' ), $name ),
-            /* translators: %s: the MCP server name or the site's address. */
-            sprintf( __( 'Using %s, which plugins are active on this site?', 'cowboy-mcp' ), $name ),
-        ];
-        foreach ( $prompts as $i => $prompt ) {
-            self::render_chip( 'mcp-prompt-' . $slug . ( $i ? '-' . ( $i + 1 ) : '' ), $prompt, __( 'Copy prompt', 'cowboy-mcp' ) );
-        }
+    private static function render_example_prompt( string $slug, string $name ): void {
+        /* translators: %s: the MCP server name or the site's address. */
+        $prompt = sprintf( __( "Using %s, tell me this site's name and WordPress version. Don't change anything.", 'cowboy-mcp' ), $name );
+        self::render_paste_field( 'mcp-prompt-' . $slug, $prompt, '', __( 'Copy prompt', 'cowboy-mcp' ) );
     }
 
     /** Last step of the cloud-app panels (claude.ai, Claude Desktop connector, ChatGPT, Gemini, Grok, Perplexity, Muse). */
@@ -1200,16 +1191,28 @@ class Cowboy_MCP_Admin_Connections {
         ?>
                 <p><?php esc_html_e( 'In a new chat, ask:', 'cowboy-mcp' ); ?></p>
         <?php
-        self::render_example_prompts( $slug, (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+        self::render_example_prompt( $slug, (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
         self::step_close();
     }
 
-    /** One-line copyable text (the test prompt) — lighter than a terminal block. */
-    private static function render_chip( string $id, string $text, string $copy_label ): void {
+    /**
+     * The one "paste from" field for everything the admin pastes into another app — connection links, chat messages,
+     * the n8n endpoint and the example prompt (owner, 2026-10-16: one unified input). Shell commands and config files
+     * keep the terminal block (render_code()). $attrs become data-cmcp-* on the Copy button (data-cmcp-start → a watch).
+     */
+    private static function render_paste_field( string $id, string $text, string $label, string $copy_label, array $attrs = [] ): void {
+        $data = '';
+        foreach ( $attrs as $k => $v ) {
+            $data .= ' data-cmcp-' . esc_attr( $k ) . '="' . esc_attr( (string) $v ) . '"';
+        }
         ?>
-        <div class="cmcp-prompt"><code id="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $text ); ?></code><button type="button" class="cmcp-icon-btn mcp-copy-btn" data-copy-target="<?php echo esc_attr( $id ); ?>" data-cmcp-icon aria-label="<?php echo esc_attr( $copy_label ); ?>"><?php
-            echo Cowboy_MCP_Admin::icon( 'copy' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literal.
-        ?></button></div>
+        <div class="cmcp-paste">
+            <?php if ( '' !== $label ) : ?><span class="cmcp-paste-label"><?php echo esc_html( $label ); ?></span><?php endif; ?>
+            <div class="cmcp-paste-field">
+                <div class="cmcp-paste-text" id="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $text ); ?></div>
+                <button type="button" class="cmcp-btn cmcp-btn--sm cmcp-paste-copy mcp-copy-btn" data-copy-target="<?php echo esc_attr( $id ); ?>"<?php echo $data; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each key/value escaped above. ?> aria-label="<?php echo esc_attr( $copy_label ); ?>"><?php esc_html_e( 'Copy', 'cowboy-mcp' ); ?></button>
+            </div>
+        </div>
         <?php
     }
 
