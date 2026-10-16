@@ -808,60 +808,6 @@ document.addEventListener( 'click', function( e ) {
 	if ( box ) { box.remove(); }
 } );
 
-// "Open ChatGPT": copy the connection link during the click (user gesture), then let the form open the new tab.
-// The page reloads ~1.5 s later (refresh-after-submit), so a success flag carries the "copied" note across it;
-// on failure the "Copy the link yourself" details opens instead.
-( function() {
-	// The flags carry the id of the panel that was submitted: every client panel is in the DOM,
-	// so a bare document.querySelector() would land in the first panel (ChatGPT), not the one used.
-	function panelId( form ) {
-		var panel = form && form.closest && form.closest( '[id^="mcp-client-panel-"]' );
-		return panel ? panel.id : '';
-	}
-	function store( key, val ) {
-		try { if ( val === null ) { window.sessionStorage.removeItem( key ); } else { window.sessionStorage.setItem( key, val ); } } catch ( err ) {}
-	}
-	function read( key ) {
-		try { return window.sessionStorage.getItem( key ); } catch ( err ) { return null; }
-	}
-	function showNote( note ) { if ( note ) { note.hidden = false; } }
-	function openDetails( form ) {
-		var d = form && form.parentNode.querySelector( 'details' );
-		if ( d ) { d.open = true; }
-	}
-	function openFallback( form ) {
-		openDetails( form );
-		// The page reloads after the submit; reopen the fallback there too.
-		store( 'cmcpCopyFailed', panelId( form ) || '1' );
-	}
-	function inPanel( id, sel ) {
-		var root = id && id !== '1' ? document.getElementById( id ) : null;
-		return ( root || document ).querySelector( sel );
-	}
-	function restore() {
-		var copied = read( 'cmcpCopied' );
-		if ( copied ) {
-			store( 'cmcpCopied', null );
-			showNote( inPanel( copied, '[data-cmcp-copy-note]' ) );
-		}
-		var failed = read( 'cmcpCopyFailed' );
-		if ( failed ) {
-			store( 'cmcpCopyFailed', null );
-			openDetails( inPanel( failed, 'form[data-cmcp-copy]' ) );
-		}
-	}
-	if ( document.readyState === 'loading' ) { document.addEventListener( 'DOMContentLoaded', restore ); } else { restore(); }
-	document.addEventListener( 'submit', function( e ) {
-		var form = e.target;
-		if ( ! form.matches || ! form.matches( 'form[data-cmcp-copy]' ) ) { return; }
-		var note = form.parentNode.querySelector( '[data-cmcp-copy-note]' );
-		if ( ! navigator.clipboard || window.isSecureContext === false ) { openFallback( form ); return; }
-		var p;
-		try { p = navigator.clipboard.writeText( form.getAttribute( 'data-cmcp-copy' ) ); } catch ( err ) { openFallback( form ); return; }
-		p.then( function() { store( 'cmcpCopied', panelId( form ) || '1' ); showNote( note ); }, function() { openFallback( form ); } );
-	} );
-} )();
-
 // Live "Connected": poll while a strip is on screen and the tab is visible. Also started by [data-cmcp-start].
 ( function() {
 	var timer = null;

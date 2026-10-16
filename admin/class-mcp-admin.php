@@ -387,7 +387,7 @@ class Cowboy_MCP_Admin {
             exit;
         }
 
-        // "Open ChatGPT": connector on + window open, then a new tab to ChatGPT (no prefill link exists; the JS copied the URL).
+        // "Open ChatGPT": connector on + window open, then a new tab to ChatGPT (no prefill link exists; the admin copies the link shown above the button).
         if ( isset( $_POST['cowboy_mcp_open_chatgpt'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ?? '' ) ), 'cowboy_mcp_open_chatgpt' ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
             self::enable_oauth_connector();
             Cowboy_MCP_OAuth::open_registration_window();

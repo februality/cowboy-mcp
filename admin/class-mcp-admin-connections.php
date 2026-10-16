@@ -221,46 +221,6 @@ class Cowboy_MCP_Admin_Connections {
         echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
     }
 
-    /**
-     * "New connections" (the 30-minute DCR registration window). Every Add / Install / Copy action
-     * opens it itself (handle_actions() + ajax_start_connect()), so the normal flows never mention it.
-     * It is offered only where a person bypasses those buttons — the by-hand paths — and reported on
-     * the live status strip while it is open. CIMD clients (Claude Code, Codex) never need it.
-     */
-    private static function render_connections_first(): void {
-        $settings = get_option( 'cowboy_mcp_settings', [] );
-        if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || empty( $settings['enabled'] ) || empty( $settings['oauth_enabled'] ) ) {
-            return;
-        }
-        $left = Cowboy_MCP_OAuth::registration_seconds_left();
-        if ( $left > 0 ) {
-            ?>
-            <p class="description cmcp-conn-first" data-cmcp-conn-open><?php
-                /* translators: %s: countdown such as 29:59 */
-                printf( esc_html__( 'New connections are on (%s left).', 'cowboy-mcp' ), '<span data-mcp-lock-until="' . esc_attr( (string) ( time() + $left ) ) . '">' . esc_html( gmdate( 'i:s', $left ) ) . '</span>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped piecewise above.
-            ?></p>
-            <?php
-            return;
-        }
-        ?>
-        <form method="post" class="mcp-inline-form cmcp-conn-first">
-            <?php wp_nonce_field( 'cowboy_mcp_toggle_connections' ); ?>
-            <p><strong><?php esc_html_e( 'Turn on new connections first:', 'cowboy-mcp' ); ?></strong>
-            <button type="submit" name="cowboy_mcp_toggle_connections" value="enable" class="cmcp-btn cmcp-btn--sm"><?php esc_html_e( 'Enable for 30 minutes', 'cowboy-mcp' ); ?></button>
-            <span class="description"><?php esc_html_e( 'It switches itself off after 30 minutes.', 'cowboy-mcp' ); ?></span></p>
-        </form>
-        <?php
-    }
-
-    /** By-hand paths: the sign-in switch while it is off (turning it on also opens the window), else the New-connections switch while closed. */
-    private static function render_manual_prereq( bool $oauth_on ): void {
-        if ( ! $oauth_on ) {
-            self::render_enable_first();
-            return;
-        }
-        self::render_connections_first();
-    }
-
     /** One callout for sites the cloud apps cannot reach (local, private or plain http); the sidebar hints already say which clients work locally. */
     private static function render_unreachable_callout( string $slug ): void {
         if ( 'chatgpt' === $slug ) {
@@ -332,9 +292,6 @@ class Cowboy_MCP_Admin_Connections {
 
         // Whole sentences per client (not sprintf'd names) so translators get
         // complete, grammatical strings.
-        $enable_text  = $is_chatgpt
-            ? __( 'This opens a secure sign-in so ChatGPT can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' )
-            : __( 'This opens a secure sign-in so the Claude apps can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' );
         $step2_title  = match ( true ) {
             $is_chatgpt => __( 'Add it in ChatGPT', 'cowboy-mcp' ),
             $is_desktop => __( 'Add it in the Claude app', 'cowboy-mcp' ),
@@ -353,20 +310,6 @@ class Cowboy_MCP_Admin_Connections {
         $quick         = ! $is_chatgpt && $oauth_avail && $reachable;
         $chatgpt_quick = $is_chatgpt && $oauth_avail && $reachable;
 
-        if ( ! $oauth_on && ! $quick && ! $chatgpt_quick ) :
-            // Browsing never flips settings — enabling the connector is an explicit click.
-            ?>
-            <?php self::step_open( '1', __( 'Turn on browser sign-in', 'cowboy-mcp' ), '' ); ?>
-                    <p><?php echo esc_html( $enable_text ); ?></p>
-                    <form method="post" class="mcp-inline-form">
-                        <?php wp_nonce_field( 'cowboy_mcp_enable_oauth' ); ?>
-                        <button type="submit" name="cowboy_mcp_enable_oauth" class="cmcp-btn cmcp-btn--primary"><?php esc_html_e( 'Turn on browser sign-in', 'cowboy-mcp' ); ?></button>
-                    </form>
-            <?php self::step_close(); ?>
-            <?php
-            return;
-        endif;
-
         if ( $quick ) :
             ?>
             <?php self::step_open( '1', __( 'Add it to Claude', 'cowboy-mcp' ), '' ); ?>
@@ -382,8 +325,7 @@ class Cowboy_MCP_Admin_Connections {
                     <details class="mcp-local-details">
                         <summary><?php esc_html_e( 'Add it by hand instead', 'cowboy-mcp' ); ?></summary>
                         <div class="mcp-local-details-body">
-                            <?php self::render_manual_prereq( $oauth_on ); ?>
-                            <?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?>
+                            <?php self::render_link_code( $slug, $endpoint ); ?>
                             <?php self::render_claude_manual_substeps( $is_desktop, true ); ?>
                         </div>
                     </details>
@@ -397,28 +339,10 @@ class Cowboy_MCP_Admin_Connections {
             return;
         endif;
         ?>
-        <?php if ( $chatgpt_quick ) : ?>
-        <?php self::step_open( '1', __( 'Open ChatGPT', 'cowboy-mcp' ), '' ); ?>
-                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
-                    <?php wp_nonce_field( 'cowboy_mcp_open_chatgpt' ); ?>
-                    <button type="submit" name="cowboy_mcp_open_chatgpt" value="1" class="cmcp-btn cmcp-btn--primary"><?php
-                        esc_html_e( 'Open ChatGPT', 'cowboy-mcp' );
-                        echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
-                    ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
-                </form>
-                <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php esc_html_e( 'Connection link copied — paste it into ChatGPT as the MCP server URL.', 'cowboy-mcp' ); ?></p>
-                <p><?php esc_html_e( 'Copies your connection link and opens ChatGPT in a new tab.', 'cowboy-mcp' ); ?></p>
-                <details class="mcp-local-details">
-                    <summary><?php esc_html_e( 'Copy the link yourself', 'cowboy-mcp' ); ?></summary>
-                    <div class="mcp-local-details-body"><?php self::render_manual_prereq( $oauth_on ); ?><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
-                </details>
-        <?php self::step_close(); ?>
-        <?php else : ?>
         <?php self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' ); ?>
-                <?php self::render_manual_prereq( $oauth_on ); ?>
-                <?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?>
+                <?php self::render_link_code( $slug, $endpoint ); ?>
+                <?php if ( $chatgpt_quick ) { self::render_open_app_form( 'cowboy_mcp_open_chatgpt', '1', 'ChatGPT' ); } ?>
         <?php self::step_close(); ?>
-        <?php endif; ?>
 
         <?php self::step_open( '2', $step2_title, '' ); ?>
                 <?php if ( $is_chatgpt ) : ?>
@@ -509,9 +433,6 @@ class Cowboy_MCP_Admin_Connections {
     private static function render_cloud_connector_panel( string $slug, array $def, string $endpoint, bool $is_local ): void {
         $label       = (string) $def['label'];
         $oauth_avail = class_exists( 'Cowboy_MCP_OAuth' );
-        // Read the option directly: Cowboy_MCP_OAuth::is_enabled() memoizes settings at request start (see render_oauth_connector_flow()).
-        $settings    = get_option( 'cowboy_mcp_settings', [] );
-        $oauth_on    = $oauth_avail && ! empty( $settings['enabled'] ) && ! empty( $settings['oauth_enabled'] );
         $reachable   = $oauth_avail && Cowboy_MCP_OAuth::site_is_publicly_reachable();
         $copy        = self::cloud_copy( $slug );
 
@@ -523,79 +444,22 @@ class Cowboy_MCP_Admin_Connections {
             <div class="cmcp-callout cmcp-callout--warn"><p><?php echo $copy['top']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p></div>
             <?php
         endif;
+        // Step 1 is the snippet itself (the link, or Muse's chat message), on screen from the start: a button that copied
+        // it silently left people not knowing they had anything to paste. Its Copy button starts a watched connection
+        // (data-cmcp-start → ajax_start_connect(): browser sign-in on + the 30-minute window open); Open <app> only opens.
         $message = (string) ( $copy['message'] ?? '' );
-        if ( ! $oauth_on && ! $reachable && '' === $message ) :
-            // Browsing never flips settings — enabling the connector is an explicit click.
-            ?>
-            <?php self::step_open( '1', __( 'Turn on browser sign-in', 'cowboy-mcp' ), '' ); ?>
-                    <p><?php
-                        /* translators: %s: AI app name, e.g. Perplexity */
-                        echo esc_html( sprintf( __( 'This opens a secure sign-in so %s can connect without a terminal. No access is granted until you approve it in your browser.', 'cowboy-mcp' ), $label ) );
-                    ?></p>
-                    <form method="post" class="mcp-inline-form">
-                        <?php wp_nonce_field( 'cowboy_mcp_enable_oauth' ); ?>
-                        <button type="submit" name="cowboy_mcp_enable_oauth" class="cmcp-btn cmcp-btn--primary"><?php esc_html_e( 'Turn on browser sign-in', 'cowboy-mcp' ); ?></button>
-                    </form>
-            <?php self::step_close(); ?>
-            <?php
-            return;
-        endif;
-
-        if ( '' !== $message ) :
-            // The message is the whole hand-over, so it is on screen from the start. Its Copy button starts a watched
-            // connection (data-cmcp-start → ajax_start_connect()): browser sign-in on + the 30-minute window open.
+        if ( '' !== $message ) {
             /* translators: %s: AI app name */
             self::step_open( '1', sprintf( __( 'Copy the message for %s', 'cowboy-mcp' ), $label ), '' );
             self::render_message_code( $slug, $message, $label );
-            if ( $reachable ) :
-                ?>
-                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $message ); ?>">
-                    <?php wp_nonce_field( 'cowboy_mcp_open_app' ); ?>
-                    <button type="submit" name="cowboy_mcp_open_app" value="<?php echo esc_attr( $slug ); ?>" class="cmcp-btn"><?php
-                        /* translators: %s: AI app name */
-                        echo esc_html( sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ) );
-                        echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
-                    ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
-                </form>
-                <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php
-                    /* translators: %s: AI app name */
-                    echo esc_html( sprintf( __( 'Message copied — paste it into a new %s chat and send it.', 'cowboy-mcp' ), $label ) );
-                ?></p>
-                <?php
-            endif;
-            self::step_close();
-        elseif ( $reachable ) :
-            /* translators: %s: AI app name */
-            self::step_open( '1', sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ), '' );
-            ?>
-                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
-                    <?php wp_nonce_field( 'cowboy_mcp_open_app' ); ?>
-                    <button type="submit" name="cowboy_mcp_open_app" value="<?php echo esc_attr( $slug ); ?>" class="cmcp-btn cmcp-btn--primary"><?php
-                        /* translators: %s: AI app name */
-                        echo esc_html( sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ) );
-                        echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
-                    ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
-                </form>
-                <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php
-                    /* translators: %s: AI app name */
-                    echo esc_html( sprintf( __( 'Connection link copied — paste it into %s as the server URL.', 'cowboy-mcp' ), $label ) );
-                ?></p>
-                <p><?php
-                    /* translators: %s: AI app name */
-                    echo esc_html( sprintf( __( 'Copies your connection link and opens %s in a new tab.', 'cowboy-mcp' ), $label ) );
-                ?></p>
-                <details class="mcp-local-details">
-                    <summary><?php esc_html_e( 'Copy the link yourself', 'cowboy-mcp' ); ?></summary>
-                    <div class="mcp-local-details-body"><?php self::render_manual_prereq( $oauth_on ); ?><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
-                </details>
-            <?php
-            self::step_close();
-        else :
+        } else {
             self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' );
-            self::render_manual_prereq( $oauth_on );
-            self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) );
-            self::step_close();
-        endif;
+            self::render_link_code( $slug, $endpoint );
+        }
+        if ( $reachable ) {
+            self::render_open_app_form( 'cowboy_mcp_open_app', $slug, $label );
+        }
+        self::step_close();
 
         /* translators: %s: AI app name */
         self::step_open( '2', sprintf( __( 'Add it in %s', 'cowboy-mcp' ), $label ), '' );
@@ -646,6 +510,28 @@ class Cowboy_MCP_Admin_Connections {
             $label
         );
         self::render_code( 'mcp-oauth-msg-' . $slug, $message, $title, __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
+    }
+
+    /** The connection link the admin pastes into a cloud app. Copying it starts a watched connection (sign-in on, window open). */
+    private static function render_link_code( string $slug, string $endpoint ): void {
+        self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
+    }
+
+    /**
+     * "Open <app>" under the snippet: a new tab to the app's connectors page. It copies nothing (the snippet above is
+     * copied on purpose); handle_actions() turns sign-in on, opens the window and starts the watch on its own too.
+     */
+    private static function render_open_app_form( string $action, string $value, string $label ): void {
+        ?>
+        <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form cmcp-open-app" data-cmcp-refresh-after-submit>
+            <?php wp_nonce_field( $action ); ?>
+            <button type="submit" name="<?php echo esc_attr( $action ); ?>" value="<?php echo esc_attr( $value ); ?>" class="cmcp-btn"><?php
+                /* translators: %s: AI app name */
+                echo esc_html( sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ) );
+                echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
+            ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
+        </form>
+        <?php
     }
 
     /** Manual connect paths with the connector off: the same Enable form, so a hand-added connector can sign in. */
@@ -989,7 +875,7 @@ class Cowboy_MCP_Admin_Connections {
 
     /**
      * Step 2 for every OAuth terminal/IDE client: one sentence. The New-connections window is opened by
-     * the Copy / Add / Install click itself, so it is not mentioned here (see render_connections_first()).
+     * the Copy / Add / Install click itself (data-cmcp-start → ajax_start_connect()), so it is not mentioned here.
      */
     private static function render_approve_step( bool $oauth_on, string $slug = '' ): void {
         ?>
