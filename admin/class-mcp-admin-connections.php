@@ -488,10 +488,14 @@ class Cowboy_MCP_Admin_Connections {
             // Muse's server-side MCP client with error 1010 (sign-in and token exchange pass; MCP calls do not).
             'muse' => [
                 'steps' => [
-                    wp_kses( __( 'Go to <code>muse.ai</code> (or open the Muse app) and sign in with your Meta account.', 'cowboy-mcp' ), [ 'code' => [] ] ),
-                    wp_kses( __( 'In a chat, ask Muse to <strong>create a custom connector</strong> for a remote MCP server: the link from step 1 as the URL, streamable HTTP, OAuth. Allow its request to contact your site.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Paste the message into a new chat on <code>muse.ai</code> (or in the Muse app) and send it. If Muse asks to contact your site, allow it.', 'cowboy-mcp' ), [ 'code' => [] ] ),
                     wp_kses( __( 'Click <strong>Connect</strong> on the connector card, then <strong>Connect</strong> again in the dialog — Muse opens the sign-in page in a new tab.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 ],
+                // Muse has no form or link for custom connectors (Settings → Connectors is Meta's catalog; the web app's
+                // only "Add custom connector" strings title the credential dialogs of chat-created connectors, and it
+                // reads no prompt parameter from the URL — checked 2026-10-16). A chat message creates one, so the panel
+                // hands over the exact message that worked live on 2026-10-14 instead of the bare link.
+                'message' => self::muse_connector_message(),
                 'plan'  => esc_html__( 'Meta offers Muse to adults in the United States. Meta does not review custom connectors, so add only sites you manage.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Muse asks you to approve each request it sends to your site (<strong>Allow once</strong> or <strong>Always allow this site</strong>). Site behind Cloudflare? Its Browser Integrity Check blocks Muse with error 1010 — turn it off for <code>/wp-json/cowboy-mcp/</code>.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
@@ -534,11 +538,12 @@ class Cowboy_MCP_Admin_Connections {
             return;
         endif;
 
+        $message = (string) ( $copy['message'] ?? '' );
         if ( $reachable ) :
             /* translators: %s: AI app name */
             self::step_open( '1', sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ), '' );
             ?>
-                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( $endpoint ); ?>">
+                <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form" data-cmcp-refresh-after-submit data-cmcp-copy="<?php echo esc_attr( '' !== $message ? $message : $endpoint ); ?>">
                     <?php wp_nonce_field( 'cowboy_mcp_open_app' ); ?>
                     <button type="submit" name="cowboy_mcp_open_app" value="<?php echo esc_attr( $slug ); ?>" class="cmcp-btn cmcp-btn--primary"><?php
                         /* translators: %s: AI app name */
@@ -546,6 +551,20 @@ class Cowboy_MCP_Admin_Connections {
                         echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
                     ?><span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></button>
                 </form>
+                <?php if ( '' !== $message ) : ?>
+                <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php
+                    /* translators: %s: AI app name */
+                    echo esc_html( sprintf( __( 'Message copied — paste it into a new %s chat and send it.', 'cowboy-mcp' ), $label ) );
+                ?></p>
+                <p><?php
+                    /* translators: %s: AI app name */
+                    echo esc_html( sprintf( __( 'Copies a ready-made message and opens %s in a new tab.', 'cowboy-mcp' ), $label ) );
+                ?></p>
+                <details class="mcp-local-details">
+                    <summary><?php esc_html_e( 'Copy the message yourself', 'cowboy-mcp' ); ?></summary>
+                    <div class="mcp-local-details-body"><?php self::render_manual_prereq( $oauth_on ); ?><?php self::render_message_code( $slug, $message, $label ); ?></div>
+                </details>
+                <?php else : ?>
                 <p class="cmcp-copy-note" data-cmcp-copy-note hidden><?php
                     /* translators: %s: AI app name */
                     echo esc_html( sprintf( __( 'Connection link copied — paste it into %s as the server URL.', 'cowboy-mcp' ), $label ) );
@@ -558,7 +577,14 @@ class Cowboy_MCP_Admin_Connections {
                     <summary><?php esc_html_e( 'Copy the link yourself', 'cowboy-mcp' ); ?></summary>
                     <div class="mcp-local-details-body"><?php self::render_manual_prereq( $oauth_on ); ?><?php self::render_code( 'mcp-oauth-url-' . $slug, $endpoint, __( 'Connection link', 'cowboy-mcp' ), __( 'Copy connector URL', 'cowboy-mcp' ) ); ?></div>
                 </details>
+                <?php endif; ?>
             <?php
+            self::step_close();
+        elseif ( '' !== $message ) :
+            /* translators: %s: AI app name */
+            self::step_open( '1', sprintf( __( 'Copy the message for %s', 'cowboy-mcp' ), $label ), '' );
+            self::render_manual_prereq( $oauth_on );
+            self::render_message_code( $slug, $message, $label );
             self::step_close();
         else :
             self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' );
@@ -591,6 +617,30 @@ class Cowboy_MCP_Admin_Connections {
                 </details>
         <?php
         self::step_close();
+    }
+
+    /**
+     * The chat message that makes Muse create a custom connector for this site. English on purpose: it is an
+     * instruction for the assistant (like tool descriptions), and the wording is the one verified live on 2026-10-14
+     * (Muse built the connector card from it on the first try). The name is the site title, else the host.
+     */
+    private static function muse_connector_message(): string {
+        $name = trim( wp_strip_all_tags( html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES, 'UTF-8' ) ) );
+        if ( '' === $name ) {
+            $name = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+        }
+        $endpoint = class_exists( 'Cowboy_MCP_OAuth' ) ? Cowboy_MCP_OAuth::resource_url() : rest_url( 'cowboy-mcp/v1/endpoint' );
+        return 'Create a Custom Connector for a remote MCP server. Name: ' . $name . '. Transport: remote streamable HTTP. URL: ' . $endpoint . '. Auth: OAuth (the server supports dynamic client registration).';
+    }
+
+    /** The copyable chat message (cloud apps that create connectors from a chat message: Muse). */
+    private static function render_message_code( string $slug, string $message, string $label ): void {
+        $title = sprintf(
+            /* translators: %s: AI app name */
+            __( 'Message for %s', 'cowboy-mcp' ),
+            $label
+        );
+        self::render_code( 'mcp-oauth-msg-' . $slug, $message, $title, __( 'Copy message', 'cowboy-mcp' ) );
     }
 
     /** Manual connect paths with the connector off: the same Enable form, so a hand-added connector can sign in. */
@@ -798,17 +848,30 @@ class Cowboy_MCP_Admin_Connections {
             /* translators: %s: the MCP server name used in the command */
             'gemini-cli'  => wp_kses( sprintf( __( 'Run this in your terminal, then start <code>gemini</code>: it opens your browser to sign in (if it does not, run <code>/mcp auth %s</code>).', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] ),
             'opencode'    => esc_html__( 'Run this in your terminal. Opencode opens your browser to sign in the first time it connects.', 'cowboy-mcp' ),
-            'muse-code'   => esc_html__( 'Run these in your terminal. The second line opens your browser to sign in.', 'cowboy-mcp' ),
+            'muse-code'   => wp_kses( __( 'Start <code>muse</code> and paste this message. Muse adds the server to its settings; approve the change when it asks.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             default       => '',
         };
         ?>
         <?php self::step_open( '1', __( 'Add the server', 'cowboy-mcp' ), '' ); ?>
                 <p><?php echo $intro; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped per-branch above. ?></p>
-                <?php self::render_code( 'mcp-oauth-cmd-' . $slug, self::oauth_snippet( $slug, $domain, $endpoint ), __( 'terminal', 'cowboy-mcp' ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
+                <?php if ( 'muse-code' === $slug ) : ?>
+                    <?php
+                    $msg_title = sprintf(
+                        /* translators: %s: AI app name */
+                        __( 'Message for %s', 'cowboy-mcp' ),
+                        $label
+                    );
+                    self::render_code( 'mcp-oauth-msg-' . $slug, self::muse_code_message( $domain, $endpoint ), $msg_title, __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] );
+                    ?>
+                    <p><?php esc_html_e( 'Then quit Muse and run this. It opens your browser to sign in:', 'cowboy-mcp' ); ?></p>
+                    <?php self::render_code( 'mcp-oauth-cmd-' . $slug, self::oauth_snippet( $slug, $domain, $endpoint ), __( 'terminal', 'cowboy-mcp' ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
+                <?php else : ?>
+                    <?php self::render_code( 'mcp-oauth-cmd-' . $slug, self::oauth_snippet( $slug, $domain, $endpoint ), __( 'terminal', 'cowboy-mcp' ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
+                <?php endif; ?>
                 <?php if ( 'claude-code' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--no-browser</code> to the second line and open the printed URL in a local browser.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'muse-code' === $slug ) : ?>
-                    <p class="description"><?php echo wp_kses( __( 'The first line writes <code>~/.config/muse/settings.json</code> and needs Node.js; without it, edit the file instead (below). Over SSH? Add <code>--headless</code> to the second line and paste back the address your browser ends on.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                    <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--headless</code> and paste back the address your browser ends on.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
                 <?php if ( $is_local && 'https' === wp_parse_url( $endpoint, PHP_URL_SCHEME ) ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Local https sites usually use a self-signed certificate that these tools reject: trust it in your tool, or set the WordPress Site Address to the <code>http://</code> URL.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
@@ -1019,8 +1082,9 @@ class Cowboy_MCP_Admin_Connections {
     /** Title shown on a snippet's terminal bar: the file it goes into (Cursor only), or "terminal". */
     private static function snippet_title( string $slug ): string {
         return match ( $slug ) {
-            'cursor' => '~/.cursor/mcp.json',
-            default  => __( 'terminal', 'cowboy-mcp' ),
+            'cursor'    => '~/.cursor/mcp.json',
+            'muse-code' => '~/.config/muse/settings.json',
+            default     => __( 'terminal', 'cowboy-mcp' ),
         };
     }
 
@@ -1035,30 +1099,35 @@ class Cowboy_MCP_Admin_Connections {
             'gemini-cli'     => 'gemini mcp add --scope user --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint, 'headers' => [ 'Authorization' => 'Bearer ' . $key_display ] ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, $key_display ),
-            'muse-code'      => self::muse_command_snippet( $domain, $endpoint, $key_display ),
+            // A key never goes into the chat message (it would reach the model); the key path edits the file instead.
+            'muse-code'      => self::muse_settings_json( $domain, $endpoint, $key_display ),
             default          => '',
         };
     }
 
     /**
-     * Muse Code has no `mcp add` command (muse mcp = login/logout only, 1.4.8), so this merges the server
-     * into its settings file: $XDG_CONFIG_HOME/muse/settings.json, else ~/.config/muse/settings.json (both
-     * honoured by Muse Code 1.4.8, verified 2026-10-14). The file must carry "schema_version": 1; the
-     * documented key is `mcp_servers` (Muse also reads `mcpServers`, used here only when the file already
-     * has it). mode "optional" so an unreachable site skips with a warning instead of aborting every run.
-     * A file that is not valid JSON is left untouched (the command fails) rather than overwritten.
-     * Empty $key_display = OAuth: a second line runs `muse mcp login`.
+     * The message the admin pastes into Muse Code. Muse Code has no `mcp add` command (1.4.9), but its bundled
+     * manage-settings skill makes any explicit settings change itself: it edits $XDG_CONFIG_HOME|~/.config/muse/
+     * settings.json with its file tools after the user approves, creating the file with schema_version 1 when it is
+     * missing. Its own MCP rules (bundled migrate skill): key `mcpServers`, {"type":"streamable-http", url, mode},
+     * always mode "optional" (a required server that fails aborts every run), and fold a legacy `mcp_servers` key into
+     * `mcpServers`, because a file with both keys loads no MCP server at all (`ambiguous_user_key`, reproduced with
+     * the 1.4.9 binary). New servers load on the next launch, so the panel follows with `muse mcp login`.
+     * Read from the skills bundled in the 1.4.9 binary; the model-driven edit itself is not yet observed live
+     * (needs a Muse Code model login) - the config-file fallback below covers a Muse that declines.
+     * English on purpose: it is an instruction for the assistant, like tool descriptions.
      */
-    private static function muse_command_snippet( string $domain, string $endpoint, string $key_display ): string {
-        $entry = '{transport:"streamable_http",url:"' . $endpoint . '",mode:"optional"' . ( '' !== $key_display ? ',headers:{Authorization:"Bearer ' . $key_display . '"}' : '' ) . '}';
-        $js    = 'const fs=require("fs"),p=require("path"),os=require("os");'
-            . 'const f=p.join(process.env.XDG_CONFIG_HOME||p.join(os.homedir(),".config"),"muse","settings.json");'
-            . 'let c={};try{c=JSON.parse(fs.readFileSync(f,"utf8"))}catch(e){if(e.code!=="ENOENT")throw e}'
-            . 'c.schema_version=c.schema_version||1;const k=c.mcpServers&&!c.mcp_servers?"mcpServers":"mcp_servers";'
-            . 'c[k]=c[k]||{};c[k]["' . $domain . '"]=' . $entry . ';'
-            . 'fs.mkdirSync(p.dirname(f),{recursive:true});fs.writeFileSync(f,JSON.stringify(c,null,2)+"\n");'
-            . 'console.log("Added ' . $domain . ' to "+f)';
-        return "node -e '" . $js . "'" . ( '' === $key_display ? "\n" . 'muse mcp login ' . $domain : '' );
+    private static function muse_code_message( string $domain, string $endpoint ): string {
+        return 'Change my Muse Code settings: add an MCP server under mcpServers named "' . $domain . '" with type "streamable-http", url "' . $endpoint . '" and mode "optional". It signs in with OAuth, so add no headers. If the file still has a legacy mcp_servers key, move its entries into mcpServers.';
+    }
+
+    /** The Muse Code settings file with this server (config-file fallback; with a key for the API-key path). */
+    private static function muse_settings_json( string $domain, string $endpoint, string $key_display ): string {
+        $entry = [ 'type' => 'streamable-http', 'url' => $endpoint, 'mode' => 'optional' ];
+        if ( '' !== $key_display ) {
+            $entry['headers'] = [ 'Authorization' => 'Bearer ' . $key_display ];
+        }
+        return (string) wp_json_encode( [ 'schema_version' => 1, 'mcpServers' => [ $domain => $entry ] ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
     }
 
     /**
@@ -1099,7 +1168,7 @@ class Cowboy_MCP_Admin_Connections {
             'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint,
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, '' ),
-            'muse-code'      => self::muse_command_snippet( $domain, $endpoint, '' ),
+            'muse-code'      => 'muse mcp login ' . $domain,
             'cursor'         => self::file_snippet( $slug, $domain, $endpoint ),
             default          => '',
         };
@@ -1114,7 +1183,7 @@ class Cowboy_MCP_Admin_Connections {
             'cursor'         => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'vscode'         => "{\n  \"servers\": {\n    \"{$domain}\": {\n      \"type\": \"http\",\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'claude-desktop' => self::bridge_config_snippet( $domain, $endpoint, '' ),
-            'muse-code'      => "{\n  \"schema_version\": 1,\n  \"mcp_servers\": {\n    \"{$domain}\": {\n      \"transport\": \"streamable_http\",\n      \"url\": \"{$endpoint}\",\n      \"mode\": \"optional\"\n    }\n  }\n}",
+            'muse-code'      => self::muse_settings_json( $domain, $endpoint, '' ),
             default          => '',
         };
     }
