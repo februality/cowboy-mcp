@@ -292,11 +292,6 @@ class Cowboy_MCP_Admin_Connections {
 
         // Whole sentences per client (not sprintf'd names) so translators get
         // complete, grammatical strings.
-        $step2_title  = match ( true ) {
-            $is_chatgpt => __( 'Add it in ChatGPT', 'cowboy-mcp' ),
-            $is_desktop => __( 'Add it in the Claude app', 'cowboy-mcp' ),
-            default     => __( 'Add it on claude.ai', 'cowboy-mcp' ),
-        };
         $approve_text = $is_chatgpt
             ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>, then pick your site under <strong>+ → Developer mode</strong> in a chat.', 'cowboy-mcp' )
             : __( 'Claude opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>, then switch the connector on under <strong>+ → Connectors</strong> in a chat.', 'cowboy-mcp' );
@@ -326,7 +321,7 @@ class Cowboy_MCP_Admin_Connections {
                         <summary><?php esc_html_e( 'Add it by hand instead', 'cowboy-mcp' ); ?></summary>
                         <div class="mcp-local-details-body">
                             <?php self::render_link_code( $slug, $endpoint ); ?>
-                            <?php self::render_claude_manual_substeps( $is_desktop, true ); ?>
+                            <?php foreach ( self::claude_manual_sentences( $is_desktop, true ) as $sentence ) : ?><p><?php echo $sentence; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in claude_manual_sentences(). ?></p><?php endforeach; ?>
                         </div>
                     </details>
             <?php self::step_close(); ?>
@@ -343,21 +338,51 @@ class Cowboy_MCP_Admin_Connections {
                 <?php self::render_link_code( $slug, $endpoint ); ?>
         <?php self::step_close(); ?>
 
-        <?php self::step_open( '2', $step2_title, '' ); ?>
-                <?php if ( $chatgpt_quick ) { self::render_open_app_form( 'cowboy_mcp_open_chatgpt', '1', 'ChatGPT' ); } ?>
-                <?php if ( $is_chatgpt ) : ?>
-                    <ol class="mcp-substeps">
-                        <li><?php echo wp_kses( __( 'Go to <code>chatgpt.com</code> and sign in (MCP apps work on the web only).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Under <code>Settings → Security and login</code>, turn on <strong>Developer mode</strong> (once).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></li>
-                        <li><?php echo wp_kses( __( 'Name it, paste the link as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong> and create it.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
-                    </ol>
-                <?php else : ?>
-                    <?php self::render_claude_manual_substeps( $is_desktop ); ?>
-                <?php endif; ?>
-        <?php self::step_close(); ?>
+        <?php
+        // One flat list, one literal action per step (owner, 2026-10-16: no nested numbered lists).
+        if ( $is_chatgpt ) :
+            /* translators: %s: a web address, e.g. chatgpt.com */
+            self::step_open( '2', sprintf( __( 'Go to %s', 'cowboy-mcp' ), 'chatgpt.com' ), '' );
+            if ( $chatgpt_quick ) {
+                self::render_open_app_form( 'cowboy_mcp_open_chatgpt', '1', 'ChatGPT' );
+            }
+            ?>
+                <p><?php esc_html_e( 'Sign in. MCP apps work on the web only.', 'cowboy-mcp' ); ?></p>
+            <?php
+            self::step_close();
+            self::step_open( '3', __( 'Turn on Developer mode', 'cowboy-mcp' ), '' );
+            ?>
+                <p><?php echo wp_kses( __( 'Under <code>Settings → Security and login</code>, turn on <strong>Developer mode</strong> (once).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></p>
+            <?php
+            self::step_close();
+            self::step_open( '4', __( 'Paste the link', 'cowboy-mcp' ), '' );
+            ?>
+                <p><?php
+                    echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] );
+                    echo ' ';
+                    echo wp_kses( __( 'Name it, paste the link as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong> and create it.', 'cowboy-mcp' ), [ 'strong' => [] ] );
+                ?></p>
+            <?php
+            self::step_close();
+            $approve_num = '5';
+        else :
+            $claude = self::claude_manual_sentences( $is_desktop );
+            /* translators: %s: a web address, e.g. claude.ai */
+            self::step_open( '2', $is_desktop ? __( 'Open the Claude app', 'cowboy-mcp' ) : sprintf( __( 'Go to %s', 'cowboy-mcp' ), 'claude.ai' ), '' );
+            ?>
+                <p><?php echo $claude[0]; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in claude_manual_sentences(). ?></p>
+            <?php
+            self::step_close();
+            self::step_open( '3', __( 'Paste the link', 'cowboy-mcp' ), '' );
+            ?>
+                <p><?php echo $claude[1] . ' ' . $claude[2]; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in claude_manual_sentences(). ?></p>
+            <?php
+            self::step_close();
+            $approve_num = '4';
+        endif;
+        ?>
 
-        <?php self::step_open( '3', __( 'Approve access', 'cowboy-mcp' ), '' ); ?>
+        <?php self::step_open( $approve_num, __( 'Approve access', 'cowboy-mcp' ), '' ); ?>
                 <p><?php echo wp_kses( $approve_text, [ 'strong' => [] ] ); ?></p>
                 <?php if ( $is_chatgpt ) : ?>
                     <details class="mcp-local-details">
@@ -372,7 +397,9 @@ class Cowboy_MCP_Admin_Connections {
     }
 
     /**
-     * Per-app sentences for the cloud-connector panels. Whole sentences; %s is only ever the app name elsewhere.
+     * Per-app sentences for the cloud-connector panels, one per flat step: 'go' = the address step 2 names (plain text),
+     * 'go_note' = what to do there, 'paste' = where the snippet goes, 'connect' = the click that starts the sign-in.
+     * Whole sentences; %s is only ever the app name elsewhere.
      * 'top' = short hard requirement shown as a callout above step 1 (Perplexity's paid plan); 'plan' = tier note; 'after' = what the app shows once the admin clicks Approve (optional).
      * Gemini verified live 2026-10-11 (personal Google account on Google AI Plus; a Workspace account has no
      * Custom apps section). Perplexity/Grok wording is from the 2026-10-07 research until their live sign-ins.
@@ -380,30 +407,27 @@ class Cowboy_MCP_Admin_Connections {
     private static function cloud_copy( string $slug ): array {
         return match ( $slug ) {
             'perplexity' => [
-                'steps' => [
-                    wp_kses( __( 'Go to <code>perplexity.ai</code> in your browser and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ),
-                    wp_kses( __( 'Open <strong>Customize → Connectors</strong>, click <strong>+ Custom connector</strong> and choose <strong>Add MCP connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    wp_kses( __( 'Give it a name, paste the link from step 1 as the <strong>MCP server URL</strong> (Advanced already says OAuth and Streamable HTTP), tick the acknowledgement and click <strong>Add</strong>. Open the new connector and click <strong>Add connector</strong> — Perplexity opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                ],
+                'go'      => 'perplexity.ai',
+                'go_note' => wp_kses( __( 'Sign in, then open <strong>Customize → Connectors</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'paste'   => wp_kses( __( 'Click <strong>+ Custom connector</strong> and choose <strong>Add MCP connector</strong>. Give it a name, paste the link as the <strong>MCP server URL</strong> (Advanced already says OAuth and Streamable HTTP), tick the acknowledgement and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'connect' => wp_kses( __( 'Open the new connector and click <strong>Add connector</strong> — Perplexity opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'top'   => wp_kses( __( '<strong>Needs Perplexity Pro, Max or Enterprise.</strong> The free plan has no custom connectors.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'plan'  => esc_html__( 'Verified on Pro (2026-10-12). On Enterprise, an admin has to allow member custom connectors first.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Perplexity, the connector shows a check mark. Ask a question that names it; Perplexity asks you to reply <code>yes</code> before its first tool run.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             ],
             'grok' => [
-                'steps' => [
-                    wp_kses( __( 'Go to <code>grok.com/connectors</code> and sign in.', 'cowboy-mcp' ), [ 'code' => [] ] ),
-                    wp_kses( __( 'Click <strong>New Connector</strong>, choose <strong>Custom</strong>, give it a name and paste the link from step 1 as the <strong>Server URL</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    wp_kses( __( 'Click <strong>Add Connector</strong> — Grok opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                ],
+                'go'      => 'grok.com/connectors',
+                'go_note' => '',
+                'paste'   => wp_kses( __( 'Click <strong>New Connector</strong>, choose <strong>Custom</strong>, give it a name and paste the link as the <strong>Server URL</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'connect' => wp_kses( __( 'Click <strong>Add Connector</strong> — Grok opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'plan'  => esc_html__( 'Works on the free plan (verified 2026-10-12) as well as SuperGrok and X Premium+. On Business and Enterprise workspaces an admin provisions the connector first.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Grok, the connector shows as <strong>Added</strong>. In a chat, type <code>@</code> to pick it.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
             'gemini-app' => [
-                'steps' => [
-                    wp_kses( __( 'Sign in to Gemini with a <strong>personal</strong> Google account — work and school accounts do not get Custom apps.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    wp_kses( __( 'Under <strong>Settings → Connected Apps → Custom apps</strong>, paste the link from step 1 into <strong>Add a custom app link</strong> and click <strong>Next</strong> twice.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                    wp_kses( __( 'Tick the acknowledgement, click <strong>Connect</strong>, then <strong>Agree and continue</strong> — Gemini opens the sign-in page.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                ],
+                'go'      => 'gemini.google.com/apps',
+                'go_note' => wp_kses( __( 'Sign in to Gemini with a <strong>personal</strong> Google account — work and school accounts do not get Custom apps.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'paste'   => wp_kses( __( 'Under <strong>Settings → Connected Apps → Custom apps</strong>, paste the link into <strong>Add a custom app link</strong> and click <strong>Next</strong> twice.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'connect' => wp_kses( __( 'Tick the acknowledgement, click <strong>Connect</strong>, then <strong>Agree and continue</strong> — Gemini opens the sign-in page.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'plan'  => esc_html__( 'Google lists no plan requirement (verified on a Google AI Plus account). You need a personal Google account in the United States, 18 or over, with Gemini in English and Keep Activity on; work and school accounts do not get Custom apps.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Gemini, click <strong>Connect</strong> on the “Save your custom app” card. In a chat, type <code>@</code> to pick the app; Gemini asks you to allow its first tool run.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
@@ -411,10 +435,10 @@ class Cowboy_MCP_Admin_Connections {
             // asks to approve every request it sends to the site, and Cloudflare's Browser Integrity Check answers
             // Muse's server-side MCP client with error 1010 (sign-in and token exchange pass; MCP calls do not).
             'muse' => [
-                'steps' => [
-                    wp_kses( __( 'Paste the message into a new chat on <code>muse.ai</code> (or in the Muse app) and send it. If Muse asks to contact your site, allow it.', 'cowboy-mcp' ), [ 'code' => [] ] ),
-                    wp_kses( __( 'Click <strong>Connect</strong> on the connector card, then <strong>Connect</strong> again in the dialog — Muse opens the sign-in page in a new tab.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                ],
+                'go'      => 'muse.ai',
+                'go_note' => esc_html__( 'Or open the Muse app.', 'cowboy-mcp' ),
+                'paste'   => esc_html__( 'Paste it into a new chat and send it. If Muse asks to contact your site, allow it.', 'cowboy-mcp' ),
+                'connect' => wp_kses( __( 'Click <strong>Connect</strong> on the connector card, then <strong>Connect</strong> again in the dialog — Muse opens the sign-in page in a new tab.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 // Muse has no form or link for custom connectors (Settings → Connectors is Meta's catalog; the web app's
                 // only "Add custom connector" strings title the credential dialogs of chat-created connectors, and it
                 // reads no prompt parameter from the URL — checked 2026-10-16). A chat message creates one, so the panel
@@ -425,7 +449,7 @@ class Cowboy_MCP_Admin_Connections {
                 // Shown only when this admin page came through Cloudflare (CF-Ray): everyone else would read a warning that does not apply.
                 'cloudflare' => wp_kses( __( 'This site is behind Cloudflare: its Browser Integrity Check blocks Muse with error 1010. Turn it off for <code>/wp-json/cowboy-mcp/</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             ],
-            default => [ 'steps' => [], 'plan' => '' ],
+            default => [ 'go' => '', 'go_note' => '', 'paste' => '', 'connect' => '', 'plan' => '' ],
         };
     }
 
@@ -459,18 +483,23 @@ class Cowboy_MCP_Admin_Connections {
         }
         self::step_close();
 
-        /* translators: %s: AI app name */
-        self::step_open( '2', sprintf( __( 'Add it in %s', 'cowboy-mcp' ), $label ), '' );
+        // One flat list, one literal action per step — go, paste, connect, approve (owner, 2026-10-16: no nested lists).
+        /* translators: %s: a web address, e.g. grok.com/connectors */
+        self::step_open( '2', sprintf( __( 'Go to %s', 'cowboy-mcp' ), (string) $copy['go'] ), '' );
         if ( $reachable ) {
             self::render_open_app_form( 'cowboy_mcp_open_app', $slug, $label );
         }
-        ?>
-                <ol class="mcp-substeps">
-                    <?php foreach ( $copy['steps'] as $step ) : ?><li><?php echo $step; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></li><?php endforeach; ?>
-                </ol>
-        <?php
+        if ( '' !== $copy['go_note'] ) :
+            ?><p><?php echo $copy['go_note']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php
+        endif;
         self::step_close();
-        self::step_open( '3', __( 'Approve access', 'cowboy-mcp' ), '' );
+        self::step_open( '3', '' !== $message ? __( 'Paste the message', 'cowboy-mcp' ) : __( 'Paste the link', 'cowboy-mcp' ), '' );
+        ?><p><?php echo $copy['paste']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php
+        self::step_close();
+        self::step_open( '4', __( 'Connect it', 'cowboy-mcp' ), '' );
+        ?><p><?php echo $copy['connect']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php
+        self::step_close();
+        self::step_open( '5', __( 'Approve access', 'cowboy-mcp' ), '' );
         ?>
                 <p><?php
                     /* translators: %s: AI app name */
@@ -519,7 +548,7 @@ class Cowboy_MCP_Admin_Connections {
     }
 
     /**
-     * "Open <app>" at the top of step 2: a new tab to the app's connectors page. It copies nothing (step 1's snippet is
+     * "Open <app>" in step 2 ("Go to <address>"): a new tab to the app's connectors page. It copies nothing (step 1's snippet is
      * copied on purpose); handle_actions() turns sign-in on, opens the window and starts the watch on its own too.
      */
     private static function render_open_app_form( string $action, string $value, string $label ): void {
@@ -546,29 +575,27 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
-    /** Claude's "Add custom connector" steps, for pasting the connection link by hand ($link_above: shown just above, not in step 1). */
-    private static function render_claude_manual_substeps( bool $is_desktop, bool $link_above = false ): void {
-        ?>
-        <ol class="mcp-substeps">
-            <li><?php
-                echo wp_kses(
-                    $is_desktop
-                        ? __( 'In the <strong>Claude</strong> desktop app, go to <code>Customize → Connectors</code>.', 'cowboy-mcp' )
-                        : __( 'On <code>claude.ai</code>, go to <code>Customize → Connectors</code>.', 'cowboy-mcp' ),
-                    [ 'code' => [], 'strong' => [] ]
-                );
-            ?></li>
-            <li><?php echo wp_kses( __( 'Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></li>
-            <li><?php
-                echo wp_kses(
-                    $link_above
-                        ? __( 'Name it, paste the link above, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' )
-                        : __( 'Name it, paste the link from step 1, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' ),
-                    [ 'strong' => [] ]
-                );
-            ?></li>
-        </ol>
-        <?php
+    /**
+     * Claude's "Add custom connector" instructions as three sentences: [where to go, what to click, what to paste].
+     * Shown as plain paragraphs (by-hand details) or spread over flat steps — never a nested numbered list.
+     * $link_above: the link is shown just above (details), not in step 1.
+     */
+    private static function claude_manual_sentences( bool $is_desktop, bool $link_above = false ): array {
+        return [
+            wp_kses(
+                $is_desktop
+                    ? __( 'In the <strong>Claude</strong> desktop app, go to <code>Customize → Connectors</code>.', 'cowboy-mcp' )
+                    : __( 'On <code>claude.ai</code>, go to <code>Customize → Connectors</code>.', 'cowboy-mcp' ),
+                [ 'code' => [], 'strong' => [] ]
+            ),
+            wp_kses( __( 'Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+            wp_kses(
+                $link_above
+                    ? __( 'Name it, paste the link above, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' )
+                    : __( 'Name it, paste the link from step 1, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' ),
+                [ 'strong' => [] ]
+            ),
+        ];
     }
 
     /**

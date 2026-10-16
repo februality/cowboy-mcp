@@ -197,9 +197,6 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-inline-sum { display: flex; gap: 12px; flex-wrap: wrap; }
 .wrap.cmcp .cmcp-inline-sum .mcp-local-details { margin: 6px 0 0; }
 .wrap.cmcp .cmcp-inline-sum .mcp-local-details[open] { flex-basis: 100%; }
-.cmcp-step-body .mcp-substeps { margin: 4px 0 0; padding: 0; counter-reset: cmcpsub; list-style: none; }
-.cmcp-step-body .mcp-substeps li { position: relative; padding-block: 4px; padding-inline: 28px 0; color: var(--cmcp-text); }
-.cmcp-step-body .mcp-substeps li::before { counter-increment: cmcpsub; content: counter(cmcpsub); position: absolute; inset-inline-start: 0; top: 5px; width: 19px; height: 19px; border-radius: 50%; border: 1px solid var(--cmcp-border-strong); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: var(--cmcp-muted); }
 .wrap.cmcp .mcp-local-details { margin: 10px 0; }
 .wrap.cmcp .mcp-local-details > summary { cursor: pointer; font-size: 13px; color: var(--cmcp-muted); text-decoration: underline; text-decoration-color: var(--cmcp-border-strong); text-underline-offset: 3px; }
 .wrap.cmcp .mcp-local-details > summary:hover, .wrap.cmcp .mcp-local-details[open] > summary { color: var(--cmcp-text); }
