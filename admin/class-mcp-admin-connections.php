@@ -168,6 +168,8 @@ class Cowboy_MCP_Admin_Connections {
             'gemini-app'     => [ 'label' => 'Gemini',         'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'gemini-app',  'local' => 'tunnel', 'open_url' => 'https://gemini.google.com/apps',               'open_host' => 'gemini.google.com' ], // /apps = Connected Apps page with the Custom apps field (verified 2026-10-11)
             'grok'           => [ 'label' => 'Grok',           'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'grok',        'local' => 'tunnel', 'open_url' => 'https://grok.com/connectors',                  'open_host' => 'grok.com' ],
             'perplexity'     => [ 'label' => 'Perplexity',     'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'perplexity',  'local' => 'tunnel', 'open_url' => 'https://www.perplexity.ai/computer/connectors', 'open_host' => 'www.perplexity.ai' ],
+            // Meta Muse (US). Verified live 2026-10-14: no Settings entry for custom connectors — Muse creates one when asked in chat; DCR name "Muse", callback agent.meta.ai/api/hatch/oauth/callback.
+            'muse'           => [ 'label' => 'Muse',           'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'muse',        'local' => 'tunnel', 'open_url' => 'https://muse.ai/',                             'open_host' => 'muse.ai' ],
             // 'cimd': the client identifies itself with a Client ID Metadata Document, so it never
             // registers and the "New connections" window is irrelevant to it (verified 2026-10-09).
             'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'claude-code', 'local' => 'works', 'cimd' => true ],
@@ -176,6 +178,8 @@ class Cowboy_MCP_Admin_Connections {
             'vscode'         => [ 'label' => 'VS Code',        'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'vscode',      'local' => 'works' ],
             'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'gemini-cli',  'local' => 'works' ],
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'opencode',    'local' => 'works' ],
+            // Meta's terminal agent: no `mcp add` command, so the panel writes ~/.config/muse/settings.json and then runs `muse mcp login` (verified against Muse Code 1.4.8, 2026-10-14).
+            'muse-code'      => [ 'label' => 'Muse Code',      'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'muse-code',   'local' => 'works' ],
             'n8n'            => [ 'label' => 'n8n',            'group' => 'automation',  'type' => 'n8n',        'watch' => 'n8n',         'local' => 'works' ],
         ];
     }
@@ -190,12 +194,13 @@ class Cowboy_MCP_Admin_Connections {
      * Marks: Claude, Cursor, Google Gemini, Perplexity, OpenCode and n8n from Simple Icons 16.34.0 (CC0 vectors of the
      * brands' own marks); OpenAI's blossom from OpenAI's official logo pack (cdn.openai.com/brand),
      * which also stands for Codex; Grok's mark from Lobe Icons 1.95.1 (MIT, @lobehub/icons-static-svg — Simple Icons
-     * carries no Grok/xAI mark). VS Code: a neutral code-brackets glyph (no brand mark). Used only to identify the app
+     * carries no Grok/xAI mark); Meta's mark (Simple Icons 16.34.0) for Muse and Muse Code. VS Code: a neutral code-brackets glyph (no brand mark). Used only to identify the app
      * being connected; no endorsement.
      */
     private static function render_client_icon( string $slug ): void {
         $claude = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"></path></svg>';
         $openai = '<svg viewBox="118.5 117.8 484.2 484.2" fill="currentColor"><path d="M304.246 294.611V249.028C304.246 245.189 305.687 242.309 309.044 240.392L400.692 187.612C413.167 180.415 428.042 177.058 443.394 177.058C500.971 177.058 537.44 221.682 537.44 269.182C537.44 272.54 537.44 276.379 536.959 280.218L441.954 224.558C436.197 221.201 430.437 221.201 424.68 224.558L304.246 294.611ZM518.245 472.145V363.224C518.245 356.505 515.364 351.707 509.608 348.349L389.174 278.296L428.519 255.743C431.877 253.826 434.757 253.826 438.115 255.743L529.762 308.523C556.154 323.879 573.905 356.505 573.905 388.171C573.905 424.636 552.315 458.225 518.245 472.141V472.145ZM275.937 376.182L236.592 353.152C233.235 351.235 231.794 348.354 231.794 344.515V238.956C231.794 187.617 271.139 148.749 324.4 148.749C344.555 148.749 363.264 155.468 379.102 167.463L284.578 222.164C278.822 225.521 275.942 230.319 275.942 237.039V376.186L275.937 376.182ZM360.626 425.122L304.246 393.455V326.283L360.626 294.616L417.002 326.283V393.455L360.626 425.122ZM396.852 570.989C376.698 570.989 357.989 564.27 342.151 552.276L436.674 497.574C442.431 494.217 445.311 489.419 445.311 482.699V343.552L485.138 366.582C488.495 368.499 489.936 371.379 489.936 375.219V480.778C489.936 532.117 450.109 570.985 396.852 570.985V570.989ZM283.134 463.99L191.486 411.211C165.094 395.854 147.343 363.229 147.343 331.562C147.343 294.616 169.415 261.509 203.48 247.593V356.991C203.48 363.71 206.361 368.508 212.117 371.866L332.074 441.437L292.729 463.99C289.372 465.907 286.491 465.907 283.134 463.99ZM277.859 542.68C223.639 542.68 183.813 501.895 183.813 451.514C183.813 447.675 184.294 443.836 184.771 439.997L279.295 494.698C285.051 498.056 290.812 498.056 296.568 494.698L417.002 425.127V470.71C417.002 474.549 415.562 477.429 412.204 479.346L320.557 532.126C308.081 539.323 293.206 542.68 277.854 542.68H277.859ZM396.852 599.776C454.911 599.776 503.37 558.513 514.41 503.812C568.149 489.896 602.696 439.515 602.696 388.176C602.696 354.587 588.303 321.962 562.392 298.45C564.791 288.373 566.231 278.296 566.231 268.224C566.231 199.611 510.571 148.267 446.274 148.267C433.322 148.267 420.846 150.184 408.37 154.505C386.775 133.392 357.026 119.958 324.4 119.958C266.342 119.958 217.883 161.22 206.843 215.921C153.104 229.837 118.557 280.218 118.557 331.557C118.557 365.146 132.95 397.771 158.861 421.283C156.462 431.36 155.022 441.437 155.022 451.51C155.022 520.123 210.682 571.466 274.978 571.466C287.931 571.466 300.407 569.549 312.883 565.228C334.473 586.341 364.222 599.776 396.852 599.776Z"></path></svg>';
+        $meta   = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.915 4.03c-1.968 0-3.683 1.28-4.871 3.113C.704 9.208 0 11.883 0 14.449c0 .706.07 1.369.21 1.973a6.624 6.624 0 0 0 .265.86 5.297 5.297 0 0 0 .371.761c.696 1.159 1.818 1.927 3.593 1.927 1.497 0 2.633-.671 3.965-2.444.76-1.012 1.144-1.626 2.663-4.32l.756-1.339.186-.325c.061.1.121.196.183.3l2.152 3.595c.724 1.21 1.665 2.556 2.47 3.314 1.046.987 1.992 1.22 3.06 1.22 1.075 0 1.876-.355 2.455-.843a3.743 3.743 0 0 0 .81-.973c.542-.939.861-2.127.861-3.745 0-2.72-.681-5.357-2.084-7.45-1.282-1.912-2.957-2.93-4.716-2.93-1.047 0-2.088.467-3.053 1.308-.652.57-1.257 1.29-1.82 2.05-.69-.875-1.335-1.547-1.958-2.056-1.182-.966-2.315-1.303-3.454-1.303zm10.16 2.053c1.147 0 2.188.758 2.992 1.999 1.132 1.748 1.647 4.195 1.647 6.4 0 1.548-.368 2.9-1.839 2.9-.58 0-1.027-.23-1.664-1.004-.496-.601-1.343-1.878-2.832-4.358l-.617-1.028a44.908 44.908 0 0 0-1.255-1.98c.07-.109.141-.224.211-.327 1.12-1.667 2.118-2.602 3.358-2.602zm-10.201.553c1.265 0 2.058.791 2.675 1.446.307.327.737.871 1.234 1.579l-1.02 1.566c-.757 1.163-1.882 3.017-2.837 4.338-1.191 1.649-1.81 1.817-2.486 1.817-.524 0-1.038-.237-1.383-.794-.263-.426-.464-1.13-.464-2.046 0-2.221.63-4.535 1.66-6.088.454-.687.964-1.226 1.533-1.533a2.264 2.264 0 0 1 1.088-.285z"></path></svg>';
         $icons  = [
             'claude-ai'      => $claude,
             'claude-desktop' => $claude,
@@ -209,6 +214,8 @@ class Cowboy_MCP_Admin_Connections {
             'grok'           => '<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>',
             'gemini-app'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
             'n8n'            => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.4737 5.6842c-1.1772 0-2.1663.8051-2.4468 1.8947h-2.8955c-1.235 0-2.289.893-2.492 2.111l-.1038.623a1.263 1.263 0 0 1-1.246 1.0555H11.289c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947s-2.1663.8051-2.4467 1.8947H4.973c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947C1.1311 9.4737 0 10.6047 0 12s1.131 2.5263 2.5263 2.5263c1.1772 0 2.1663-.8051 2.4468-1.8947h1.4223c.2804 1.0896 1.2696 1.8947 2.4467 1.8947 1.1772 0 2.1663-.8051 2.4468-1.8947h1.0008a1.263 1.263 0 0 1 1.2459 1.0555l.1038.623c.203 1.218 1.257 2.111 2.492 2.111h.3692c.2804 1.0895 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263c-1.1772 0-2.1664.805-2.4468 1.8947h-.3692a1.263 1.263 0 0 1-1.246-1.0555l-.1037-.623A2.52 2.52 0 0 0 13.9607 12a2.52 2.52 0 0 0 .821-1.4794l.1038-.623a1.263 1.263 0 0 1 1.2459-1.0555h2.8955c.2805 1.0896 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263m0 1.2632a1.263 1.263 0 0 1 1.2631 1.2631 1.263 1.263 0 0 1-1.2631 1.2632 1.263 1.263 0 0 1-1.2632-1.2632 1.263 1.263 0 0 1 1.2632-1.2631M2.5263 10.7368A1.263 1.263 0 0 1 3.7895 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 1.2632 12a1.263 1.263 0 0 1 1.2631-1.2632m6.3158 0A1.263 1.263 0 0 1 10.1053 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 7.579 12a1.263 1.263 0 0 1 1.2632-1.2632m10.1053 3.7895a1.263 1.263 0 0 1 1.2631 1.2632 1.263 1.263 0 0 1-1.2631 1.2631 1.263 1.263 0 0 1-1.2632-1.2631 1.263 1.263 0 0 1 1.2632-1.2632"/></svg>',
+            'muse'           => $meta,
+            'muse-code'      => $meta,
             'gemini-cli'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
         ];
         echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
@@ -475,6 +482,18 @@ class Cowboy_MCP_Admin_Connections {
                 ],
                 'plan'  => esc_html__( 'Google lists no plan requirement (verified on a Google AI Plus account). You need a personal Google account in the United States, 18 or over, with Gemini in English and Keep Activity on; work and school accounts do not get Custom apps.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Gemini, click <strong>Connect</strong> on the “Save your custom app” card. In a chat, type <code>@</code> to pick the app; Gemini asks you to allow its first tool run.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
+            ],
+            // Verified live 2026-10-14 on muse.ai (US account): the connector is created from a chat request, Muse
+            // asks to approve every request it sends to the site, and Cloudflare's Browser Integrity Check answers
+            // Muse's server-side MCP client with error 1010 (sign-in and token exchange pass; MCP calls do not).
+            'muse' => [
+                'steps' => [
+                    wp_kses( __( 'Go to <code>muse.ai</code> (or open the Muse app) and sign in with your Meta account.', 'cowboy-mcp' ), [ 'code' => [] ] ),
+                    wp_kses( __( 'In a chat, ask Muse to <strong>create a custom connector</strong> for a remote MCP server: the link from step 1 as the URL, streamable HTTP, OAuth. Allow its request to contact your site.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                    wp_kses( __( 'Click <strong>Connect</strong> on the connector card, then <strong>Connect</strong> again in the dialog — Muse opens the sign-in page in a new tab.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                ],
+                'plan'  => esc_html__( 'Meta offers Muse to adults in the United States. Meta does not review custom connectors, so add only sites you manage.', 'cowboy-mcp' ),
+                'after' => wp_kses( __( 'Muse asks you to approve each request it sends to your site (<strong>Allow once</strong> or <strong>Always allow this site</strong>). Site behind Cloudflare? Its Browser Integrity Check blocks Muse with error 1010 — turn it off for <code>/wp-json/cowboy-mcp/</code>.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
             default => [ 'steps' => [], 'plan' => '' ],
         };
@@ -779,6 +798,7 @@ class Cowboy_MCP_Admin_Connections {
             /* translators: %s: the MCP server name used in the command */
             'gemini-cli'  => wp_kses( sprintf( __( 'Run this in your terminal, then start <code>gemini</code>: it opens your browser to sign in (if it does not, run <code>/mcp auth %s</code>).', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] ),
             'opencode'    => esc_html__( 'Run this in your terminal. Opencode opens your browser to sign in the first time it connects.', 'cowboy-mcp' ),
+            'muse-code'   => esc_html__( 'Run these in your terminal. The second line opens your browser to sign in.', 'cowboy-mcp' ),
             default       => '',
         };
         ?>
@@ -787,12 +807,17 @@ class Cowboy_MCP_Admin_Connections {
                 <?php self::render_code( 'mcp-oauth-cmd-' . $slug, self::oauth_snippet( $slug, $domain, $endpoint ), __( 'terminal', 'cowboy-mcp' ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
                 <?php if ( 'claude-code' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--no-browser</code> to the second line and open the printed URL in a local browser.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <?php elseif ( 'muse-code' === $slug ) : ?>
+                    <p class="description"><?php echo wp_kses( __( 'The first line writes <code>~/.config/muse/settings.json</code> and needs Node.js; without it, edit the file instead (below). Over SSH? Add <code>--headless</code> to the second line and paste back the address your browser ends on.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
                 <?php if ( $is_local && 'https' === wp_parse_url( $endpoint, PHP_URL_SCHEME ) ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Local https sites usually use a self-signed certificate that these tools reject: trust it in your tool, or set the WordPress Site Address to the <code>http://</code> URL.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
                 <div class="cmcp-inline-sum">
-                <?php self::render_file_fallback( $slug, $domain, $endpoint ); ?>
+                <?php
+                /* translators: 1: config file path, 2: the MCP server name used in the command */
+                self::render_file_fallback( $slug, $domain, $endpoint, 'muse-code' === $slug ? sprintf( __( 'Add this to <code>%1$s</code> (merge it if the file exists), then run <code>muse mcp login %2$s</code>.', 'cowboy-mcp' ), '%s', esc_html( $domain ) ) : '' );
+                ?>
                 <?php self::render_key_fallback( $slug, $label, $keys, $endpoint, $new_key, $is_local ); ?>
                 </div>
         <?php self::step_close(); ?>
@@ -1010,8 +1035,30 @@ class Cowboy_MCP_Admin_Connections {
             'gemini-cli'     => 'gemini mcp add --scope user --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint, 'headers' => [ 'Authorization' => 'Bearer ' . $key_display ] ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, $key_display ),
+            'muse-code'      => self::muse_command_snippet( $domain, $endpoint, $key_display ),
             default          => '',
         };
+    }
+
+    /**
+     * Muse Code has no `mcp add` command (muse mcp = login/logout only, 1.4.8), so this merges the server
+     * into its settings file: $XDG_CONFIG_HOME/muse/settings.json, else ~/.config/muse/settings.json (both
+     * honoured by Muse Code 1.4.8, verified 2026-10-14). The file must carry "schema_version": 1; the
+     * documented key is `mcp_servers` (Muse also reads `mcpServers`, used here only when the file already
+     * has it). mode "optional" so an unreachable site skips with a warning instead of aborting every run.
+     * A file that is not valid JSON is left untouched (the command fails) rather than overwritten.
+     * Empty $key_display = OAuth: a second line runs `muse mcp login`.
+     */
+    private static function muse_command_snippet( string $domain, string $endpoint, string $key_display ): string {
+        $entry = '{transport:"streamable_http",url:"' . $endpoint . '",mode:"optional"' . ( '' !== $key_display ? ',headers:{Authorization:"Bearer ' . $key_display . '"}' : '' ) . '}';
+        $js    = 'const fs=require("fs"),p=require("path"),os=require("os");'
+            . 'const f=p.join(process.env.XDG_CONFIG_HOME||p.join(os.homedir(),".config"),"muse","settings.json");'
+            . 'let c={};try{c=JSON.parse(fs.readFileSync(f,"utf8"))}catch(e){if(e.code!=="ENOENT")throw e}'
+            . 'c.schema_version=c.schema_version||1;const k=c.mcpServers&&!c.mcp_servers?"mcpServers":"mcp_servers";'
+            . 'c[k]=c[k]||{};c[k]["' . $domain . '"]=' . $entry . ';'
+            . 'fs.mkdirSync(p.dirname(f),{recursive:true});fs.writeFileSync(f,JSON.stringify(c,null,2)+"\n");'
+            . 'console.log("Added ' . $domain . ' to "+f)';
+        return "node -e '" . $js . "'" . ( '' === $key_display ? "\n" . 'muse mcp login ' . $domain : '' );
     }
 
     /**
@@ -1052,6 +1099,7 @@ class Cowboy_MCP_Admin_Connections {
             'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint,
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, '' ),
+            'muse-code'      => self::muse_command_snippet( $domain, $endpoint, '' ),
             'cursor'         => self::file_snippet( $slug, $domain, $endpoint ),
             default          => '',
         };
@@ -1066,6 +1114,7 @@ class Cowboy_MCP_Admin_Connections {
             'cursor'         => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'vscode'         => "{\n  \"servers\": {\n    \"{$domain}\": {\n      \"type\": \"http\",\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'claude-desktop' => self::bridge_config_snippet( $domain, $endpoint, '' ),
+            'muse-code'      => "{\n  \"schema_version\": 1,\n  \"mcp_servers\": {\n    \"{$domain}\": {\n      \"transport\": \"streamable_http\",\n      \"url\": \"{$endpoint}\",\n      \"mode\": \"optional\"\n    }\n  }\n}",
             default          => '',
         };
     }
@@ -1078,6 +1127,7 @@ class Cowboy_MCP_Admin_Connections {
             'cursor'         => '~/.cursor/mcp.json',
             'vscode'         => '.vscode/mcp.json',
             'claude-desktop' => 'claude_desktop_config.json',
+            'muse-code'      => '~/.config/muse/settings.json',
             default          => '',
         };
     }
@@ -1113,6 +1163,8 @@ class Cowboy_MCP_Admin_Connections {
             'gemini-cli'  => sprintf( __( 'Run <code>gemini mcp list</code> — <code>%s</code> should show as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
             'vscode'      => sprintf( __( 'Open Copilot Chat in agent mode and click the tools icon — <code>%s</code> should be listed. Errors show under <code>Output → MCP</code>.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'muse-code'   => sprintf( __( 'Start <code>muse</code> and run <code>/mcp</code> — <code>%s</code> should be listed with its tools.', 'cowboy-mcp' ), esc_html( $domain ) ),
             default       => '',
         };
         ?>
@@ -1581,6 +1633,11 @@ class Cowboy_MCP_Admin_Connections {
             <div class="cmcp-card-h"><h2 id="cmcp-doctor-h"><?php esc_html_e( 'Connection Doctor', 'cowboy-mcp' ); ?></h2></div>
             <div class="cmcp-doc-body">
                 <p><?php esc_html_e( 'Test whether AI clients can reach this site and get a copy-pasteable diagnosis for anything broken.', 'cowboy-mcp' ); ?></p>
+                <?php if ( Cowboy_MCP_Doctor::request_via_cloudflare() ) : // Advisory: CF-Ray on this admin request means Cloudflare sits in front of the site. ?>
+                    <div class="cmcp-callout cmcp-callout--info cmcp-doctor-cf"><p><?php
+                        echo wp_kses( __( '<strong>This site is behind Cloudflare.</strong> Some Cloudflare security settings, such as Browser Integrity Check and Bot Fight Mode, can block AI apps before WordPress sees them. Run the checks to test it.', 'cowboy-mcp' ), [ 'strong' => [] ] );
+                    ?> <a href="<?php echo esc_url( Cowboy_MCP_Doctor::CLOUDFLARE_GUIDE ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'How to let AI apps through Cloudflare', 'cowboy-mcp' ); ?> &#x2197;<span class="screen-reader-text"><?php esc_html_e( '(opens in a new tab)', 'cowboy-mcp' ); ?></span></a></p></div>
+                <?php endif; ?>
                 <div class="cmcp-formrow">
                     <button type="button" class="cmcp-btn cmcp-btn--primary" id="cowboy-doctor-run"><?php esc_html_e( 'Run checks', 'cowboy-mcp' ); ?></button>
                     <button type="button" class="cmcp-btn" id="cowboy-doctor-copy" hidden><?php esc_html_e( 'Copy report', 'cowboy-mcp' ); ?></button>
