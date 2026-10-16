@@ -341,10 +341,10 @@ class Cowboy_MCP_Admin_Connections {
         ?>
         <?php self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' ); ?>
                 <?php self::render_link_code( $slug, $endpoint ); ?>
-                <?php if ( $chatgpt_quick ) { self::render_open_app_form( 'cowboy_mcp_open_chatgpt', '1', 'ChatGPT' ); } ?>
         <?php self::step_close(); ?>
 
         <?php self::step_open( '2', $step2_title, '' ); ?>
+                <?php if ( $chatgpt_quick ) { self::render_open_app_form( 'cowboy_mcp_open_chatgpt', '1', 'ChatGPT' ); } ?>
                 <?php if ( $is_chatgpt ) : ?>
                     <ol class="mcp-substeps">
                         <li><?php echo wp_kses( __( 'Go to <code>chatgpt.com</code> and sign in (MCP apps work on the web only).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></li>
@@ -446,7 +446,8 @@ class Cowboy_MCP_Admin_Connections {
         endif;
         // Step 1 is the snippet itself (the link, or Muse's chat message), on screen from the start: a button that copied
         // it silently left people not knowing they had anything to paste. Its Copy button starts a watched connection
-        // (data-cmcp-start → ajax_start_connect(): browser sign-in on + the 30-minute window open); Open <app> only opens.
+        // (data-cmcp-start → ajax_start_connect(): browser sign-in on + the 30-minute window open). Open <app> belongs
+        // to step 2, where the app is used — in step 1 it read as the way to copy (owner, 2026-10-16).
         $message = (string) ( $copy['message'] ?? '' );
         if ( '' !== $message ) {
             /* translators: %s: AI app name */
@@ -456,13 +457,13 @@ class Cowboy_MCP_Admin_Connections {
             self::step_open( '1', __( 'Copy your connection link', 'cowboy-mcp' ), '' );
             self::render_link_code( $slug, $endpoint );
         }
-        if ( $reachable ) {
-            self::render_open_app_form( 'cowboy_mcp_open_app', $slug, $label );
-        }
         self::step_close();
 
         /* translators: %s: AI app name */
         self::step_open( '2', sprintf( __( 'Add it in %s', 'cowboy-mcp' ), $label ), '' );
+        if ( $reachable ) {
+            self::render_open_app_form( 'cowboy_mcp_open_app', $slug, $label );
+        }
         ?>
                 <ol class="mcp-substeps">
                     <?php foreach ( $copy['steps'] as $step ) : ?><li><?php echo $step; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></li><?php endforeach; ?>
@@ -518,7 +519,7 @@ class Cowboy_MCP_Admin_Connections {
     }
 
     /**
-     * "Open <app>" under the snippet: a new tab to the app's connectors page. It copies nothing (the snippet above is
+     * "Open <app>" at the top of step 2: a new tab to the app's connectors page. It copies nothing (step 1's snippet is
      * copied on purpose); handle_actions() turns sign-in on, opens the window and starts the watch on its own too.
      */
     private static function render_open_app_form( string $action, string $value, string $label ): void {
