@@ -497,7 +497,9 @@ class Cowboy_MCP_Admin_Connections {
                 // hands over the exact message that worked live on 2026-10-14 instead of the bare link.
                 'message' => self::muse_connector_message(),
                 'plan'  => esc_html__( 'Meta offers Muse to adults in the United States. Meta does not review custom connectors, so add only sites you manage.', 'cowboy-mcp' ),
-                'after' => wp_kses( __( 'Muse asks you to approve each request it sends to your site (<strong>Allow once</strong> or <strong>Always allow this site</strong>). Site behind Cloudflare? Its Browser Integrity Check blocks Muse with error 1010 — turn it off for <code>/wp-json/cowboy-mcp/</code>.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
+                'after' => wp_kses( __( 'Muse asks you to approve each request it sends to your site (<strong>Allow once</strong> or <strong>Always allow this site</strong>).', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                // Shown only when this admin page came through Cloudflare (CF-Ray): everyone else would read a warning that does not apply.
+                'cloudflare' => wp_kses( __( 'This site is behind Cloudflare: its Browser Integrity Check blocks Muse with error 1010. Turn it off for <code>/wp-json/cowboy-mcp/</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             ],
             default => [ 'steps' => [], 'plan' => '' ],
         };
@@ -610,6 +612,7 @@ class Cowboy_MCP_Admin_Connections {
                     echo wp_kses( sprintf( __( '%s opens a sign-in page on <strong>your site</strong>. Review what it is asking for and click <strong>Approve</strong>.', 'cowboy-mcp' ), esc_html( $label ) ), [ 'strong' => [] ] );
                 ?></p>
                 <?php if ( ! empty( $copy['after'] ) ) : ?><p><?php echo $copy['after']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php endif; ?>
+                <?php if ( ! empty( $copy['cloudflare'] ) && class_exists( 'Cowboy_MCP_Doctor' ) && Cowboy_MCP_Doctor::request_via_cloudflare() ) : ?><p><?php echo $copy['cloudflare']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cloud_copy(). ?></p><?php endif; ?>
                 <details class="mcp-local-details">
                     <summary><?php
                         /* translators: %s: AI app name */
