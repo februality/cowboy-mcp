@@ -360,7 +360,7 @@ class Cowboy_MCP_Doctor {
 			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? 'A cache plugin or server rule is likely intercepting root .well-known paths - exclude them from caching/rewrites.' ) );
 		}
 
-		$checks[] = self::cloudflare_check( $env_headers, $oauth_on, $endpoint );
+		$checks[] = self::cloudflare_check( $env_headers, $endpoint );
 
 		return [ 'checks' => $checks, 'env_headers' => $env_headers ];
 	}
@@ -371,19 +371,24 @@ class Cowboy_MCP_Doctor {
 	/** Step-by-step Cloudflare setup (skip rule, Bot Fight Mode, AI bot policies) on the project site. */
 	const CLOUDFLARE_GUIDE = 'https://cowboymcp.com/guides/cloudflare-blocking-ai-apps-wordpress';
 
-	/** Cloudflare skip-rule expression covering every URL an MCP client calls. */
-	const CLOUDFLARE_RULE = '(starts_with(http.request.uri.path, "/wp-json/cowboy-mcp/") or starts_with(http.request.uri.path, "/.well-known/oauth-"))';
+	/**
+	 * Cloudflare skip-rule expression: the MCP endpoint and the OAuth routes under it. The
+	 * /.well-known/oauth-* discovery documents stay out on purpose - Muse's sign-in fetches them
+	 * from Meta's own servers, which passed Browser Integrity Check (verified live 2026-10-14);
+	 * only its sandboxed MCP client was refused, and only on /wp-json/cowboy-mcp/.
+	 */
+	const CLOUDFLARE_RULE = 'starts_with(http.request.uri.path, "/wp-json/cowboy-mcp/")';
 
 	/**
 	 * Cloudflare in front of the site. Cloud AI apps reach the site from data centres,
 	 * some with a bare HTTP library's user agent (Muse: Python-urllib), and Browser
 	 * Integrity Check (error 1010) or a bot challenge stops them before WordPress logs
 	 * anything - while the browser and the loopback checks above look healthy. The probe
-	 * repeats the endpoint and discovery requests with a script user agent; the loopback
+	 * repeats the endpoint request with a script user agent; the loopback
 	 * leaves through the public DNS name, so it crosses Cloudflare as an app would.
 	 * Advisory: Bot Fight Mode scores the app's own servers, which this cannot imitate.
 	 */
-	private static function cloudflare_check( array $env_headers, bool $oauth_on, string $endpoint ): array {
+	private static function cloudflare_check( array $env_headers, string $endpoint ): array {
 		$id      = 'cloudflare';
 		$label   = 'Cloudflare lets AI apps through';
 		$via_cf  = self::is_cloudflare( $env_headers );
@@ -396,10 +401,6 @@ class Cowboy_MCP_Doctor {
 		}
 
 		$probes = [ [ 'POST', $endpoint, 401 ] ];
-		if ( $oauth_on ) {
-			$probes[] = [ 'GET', home_url( '/.well-known/oauth-protected-resource' ), 200 ];
-			$probes[] = [ 'GET', home_url( '/.well-known/oauth-authorization-server' ), 200 ];
-		}
 		$blocked  = [];
 		$other    = [];
 		$evidence = [ 'probe User-Agent: ' . self::SCRIPT_USER_AGENT ];
@@ -453,7 +454,7 @@ class Cowboy_MCP_Doctor {
 		if ( $other ) {
 			return self::result( $id, $label, 'warn', 'A script-style request to ' . implode( ', ', $other ) . ' got an unexpected answer, while the same request from WordPress passed. Something filters by user agent (Cloudflare or a server firewall).', $evidence, null, 'Check Security > Analytics > Events in Cloudflare and your host\'s firewall (ModSecurity) for the blocked request, then exempt ' . self::CLOUDFLARE_RULE . '. Guide: ' . self::CLOUDFLARE_GUIDE );
 		}
-		return self::result( $id, $label, 'pass', 'Cloudflare is in front of this site and let a script-style request reach the MCP endpoint' . ( $oauth_on ? ' and the sign-in discovery documents' : '' ) . '. Bot Fight Mode judges each app\'s own servers, so if one app still cannot connect, check Security > Analytics > Events in Cloudflare (guide: ' . self::CLOUDFLARE_GUIDE . ').', $evidence );
+		return self::result( $id, $label, 'pass', 'Cloudflare is in front of this site and let a script-style request reach the MCP endpoint. Bot Fight Mode judges each app\'s own servers, so if one app still cannot connect, check Security > Analytics > Events in Cloudflare (guide: ' . self::CLOUDFLARE_GUIDE . ').', $evidence );
 	}
 
 	/**
@@ -513,7 +514,7 @@ class Cowboy_MCP_Doctor {
 	public static function fingerprints_for_js(): array {
 		return [
 			[ 'id' => 'cloudflare_challenge', 'status' => [ 403, 503 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/just a moment|cf-chl|challenge-platform/i', 'fix' => 'Cloudflare is challenging the request. Add a WAF skip rule (or disable Bot Fight Mode) for /wp-json/cowboy-mcp/* and /.well-known/oauth-*.' ],
-			[ 'id' => 'cloudflare_block', 'status' => [ 403 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/error code:?\s*1\d{3}|used Cloudflare to restrict access/i', 'fix' => 'Cloudflare blocked the request (error 1010 = Browser Integrity Check, 1020 = a firewall rule). Add a custom rule with the Skip action for /wp-json/cowboy-mcp/* and /.well-known/oauth-* that skips Browser Integrity Check.' ],
+			[ 'id' => 'cloudflare_block', 'status' => [ 403 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/error code:?\s*1\d{3}|used Cloudflare to restrict access/i', 'fix' => 'Cloudflare blocked the request (error 1010 = Browser Integrity Check, 1020 = a firewall rule). Add a custom rule with the Skip action for /wp-json/cowboy-mcp/* that skips Browser Integrity Check.' ],
 			[ 'id' => 'modsecurity', 'status' => [ 403, 406 ], 'header' => null, 'body_regex' => '/mod_security|modsecurity|not acceptable/i', 'fix' => 'A web application firewall (likely ModSecurity) is blocking JSON POSTs. Ask your host to allowlist POST /wp-json/cowboy-mcp/v1/endpoint.' ],
 			[ 'id' => 'basic_auth', 'status' => [ 401 ], 'header' => [ 'www-authenticate', '/basic/i' ], 'body_regex' => null, 'fix' => 'Server-level Basic Auth answers before WordPress. Exclude /wp-json/cowboy-mcp/ and /.well-known/ from Basic Auth - MCP clients cannot send two Authorization headers.' ],
 			[ 'id' => 'dirty_json', 'status' => null, 'header' => null, 'body_regex' => '/^(\xEF\xBB\xBF|\s+)[\{\[]/', 'fix' => 'The JSON response has junk before it (BOM, whitespace, or a PHP notice). Set WP_DEBUG_DISPLAY to false and deactivate plugins one by one to find the one printing output.' ],
