@@ -1175,7 +1175,8 @@ class Cowboy_MCP_Admin_Connections {
     }
 
     /**
-     * Example prompts, one copyable chip each: a read-only check, a read, and a safe write (a draft, never published).
+     * Example prompts, one copyable chip each: short and read-only (owner, 2026-10-16) — they show how it works and
+     * prove the connection, and they also work on a read-only credential (wp_site_info, wp_list_posts, wp_list_plugins).
      * $name is how the prompt points the app at this site: the server name for terminal/IDE clients, the host for
      * cloud apps (their connector is whatever the admin named it). The first chip keeps its old id (mcp-prompt-<slug>).
      */
@@ -1184,9 +1185,9 @@ class Cowboy_MCP_Admin_Connections {
             /* translators: %s: the MCP server name or the site's address. */
             sprintf( __( "Using %s, tell me this site's name and WordPress version. Don't change anything.", 'cowboy-mcp' ), $name ),
             /* translators: %s: the MCP server name or the site's address. */
-            sprintf( __( 'Using %s, list my five most recent posts and pages with their status.', 'cowboy-mcp' ), $name ),
+            sprintf( __( 'Using %s, list my five most recent posts.', 'cowboy-mcp' ), $name ),
             /* translators: %s: the MCP server name or the site's address. */
-            sprintf( __( "Using %s, write a short welcome post and save it as a draft. Don't publish it.", 'cowboy-mcp' ), $name ),
+            sprintf( __( 'Using %s, which plugins are active on this site?', 'cowboy-mcp' ), $name ),
         ];
         foreach ( $prompts as $i => $prompt ) {
             self::render_chip( 'mcp-prompt-' . $slug . ( $i ? '-' . ( $i + 1 ) : '' ), $prompt, __( 'Copy prompt', 'cowboy-mcp' ) );
