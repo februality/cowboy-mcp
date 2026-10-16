@@ -123,6 +123,12 @@ class Cowboy_MCP_Admin_Connections {
                 /* translators: %s: AI app name, e.g. Claude Code */
                 return sprintf( __( '%s tried to connect, but new connections were off.', 'cowboy-mcp' ), $n );
             default:
+                // "Pairing enabled" only while the 30-minute window is open: CIMD clients (Claude Code, Codex) and
+                // API-key copies start a watch without opening it, and the line must not claim otherwise.
+                if ( class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::registration_seconds_left() > 0 ) {
+                    /* translators: %s: AI app name, e.g. Claude Code */
+                    return sprintf( __( 'Pairing enabled, waiting for %s…', 'cowboy-mcp' ), $n );
+                }
                 /* translators: %s: AI app name, e.g. Claude Code */
                 return sprintf( __( 'Waiting for %s…', 'cowboy-mcp' ), $n );
         }
@@ -147,7 +153,7 @@ class Cowboy_MCP_Admin_Connections {
                     ?></span>
                     <form method="post" class="mcp-inline-form">
                         <?php wp_nonce_field( 'cowboy_mcp_toggle_connections' ); ?>
-                        <button type="submit" name="cowboy_mcp_toggle_connections" value="disable" class="cmcp-linkbtn"><?php esc_html_e( 'Turn off', 'cowboy-mcp' ); ?></button>
+                        <button type="submit" name="cowboy_mcp_toggle_connections" value="disable" class="cmcp-linkbtn"><?php esc_html_e( 'Disable pairing', 'cowboy-mcp' ); ?></button>
                     </form>
                 </span>
             <?php endif; ?>
@@ -331,6 +337,7 @@ class Cowboy_MCP_Admin_Connections {
                     <?php self::render_claude_plan_details( $oauth_on, true ); ?>
             <?php self::step_close(); ?>
             <?php
+            self::render_try_step( '3', $slug );
             return;
         endif;
         ?>
@@ -394,6 +401,7 @@ class Cowboy_MCP_Admin_Connections {
                 <?php endif; ?>
         <?php self::step_close(); ?>
         <?php
+        self::render_try_step( (string) ( (int) $approve_num + 1 ), $slug );
     }
 
     /**
@@ -516,6 +524,7 @@ class Cowboy_MCP_Admin_Connections {
                 </details>
         <?php
         self::step_close();
+        self::render_try_step( '6', $slug );
     }
 
     /**
@@ -691,7 +700,8 @@ class Cowboy_MCP_Admin_Connections {
                 <p><?php
                     /* translators: %s: the MCP server name shown in the client. */
                     echo wp_kses( sprintf( __( 'Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> should be listed. The first start takes a moment while the bridge downloads.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
-                ?></p>
+                ?> <?php esc_html_e( 'Then try:', 'cowboy-mcp' ); ?></p>
+                <?php self::render_example_prompts( 'claude-desktop-bridge', $domain ); ?>
         <?php self::step_close(); ?>
         <?php
     }
@@ -896,7 +906,8 @@ class Cowboy_MCP_Admin_Connections {
                 </div></details>
         <?php self::step_close(); ?>
         <?php self::step_open( '2', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
-            <p><?php echo wp_kses( __( 'Execute the node once — its Tools output lists <code>cowboy_discover</code> and <code>cowboy_run</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+            <p><?php echo wp_kses( __( 'Execute the node once — its Tools output lists <code>cowboy_discover</code> and <code>cowboy_run</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?> <?php esc_html_e( 'Then ask your agent:', 'cowboy-mcp' ); ?></p>
+            <?php self::render_example_prompts( 'n8n', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>
         <?php self::step_close(); ?>
         <?php
     }
@@ -1158,12 +1169,38 @@ class Cowboy_MCP_Admin_Connections {
         ?>
         <?php self::step_open( '3', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
                 <p><?php echo wp_kses( $text, [ 'code' => [] ] ); ?> <?php esc_html_e( 'Then try:', 'cowboy-mcp' ); ?></p>
-                <?php
-                /* translators: %s: the MCP server name shown in the client. */
-                self::render_chip( 'mcp-prompt-' . $slug, sprintf( __( "Using %s, tell me this site's name and WordPress version. Don't change anything.", 'cowboy-mcp' ), $domain ), __( 'Copy prompt', 'cowboy-mcp' ) );
-                ?>
+                <?php self::render_example_prompts( $slug, $domain ); ?>
         <?php self::step_close(); ?>
         <?php
+    }
+
+    /**
+     * Example prompts, one copyable chip each: a read-only check, a read, and a safe write (a draft, never published).
+     * $name is how the prompt points the app at this site: the server name for terminal/IDE clients, the host for
+     * cloud apps (their connector is whatever the admin named it). The first chip keeps its old id (mcp-prompt-<slug>).
+     */
+    private static function render_example_prompts( string $slug, string $name ): void {
+        $prompts = [
+            /* translators: %s: the MCP server name or the site's address. */
+            sprintf( __( "Using %s, tell me this site's name and WordPress version. Don't change anything.", 'cowboy-mcp' ), $name ),
+            /* translators: %s: the MCP server name or the site's address. */
+            sprintf( __( 'Using %s, list my five most recent posts and pages with their status.', 'cowboy-mcp' ), $name ),
+            /* translators: %s: the MCP server name or the site's address. */
+            sprintf( __( "Using %s, write a short welcome post and save it as a draft. Don't publish it.", 'cowboy-mcp' ), $name ),
+        ];
+        foreach ( $prompts as $i => $prompt ) {
+            self::render_chip( 'mcp-prompt-' . $slug . ( $i ? '-' . ( $i + 1 ) : '' ), $prompt, __( 'Copy prompt', 'cowboy-mcp' ) );
+        }
+    }
+
+    /** Last step of the cloud-app panels (claude.ai, Claude Desktop connector, ChatGPT, Gemini, Grok, Perplexity, Muse). */
+    private static function render_try_step( string $num, string $slug ): void {
+        self::step_open( $num, __( 'Try it', 'cowboy-mcp' ), '' );
+        ?>
+                <p><?php esc_html_e( 'In a new chat, ask:', 'cowboy-mcp' ); ?></p>
+        <?php
+        self::render_example_prompts( $slug, (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+        self::step_close();
     }
 
     /** One-line copyable text (the test prompt) — lighter than a terminal block. */
