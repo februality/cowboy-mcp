@@ -564,7 +564,7 @@ class Cowboy_MCP_Admin_Connections {
         ?>
         <form method="post" target="_blank" action="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection', 'connect' => '1' ] ) ); ?>" class="mcp-inline-form cmcp-open-app" data-cmcp-refresh-after-submit>
             <?php wp_nonce_field( $action ); ?>
-            <button type="submit" name="<?php echo esc_attr( $action ); ?>" value="<?php echo esc_attr( $value ); ?>" class="cmcp-btn"><?php
+            <button type="submit" name="<?php echo esc_attr( $action ); ?>" value="<?php echo esc_attr( $value ); ?>" class="cmcp-btn cmcp-btn--primary"><?php
                 /* translators: %s: AI app name */
                 echo esc_html( sprintf( __( 'Open %s', 'cowboy-mcp' ), $label ) );
                 echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
