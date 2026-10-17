@@ -186,6 +186,12 @@ class Cowboy_MCP_Admin_Connections {
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'opencode',    'local' => 'works' ],
             // Meta's terminal agent: no `mcp add` command, so the panel writes ~/.config/muse/settings.json and then runs `muse mcp login` (verified against Muse Code 1.4.8, 2026-10-14).
             'muse-code'      => [ 'label' => 'Muse Code',      'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'muse-code',   'local' => 'works' ],
+            // OpenClaw (self-hosted agent gateway): `openclaw mcp add … --auth oauth` + `openclaw mcp login`; DCR "OpenClaw MCP" on 127.0.0.1:8989 (verified live against openclaw 2026.10.4, 2026-10-16).
+            'openclaw'       => [ 'label' => 'OpenClaw',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'openclaw',    'local' => 'works' ],
+            // Hermes Agent (Nous Research): `hermes mcp add <name> --url … --auth oauth` signs in at once. It identifies itself with a
+            // CIMD document on main (CIMD_DOCUMENT_HOSTS has nousresearch.github.io) and with DCR "Hermes Agent" on older builds, so
+            // no 'cimd' flag: the Copy still opens the window for the DCR case (verified 2026-10-16).
+            'hermes'         => [ 'label' => 'Hermes Agent',   'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'hermes',      'local' => 'works' ],
             'n8n'            => [ 'label' => 'n8n',            'group' => 'automation',  'type' => 'n8n',        'watch' => 'n8n',         'local' => 'works' ],
         ];
     }
@@ -200,7 +206,8 @@ class Cowboy_MCP_Admin_Connections {
      * Marks: Claude, Cursor, Google Gemini, Perplexity, OpenCode and n8n from Simple Icons 16.34.0 (CC0 vectors of the
      * brands' own marks); OpenAI's blossom from OpenAI's official logo pack (cdn.openai.com/brand),
      * which also stands for Codex; Grok's mark from Lobe Icons 1.95.1 (MIT, @lobehub/icons-static-svg — Simple Icons
-     * carries no Grok/xAI mark); Meta's mark (Simple Icons 16.34.0) for Muse and Muse Code. VS Code: a neutral code-brackets glyph (no brand mark). Used only to identify the app
+     * carries no Grok/xAI mark); Meta's mark (Simple Icons 16.34.0) for Muse and Muse Code. VS Code: a neutral code-brackets glyph (no brand mark);
+     * OpenClaw: a neutral chat-bubble-with-prompt glyph; Hermes Agent: a neutral terminal-window glyph (Simple Icons has neither mark, 2026-10-16). Used only to identify the app
      * being connected; no endorsement.
      */
     private static function render_client_icon( string $slug ): void {
@@ -222,6 +229,8 @@ class Cowboy_MCP_Admin_Connections {
             'n8n'            => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.4737 5.6842c-1.1772 0-2.1663.8051-2.4468 1.8947h-2.8955c-1.235 0-2.289.893-2.492 2.111l-.1038.623a1.263 1.263 0 0 1-1.246 1.0555H11.289c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947s-2.1663.8051-2.4467 1.8947H4.973c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947C1.1311 9.4737 0 10.6047 0 12s1.131 2.5263 2.5263 2.5263c1.1772 0 2.1663-.8051 2.4468-1.8947h1.4223c.2804 1.0896 1.2696 1.8947 2.4467 1.8947 1.1772 0 2.1663-.8051 2.4468-1.8947h1.0008a1.263 1.263 0 0 1 1.2459 1.0555l.1038.623c.203 1.218 1.257 2.111 2.492 2.111h.3692c.2804 1.0895 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263c-1.1772 0-2.1664.805-2.4468 1.8947h-.3692a1.263 1.263 0 0 1-1.246-1.0555l-.1037-.623A2.52 2.52 0 0 0 13.9607 12a2.52 2.52 0 0 0 .821-1.4794l.1038-.623a1.263 1.263 0 0 1 1.2459-1.0555h2.8955c.2805 1.0896 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263m0 1.2632a1.263 1.263 0 0 1 1.2631 1.2631 1.263 1.263 0 0 1-1.2631 1.2632 1.263 1.263 0 0 1-1.2632-1.2632 1.263 1.263 0 0 1 1.2632-1.2631M2.5263 10.7368A1.263 1.263 0 0 1 3.7895 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 1.2632 12a1.263 1.263 0 0 1 1.2631-1.2632m6.3158 0A1.263 1.263 0 0 1 10.1053 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 7.579 12a1.263 1.263 0 0 1 1.2632-1.2632m10.1053 3.7895a1.263 1.263 0 0 1 1.2631 1.2632 1.263 1.263 0 0 1-1.2631 1.2631 1.263 1.263 0 0 1-1.2632-1.2631 1.263 1.263 0 0 1 1.2632-1.2632"/></svg>',
             'muse'           => $meta,
             'muse-code'      => $meta,
+            'openclaw'       => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 8.5 11 11l-2.5 2.5M12.5 13.5h3"/></svg>',
+            'hermes'         => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 12.5l2.5 2.5L7 17.5M12 17.5h4"/></svg>',
             'gemini-cli'     => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>',
         ];
         echo $icons[ $slug ] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG literals defined directly above; no user input.
@@ -778,6 +787,10 @@ class Cowboy_MCP_Admin_Connections {
             'gemini-cli'  => wp_kses( sprintf( __( 'Run this in your terminal, then start <code>gemini</code>: it opens your browser to sign in (if it does not, run <code>/mcp auth %s</code>).', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] ),
             'opencode'    => esc_html__( 'Run this in your terminal. Opencode opens your browser to sign in the first time it connects.', 'cowboy-mcp' ),
             'muse-code'   => wp_kses( __( 'Start <code>muse</code> and paste this message. Muse adds the server to its settings; approve the change when it asks.', 'cowboy-mcp' ), [ 'code' => [] ] ),
+            'openclaw'    => esc_html__( 'Run these in your terminal where OpenClaw is installed. The second line prints a sign-in link; open it in your browser.', 'cowboy-mcp' ),
+            // "press Enter again": Hermes's paste-back stdin thread (tools/mcp_oauth.py _paste_callback_reader) is still blocked in
+            // readline() after the browser callback won, so it swallows the first line typed at "Enable all" (reproduced 2026-10-16).
+            'hermes'      => wp_kses( __( 'Run this in your terminal. Hermes opens your browser to sign in, then asks which tools to enable — answer <code>Y</code> (press Enter again if nothing happens).', 'cowboy-mcp' ), [ 'code' => [] ] ),
             default       => '',
         };
         ?>
@@ -801,14 +814,32 @@ class Cowboy_MCP_Admin_Connections {
                     <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--no-browser</code> to the second line and open the printed URL in a local browser.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'muse-code' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--headless</code> and paste back the address your browser ends on.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <?php elseif ( 'openclaw' === $slug ) : ?>
+                    <p class="description"><?php
+                        /* translators: %s: the MCP server name used in the command */
+                        echo wp_kses( sprintf( __( 'OpenClaw running on another machine? Open the printed link in a local browser, copy the <code>code</code> from the address your browser ends on and run <code>openclaw mcp login %s --code &lt;code&gt;</code>.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
+                    ?></p>
+                <?php elseif ( 'hermes' === $slug ) : ?>
+                    <p class="description"><?php esc_html_e( 'Over SSH? Open the printed link in a local browser and paste the address your browser ends on back into the terminal. Asking Hermes in chat only installs servers from its built-in catalog, so use the command.', 'cowboy-mcp' ); ?></p>
                 <?php endif; ?>
                 <?php if ( $is_local && 'https' === wp_parse_url( $endpoint, PHP_URL_SCHEME ) ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Local https sites usually use a self-signed certificate that these tools reject: trust it in your tool, or set the WordPress Site Address to the <code>http://</code> URL.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
                 <div class="cmcp-inline-sum">
+                <?php if ( 'openclaw' === $slug ) : ?>
+                    <?php self::render_openclaw_chat_details( $domain, $endpoint, $slug ); ?>
+                <?php endif; ?>
                 <?php
-                /* translators: 1: config file path, 2: the MCP server name used in the command */
-                self::render_file_fallback( $slug, $domain, $endpoint, 'muse-code' === $slug ? sprintf( __( 'Add this to <code>%1$s</code> (merge it if the file exists), then run <code>muse mcp login %2$s</code>.', 'cowboy-mcp' ), '%s', esc_html( $domain ) ) : '' );
+                $file_text = match ( $slug ) {
+                    /* translators: 1: config file path, 2: the MCP server name used in the command */
+                    'muse-code' => sprintf( __( 'Add this to <code>%1$s</code> (merge it if the file exists), then run <code>muse mcp login %2$s</code>.', 'cowboy-mcp' ), '%s', esc_html( $domain ) ),
+                    /* translators: 1: config file path, 2: the MCP server name used in the command */
+                    'openclaw'  => sprintf( __( 'Add this to <code>%1$s</code> (merge it if the file exists), then run <code>openclaw mcp login %2$s</code>.', 'cowboy-mcp' ), '%s', esc_html( $domain ) ),
+                    /* translators: 1: config file path, 2: the MCP server name used in the command */
+                    'hermes'    => sprintf( __( 'Add this to <code>%1$s</code>, then run <code>hermes mcp login %2$s</code>.', 'cowboy-mcp' ), '%s', esc_html( $domain ) ),
+                    default     => '',
+                };
+                self::render_file_fallback( $slug, $domain, $endpoint, $file_text );
                 ?>
                 <?php self::render_key_fallback( $slug, $label, $keys, $endpoint, $new_key, $is_local ); ?>
                 </div>
@@ -816,6 +847,34 @@ class Cowboy_MCP_Admin_Connections {
         <?php self::render_approve_step( $oauth_on, $slug ); ?>
         <?php self::render_verify_step_with_prompt( $slug, $domain ); ?>
         <?php
+    }
+
+    /**
+     * OpenClaw is mostly driven from a messaging app, so the chat path is offered next to the terminal commands:
+     * its agents carry an `openclaw` tool that proposes typed config operations (`config set`) which the owner
+     * approves in the chat (Allow once / `/approve <id>`; Full Access applies them at once - docs/cli/openclaw.md
+     * "Operations and approval", 2026.10.4), and a shell-capable agent may run `openclaw mcp login <name>`
+     * (docs/cli/mcp/transports.md). The browser step still happens where the gateway runs, or through `--code`.
+     * The model-driven turn itself was not observed live (no OpenClaw model account here); the commands above
+     * are the verified path, which is why this sits in the "instead" row. The message is English on purpose:
+     * it is an instruction for the agent, like tool descriptions. Copying it starts a watched connection.
+     */
+    private static function render_openclaw_chat_details( string $domain, string $endpoint, string $slug ): void {
+        ?>
+        <details class="mcp-local-details">
+            <summary><?php esc_html_e( 'Talking to OpenClaw in a chat app instead?', 'cowboy-mcp' ); ?></summary>
+            <div class="mcp-local-details-body">
+                <p><?php esc_html_e( 'Paste this message into your OpenClaw chat. OpenClaw asks you to approve the config change, then sends you the sign-in link.', 'cowboy-mcp' ); ?></p>
+                <?php self::render_paste_field( 'mcp-oauth-msg-' . $slug, self::openclaw_chat_message( $domain, $endpoint ), __( 'Message for OpenClaw', 'cowboy-mcp' ), __( 'Copy message', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
+            </div>
+        </details>
+        <?php
+    }
+
+    /** The chat message that makes an OpenClaw agent add this server to `mcp.servers` and start the sign-in (see render_openclaw_chat_details()). */
+    private static function openclaw_chat_message( string $domain, string $endpoint ): string {
+        $json = (string) wp_json_encode( [ 'url' => $endpoint, 'transport' => 'streamable-http', 'auth' => 'oauth' ], JSON_UNESCAPED_SLASHES );
+        return 'Add an MCP server to my OpenClaw config: set mcp.servers.' . $domain . ' to ' . $json . ' (propose the config change and wait for my approval). Then run `openclaw mcp login ' . $domain . '` and send me the authorization link it prints. If the sign-in cannot reach your callback, I will send you the code to finish with `openclaw mcp login ' . $domain . ' --code <code>`.';
     }
 
     /** IDEs with an install link: Cursor, VS Code. */
@@ -949,6 +1008,8 @@ class Cowboy_MCP_Admin_Connections {
                 <?php self::render_code( 'mcp-cmd-' . $slug, self::install_snippet( $slug, $domain, $endpoint, $key_display ), self::snippet_title( $slug ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'key' ] ); ?>
                 <?php if ( 'codex' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Codex reads the key each time it starts, so also add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</code>).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <?php elseif ( 'hermes' === $slug ) : ?>
+                    <p class="description"><?php echo wp_kses( __( 'Hermes asks for the key when you run this and stores it in <code>~/.hermes/.env</code>; the config file only references it.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
                 <?php
                 if ( $offer_http ) {
@@ -1018,6 +1079,31 @@ class Cowboy_MCP_Admin_Connections {
         };
     }
 
+    /**
+     * The OpenClaw config file (`~/.openclaw/openclaw.json`, JSON5 - plain JSON is valid) with this server under
+     * `mcp.servers` (docs/cli/mcp/transports.md, 2026.10.4). `transport` is mandatory: without it OpenClaw assumes SSE.
+     * Empty $key_display = OAuth (`auth: "oauth"`); a key goes in `headers` and OAuth is left out, because static
+     * headers are ignored while `auth` is oauth.
+     */
+    private static function openclaw_config_json( string $domain, string $endpoint, string $key_display ): string {
+        $entry = [ 'url' => $endpoint, 'transport' => 'streamable-http' ];
+        if ( '' !== $key_display ) {
+            $entry['headers'] = [ 'Authorization' => 'Bearer ' . $key_display ];
+        } else {
+            $entry['auth'] = 'oauth';
+        }
+        return (string) wp_json_encode( [ 'mcp' => [ 'servers' => [ $domain => $entry ] ] ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+    }
+
+    /** The Hermes Agent config file (`~/.hermes/config.yaml`, key `mcp_servers`) with this server; `auth: oauth` or a Bearer header (website/docs/user-guide/features/mcp.md, 2026-10-16). */
+    private static function hermes_config_yaml( string $domain, string $endpoint, string $key_display ): string {
+        $yaml = "mcp_servers:\n  {$domain}:\n    url: \"{$endpoint}\"\n";
+        if ( '' !== $key_display ) {
+            return $yaml . "    headers:\n      Authorization: \"Bearer {$key_display}\"\n";
+        }
+        return $yaml . "    auth: oauth\n";
+    }
+
     /** Raw (unescaped) setup snippet for an API-key client: a command wherever the client has one. Escaped at output. */
     private static function install_snippet( string $slug, string $domain, string $endpoint, string $key_display ): string {
         return match ( $slug ) {
@@ -1031,6 +1117,10 @@ class Cowboy_MCP_Admin_Connections {
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, $key_display ),
             // A key never goes into the chat message (it would reach the model); the key path edits the file instead.
             'muse-code'      => self::muse_settings_json( $domain, $endpoint, $key_display ),
+            // `--header <key=value>`, repeatable (openclaw mcp add --help, 2026.10.4); `add` probes the server before saving.
+            'openclaw'       => 'openclaw mcp add ' . $domain . ' --url ' . $endpoint . ' --transport streamable-http --header "Authorization=Bearer ' . $key_display . '"',
+            // `--auth header` prompts for the token (masked) and keeps it in ~/.hermes/.env, so the key is never on the command line (hermes_cli/mcp_config.py, 2026-10-16).
+            'hermes'         => 'hermes mcp add ' . $domain . ' --url ' . $endpoint . ' --auth header',
             default          => '',
         };
     }
@@ -1099,6 +1189,14 @@ class Cowboy_MCP_Admin_Connections {
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, '' ),
             'muse-code'      => 'muse mcp login ' . $domain,
+            // Saves without probing when auth is oauth, then `login` prints the sign-in link (verified live, openclaw 2026.10.4, 2026-10-16).
+            'openclaw'       => 'openclaw mcp add ' . $domain . ' --url ' . $endpoint . ' --transport streamable-http --auth oauth' . "\n" . 'openclaw mcp login ' . $domain,
+            // `add --auth oauth` runs the sign-in itself (prints the link, waits for the loopback callback) and then asks which tools
+            // to enable (hermes_cli/mcp_config.py, main 2026-10-16). Its probe is bounded by connect_timeout, default 30 s - too short
+            // for a browser round trip (reproduced live: "timed out after 30s"), and on timeout Hermes offers to save the server
+            // DISABLED. --connect-timeout 300 matches `hermes mcp login`'s own 5-minute window; it is persisted in config.yaml and
+            // only matters for a server that accepts the connection and then hangs (refused/unknown hosts still fail at once).
+            'hermes'         => 'hermes mcp add ' . $domain . ' --url ' . $endpoint . ' --auth oauth --connect-timeout 300',
             'cursor'         => self::file_snippet( $slug, $domain, $endpoint ),
             default          => '',
         };
@@ -1114,6 +1212,8 @@ class Cowboy_MCP_Admin_Connections {
             'vscode'         => "{\n  \"servers\": {\n    \"{$domain}\": {\n      \"type\": \"http\",\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'claude-desktop' => self::bridge_config_snippet( $domain, $endpoint, '' ),
             'muse-code'      => self::muse_settings_json( $domain, $endpoint, '' ),
+            'openclaw'       => self::openclaw_config_json( $domain, $endpoint, '' ),
+            'hermes'         => self::hermes_config_yaml( $domain, $endpoint, '' ),
             default          => '',
         };
     }
@@ -1127,6 +1227,8 @@ class Cowboy_MCP_Admin_Connections {
             'vscode'         => '.vscode/mcp.json',
             'claude-desktop' => 'claude_desktop_config.json',
             'muse-code'      => '~/.config/muse/settings.json',
+            'openclaw'       => '~/.openclaw/openclaw.json',
+            'hermes'         => '~/.hermes/config.yaml',
             default          => '',
         };
     }
@@ -1164,6 +1266,10 @@ class Cowboy_MCP_Admin_Connections {
             'vscode'      => sprintf( __( 'Open Copilot Chat in agent mode and click the tools icon — <code>%s</code> should be listed. Errors show under <code>Output → MCP</code>.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
             'muse-code'   => sprintf( __( 'Start <code>muse</code> and run <code>/mcp</code> — <code>%s</code> should be listed with its tools.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'openclaw'    => sprintf( __( 'Run <code>openclaw mcp probe %s</code> — it should report 2 tools.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            /* translators: %s: the MCP server name shown in the client. */
+            'hermes'      => sprintf( __( 'Run <code>hermes mcp test %s</code> — it should list the server’s tools.', 'cowboy-mcp' ), esc_html( $domain ) ),
             default       => '',
         };
         ?>

@@ -70,6 +70,8 @@ class Cowboy_MCP_OAuth {
         'antigravity' => 'Antigravity',
         'muse'        => 'Muse',
         'muse-code'   => 'Muse Code',
+        'openclaw'    => 'OpenClaw',
+        'hermes'      => 'Hermes Agent',
         'zed'         => 'Zed',
         'cline'       => 'Cline',
         'goose'       => 'Goose',
@@ -242,7 +244,9 @@ class Cowboy_MCP_OAuth {
             return null;
         }
         $name = strtolower( trim( (string) ( $row['client_name'] ?? '' ) ) );
-        foreach ( [ 'claude code' => 'claude-code', 'codex' => 'codex', 'gemini cli' => 'gemini-cli', 'visual studio code' => 'vscode', 'cursor' => 'cursor', 'opencode' => 'opencode', 'muse code' => 'muse-code', 'mcp cli' => 'mcp-remote', 'zed' => 'zed', 'cline' => 'cline', 'goose' => 'goose', 'amp' => 'amp', 'kiro' => 'kiro', 'qwen code' => 'qwen-code', 'kilo' => 'kilo', 'raycast' => 'raycast', 'windsurf' => 'windsurf', 'devin' => 'windsurf', 'n8n' => 'n8n' ] as $prefix => $slug ) {
+        // OpenClaw registers as "OpenClaw MCP" on 127.0.0.1:8989 (bundle src/agents/mcp-oauth-provider.ts, 2026.10.4); Hermes Agent
+        // as "Hermes Agent" (DCR) or through its CIMD document of the same name (tools/mcp_oauth.py) - both verified 2026-10-16.
+        foreach ( [ 'claude code' => 'claude-code', 'codex' => 'codex', 'gemini cli' => 'gemini-cli', 'visual studio code' => 'vscode', 'cursor' => 'cursor', 'opencode' => 'opencode', 'openclaw' => 'openclaw', 'hermes' => 'hermes', 'muse code' => 'muse-code', 'mcp cli' => 'mcp-remote', 'zed' => 'zed', 'cline' => 'cline', 'goose' => 'goose', 'amp' => 'amp', 'kiro' => 'kiro', 'qwen code' => 'qwen-code', 'kilo' => 'kilo', 'raycast' => 'raycast', 'windsurf' => 'windsurf', 'devin' => 'windsurf', 'n8n' => 'n8n' ] as $prefix => $slug ) {
             if ( str_starts_with( $name, $prefix ) ) {
                 return $slug;
             }
@@ -276,13 +280,13 @@ class Cowboy_MCP_OAuth {
         Cowboy_MCP_Auth::store_client_info( 'oauth', $cid, $info );
     }
 
-    /** Slug from an MCP initialize clientInfo (names verified from each client's source, 2026-10-07; n8n 2.42.6 MCP Client Tool node, observed 2026-10-10; Muse Code 1.4.8 sends its internal name `tbh` / `0.1.0`, the Muse app `muse-custom-connector` / `1`, both observed 2026-10-14). */
+    /** Slug from an MCP initialize clientInfo (names verified from each client's source, 2026-10-07; n8n 2.42.6 MCP Client Tool node, observed 2026-10-10; Muse Code 1.4.8 sends its internal name `tbh` / `0.1.0`, the Muse app `muse-custom-connector` / `1`, both observed 2026-10-14; OpenClaw's embedded runtime `openclaw-bundle-mcp` / `0.0.0`, 2026.10.4 source + live 2026-10-16. Hermes Agent passes no clientInfo, so the SDK default `mcp` / `0.1.0` arrives - generic, the row label wins). */
     public static function client_slug_for_info( $info ): ?string {
         if ( ! is_array( $info ) || empty( $info['name'] ) ) {
             return null;
         }
         $name = (string) $info['name'];
-        $map  = [ 'claude-code' => 'claude-code', 'codex-mcp-client' => 'codex', 'gemini-cli-mcp-client' => 'gemini-cli', 'cursor-vscode' => 'cursor', 'opencode' => 'opencode', '@n8n/n8n-nodes-langchain.mcpClientTool' => 'n8n', 'tbh' => 'muse-code', 'muse-custom-connector' => 'muse' ];
+        $map  = [ 'claude-code' => 'claude-code', 'codex-mcp-client' => 'codex', 'gemini-cli-mcp-client' => 'gemini-cli', 'cursor-vscode' => 'cursor', 'opencode' => 'opencode', '@n8n/n8n-nodes-langchain.mcpClientTool' => 'n8n', 'tbh' => 'muse-code', 'muse-custom-connector' => 'muse', 'openclaw-bundle-mcp' => 'openclaw' ];
         if ( isset( $map[ $name ] ) ) {
             return $map[ $name ];
         }
@@ -453,7 +457,11 @@ class Cowboy_MCP_OAuth {
      * a JSON document claiming to be "Claude Code". Administrators extend it with the same
      * extra-hosts setting as redirects, or via the cowboy_mcp_oauth_cimd_hosts filter.
      */
-    const CIMD_DOCUMENT_HOSTS = [ 'claude.ai', 'claude.com', 'anthropic.com', 'chatgpt.com', 'openai.com', 'perplexity.ai', 'perplexity.com' ]; // Perplexity: https://www.perplexity.ai/.well-known/mcp-client.json (verified live 2026-10-12; no DCR any more)
+    // Hermes Agent (Nous Research) publishes https://nousresearch.github.io/hermes-agent/docs/oauth/client-metadata.json
+    // and sends it as client_id whenever the server advertises CIMD (verified in tools/mcp_oauth.py, main 2026-10-16); it
+    // falls back to DCR only on an invalid_client at the token endpoint, so refusing the host would dead-end every sign-in.
+    // The host is the NousResearch GitHub Pages origin - a single owner, unlike github.io itself.
+    const CIMD_DOCUMENT_HOSTS = [ 'claude.ai', 'claude.com', 'anthropic.com', 'chatgpt.com', 'openai.com', 'perplexity.ai', 'perplexity.com', 'nousresearch.github.io' ]; // Perplexity: https://www.perplexity.ai/.well-known/mcp-client.json (verified live 2026-10-12; no DCR any more)
 
     /**
      * Whether a client_id is a Client ID Metadata Document URL
