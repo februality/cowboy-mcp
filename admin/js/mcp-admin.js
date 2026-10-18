@@ -862,3 +862,26 @@ document.addEventListener( 'click', function( e ) {
 			.catch( function() {} );
 	} );
 } )();
+
+/* ── Cowboy Hub promo: dismiss in place, honour reduced motion ── */
+( function() {
+	'use strict';
+	if ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) {
+		document.querySelectorAll( '.cmcp-hub-art animateMotion, .cmcp-hub-art animate, .cmcp-hub-art set' ).forEach( function( n ) { n.parentNode.removeChild( n ); } );
+	}
+	var banner = document.querySelector( '[data-cmcp-hub]' );
+	var x = document.querySelector( '[data-cmcp-hub-dismiss]' );
+	if ( ! banner || ! x || typeof cowboyMcpAdmin === 'undefined' || ! cowboyMcpAdmin.hubNonce ) {
+		return;
+	}
+	x.addEventListener( 'click', function() {
+		var pill = document.querySelector( '[data-cmcp-hub-pill]' );
+		banner.classList.add( 'is-leaving' );
+		setTimeout( function() {
+			if ( banner.parentNode ) { banner.parentNode.removeChild( banner ); }
+			if ( pill ) { pill.removeAttribute( 'hidden' ); }
+		}, 280 );
+		var body = new URLSearchParams( { action: 'cowboy_mcp_hub_dismiss', _ajax_nonce: cowboyMcpAdmin.hubNonce } );
+		window.fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body, keepalive: true } ).catch( function() {} );
+	} );
+} )();

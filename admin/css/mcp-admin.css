@@ -405,3 +405,54 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .wrap.cmcp .cmcp-connect-status-window { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 10px; color: var(--cmcp-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wrap.cmcp .cmcp-connect-status-window form { display: inline; margin: 0; }
 .wrap.cmcp .cmcp-connect-status-window .cmcp-linkbtn { font-size: 13px; }
+
+/* ── Cowboy Hub promo: banner under the header + dismissed-state pill (Cowboy_MCP_Hub_Promo) ── */
+.wrap.cmcp > .cmcp-hub { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; padding: 20px 24px 20px 26px; background: var(--cmcp-code-bg); border-color: #0b100c; color: var(--cmcp-code-text); }
+.cmcp-hub::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(420px 160px at 46% 50%, rgba(60,240,122,.14), transparent 70%); }
+.cmcp-hub::after { content: ""; position: absolute; top: 0; left: 0; height: 1px; width: 220px; background: linear-gradient(90deg, transparent, var(--cmcp-code-green), transparent); opacity: 0; animation: cmcp-hub-streamer 11s cubic-bezier(.5,0,.2,1) infinite; pointer-events: none; }
+@keyframes cmcp-hub-streamer { 0% { transform: translateX(-220px); opacity: 0; } 3% { opacity: 1; } 40% { transform: translateX(1500px); opacity: 1; } 41% { opacity: 0; } 100% { transform: translateX(-220px); opacity: 0; } }
+.cmcp-hub-copy { position: relative; min-width: 0; }
+.wrap.cmcp .cmcp-hub h2 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: #fff; margin: 0 0 6px; padding: 0; line-height: 1.25; }
+.wrap.cmcp .cmcp-hub p { margin: 0 0 12px; max-width: 72ch; font-size: 13.5px; line-height: 1.5; color: #b9d1c2; }
+.wrap.cmcp .cmcp-hub-points { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: max-content max-content; column-gap: 32px; row-gap: 6px; }
+.wrap.cmcp .cmcp-hub-points li { position: relative; margin: 0; padding-left: 14px; font-size: 13.5px; line-height: 1.5; color: var(--cmcp-code-text); white-space: nowrap; }
+.wrap.cmcp .cmcp-hub-points li::before { content: ""; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--cmcp-code-green); }
+@media (max-width: 1280px) { .wrap.cmcp .cmcp-hub-points { grid-template-columns: 1fr; } }
+@media (max-width: 782px) { .wrap.cmcp .cmcp-hub-points li { white-space: normal; } }
+.cmcp-hub-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.wrap.cmcp .cmcp-hub-cta { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 16px; border-radius: 6px; background: var(--cmcp-code-green); color: #04140a; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.wrap.cmcp .cmcp-hub-cta:hover, .wrap.cmcp .cmcp-hub-cta:focus-visible { background: #fff; color: #04140a; }
+.cmcp-hub-cta svg { width: 14px; height: 14px; transition: transform .2s ease; }
+.cmcp-hub-cta:hover svg { transform: translateX(3px); }
+.wrap.cmcp .cmcp-hub :focus-visible { outline-color: #fff; }
+.cmcp-hub-x { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; padding: 0; border: 0; background: none; border-radius: 6px; color: var(--cmcp-code-dim); font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
+.cmcp-hub-x:hover, .cmcp-hub-x:focus-visible { color: #fff; background: rgba(255,255,255,.08); }
+.cmcp-hub-art { position: relative; width: 450px; height: 128px; margin-right: 10px; }
+.cmcp-hub-art svg { width: 100%; height: 100%; overflow: visible; }
+.cmcp-hub-wire { fill: none; stroke: #2a3a2f; stroke-width: 1; }
+.cmcp-hub-node { fill: #4c6252; }
+.cmcp-hub-agentbox { fill: #121a14; stroke: #2f4536; stroke-width: 1; }
+.cmcp-hub-lbl { font: 11px var(--cmcp-mono); fill: var(--cmcp-code-dim); }
+.cmcp-hub-lbl--b { fill: #cfeedd; }
+.cmcp-hub-pulse { opacity: 0; }
+.cmcp-hub-dot { fill: var(--cmcp-code-green); }
+.cmcp-hub-halo { fill: var(--cmcp-code-green); opacity: .22; }
+@media (max-width: 1180px) { .cmcp-hub-art { width: 340px; height: 97px; } }
+@media (max-width: 1000px) { .wrap.cmcp > .cmcp-hub { grid-template-columns: 1fr; } .cmcp-hub-art { display: none; } }
+@media (max-width: 782px) { .wrap.cmcp > .cmcp-hub { padding: 16px 16px 18px; } }
+/* dismissed state: a black pill at the end of the tab row; a wave of green pixels sweeps through it every 6 s */
+.wrap.cmcp .cmcp-hub-pill { position: relative; overflow: hidden; isolation: isolate; margin-inline-start: auto; align-self: center; display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 13px; border-radius: 999px; background: var(--cmcp-code-bg); border: 1px solid #2f4536; color: #fff; font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color .2s ease; }
+.wrap.cmcp .cmcp-hub-pill b { font-weight: 600; }
+.wrap.cmcp .cmcp-hub-pill:hover, .wrap.cmcp .cmcp-hub-pill:focus-visible { color: #fff; background: #0f1711; }
+/* hover: no border change; the pixel field brightens and the wave runs faster with no rest */
+.wrap.cmcp .cmcp-hub-pill:hover::before, .wrap.cmcp .cmcp-hub-pill:focus-visible::before { background: conic-gradient(from 90deg at 2px 2px, rgba(60,240,122,.95) 25%, transparent 0) 0 0 / 4px 4px; -webkit-mask-image: linear-gradient(135deg, transparent calc(50% - 90px), #000 50%, transparent calc(50% + 90px)); mask-image: linear-gradient(135deg, transparent calc(50% - 90px), #000 50%, transparent calc(50% + 90px)); animation: cmcp-cmcp-hub-pixel-wave-fast 2.2s linear infinite; }
+@keyframes cmcp-cmcp-hub-pixel-wave-fast { 0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } 100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } }
+.wrap.cmcp .cmcp-hub-pill:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--cmcp-ink); }
+.wrap.cmcp .cmcp-hub-pill:focus, .wrap.cmcp .cmcp-hub-pill:active { border-radius: 999px; outline: none; }
+.cmcp-hub-pill span { position: relative; z-index: 1; }
+/* pixel grid: one 2x2 mint square per 4x4 cell, revealed by a soft band slanted 45deg that travels left to right (5 s, on screen almost the whole way), then rests 1.5 s; 6.5 s cycle */
+.cmcp-hub-pill::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: conic-gradient(from 90deg at 2px 2px, rgba(60,240,122,.55) 25%, transparent 0) 0 0 / 4px 4px; -webkit-mask-image: linear-gradient(135deg, transparent calc(50% - 48px), #000 50%, transparent calc(50% + 48px)); mask-image: linear-gradient(135deg, transparent calc(50% - 48px), #000 50%, transparent calc(50% + 48px)); -webkit-mask-size: 230% 100%; mask-size: 230% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: 100% 0; mask-position: 100% 0; animation: cmcp-hub-pixel-wave 6.5s cubic-bezier(.3,0,.7,1) infinite; }
+@keyframes cmcp-hub-pixel-wave { 0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } 77% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } 100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } }
+@media (max-width: 782px) { .wrap.cmcp .cmcp-hub-pill { margin: 2px 0 8px; } }
+.cmcp-hub.is-leaving { opacity: 0; transition: opacity .28s ease; }
+@media (prefers-reduced-motion: reduce) { .cmcp-hub::after, .cmcp-hub-pill::before, .wrap.cmcp .cmcp-hub-pill:hover::before { animation: none; } }

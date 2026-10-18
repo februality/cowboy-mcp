@@ -217,6 +217,7 @@ class Cowboy_MCP_Admin {
             'startNonce'   => wp_create_nonce( 'cowboy_mcp_start_connect' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
             'blockedNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_blocked' ),
+            'hubNonce'     => wp_create_nonce( Cowboy_MCP_Hub_Promo::NONCE ),
             'cancel'       => __( 'Cancel', 'cowboy-mcp' ),
             'confirm'      => __( 'Confirm', 'cowboy-mcp' ),
             'copied'       => __( 'Copied!', 'cowboy-mcp' ),
@@ -628,9 +629,11 @@ class Cowboy_MCP_Admin {
                     <?php foreach ( $tabs as $slug => $label ) : ?>
                         <a class="cmcp-tab" href="<?php echo esc_url( self::url( [ 'tab' => $slug ] ) ); ?>"<?php echo $slug === $active_tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
                     <?php endforeach; ?>
+                    <?php Cowboy_MCP_Hub_Promo::render_pill( ! Cowboy_MCP_Hub_Promo::is_dismissed() ); ?>
                 </nav>
             </header>
             <?php self::render_offbar( $settings ); ?>
+            <?php Cowboy_MCP_Hub_Promo::render_banner(); ?>
             <h1 class="screen-reader-text"><?php echo esc_html( $tabs[ $active_tab ] ); ?></h1>
             <div class="cmcp-body">
                 <?php
