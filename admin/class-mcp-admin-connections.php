@@ -979,7 +979,12 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
-    /** n8n: MCP Client Tool node. Bearer first (works everywhere), OAuth2 second (n8n registers itself). */
+    /**
+     * n8n: MCP Client Tool node. OAuth2 first (owner, 2026-10-17: fewer steps and no key to copy — n8n registers itself
+     * with this site and opens the sign-in; verified live with n8n 2.42.6), the API key as the collapsed row like
+     * every other panel. Self-hosted n8n on another host needs its host under Settings → Additional allowed hosts;
+     * n8n cloud (n8n.cloud) and an n8n on this machine (loopback) are allowed already.
+     */
     private static function render_n8n_panel( string $slug, array $def, array $keys, string $endpoint, $new_key, bool $is_local ): void {
         $settings = get_option( 'cowboy_mcp_settings', [] );
         $oauth_on = class_exists( 'Cowboy_MCP_OAuth' ) && ! empty( $settings['enabled'] ) && ! empty( $settings['oauth_enabled'] );
@@ -989,23 +994,26 @@ class Cowboy_MCP_Admin_Connections {
         <?php self::step_open( '1', __( 'Add an MCP Client Tool node', 'cowboy-mcp' ), '' ); ?>
             <p><?php echo wp_kses( __( 'In your workflow, add the <strong>MCP Client Tool</strong> node to your agent and fill in:', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
             <dl class="cmcp-fields">
-                <dt><?php esc_html_e( 'Endpoint', 'cowboy-mcp' ); ?></dt><dd><?php self::render_paste_field( 'mcp-n8n-ep', $endpoint, '', __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'key' ] ); ?></dd>
+                <dt><?php esc_html_e( 'Endpoint', 'cowboy-mcp' ); ?></dt><dd><?php self::render_paste_field( 'mcp-n8n-ep', $endpoint, '', __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?></dd>
                 <dt><?php esc_html_e( 'Server Transport', 'cowboy-mcp' ); ?></dt><dd><code>HTTP Streamable</code></dd>
-                <dt><?php esc_html_e( 'Authentication', 'cowboy-mcp' ); ?></dt><dd><?php echo wp_kses( __( '<strong>Bearer Auth</strong> — create a Bearer Auth credential and paste the API key below.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></dd>
+                <dt><?php esc_html_e( 'Authentication', 'cowboy-mcp' ); ?></dt><dd><?php echo wp_kses( __( '<strong>OAuth2</strong> — create a new OAuth2 credential and click Connect. n8n registers itself with this site and opens the sign-in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></dd>
             </dl>
-            <?php self::render_key_step( 'n8n', 'n8n', $new_key, ! empty( $keys ), 'a' ); ?>
-            <details class="mcp-local-details"><summary><?php esc_html_e( 'Prefer OAuth2?', 'cowboy-mcp' ); ?></summary>
-                <div class="mcp-local-details-body">
-                    <p><?php echo wp_kses( __( 'Set Authentication to <strong>OAuth2</strong> and create a new OAuth2 credential: n8n registers itself with this site and opens the sign-in when you connect. Click Copy on the endpoint above first — it turns on new connections for 30 minutes.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
-                    <?php self::render_paste_field( 'mcp-n8n-ep-oauth', $endpoint, __( 'Endpoint', 'cowboy-mcp' ), __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?>
-                    <p><?php echo wp_kses( __( 'A sign-in page opens on <strong>your site</strong>. Pick the access level and click <strong>Approve</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
-                    <p class="description"><?php
-                        /* translators: %s: URL of the Settings tab */
-                        echo wp_kses( sprintf( __( 'Self-hosted n8n: add your n8n host under <a href="%s">Settings → Additional allowed hosts</a> first. n8n cloud is already allowed.', 'cowboy-mcp' ), esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'settings' ] ) . '#cowboy_mcp_oauth_extra_redirect_hosts' ) ), [ 'a' => [ 'href' => [] ] ] );
-                    ?></p>
-                </div></details>
+            <p class="description"><?php
+                /* translators: %s: URL of the Settings tab */
+                echo wp_kses( sprintf( __( 'Self-hosted n8n: add your n8n host under <a href="%s">Settings → Additional allowed hosts</a> first. n8n cloud is already allowed.', 'cowboy-mcp' ), esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'settings' ] ) . '#cowboy_mcp_oauth_extra_redirect_hosts' ) ), [ 'a' => [ 'href' => [] ] ] );
+            ?></p>
+            <div class="cmcp-inline-sum">
+                <details class="mcp-local-details cmcp-key-fallback" <?php echo $new_key ? 'open' : ''; ?>>
+                    <summary><?php esc_html_e( 'Use an API key instead', 'cowboy-mcp' ); ?></summary>
+                    <div class="mcp-local-details-body cmcp-key-fallback-body">
+                        <p><?php echo wp_kses( __( 'Set Authentication to <strong>Bearer Auth</strong> instead and paste the key into a new Bearer Auth credential.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                        <?php self::render_key_step( 'n8n', 'n8n', $new_key, ! empty( $keys ), 'a' ); ?>
+                    </div>
+                </details>
+            </div>
         <?php self::step_close(); ?>
-        <?php self::step_open( '2', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
+        <?php self::render_approve_step( $oauth_on ); ?>
+        <?php self::step_open( '3', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
             <p><?php echo wp_kses( __( 'Execute the node once — its Tools output lists <code>cowboy_discover</code> and <code>cowboy_run</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?> <?php esc_html_e( 'Then ask your agent:', 'cowboy-mcp' ); ?></p>
             <?php self::render_example_prompt( 'n8n', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>
         <?php self::step_close(); ?>
