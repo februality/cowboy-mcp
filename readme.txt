@@ -5,7 +5,7 @@ Tags: mcp, ai-agent, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.3
+Stable tag: 1.7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,7 +25,7 @@ https://www.youtube.com/watch?v=poFkhBgzq-s
 * 🛡️ **Secure by default** - safe mode confirms before anything destructive, you can preview any change before it runs, every key can be scoped to read-only, and every action is written to an audit log.
 * 🆓 **Free and open source** - every tool included, with deep WooCommerce, Gutenberg, ACF, Elementor, Beaver Builder, SiteOrigin, Wordfence and SEO support. No Pro tier, no credits, no usage meter.
 * 🔒 **Your data stays yours** - self-hosted, no accounts, no relay, no phone-home. Your agent connects to your site; nothing leaves your server.
-* 🔌 **One-click sign-in** - Claude, ChatGPT, Gemini, Grok, Perplexity, Cursor, VS Code, Claude Code, Codex, n8n and any MCP client connect through your browser; no API key to paste. About two minutes, on a live site or a local one.
+* 🔌 **One-click sign-in** - Claude, ChatGPT, Gemini, Grok, Perplexity, Muse, Cursor, VS Code, Claude Code, Codex, n8n, OpenClaw, Hermes Agent and any MCP client connect through your browser; no API key to paste. About two minutes, on a live site or a local one.
 
 > "More access than any other MCP offers, easy to use, LOVE the change journal and the checkpoints - safe if you break something, without having to run back ups on the host or yet another plugin." - a WordPress.org reviewer
 
@@ -50,7 +50,7 @@ MCP (Model Context Protocol) is the open standard AI assistants use to work with
 * **Roll back a post** - list a post's revisions, see a git-style diff of what changed, and restore any revision (the restore itself is undoable).
 * **Run your events** - create and edit The Events Calendar events, venues and organizers; with Events Calendar Pro, manage recurring series and cancel single dates.
 * **Plug into the WordPress Abilities API** - every tool is also a `cowboy-mcp/*` ability (with safe mode, the audit log and undo still in front), and abilities other plugins register become tools for your agent.
-* **Works on any host** - shared hosting, managed WordPress, a VPS or a local dev site. Nothing to install beyond the plugin; no WordPress.com account or Jetpack plan.
+* **Works on any host** - shared hosting, managed WordPress, a VPS or a local dev site; nothing to install beyond the plugin, no WordPress.com account or Jetpack plan.
 
 = Tool coverage =
 
@@ -76,11 +76,11 @@ Plus 17 read-only MCP resources, 4 resource templates and 8 guided workflow prom
 
 = One-click sign-in for every app =
 
-Every app sends you to a sign-in page on your own site, and you approve it as an administrator. Claude, ChatGPT, Cursor and VS Code: one button. Claude Code, Codex, Gemini CLI and Opencode: one command, then your browser opens. The consent screen names the app and lets you grant full access, read-only, or a hand-picked list of tools. Nothing is granted until you click **Approve**. Keys remain for scripts and CI.
+Every app sends you to a sign-in page on your own site: the cloud apps and IDEs with one button, the terminal tools with one command. The consent screen names the app and lets you grant full access, read-only, or a hand-picked list of tools; nothing is granted until you click **Approve**. Keys remain for scripts and CI.
 
 = Connect Claude Code to WordPress =
 
-Open the Claude Code panel on the Connections tab and run the two lines it shows:
+Two lines, ready to copy on the Connections tab:
 
     claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
     claude mcp login your-site
@@ -93,27 +93,27 @@ No terminal: click **Add to Claude** on the Connections tab and approve the sign
 
 = Connect ChatGPT to WordPress =
 
-ChatGPT connects with the same one-click sign-in. You need ChatGPT on the web in a Business, Enterprise or Edu workspace (Pro can connect for read-only use), and a public HTTPS site.
+ChatGPT connects with the same one-click sign-in from a Business, Enterprise or Edu workspace on the web (Pro: read-only); it needs a public HTTPS site.
 
-1. On your site, open the ChatGPT panel on the Connections tab and click **Open ChatGPT** (it copies your connection link).
-2. In ChatGPT, go to **Plugins**, click **Add** and choose **Add custom MCP server**. Name it, paste your connection link as the Server URL, keep **OAuth**, tick the risk acknowledgement and click **Create as a plugin**.
-3. ChatGPT opens a sign-in page on your site. Review it and click **Approve**.
-4. Back in ChatGPT, review the tools it found and install the plugin.
-5. In a chat, pick it from the **+** menu, or type **@** and its name.
+1. Click **Open ChatGPT** on the Connections tab (it copies your connection link).
+2. In ChatGPT, go to **Plugins → Add → Add custom MCP server**, paste the link as the Server URL, keep **OAuth** and click **Create as a plugin**.
+3. Approve the sign-in on your site, install the plugin, then pick it from the **+** menu in a chat.
 
 = Connect Perplexity, Grok and Gemini =
 
-All three add a custom MCP server by URL and sign in with OAuth: click your app's **Open** button on the Connections tab (it copies your connection link and turns on new connections for 30 minutes), paste the link where the app asks for a server URL, then approve the sign-in on your own site.
+Perplexity (Pro, Max or Enterprise), Grok (free plan works) and the Gemini app (personal US Google account) each add a custom MCP server by URL: click the app's **Open** button on the Connections tab (it copies your connection link), paste the link where the app asks for a server URL, then approve the sign-in on your own site. They connect from the vendor's cloud, so the site needs a public HTTPS address.
 
-* **Perplexity** (Pro, Max or Enterprise plans): Customize → Connectors → + Custom connector → Add MCP connector.
-* **Grok** (free plan works): grok.com/connectors → New Connector → Custom.
-* **Gemini app** (personal US Google account): Settings → Connected Apps → Custom apps → Add a custom app link.
+= Connect Meta Muse =
 
-All three connect from the vendor's cloud and need a public HTTPS site.
+Muse and Muse Code set up from a pasted message: click **Copy message** on the Muse panel, send it in a new Muse chat, click **Connect** on the connector card and approve the sign-in on your site. Sites behind Cloudflare need one firewall rule, which the panel and the Connection Doctor spell out.
 
 = Connect n8n =
 
-Add an **MCP Client Tool** node: Endpoint = your connection link, Server Transport = HTTP Streamable, Authentication = **Bearer Auth** with an API key from the Connections tab, or **OAuth2** (n8n registers itself and opens the sign-in; self-hosted n8n adds its host under Settings → Additional allowed hosts). Execute the node once: its Tools output lists cowboy_discover and cowboy_run.
+Add an **MCP Client Tool** node: Endpoint = your connection link, Server Transport = HTTP Streamable, Authentication = **OAuth2** (n8n registers itself and opens the sign-in; self-hosted n8n adds its host under Browser sign-in → Additional allowed hosts) or **Bearer Auth** with an API key. Execute the node once to see cowboy_discover and cowboy_run.
+
+= Connect OpenClaw and Hermes Agent =
+
+Both run from a chat, so the Connections tab gives you a message to paste: the agent adds the server to its config, starts the sign-in and sends you the link to approve. Terminal commands, config files and an API-key setup are one click away.
 
 = Connect Cursor and VS Code =
 
@@ -138,21 +138,21 @@ Cline adds `"type": "streamableHttp"`; Zed takes `url` and `headers` under `cont
 
     codex mcp add your-site --url https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
 
-Codex opens your browser to sign in. Headless or CI? Add `--bearer-token-env-var COWBOY_MCP_API_KEY` and export your key.
+Codex opens your browser to sign in; headless, add `--bearer-token-env-var COWBOY_MCP_API_KEY` and export your key.
 
 = Connect Gemini CLI =
 
     gemini mcp add -s user -t http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
 
-Click **Copy** on the Connections tab, then start `gemini` and run `/mcp auth your-site` to sign in. Headless or CI? Use an API key with `--header`.
+Start `gemini` and run `/mcp auth your-site` to sign in; headless, use an API key with `--header`.
 
-= n8n, Opencode and other MCP clients =
+= Opencode and other MCP clients =
 
-Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0). Point any MCP client - n8n, Opencode, LibreChat, your own agent - at `/wp-json/cowboy-mcp/v1/endpoint` with an `Authorization: Bearer` header. Opencode signs in with OAuth; set `"oauth": false` only for a key.
+Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0): point Opencode, LibreChat or your own agent at `/wp-json/cowboy-mcp/v1/endpoint`. Opencode signs in with OAuth; others send an `Authorization: Bearer` header.
 
 = Local development sites =
 
-Local, Studio, MAMP, DevKinsta, wp-env, Docker - it works the same. Terminal and IDE tools sign in on this computer with no public URL; Claude Desktop uses the `mcp-remote` bridge. Cloud apps such as claude.ai and ChatGPT need a public HTTPS address.
+Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in on this computer with no public URL, and Claude Desktop uses the `mcp-remote` bridge. Cloud apps such as claude.ai and ChatGPT need a public HTTPS address.
 
 = Secure by design: built for live sites =
 
@@ -165,15 +165,15 @@ Local, Studio, MAMP, DevKinsta, wp-env, Docker - it works the same. Terminal and
 * **AI agent permissions** - each API key and OAuth connection can be full access, read-only, or a custom list of tools.
 * **Hashed keys, rate limits, origin checks** - keys are shown once and stored as one-way hashes, requests are rate-limited per key, and unknown browser origins are rejected.
 * **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection, file writes confined to `wp-content`, and last-administrator protection. Power mode lifts some for rare jobs; only a human can switch it on in wp-admin.
-* **Connection Doctor** - a one-click self-test that names what blocks a connection (HTTPS, REST, OAuth, Cloudflare, firewalls, caching) and gives you a report to paste into a support topic.
+* **Connection Doctor** - a one-click self-test that names what blocks a connection (HTTPS, REST, OAuth, Cloudflare, firewalls, caching), with a report to paste into a support topic.
 
 = How Cowboy MCP is different =
 
 * **Nothing in the middle.** Cowboy MCP runs on your server, on any host: no account, no relay, no credits, no quota.
 * **Every tool is free.** Cowboy MCP ships plugins, themes, database and WooCommerce tools GPL-licensed, with no paid tier.
-* **Typed tools with undo, not a PHP shell.** Tools that let an agent execute arbitrary PHP are built for development copies. Cowboy MCP gives the agent typed tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills. (Want the comparison? See [Cowboy MCP vs Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira).)
+* **Typed tools with undo, not a PHP shell.** Tools that execute arbitrary PHP are built for development copies. Cowboy MCP gives the agent typed tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills ([compared with Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira)).
 * **A full safety net, not just an undo button.** A per-change journal with conflict detection, whole-database checkpoints, automatic restore of broken updates, dry run, safe mode and an always-on audit log.
-* **A complete server today, wired into the official pieces.** The Abilities API and the official MCP adapter are a framework; Cowboy MCP is the turnkey server, and on WordPress 6.9+ it bridges both ways. Needs WordPress 6.2+, no Composer, Node.js or build step.
+* **A complete server today, wired into the official pieces.** The Abilities API and the official MCP adapter are a framework; Cowboy MCP is the turnkey server and bridges both ways on WordPress 6.9+. Needs WordPress 6.2+, no Composer, Node.js or build step.
 
 Guides and comparisons: [cowboymcp.com](https://cowboymcp.com).
 
@@ -238,7 +238,7 @@ No. Publishing content and running your store work through plain conversation. T
 
 = Which AI agents and assistants work with it? =
 
-Any MCP-compatible client over Streamable HTTP - including Claude Code, the Claude desktop and web apps, ChatGPT, Perplexity, Grok, the Gemini app, Cursor, VS Code with GitHub Copilot, Windsurf, Cline, Zed, Codex CLI, Gemini CLI, Opencode and n8n.
+Any MCP-compatible client over Streamable HTTP - including Claude Code, the Claude desktop and web apps, ChatGPT, Perplexity, Grok, the Gemini app, Meta Muse and Muse Code, Cursor, VS Code with GitHub Copilot, Windsurf, Cline, Zed, Codex CLI, Gemini CLI, Opencode, n8n, OpenClaw and Hermes Agent.
 
 = Does it work with WooCommerce? =
 
@@ -293,7 +293,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Screenshots ==
 
-1. Connections tab - pick your AI tool (claude.ai, ChatGPT, Gemini, Grok, Perplexity, Claude Code, Codex, Cursor, VS Code, n8n, and more): one click adds the site to Claude or opens the other AI apps with your link copied, terminal tools get a ready-made command, and every app then signs in through your browser. Connected apps - API keys and app connections - are listed in one table with when each was created and last used, and can be limited to chosen tools or revoked.
+1. Connections tab - pick your AI tool (claude.ai, ChatGPT, Gemini, Grok, Perplexity, Muse, Claude Code, Codex, Cursor, VS Code, n8n, OpenClaw, Hermes Agent, and more): one click adds the site to Claude, the other AI apps get the exact link or message to paste, terminal tools get a ready-made command, and every app then signs in through your browser. Connected apps - API keys and app connections - are listed in one table with when each was created and last used, and can be limited to chosen tools or revoked.
 2. Settings tab - turn the server on or off, require Safe Mode confirmation for destructive actions, turn on Browser sign-in (OAuth) for apps that connect without a key, set a per-key rate limit, tune the undo journal and database checkpoints, and opt in to advanced Power Mode.
 3. Activity tab - a per-change undo journal: review every change your agents made and roll any of them back individually, plus one-click database checkpoints you can restore the whole site to.
 4. Logs tab - a structured, filterable audit log of every MCP tool call, error, and auth event, auto-pruned after 30 days.
@@ -302,17 +302,16 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.3 =
-* New: connect Perplexity, Grok and the Gemini app from the Connections tab. One click copies your site link and opens the app, and the page confirms when the app has signed in. There is also an n8n panel with the MCP Client Tool fields ready to copy.
-* New: `wp_search_replace` takes an optional `post_id` to limit a replacement to one post or page (contributed by dandry, PR #4).
-* Fix: ChatGPT connects again. 1.7.2 refused ChatGPT's new sign-in identity with "the app's identity document on chatgpt.com is invalid".
-* Fix: restoring a database checkpoint no longer runs out of memory on larger sites.
-* Fix: the Wordfence tools work again on current Wordfence installs, and the activity report shows readable IP addresses.
-* Fix: the WooCommerce customer report lists top spenders.
-* Fix: an agent can no longer deactivate Cowboy MCP and cut off its own connection.
-* Improved: "Last used" on the Connections tab stays accurate after an app's sign-in expires, and reconnecting an app you removed points you to the New connections switch.
-* Security: `wp_cli` refuses commands that would print passwords, salts or keys and redacts them from its output; agents can no longer delete Cowboy MCP's own transients.
-* Fixes: MCP protocol conformance (`completions` capability, JSON-RPC errors for malformed requests), PHP warnings when an agent creates a comment without an author name, and the access-level selector on phones.
+= 1.7.4 =
+* New: connect Meta Muse and Muse Code from the Connections tab. Setup is a single message pasted into the chat: the app configures itself, signs in on your site, and the page confirms the connection. Sites behind Cloudflare are shown the one firewall rule Muse needs.
+* New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect the same way, with one message pasted into the agent's chat. Terminal commands, config files and an API-key setup are available in each panel for people who prefer them.
+* New: n8n connects with OAuth2. n8n registers itself and your site asks for approval, so there is no secret to create or copy. The API-key setup remains available.
+* Improved: every connection screen shows the exact link or message to paste, each in its own field with a Copy button. Copying turns on browser sign-in and opens pairing for 30 minutes, and the "Open <app>" buttons simply open the app. Each panel is one short numbered list and ends with a read-only example prompt that confirms the connection within a minute.
+* Improved: the Connection Doctor detects when Cloudflare's Browser Integrity Check keeps AI apps from reaching the MCP endpoint and provides the rule to add.
+* Changed: the ChatGPT and Claude setup steps reflect the current versions of both apps. ChatGPT is now two clicks away: open Plugins, click Add, choose Add custom MCP server, and the site appears in the chat's + menu, with no Developer mode involved. OpenAI offers custom MCP servers on Business, Enterprise and Edu workspaces, with read-only use on Pro. Claude's Add custom connector dialog detects the sign-in settings automatically, and its recommended "Use Claude's published identity" option is fully supported.
+* Fix: ChatGPT shows file contents, posts, patterns and templates again. Results carrying a `content` field arrived in ChatGPT as an empty `{}`; the affected tools now also return structured output, which ChatGPT reads correctly. Thanks to the WordPress.org user who reported the issue and tested the fix.
+* Fix: `wp_list_directory` with `recursive: true` lists subdirectories instead of failing with an exception.
+* Fix: a terminal app that signs in again from a different local port (as Muse Code does) is accepted; the sign-in page previously refused the new port.
 
 = Earlier versions =
 
