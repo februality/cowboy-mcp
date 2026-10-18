@@ -93,13 +93,13 @@ No terminal: click **Add to Claude** on the Connections tab and approve the sign
 
 = Connect ChatGPT to WordPress =
 
-ChatGPT connects with the same one-click sign-in. You need ChatGPT on the web with a Plus, Pro, Business, Enterprise or Edu plan, and a public HTTPS site.
+ChatGPT connects with the same one-click sign-in. You need ChatGPT on the web in a Business, Enterprise or Edu workspace (Pro can connect for read-only use), and a public HTTPS site.
 
 1. On your site, open the ChatGPT panel on the Connections tab and click **Open ChatGPT** (it copies your connection link).
-2. In ChatGPT, open **Settings > Security and login** and turn on **Developer mode**. On Business and Enterprise workspaces an admin has to allow Developer mode first.
-3. Go to **Plugins**, click **+** and choose **Add custom MCP server**. Paste your connection link as the MCP server URL and choose **OAuth**.
-4. ChatGPT opens a sign-in page on your site. Review it and click **Approve**.
-5. In a chat, open the **+** menu, pick **Developer mode** and select your site.
+2. In ChatGPT, go to **Plugins**, click **Add** and choose **Add custom MCP server**. Name it, paste your connection link as the Server URL, keep **OAuth**, tick the risk acknowledgement and click **Create as a plugin**.
+3. ChatGPT opens a sign-in page on your site. Review it and click **Approve**.
+4. Back in ChatGPT, review the tools it found and install the plugin.
+5. In a chat, pick it from the **+** menu, or type **@** and its name.
 
 = Connect Perplexity, Grok and Gemini =
 
@@ -214,7 +214,7 @@ A plugin that lets AI assistants act on your site through the Model Context Prot
 
 = How do I connect ChatGPT to my WordPress site? =
 
-Click **Open ChatGPT** on the ChatGPT panel of the Connections tab in Cowboy MCP; it copies your connection link. In ChatGPT on the web, turn on **Developer mode** under **Settings > Security and login**, then go to **Plugins**, click **+ > Add custom MCP server**, paste the link and choose OAuth. Approve the sign-in on your site as an administrator, then pick **Developer mode** from the **+** menu in a chat. It needs a Plus, Pro, Business, Enterprise or Edu plan and a public HTTPS site.
+Click **Open ChatGPT** on the ChatGPT panel of the Connections tab in Cowboy MCP; it copies your connection link. In ChatGPT on the web, go to **Plugins**, click **Add > Add custom MCP server**, paste the link as the Server URL, keep OAuth, acknowledge the risk warning and click **Create as a plugin**. Approve the sign-in on your site as an administrator, install the plugin, then pick it from the **+** menu in a chat (or type **@** and its name). It needs a Business, Enterprise or Edu workspace (Pro: read-only) and a public HTTPS site.
 
 = How do I connect Claude to my WordPress site? =
 

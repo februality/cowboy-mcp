@@ -308,7 +308,7 @@ class Cowboy_MCP_Admin_Connections {
         // Whole sentences per client (not sprintf'd names) so translators get
         // complete, grammatical strings.
         $approve_text = $is_chatgpt
-            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>, then pick your site under <strong>+ → Developer mode</strong> in a chat.', 'cowboy-mcp' )
+            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>. Back in ChatGPT, review the tools it found and install the plugin; in a chat, pick it from the <strong>+</strong> menu or type <strong>@</strong> and its name.', 'cowboy-mcp' )
             : __( 'Claude opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>, then switch the connector on under <strong>+ → Connectors</strong> in a chat.', 'cowboy-mcp' );
 
         if ( $show_warning && ! $reachable ) {
@@ -363,24 +363,22 @@ class Cowboy_MCP_Admin_Connections {
                 self::render_open_app_form( 'cowboy_mcp_open_chatgpt', '1', 'ChatGPT' );
             }
             ?>
-                <p><?php esc_html_e( 'Sign in. MCP apps work on the web only.', 'cowboy-mcp' ); ?></p>
+                <p><?php esc_html_e( 'Sign in. Custom MCP servers work in ChatGPT on the web only.', 'cowboy-mcp' ); ?></p>
             <?php
             self::step_close();
-            self::step_open( '3', __( 'Turn on Developer mode', 'cowboy-mcp' ), '' );
-            ?>
-                <p><?php echo wp_kses( __( 'Under <code>Settings → Security and login</code>, turn on <strong>Developer mode</strong> (once).', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] ); ?></p>
-            <?php
-            self::step_close();
-            self::step_open( '4', __( 'Paste the link', 'cowboy-mcp' ), '' );
+            // No Developer mode step any more: ChatGPT adds custom servers straight from Plugins behind a per-server risk
+            // acknowledgement (help.openai.com article 12584461; live-checked 2026-10-18: Plugins → Add ▾ → Add custom MCP server,
+            // fields Name / Server URL / Authentication = OAuth, checkbox, "Create as a plugin"; the plugin then sits in the chat's + menu).
+            self::step_open( '3', __( 'Paste the link', 'cowboy-mcp' ), '' );
             ?>
                 <p><?php
-                    echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] );
+                    echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>Add</strong> and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] );
                     echo ' ';
-                    echo wp_kses( __( 'Name it, paste the link as the <strong>MCP server URL</strong>, set Authentication to <strong>OAuth</strong> and create it.', 'cowboy-mcp' ), [ 'strong' => [] ] );
+                    echo wp_kses( __( 'Name it, paste the link as the <strong>Server URL</strong>, keep Authentication on <strong>OAuth</strong>, tick the risk acknowledgement and click <strong>Create as a plugin</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] );
                 ?></p>
             <?php
             self::step_close();
-            $approve_num = '5';
+            $approve_num = '4';
         else :
             $claude = self::claude_manual_sentences( $is_desktop );
             /* translators: %s: a web address, e.g. claude.ai */
@@ -403,7 +401,7 @@ class Cowboy_MCP_Admin_Connections {
                 <?php if ( $is_chatgpt ) : ?>
                     <details class="mcp-local-details">
                         <summary><?php esc_html_e( 'Which ChatGPT plans work?', 'cowboy-mcp' ); ?></summary>
-                        <div class="mcp-local-details-body"><p><?php echo wp_kses( __( 'Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> plan, on the web. On Business and Enterprise workspaces an admin has to allow Developer mode first.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p></div>
+                        <div class="mcp-local-details-body"><p><?php echo wp_kses( __( 'Custom MCP servers need a ChatGPT <strong>Business, Enterprise or Edu</strong> workspace, on the web; Pro can connect one for read-only use. On Business only workspace admins and owners can add it; on Enterprise and Edu an admin grants that permission by role.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p></div>
                     </details>
                 <?php else : ?>
                     <?php self::render_claude_plan_details( $oauth_on, false ); ?>
@@ -608,9 +606,11 @@ class Cowboy_MCP_Admin_Connections {
             ),
             wp_kses( __( 'Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
             wp_kses(
+                // Claude's dialog (2026-10-18) detects the sign-in settings itself; its OAuth-client choices are "Use Claude's published
+                // identity" (CIMD, the recommended default) and "Register automatically" (DCR) — both are paths this plugin serves.
                 $link_above
-                    ? __( 'Name it, paste the link above, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' )
-                    : __( 'Name it, paste the link from step 1, click <strong>Continue</strong> and then <strong>Add</strong>. If Claude asks which OAuth client to use, choose <strong>Register automatically</strong>.', 'cowboy-mcp' ),
+                    ? __( 'Name it, paste the link above and click <strong>Continue</strong>. Keep the sign-in settings Claude detects (either OAuth client option works) and click <strong>Add</strong>.', 'cowboy-mcp' )
+                    : __( 'Name it, paste the link from step 1 and click <strong>Continue</strong>. Keep the sign-in settings Claude detects (either OAuth client option works) and click <strong>Add</strong>.', 'cowboy-mcp' ),
                 [ 'strong' => [] ]
             ),
         ];
@@ -708,7 +708,7 @@ class Cowboy_MCP_Admin_Connections {
         <?php self::step_open( '3', __( 'Check it worked', 'cowboy-mcp' ), '' ); ?>
                 <p><?php
                     /* translators: %s: the MCP server name shown in the client. */
-                    echo wp_kses( sprintf( __( 'Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> should be listed. The first start takes a moment while the bridge downloads.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
+                    echo wp_kses( sprintf( __( 'Open a new chat in Claude Desktop, click <strong>+</strong> and open <strong>Connectors</strong> — <code>%s</code> should be listed. The first start takes a moment while the bridge downloads.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [], 'strong' => [] ] );
                 ?> <?php esc_html_e( 'Then try:', 'cowboy-mcp' ); ?></p>
                 <?php self::render_example_prompt( 'claude-desktop-bridge', $domain ); ?>
         <?php self::step_close(); ?>

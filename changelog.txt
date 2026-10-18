@@ -6,6 +6,7 @@ release; older entries are kept here.
 = 1.7.4 =
 * Fix: ChatGPT shows file contents, posts, patterns and templates again. Results that carry a `content` field came through as an empty `{}` in ChatGPT; `wp_read_file`, `wp_get_post`, `wp_create_post`, `wp_update_post`, `wp_get_pattern` and `wp_get_template` now also return structured output, which ChatGPT reads correctly. Thanks to the WordPress.org user who reported it and tested the fix.
 * Fix: `wp_list_directory` with `recursive: true` lists subdirectories instead of failing with an exception.
+* Changed: the ChatGPT and Claude setup steps on the Connections tab follow the current apps. ChatGPT no longer needs Developer mode: Plugins → Add → Add custom MCP server, then the plugin sits in the chat's + menu; custom servers need a Business, Enterprise or Edu workspace (Pro: read-only). Claude's Add custom connector dialog now detects the sign-in settings itself, and its recommended "Use Claude's published identity" option works with this plugin.
 
 = 1.7.3 =
 * New: connect Perplexity, Grok and the Gemini app from the Connections tab. One click copies your site link and opens the app, and the page confirms when the app has signed in. There is also an n8n panel with the MCP Client Tool fields ready to copy.

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-17 21:14-0700\n"
+"POT-Creation-Date: 2026-10-18 12:15-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -379,12 +379,14 @@ msgstr ""
 #: admin/class-mcp-admin-connections.php:311
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Click "
-"<strong>Approve</strong>, then pick your site under <strong>+ → Developer "
-"mode</strong> in a chat."
+"<strong>Approve</strong>. Back in ChatGPT, review the tools it found and "
+"install the plugin; in a chat, pick it from the <strong>+</strong> menu or "
+"type <strong>@</strong> and its name."
 msgstr ""
-"ChatGPT가 <strong>내 사이트</strong>에서 로그인 페이지를 엽니다. <strong>승인"
-"</strong>을 클릭한 뒤, 채팅에서 <strong>+ → 개발자 모드</strong> 아래에서 사"
-"이트를 선택하세요."
+"ChatGPT가 <strong>내 사이트</strong>의 로그인 페이지를 엽니다. "
+"<strong>Approve</strong>를 클릭하세요. ChatGPT로 돌아가 발견된 도구를 확인하"
+"고 플러그인을 설치하세요. 채팅에서는 <strong>+</strong> 메뉴에서 선택하거나 "
+"<strong>@</strong>와 이름을 입력하면 됩니다."
 
 #: admin/class-mcp-admin-connections.php:312
 msgid ""
@@ -427,88 +429,80 @@ msgid "Add it by hand instead"
 msgstr "직접 추가하기"
 
 #: admin/class-mcp-admin-connections.php:344
-#: admin/class-mcp-admin-connections.php:401
-#: admin/class-mcp-admin-connections.php:519
+#: admin/class-mcp-admin-connections.php:399
+#: admin/class-mcp-admin-connections.php:517
 #: admin/class-mcp-admin-connections.php:1029
 msgid "Approve access"
 msgstr "접근 승인"
 
 #: admin/class-mcp-admin-connections.php:353
-#: admin/class-mcp-admin-connections.php:498
+#: admin/class-mcp-admin-connections.php:496
 msgid "Copy your connection link"
 msgstr "연결 링크 복사"
 
 #. translators: %s: a web address, e.g. chatgpt.com
 #. translators: %s: a web address, e.g. grok.com/connectors
 #: admin/class-mcp-admin-connections.php:361
-#: admin/class-mcp-admin-connections.php:387
-#: admin/class-mcp-admin-connections.php:505
+#: admin/class-mcp-admin-connections.php:385
+#: admin/class-mcp-admin-connections.php:503
 #, php-format
 msgid "Go to %s"
 msgstr "%s(으)로 이동"
 
 #: admin/class-mcp-admin-connections.php:366
-msgid "Sign in. MCP apps work on the web only."
-msgstr "로그인하세요. MCP 앱은 웹에서만 작동합니다."
+msgid "Sign in. Custom MCP servers work in ChatGPT on the web only."
+msgstr "로그인하세요. 사용자 지정 MCP 서버는 웹 버전 ChatGPT에서만 작동합니다."
 
-#: admin/class-mcp-admin-connections.php:369
-msgid "Turn on Developer mode"
-msgstr "개발자 모드 켜기"
-
-#: admin/class-mcp-admin-connections.php:371
-msgid ""
-"Under <code>Settings → Security and login</code>, turn on <strong>Developer "
-"mode</strong> (once)."
-msgstr ""
-"<code>설정 → 보안 및 로그인</code>에서 <strong>개발자 모드</strong>를 켜세요 "
-"(한 번만)."
-
-#: admin/class-mcp-admin-connections.php:374
-#: admin/class-mcp-admin-connections.php:392
-#: admin/class-mcp-admin-connections.php:513
+#: admin/class-mcp-admin-connections.php:372
+#: admin/class-mcp-admin-connections.php:390
+#: admin/class-mcp-admin-connections.php:511
 msgid "Paste the link"
 msgstr "링크 붙여넣기"
 
-#: admin/class-mcp-admin-connections.php:377
+#: admin/class-mcp-admin-connections.php:375
 msgid ""
-"Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add "
-"custom MCP server</strong>."
+"Go to <code>Plugins</code>, click <strong>Add</strong> and choose "
+"<strong>Add custom MCP server</strong>."
 msgstr ""
-"<code>Plugins</code>로 이동하여 <strong>+</strong>를 클릭하고 <strong>Add "
+"<code>Plugins</code>로 이동하여 <strong>Add</strong>를 클릭하고 <strong>Add "
 "custom MCP server</strong>를 선택하세요."
 
-#: admin/class-mcp-admin-connections.php:379
+#: admin/class-mcp-admin-connections.php:377
 msgid ""
-"Name it, paste the link as the <strong>MCP server URL</strong>, set "
-"Authentication to <strong>OAuth</strong> and create it."
+"Name it, paste the link as the <strong>Server URL</strong>, keep "
+"Authentication on <strong>OAuth</strong>, tick the risk acknowledgement and "
+"click <strong>Create as a plugin</strong>."
 msgstr ""
-"이름을 지정하고, 링크를 <strong>MCP 서버 URL</strong>로 붙여 넣고, 인증을 "
-"<strong>OAuth</strong>로 설정한 뒤 만드세요."
+"이름을 지정하고 링크를 <strong>Server URL</strong>에 붙여넣은 뒤 인증은 "
+"<strong>OAuth</strong>로 두고, 위험 확인에 체크한 다음 <strong>Create as a "
+"plugin</strong>을 클릭하세요."
 
 #. translators: %s: a web address, e.g. claude.ai
-#: admin/class-mcp-admin-connections.php:387
+#: admin/class-mcp-admin-connections.php:385
 msgid "Open the Claude app"
 msgstr "Claude 앱 열기"
 
-#: admin/class-mcp-admin-connections.php:405
+#: admin/class-mcp-admin-connections.php:403
 msgid "Which ChatGPT plans work?"
 msgstr "어떤 ChatGPT 플랜에서 작동하나요?"
 
-#: admin/class-mcp-admin-connections.php:406
+#: admin/class-mcp-admin-connections.php:404
 msgid ""
-"Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
-"plan, on the web. On Business and Enterprise workspaces an admin has to "
-"allow Developer mode first."
+"Custom MCP servers need a ChatGPT <strong>Business, Enterprise or Edu</"
+"strong> workspace, on the web; Pro can connect one for read-only use. On "
+"Business only workspace admins and owners can add it; on Enterprise and Edu "
+"an admin grants that permission by role."
 msgstr ""
-"ChatGPT <strong>Plus, Pro, Business, Enterprise 또는 Edu</strong> 요금제가 필"
-"요하며 웹에서만 사용할 수 있습니다. Business 및 Enterprise 워크스페이스에서"
-"는 관리자가 먼저 Developer mode를 허용해야 합니다."
+"사용자 지정 MCP 서버에는 ChatGPT <strong>Business, Enterprise 또는 Edu</"
+"strong> 워크스페이스가 필요하며 웹 버전에서만 작동합니다. Pro는 읽기 전용으"
+"로 연결할 수 있습니다. Business에서는 워크스페이스 관리자와 소유자만 추가할 "
+"수 있고, Enterprise와 Edu에서는 관리자가 역할별로 해당 권한을 부여합니다."
 
-#: admin/class-mcp-admin-connections.php:428
+#: admin/class-mcp-admin-connections.php:426
 msgid "Sign in, then open <strong>Customize → Connectors</strong>."
 msgstr "로그인한 다음 <strong>Customize → Connectors</strong>를 여세요."
 
-#: admin/class-mcp-admin-connections.php:429
+#: admin/class-mcp-admin-connections.php:427
 msgid ""
 "Click <strong>+ Custom connector</strong> and choose <strong>Add MCP "
 "connector</strong>. Give it a name, paste the link as the <strong>MCP server "
@@ -520,7 +514,7 @@ msgstr ""
 "붙여넣은 다음(Advanced에는 이미 OAuth와 Streamable HTTP가 설정되어 있습니다) "
 "확인란에 체크하고 <strong>Add</strong>를 클릭하세요."
 
-#: admin/class-mcp-admin-connections.php:430
+#: admin/class-mcp-admin-connections.php:428
 msgid ""
 "Open the new connector and click <strong>Add connector</strong> — Perplexity "
 "opens the sign-in in a popup."
@@ -528,7 +522,7 @@ msgstr ""
 "새 커넥터를 열고 <strong>Add connector</strong>를 클릭하세요. Perplexity가 팝"
 "업에서 로그인을 엽니다."
 
-#: admin/class-mcp-admin-connections.php:431
+#: admin/class-mcp-admin-connections.php:429
 msgid ""
 "<strong>Needs Perplexity Pro, Max or Enterprise.</strong> The free plan has "
 "no custom connectors."
@@ -536,7 +530,7 @@ msgstr ""
 "<strong>Perplexity Pro, Max 또는 Enterprise가 필요합니다.</strong> 무료 플랜"
 "에는 사용자 지정 커넥터가 없습니다."
 
-#: admin/class-mcp-admin-connections.php:432
+#: admin/class-mcp-admin-connections.php:430
 msgid ""
 "Verified on Pro (2026-10-12). On Enterprise, an admin has to allow member "
 "custom connectors first."
@@ -544,7 +538,7 @@ msgstr ""
 "Pro에서 확인(2026-10-12). Enterprise에서는 관리자가 먼저 구성원의 사용자 지"
 "정 커넥터를 허용해야 합니다."
 
-#: admin/class-mcp-admin-connections.php:433
+#: admin/class-mcp-admin-connections.php:431
 msgid ""
 "Back in Perplexity, the connector shows a check mark. Ask a question that "
 "names it; Perplexity asks you to reply <code>yes</code> before its first "
@@ -554,7 +548,7 @@ msgstr ""
 "질문을 하세요. 첫 도구 실행 전에 Perplexity가 <code>yes</code>라고 답하도록 "
 "요청합니다."
 
-#: admin/class-mcp-admin-connections.php:438
+#: admin/class-mcp-admin-connections.php:436
 msgid ""
 "Click <strong>New Connector</strong>, choose <strong>Custom</strong>, give "
 "it a name and paste the link as the <strong>Server URL</strong>."
@@ -562,13 +556,13 @@ msgstr ""
 "<strong>New Connector</strong>를 클릭하고 <strong>Custom</strong>을 선택한 "
 "뒤 이름을 정하고 링크를 <strong>Server URL</strong>에 붙여넣으세요."
 
-#: admin/class-mcp-admin-connections.php:439
+#: admin/class-mcp-admin-connections.php:437
 msgid ""
 "Click <strong>Add Connector</strong> — Grok opens the sign-in in a popup."
 msgstr ""
 "<strong>Add Connector</strong>를 클릭하면 Grok이 팝업에서 로그인을 엽니다."
 
-#: admin/class-mcp-admin-connections.php:440
+#: admin/class-mcp-admin-connections.php:438
 msgid ""
 "Works on the free plan (verified 2026-10-12) as well as SuperGrok and X "
 "Premium+. On Business and Enterprise workspaces an admin provisions the "
@@ -578,7 +572,7 @@ msgstr ""
 "수 있습니다. Business 및 Enterprise 워크스페이스에서는 관리자가 먼저 커넥터"
 "를 프로비저닝합니다."
 
-#: admin/class-mcp-admin-connections.php:441
+#: admin/class-mcp-admin-connections.php:439
 msgid ""
 "Back in Grok, the connector shows as <strong>Added</strong>. In a chat, type "
 "<code>@</code> to pick it."
@@ -586,7 +580,7 @@ msgstr ""
 "Grok으로 돌아가면 커넥터가 <strong>Added</strong>로 표시됩니다. 채팅에서 "
 "<code>@</code>를 입력해 선택하세요."
 
-#: admin/class-mcp-admin-connections.php:445
+#: admin/class-mcp-admin-connections.php:443
 msgid ""
 "Sign in to Gemini with a <strong>personal</strong> Google account — work and "
 "school accounts do not get Custom apps."
@@ -594,7 +588,7 @@ msgstr ""
 "<strong>개인</strong> Google 계정으로 Gemini에 로그인하세요. 직장·학교 계정에"
 "는 Custom apps가 제공되지 않습니다."
 
-#: admin/class-mcp-admin-connections.php:446
+#: admin/class-mcp-admin-connections.php:444
 msgid ""
 "Under <strong>Settings → Connected Apps → Custom apps</strong>, paste the "
 "link into <strong>Add a custom app link</strong> and click <strong>Next</"
@@ -604,7 +598,7 @@ msgstr ""
 "<strong>Add a custom app link</strong>에 붙여넣고 <strong>Next</strong>를 두 "
 "번 클릭하세요."
 
-#: admin/class-mcp-admin-connections.php:447
+#: admin/class-mcp-admin-connections.php:445
 msgid ""
 "Tick the acknowledgement, click <strong>Connect</strong>, then <strong>Agree "
 "and continue</strong> — Gemini opens the sign-in page."
@@ -612,7 +606,7 @@ msgstr ""
 "확인란에 체크하고 <strong>Connect</strong>, 이어서 <strong>Agree and "
 "continue</strong>를 클릭하면 Gemini가 로그인 페이지를 엽니다."
 
-#: admin/class-mcp-admin-connections.php:448
+#: admin/class-mcp-admin-connections.php:446
 msgid ""
 "Google lists no plan requirement (verified on a Google AI Plus account). You "
 "need a personal Google account in the United States, 18 or over, with Gemini "
@@ -623,7 +617,7 @@ msgstr ""
 "의 개인 Google 계정, 만 18세 이상, 영어로 설정된 Gemini, 그리고 Keep Activity"
 "가 켜져 있어야 합니다. 직장·학교 계정에는 Custom apps가 제공되지 않습니다."
 
-#: admin/class-mcp-admin-connections.php:449
+#: admin/class-mcp-admin-connections.php:447
 msgid ""
 "Back in Gemini, click <strong>Connect</strong> on the “Save your custom app” "
 "card. In a chat, type <code>@</code> to pick the app; Gemini asks you to "
@@ -633,18 +627,18 @@ msgstr ""
 "릭하세요. 채팅에서 <code>@</code>를 입력해 앱을 선택하면, 첫 도구 실행 시 "
 "Gemini가 허용 여부를 묻습니다."
 
-#: admin/class-mcp-admin-connections.php:456
+#: admin/class-mcp-admin-connections.php:454
 msgid "Or open the Muse app."
 msgstr "또는 Muse 앱을 여세요."
 
-#: admin/class-mcp-admin-connections.php:457
+#: admin/class-mcp-admin-connections.php:455
 msgid ""
 "Paste it into a new chat and send it. If Muse asks to contact your site, "
 "allow it."
 msgstr ""
 "새 채팅에 붙여넣고 보내세요. Muse가 사이트 연결 허용을 요청하면 허용하세요."
 
-#: admin/class-mcp-admin-connections.php:458
+#: admin/class-mcp-admin-connections.php:456
 msgid ""
 "Click <strong>Connect</strong> on the connector card, then <strong>Connect</"
 "strong> again in the dialog — Muse opens the sign-in page in a new tab."
@@ -653,7 +647,7 @@ msgstr ""
 "<strong>Connect</strong>를 클릭하세요. Muse가 새 탭에서 로그인 페이지를 엽니"
 "다."
 
-#: admin/class-mcp-admin-connections.php:464
+#: admin/class-mcp-admin-connections.php:462
 msgid ""
 "Meta offers Muse to adults in the United States. Meta does not review custom "
 "connectors, so add only sites you manage."
@@ -661,7 +655,7 @@ msgstr ""
 "Meta는 미국의 성인에게 Muse를 제공합니다. Meta는 사용자 지정 커넥터를 검토하"
 "지 않으므로 직접 관리하는 사이트만 추가하세요."
 
-#: admin/class-mcp-admin-connections.php:465
+#: admin/class-mcp-admin-connections.php:463
 msgid ""
 "Muse asks you to approve each request it sends to your site (<strong>Allow "
 "once</strong> or <strong>Always allow this site</strong>)."
@@ -669,7 +663,7 @@ msgstr ""
 "Muse는 사이트로 보내는 요청마다 승인을 요청합니다(<strong>Allow once</"
 "strong> 또는 <strong>Always allow this site</strong>)."
 
-#: admin/class-mcp-admin-connections.php:467
+#: admin/class-mcp-admin-connections.php:465
 msgid ""
 "This site is behind Cloudflare: its Browser Integrity Check blocks Muse with "
 "error 1010. Turn it off for <code>/wp-json/cowboy-mcp/</code>."
@@ -678,21 +672,21 @@ msgstr ""
 "로 Muse를 차단하므로 <code>/wp-json/cowboy-mcp/</code>에서는 끄세요."
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:495
+#: admin/class-mcp-admin-connections.php:493
 #, php-format
 msgid "Copy the message for %s"
 msgstr "%s용 메시지 복사"
 
-#: admin/class-mcp-admin-connections.php:513
+#: admin/class-mcp-admin-connections.php:511
 msgid "Paste the message"
 msgstr "메시지 붙여넣기"
 
-#: admin/class-mcp-admin-connections.php:516
+#: admin/class-mcp-admin-connections.php:514
 msgid "Connect it"
 msgstr "연결하기"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:523
+#: admin/class-mcp-admin-connections.php:521
 #, php-format
 msgid ""
 "%s opens a sign-in page on <strong>your site</strong>. Review what it is "
@@ -702,54 +696,54 @@ msgstr ""
 "확인하고 <strong>승인</strong>을 클릭하세요."
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:530
+#: admin/class-mcp-admin-connections.php:528
 #, php-format
 msgid "Which %s plans work?"
 msgstr "%s의 어떤 요금제에서 작동하나요?"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:557
+#: admin/class-mcp-admin-connections.php:555
 #: admin/class-mcp-admin-connections.php:803
 #: admin/class-mcp-admin-connections.php:814
 #, php-format
 msgid "Message for %s"
 msgstr "%s용 메시지"
 
-#: admin/class-mcp-admin-connections.php:560
+#: admin/class-mcp-admin-connections.php:558
 #: admin/class-mcp-admin-connections.php:806
 #: admin/class-mcp-admin-connections.php:817
 msgid "Copy message"
 msgstr "메시지 복사"
 
-#: admin/class-mcp-admin-connections.php:565
+#: admin/class-mcp-admin-connections.php:563
 msgid "Connection link"
 msgstr "연결 링크"
 
-#: admin/class-mcp-admin-connections.php:565
+#: admin/class-mcp-admin-connections.php:563
 msgid "Copy connector URL"
 msgstr "커넥터 URL 복사"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:578
+#: admin/class-mcp-admin-connections.php:576
 #, php-format
 msgid "Open %s"
 msgstr "%s 열기"
 
-#: admin/class-mcp-admin-connections.php:580
+#: admin/class-mcp-admin-connections.php:578
 #: admin/class-mcp-admin-connections.php:630
 #: admin/class-mcp-admin-connections.php:1823
 msgid "(opens in a new tab)"
 msgstr "(새 탭에서 열림)"
 
-#: admin/class-mcp-admin-connections.php:590
+#: admin/class-mcp-admin-connections.php:588
 msgid "Turn on sign-in first:"
 msgstr "먼저 로그인을 켜세요:"
 
-#: admin/class-mcp-admin-connections.php:591
+#: admin/class-mcp-admin-connections.php:589
 msgid "Turn on browser sign-in"
 msgstr "브라우저 로그인 켜기"
 
-#: admin/class-mcp-admin-connections.php:605
+#: admin/class-mcp-admin-connections.php:603
 msgid ""
 "In the <strong>Claude</strong> desktop app, go to <code>Customize → "
 "Connectors</code>."
@@ -757,12 +751,12 @@ msgstr ""
 "<strong>Claude</strong> 데스크톱 앱에서 <code>사용자 지정 → 커넥터</code>로 "
 "이동하세요."
 
-#: admin/class-mcp-admin-connections.php:606
+#: admin/class-mcp-admin-connections.php:604
 msgid "On <code>claude.ai</code>, go to <code>Customize → Connectors</code>."
 msgstr ""
 "<code>claude.ai</code>에서 <code>사용자 지정 → 커넥터</code>로 이동하세요."
 
-#: admin/class-mcp-admin-connections.php:609
+#: admin/class-mcp-admin-connections.php:607
 msgid ""
 "Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
 msgstr ""
@@ -771,23 +765,23 @@ msgstr ""
 
 #: admin/class-mcp-admin-connections.php:612
 msgid ""
-"Name it, paste the link above, click <strong>Continue</strong> and then "
-"<strong>Add</strong>. If Claude asks which OAuth client to use, choose "
-"<strong>Register automatically</strong>."
+"Name it, paste the link above and click <strong>Continue</strong>. Keep the "
+"sign-in settings Claude detects (either OAuth client option works) and click "
+"<strong>Add</strong>."
 msgstr ""
-"이름을 지정하고 위의 링크를 붙여 넣은 뒤 <strong>계속</strong>, 그다음 "
-"<strong>추가</strong>를 클릭하세요. Claude가 어떤 OAuth 클라이언트를 사용할"
-"지 물으면 <strong>자동 등록</strong>을 선택하세요."
+"이름을 지정하고 위의 링크를 붙여넣은 뒤 <strong>계속</strong>을 클릭하세요. "
+"Claude가 감지한 로그인 설정은 그대로 두고(OAuth 클라이언트 옵션은 둘 다 작동"
+"합니다) <strong>추가</strong>를 클릭하세요."
 
 #: admin/class-mcp-admin-connections.php:613
 msgid ""
-"Name it, paste the link from step 1, click <strong>Continue</strong> and "
-"then <strong>Add</strong>. If Claude asks which OAuth client to use, choose "
-"<strong>Register automatically</strong>."
+"Name it, paste the link from step 1 and click <strong>Continue</strong>. "
+"Keep the sign-in settings Claude detects (either OAuth client option works) "
+"and click <strong>Add</strong>."
 msgstr ""
-"이름을 지정하고 1단계의 링크를 붙여 넣은 뒤 <strong>계속</strong>, 그다음 "
-"<strong>추가</strong>를 클릭하세요. Claude가 어떤 OAuth 클라이언트를 사용할"
-"지 물으면 <strong>자동 등록</strong>을 선택하세요."
+"이름을 지정하고 1단계의 링크를 붙여넣은 뒤 <strong>계속</strong>을 클릭하세"
+"요. Claude가 감지한 로그인 설정은 그대로 두고(OAuth 클라이언트 옵션은 둘 다 "
+"작동합니다) <strong>추가</strong>를 클릭하세요."
 
 #: admin/class-mcp-admin-connections.php:668
 msgid ""
@@ -900,12 +894,13 @@ msgstr "작동 확인"
 #: admin/class-mcp-admin-connections.php:711
 #, php-format
 msgid ""
-"Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> "
-"should be listed. The first start takes a moment while the bridge downloads."
+"Open a new chat in Claude Desktop, click <strong>+</strong> and open "
+"<strong>Connectors</strong> — <code>%s</code> should be listed. The first "
+"start takes a moment while the bridge downloads."
 msgstr ""
-"Claude Desktop에서 새 채팅을 열고 도구 아이콘을 클릭하면 <code>%s</code>이"
-"(가) 목록에 표시되어야 합니다. 첫 실행 시 브리지를 내려받는 동안 잠시 시간이 "
-"걸립니다."
+"Claude Desktop에서 새 채팅을 열고 <strong>+</strong>를 클릭한 뒤 "
+"<strong>Connectors</strong>를 여세요. 목록에 <code>%s</code>가 표시되어야 합"
+"니다. 첫 실행은 브리지를 내려받는 동안 잠시 시간이 걸립니다."
 
 #: admin/class-mcp-admin-connections.php:712
 #: admin/class-mcp-admin-connections.php:1326

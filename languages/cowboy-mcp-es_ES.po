@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-17 21:14-0700\n"
+"POT-Creation-Date: 2026-10-18 12:15-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Spanish\n"
@@ -391,12 +391,14 @@ msgstr ""
 #: admin/class-mcp-admin-connections.php:311
 msgid ""
 "ChatGPT opens a sign-in page on <strong>your site</strong>. Click "
-"<strong>Approve</strong>, then pick your site under <strong>+ → Developer "
-"mode</strong> in a chat."
+"<strong>Approve</strong>. Back in ChatGPT, review the tools it found and "
+"install the plugin; in a chat, pick it from the <strong>+</strong> menu or "
+"type <strong>@</strong> and its name."
 msgstr ""
 "ChatGPT abre una página de inicio de sesión en <strong>su sitio</strong>. "
-"Haga clic en <strong>Aprobar</strong> y luego elija su sitio en <strong>+ → "
-"Modo desarrollador</strong> dentro de un chat."
+"Haga clic en <strong>Aprobar</strong>. De vuelta en ChatGPT, revise las "
+"herramientas encontradas e instale el plugin; en un chat, elíjalo en el menú "
+"<strong>+</strong> o escriba <strong>@</strong> y su nombre."
 
 #: admin/class-mcp-admin-connections.php:312
 msgid ""
@@ -439,88 +441,83 @@ msgid "Add it by hand instead"
 msgstr "Añadirlo manualmente"
 
 #: admin/class-mcp-admin-connections.php:344
-#: admin/class-mcp-admin-connections.php:401
-#: admin/class-mcp-admin-connections.php:519
+#: admin/class-mcp-admin-connections.php:399
+#: admin/class-mcp-admin-connections.php:517
 #: admin/class-mcp-admin-connections.php:1029
 msgid "Approve access"
 msgstr "Apruebe el acceso"
 
 #: admin/class-mcp-admin-connections.php:353
-#: admin/class-mcp-admin-connections.php:498
+#: admin/class-mcp-admin-connections.php:496
 msgid "Copy your connection link"
 msgstr "Copie su enlace de conexión"
 
 #. translators: %s: a web address, e.g. chatgpt.com
 #. translators: %s: a web address, e.g. grok.com/connectors
 #: admin/class-mcp-admin-connections.php:361
-#: admin/class-mcp-admin-connections.php:387
-#: admin/class-mcp-admin-connections.php:505
+#: admin/class-mcp-admin-connections.php:385
+#: admin/class-mcp-admin-connections.php:503
 #, php-format
 msgid "Go to %s"
 msgstr "Ve a %s"
 
 #: admin/class-mcp-admin-connections.php:366
-msgid "Sign in. MCP apps work on the web only."
-msgstr "Inicia sesión. Las aplicaciones MCP solo funcionan en la web."
-
-#: admin/class-mcp-admin-connections.php:369
-msgid "Turn on Developer mode"
-msgstr "Activa el modo desarrollador"
-
-#: admin/class-mcp-admin-connections.php:371
-msgid ""
-"Under <code>Settings → Security and login</code>, turn on <strong>Developer "
-"mode</strong> (once)."
+msgid "Sign in. Custom MCP servers work in ChatGPT on the web only."
 msgstr ""
-"En <code>Configuración → Seguridad e inicio de sesión</code>, active el "
-"<strong>Modo desarrollador</strong> (una sola vez)."
+"Inicie sesión. Los servidores MCP personalizados solo funcionan en la "
+"versión web de ChatGPT."
 
-#: admin/class-mcp-admin-connections.php:374
-#: admin/class-mcp-admin-connections.php:392
-#: admin/class-mcp-admin-connections.php:513
+#: admin/class-mcp-admin-connections.php:372
+#: admin/class-mcp-admin-connections.php:390
+#: admin/class-mcp-admin-connections.php:511
 msgid "Paste the link"
 msgstr "Pega el enlace"
 
-#: admin/class-mcp-admin-connections.php:377
+#: admin/class-mcp-admin-connections.php:375
 msgid ""
-"Go to <code>Plugins</code>, click <strong>+</strong> and choose <strong>Add "
-"custom MCP server</strong>."
+"Go to <code>Plugins</code>, click <strong>Add</strong> and choose "
+"<strong>Add custom MCP server</strong>."
 msgstr ""
-"Vaya a <code>Plugins</code>, haga clic en <strong>+</strong> y elija "
+"Vaya a <code>Plugins</code>, haga clic en <strong>Añadir</strong> y elija "
 "<strong>Añadir servidor MCP personalizado</strong>."
 
-#: admin/class-mcp-admin-connections.php:379
+#: admin/class-mcp-admin-connections.php:377
 msgid ""
-"Name it, paste the link as the <strong>MCP server URL</strong>, set "
-"Authentication to <strong>OAuth</strong> and create it."
+"Name it, paste the link as the <strong>Server URL</strong>, keep "
+"Authentication on <strong>OAuth</strong>, tick the risk acknowledgement and "
+"click <strong>Create as a plugin</strong>."
 msgstr ""
-"Póngale un nombre, pegue el enlace como <strong>URL del servidor MCP</"
-"strong>, establezca la autenticación en <strong>OAuth</strong> y créelo."
+"Póngale un nombre, pegue el enlace como <strong>URL del servidor</strong>, "
+"deje la autenticación en <strong>OAuth</strong>, marque la confirmación de "
+"riesgo y haga clic en <strong>Crear como plugin</strong>."
 
 #. translators: %s: a web address, e.g. claude.ai
-#: admin/class-mcp-admin-connections.php:387
+#: admin/class-mcp-admin-connections.php:385
 msgid "Open the Claude app"
 msgstr "Abre la aplicación de Claude"
 
-#: admin/class-mcp-admin-connections.php:405
+#: admin/class-mcp-admin-connections.php:403
 msgid "Which ChatGPT plans work?"
 msgstr "¿Qué planes de ChatGPT funcionan?"
 
-#: admin/class-mcp-admin-connections.php:406
+#: admin/class-mcp-admin-connections.php:404
 msgid ""
-"Requires a ChatGPT <strong>Plus, Pro, Business, Enterprise or Edu</strong> "
-"plan, on the web. On Business and Enterprise workspaces an admin has to "
-"allow Developer mode first."
+"Custom MCP servers need a ChatGPT <strong>Business, Enterprise or Edu</"
+"strong> workspace, on the web; Pro can connect one for read-only use. On "
+"Business only workspace admins and owners can add it; on Enterprise and Edu "
+"an admin grants that permission by role."
 msgstr ""
-"Requiere un plan de ChatGPT <strong>Plus, Pro, Business, Enterprise o Edu</"
-"strong>, en la web. En los espacios de trabajo Business y Enterprise, un "
-"administrador debe permitir antes Developer mode."
+"Los servidores MCP personalizados necesitan un espacio de trabajo de ChatGPT "
+"<strong>Business, Enterprise o Edu</strong>, en la web; Pro puede conectar "
+"uno solo en modo de lectura. En Business solo los administradores y "
+"propietarios del espacio pueden añadirlo; en Enterprise y Edu un "
+"administrador concede ese permiso por rol."
 
-#: admin/class-mcp-admin-connections.php:428
+#: admin/class-mcp-admin-connections.php:426
 msgid "Sign in, then open <strong>Customize → Connectors</strong>."
 msgstr "Inicia sesión y abre <strong>Customize → Connectors</strong>."
 
-#: admin/class-mcp-admin-connections.php:429
+#: admin/class-mcp-admin-connections.php:427
 msgid ""
 "Click <strong>+ Custom connector</strong> and choose <strong>Add MCP "
 "connector</strong>. Give it a name, paste the link as the <strong>MCP server "
@@ -532,7 +529,7 @@ msgstr ""
 "URL</strong> (en Advanced ya figuran OAuth y Streamable HTTP), marca la "
 "casilla de confirmación y haz clic en <strong>Add</strong>."
 
-#: admin/class-mcp-admin-connections.php:430
+#: admin/class-mcp-admin-connections.php:428
 msgid ""
 "Open the new connector and click <strong>Add connector</strong> — Perplexity "
 "opens the sign-in in a popup."
@@ -540,7 +537,7 @@ msgstr ""
 "Abre el nuevo conector y haz clic en <strong>Add connector</strong>: "
 "Perplexity abre el inicio de sesión en una ventana emergente."
 
-#: admin/class-mcp-admin-connections.php:431
+#: admin/class-mcp-admin-connections.php:429
 msgid ""
 "<strong>Needs Perplexity Pro, Max or Enterprise.</strong> The free plan has "
 "no custom connectors."
@@ -548,7 +545,7 @@ msgstr ""
 "<strong>Requiere Perplexity Pro, Max o Enterprise.</strong> El plan gratuito "
 "no tiene conectores personalizados."
 
-#: admin/class-mcp-admin-connections.php:432
+#: admin/class-mcp-admin-connections.php:430
 msgid ""
 "Verified on Pro (2026-10-12). On Enterprise, an admin has to allow member "
 "custom connectors first."
@@ -556,7 +553,7 @@ msgstr ""
 "Comprobado con Pro (2026-10-12). En Enterprise, un administrador debe "
 "permitir antes los conectores personalizados de los miembros."
 
-#: admin/class-mcp-admin-connections.php:433
+#: admin/class-mcp-admin-connections.php:431
 msgid ""
 "Back in Perplexity, the connector shows a check mark. Ask a question that "
 "names it; Perplexity asks you to reply <code>yes</code> before its first "
@@ -566,7 +563,7 @@ msgstr ""
 "una pregunta que lo nombre; Perplexity te pide responder <code>yes</code> "
 "antes de su primera ejecución de herramienta."
 
-#: admin/class-mcp-admin-connections.php:438
+#: admin/class-mcp-admin-connections.php:436
 msgid ""
 "Click <strong>New Connector</strong>, choose <strong>Custom</strong>, give "
 "it a name and paste the link as the <strong>Server URL</strong>."
@@ -574,14 +571,14 @@ msgstr ""
 "Haz clic en <strong>New Connector</strong>, elige <strong>Custom</strong>, "
 "ponle un nombre y pega el enlace como <strong>Server URL</strong>."
 
-#: admin/class-mcp-admin-connections.php:439
+#: admin/class-mcp-admin-connections.php:437
 msgid ""
 "Click <strong>Add Connector</strong> — Grok opens the sign-in in a popup."
 msgstr ""
 "Haz clic en <strong>Add Connector</strong>: Grok abre el inicio de sesión en "
 "una ventana emergente."
 
-#: admin/class-mcp-admin-connections.php:440
+#: admin/class-mcp-admin-connections.php:438
 msgid ""
 "Works on the free plan (verified 2026-10-12) as well as SuperGrok and X "
 "Premium+. On Business and Enterprise workspaces an admin provisions the "
@@ -591,7 +588,7 @@ msgstr ""
 "SuperGrok y X Premium+. En los espacios de trabajo Business y Enterprise, un "
 "administrador aprovisiona primero el conector."
 
-#: admin/class-mcp-admin-connections.php:441
+#: admin/class-mcp-admin-connections.php:439
 msgid ""
 "Back in Grok, the connector shows as <strong>Added</strong>. In a chat, type "
 "<code>@</code> to pick it."
@@ -599,7 +596,7 @@ msgstr ""
 "De vuelta en Grok, el conector aparece como <strong>Added</strong>. En un "
 "chat, escribe <code>@</code> para elegirlo."
 
-#: admin/class-mcp-admin-connections.php:445
+#: admin/class-mcp-admin-connections.php:443
 msgid ""
 "Sign in to Gemini with a <strong>personal</strong> Google account — work and "
 "school accounts do not get Custom apps."
@@ -607,7 +604,7 @@ msgstr ""
 "Inicia sesión en Gemini con una cuenta de Google <strong>personal</strong>: "
 "las cuentas de trabajo y de centros educativos no tienen Custom apps."
 
-#: admin/class-mcp-admin-connections.php:446
+#: admin/class-mcp-admin-connections.php:444
 msgid ""
 "Under <strong>Settings → Connected Apps → Custom apps</strong>, paste the "
 "link into <strong>Add a custom app link</strong> and click <strong>Next</"
@@ -617,7 +614,7 @@ msgstr ""
 "en <strong>Add a custom app link</strong> y haz clic en <strong>Next</"
 "strong> dos veces."
 
-#: admin/class-mcp-admin-connections.php:447
+#: admin/class-mcp-admin-connections.php:445
 msgid ""
 "Tick the acknowledgement, click <strong>Connect</strong>, then <strong>Agree "
 "and continue</strong> — Gemini opens the sign-in page."
@@ -626,7 +623,7 @@ msgstr ""
 "luego en <strong>Agree and continue</strong>: Gemini abre la página de "
 "inicio de sesión."
 
-#: admin/class-mcp-admin-connections.php:448
+#: admin/class-mcp-admin-connections.php:446
 msgid ""
 "Google lists no plan requirement (verified on a Google AI Plus account). You "
 "need a personal Google account in the United States, 18 or over, with Gemini "
@@ -638,7 +635,7 @@ msgstr ""
 "18 años o más, Gemini en inglés y Keep Activity activado; las cuentas de "
 "trabajo y de centros educativos no tienen Custom apps."
 
-#: admin/class-mcp-admin-connections.php:449
+#: admin/class-mcp-admin-connections.php:447
 msgid ""
 "Back in Gemini, click <strong>Connect</strong> on the “Save your custom app” "
 "card. In a chat, type <code>@</code> to pick the app; Gemini asks you to "
@@ -648,11 +645,11 @@ msgstr ""
 "«Save your custom app». En un chat, escribe <code>@</code> para elegir la "
 "app; Gemini te pedirá permiso la primera vez que ejecute una herramienta."
 
-#: admin/class-mcp-admin-connections.php:456
+#: admin/class-mcp-admin-connections.php:454
 msgid "Or open the Muse app."
 msgstr "O abre la aplicación de Muse."
 
-#: admin/class-mcp-admin-connections.php:457
+#: admin/class-mcp-admin-connections.php:455
 msgid ""
 "Paste it into a new chat and send it. If Muse asks to contact your site, "
 "allow it."
@@ -660,7 +657,7 @@ msgstr ""
 "Pégalo en un chat nuevo y envíalo. Si Muse pide permiso para contactar con "
 "tu sitio, permíteselo."
 
-#: admin/class-mcp-admin-connections.php:458
+#: admin/class-mcp-admin-connections.php:456
 msgid ""
 "Click <strong>Connect</strong> on the connector card, then <strong>Connect</"
 "strong> again in the dialog — Muse opens the sign-in page in a new tab."
@@ -669,7 +666,7 @@ msgstr ""
 "en <strong>Connect</strong> en el diálogo: Muse abre la página de inicio de "
 "sesión en una pestaña nueva."
 
-#: admin/class-mcp-admin-connections.php:464
+#: admin/class-mcp-admin-connections.php:462
 msgid ""
 "Meta offers Muse to adults in the United States. Meta does not review custom "
 "connectors, so add only sites you manage."
@@ -677,7 +674,7 @@ msgstr ""
 "Meta ofrece Muse a adultos en Estados Unidos. Meta no revisa los conectores "
 "personalizados, así que añade solo sitios que gestiones tú."
 
-#: admin/class-mcp-admin-connections.php:465
+#: admin/class-mcp-admin-connections.php:463
 msgid ""
 "Muse asks you to approve each request it sends to your site (<strong>Allow "
 "once</strong> or <strong>Always allow this site</strong>)."
@@ -685,7 +682,7 @@ msgstr ""
 "Muse te pide aprobar cada solicitud que envía a tu sitio (<strong>Allow "
 "once</strong> o <strong>Always allow this site</strong>)."
 
-#: admin/class-mcp-admin-connections.php:467
+#: admin/class-mcp-admin-connections.php:465
 msgid ""
 "This site is behind Cloudflare: its Browser Integrity Check blocks Muse with "
 "error 1010. Turn it off for <code>/wp-json/cowboy-mcp/</code>."
@@ -694,21 +691,21 @@ msgstr ""
 "Muse con el error 1010. Desactívalo para <code>/wp-json/cowboy-mcp/</code>."
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:495
+#: admin/class-mcp-admin-connections.php:493
 #, php-format
 msgid "Copy the message for %s"
 msgstr "Copia el mensaje para %s"
 
-#: admin/class-mcp-admin-connections.php:513
+#: admin/class-mcp-admin-connections.php:511
 msgid "Paste the message"
 msgstr "Pega el mensaje"
 
-#: admin/class-mcp-admin-connections.php:516
+#: admin/class-mcp-admin-connections.php:514
 msgid "Connect it"
 msgstr "Conéctalo"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:523
+#: admin/class-mcp-admin-connections.php:521
 #, php-format
 msgid ""
 "%s opens a sign-in page on <strong>your site</strong>. Review what it is "
@@ -718,54 +715,54 @@ msgstr ""
 "lo que solicita y haz clic en <strong>Aprobar</strong>."
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:530
+#: admin/class-mcp-admin-connections.php:528
 #, php-format
 msgid "Which %s plans work?"
 msgstr "¿Qué planes de %s funcionan?"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:557
+#: admin/class-mcp-admin-connections.php:555
 #: admin/class-mcp-admin-connections.php:803
 #: admin/class-mcp-admin-connections.php:814
 #, php-format
 msgid "Message for %s"
 msgstr "Mensaje para %s"
 
-#: admin/class-mcp-admin-connections.php:560
+#: admin/class-mcp-admin-connections.php:558
 #: admin/class-mcp-admin-connections.php:806
 #: admin/class-mcp-admin-connections.php:817
 msgid "Copy message"
 msgstr "Copiar mensaje"
 
-#: admin/class-mcp-admin-connections.php:565
+#: admin/class-mcp-admin-connections.php:563
 msgid "Connection link"
 msgstr "Enlace de conexión"
 
-#: admin/class-mcp-admin-connections.php:565
+#: admin/class-mcp-admin-connections.php:563
 msgid "Copy connector URL"
 msgstr "Copiar URL del conector"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:578
+#: admin/class-mcp-admin-connections.php:576
 #, php-format
 msgid "Open %s"
 msgstr "Abrir %s"
 
-#: admin/class-mcp-admin-connections.php:580
+#: admin/class-mcp-admin-connections.php:578
 #: admin/class-mcp-admin-connections.php:630
 #: admin/class-mcp-admin-connections.php:1823
 msgid "(opens in a new tab)"
 msgstr "(se abre en una pestaña nueva)"
 
-#: admin/class-mcp-admin-connections.php:590
+#: admin/class-mcp-admin-connections.php:588
 msgid "Turn on sign-in first:"
 msgstr "Activa primero el inicio de sesión:"
 
-#: admin/class-mcp-admin-connections.php:591
+#: admin/class-mcp-admin-connections.php:589
 msgid "Turn on browser sign-in"
 msgstr "Activar el inicio de sesión en el navegador"
 
-#: admin/class-mcp-admin-connections.php:605
+#: admin/class-mcp-admin-connections.php:603
 msgid ""
 "In the <strong>Claude</strong> desktop app, go to <code>Customize → "
 "Connectors</code>."
@@ -773,12 +770,12 @@ msgstr ""
 "En la app de escritorio de <strong>Claude</strong>, vaya a "
 "<code>Personalizar → Conectores</code>."
 
-#: admin/class-mcp-admin-connections.php:606
+#: admin/class-mcp-admin-connections.php:604
 msgid "On <code>claude.ai</code>, go to <code>Customize → Connectors</code>."
 msgstr ""
 "En <code>claude.ai</code>, vaya a <code>Personalizar → Conectores</code>."
 
-#: admin/class-mcp-admin-connections.php:609
+#: admin/class-mcp-admin-connections.php:607
 msgid ""
 "Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
 msgstr ""
@@ -787,25 +784,25 @@ msgstr ""
 
 #: admin/class-mcp-admin-connections.php:612
 msgid ""
-"Name it, paste the link above, click <strong>Continue</strong> and then "
-"<strong>Add</strong>. If Claude asks which OAuth client to use, choose "
-"<strong>Register automatically</strong>."
+"Name it, paste the link above and click <strong>Continue</strong>. Keep the "
+"sign-in settings Claude detects (either OAuth client option works) and click "
+"<strong>Add</strong>."
 msgstr ""
 "Póngale un nombre, pegue el enlace de arriba y haga clic en "
-"<strong>Continuar</strong> y luego en <strong>Añadir</strong>. Si Claude "
-"pregunta qué cliente OAuth usar, elija <strong>Registrar automáticamente</"
-"strong>."
+"<strong>Continuar</strong>. Mantenga la configuración de inicio de sesión "
+"que detecta Claude (cualquiera de las dos opciones de cliente OAuth "
+"funciona) y haga clic en <strong>Añadir</strong>."
 
 #: admin/class-mcp-admin-connections.php:613
 msgid ""
-"Name it, paste the link from step 1, click <strong>Continue</strong> and "
-"then <strong>Add</strong>. If Claude asks which OAuth client to use, choose "
-"<strong>Register automatically</strong>."
+"Name it, paste the link from step 1 and click <strong>Continue</strong>. "
+"Keep the sign-in settings Claude detects (either OAuth client option works) "
+"and click <strong>Add</strong>."
 msgstr ""
 "Póngale un nombre, pegue el enlace del paso 1 y haga clic en "
-"<strong>Continuar</strong> y luego en <strong>Añadir</strong>. Si Claude "
-"pregunta qué cliente OAuth usar, elija <strong>Registrar automáticamente</"
-"strong>."
+"<strong>Continuar</strong>. Mantenga la configuración de inicio de sesión "
+"que detecta Claude (cualquiera de las dos opciones de cliente OAuth "
+"funciona) y haga clic en <strong>Añadir</strong>."
 
 #: admin/class-mcp-admin-connections.php:668
 msgid ""
@@ -921,12 +918,13 @@ msgstr "Compruebe que funcionó"
 #: admin/class-mcp-admin-connections.php:711
 #, php-format
 msgid ""
-"Open a new chat in Claude Desktop and click the tools icon — <code>%s</code> "
-"should be listed. The first start takes a moment while the bridge downloads."
+"Open a new chat in Claude Desktop, click <strong>+</strong> and open "
+"<strong>Connectors</strong> — <code>%s</code> should be listed. The first "
+"start takes a moment while the bridge downloads."
 msgstr ""
-"Abra un chat nuevo en Claude Desktop y haga clic en el icono de "
-"herramientas: <code>%s</code> debería aparecer en la lista. El primer "
-"arranque tarda un momento mientras se descarga el puente."
+"Abra un chat nuevo en Claude Desktop, haga clic en <strong>+</strong> y abra "
+"<strong>Conectores</strong>: <code>%s</code> debería aparecer en la lista. "
+"El primer arranque tarda un momento mientras se descarga el puente."
 
 #: admin/class-mcp-admin-connections.php:712
 #: admin/class-mcp-admin-connections.php:1326
