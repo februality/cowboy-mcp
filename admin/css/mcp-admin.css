@@ -415,19 +415,21 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .wrap.cmcp .cmcp-hub h2 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: #fff; margin: 0 0 6px; padding: 0; line-height: 1.25; }
 .wrap.cmcp .cmcp-hub p { margin: 0 0 12px; max-width: 72ch; font-size: 13.5px; line-height: 1.5; color: #b9d1c2; }
 .wrap.cmcp .cmcp-hub-points { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: max-content max-content; column-gap: 32px; row-gap: 6px; }
-.wrap.cmcp .cmcp-hub-points li { position: relative; margin: 0; padding-left: 14px; font-size: 13.5px; line-height: 1.5; color: var(--cmcp-code-text); white-space: nowrap; }
-.wrap.cmcp .cmcp-hub-points li::before { content: ""; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--cmcp-code-green); }
+.wrap.cmcp .cmcp-hub-points li { position: relative; margin: 0; padding-inline-start: 14px; font-size: 13.5px; line-height: 1.5; color: var(--cmcp-code-text); white-space: nowrap; }
+.wrap.cmcp .cmcp-hub-points li::before { content: ""; position: absolute; inset-inline-start: 0; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--cmcp-code-green); }
 @media (max-width: 1280px) { .wrap.cmcp .cmcp-hub-points { grid-template-columns: 1fr; } }
 @media (max-width: 782px) { .wrap.cmcp .cmcp-hub-points li { white-space: normal; } }
 .cmcp-hub-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.wrap.cmcp .cmcp-hub-cta { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 16px; border-radius: 6px; background: var(--cmcp-code-green); color: #04140a; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.wrap.cmcp .cmcp-hub-cta { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding-inline: 16px 14px; border-radius: 6px; background: var(--cmcp-code-green); color: #04140a; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
 .wrap.cmcp .cmcp-hub-cta:hover, .wrap.cmcp .cmcp-hub-cta:focus-visible { background: #fff; color: #04140a; }
 .cmcp-hub-cta svg { width: 14px; height: 14px; transition: transform .2s ease; }
 .cmcp-hub-cta:hover svg { transform: translateX(3px); }
+.rtl .cmcp-hub-cta svg { transform: scaleX(-1); }
+.rtl .cmcp-hub-cta:hover svg { transform: scaleX(-1) translateX(3px); }
 .wrap.cmcp .cmcp-hub :focus-visible { outline-color: #fff; }
-.cmcp-hub-x { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; padding: 0; border: 0; background: none; border-radius: 6px; color: var(--cmcp-code-dim); font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
+.cmcp-hub-x { position: absolute; top: 10px; inset-inline-end: 10px; width: 28px; height: 28px; padding: 0; border: 0; background: none; border-radius: 6px; color: var(--cmcp-code-dim); font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
 .cmcp-hub-x:hover, .cmcp-hub-x:focus-visible { color: #fff; background: rgba(255,255,255,.08); }
-.cmcp-hub-art { position: relative; width: 450px; height: 128px; margin-right: 10px; }
+.cmcp-hub-art { position: relative; width: 450px; height: 128px; margin-inline-end: 10px; }
 .cmcp-hub-art svg { width: 100%; height: 100%; overflow: visible; }
 .cmcp-hub-wire { fill: none; stroke: #2a3a2f; stroke-width: 1; }
 .cmcp-hub-node { fill: #4c6252; }
