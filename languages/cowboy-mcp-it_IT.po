@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-18 12:15-0700\n"
+"POT-Creation-Date: 2026-10-18 16:03-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Italian\n"
@@ -1719,7 +1719,7 @@ msgid "Access for <strong>%s</strong>"
 msgstr "Accesso per <strong>%s</strong>"
 
 #: admin/class-mcp-admin-connections.php:1803
-#: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:220
+#: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:221
 msgid "Cancel"
 msgstr "Indietro"
 
@@ -2219,7 +2219,7 @@ msgid "Save Settings"
 msgstr "Salva le impostazioni"
 
 #: admin/class-mcp-admin.php:33 admin/class-mcp-admin.php:34
-#: admin/class-mcp-admin.php:623
+#: admin/class-mcp-admin.php:624
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2236,136 +2236,136 @@ msgstr ""
 msgid "Connect your AI"
 msgstr "Collega la tua IA"
 
-#: admin/class-mcp-admin.php:221
+#: admin/class-mcp-admin.php:222
 msgid "Confirm"
 msgstr "Conferma"
 
-#: admin/class-mcp-admin.php:222
+#: admin/class-mcp-admin.php:223
 msgid "Copied!"
 msgstr "Copiato!"
 
-#: admin/class-mcp-admin.php:223
+#: admin/class-mcp-admin.php:224
 msgid "Failed to copy"
 msgstr "Copia non riuscita"
 
-#: admin/class-mcp-admin.php:224
+#: admin/class-mcp-admin.php:225
 msgid "Not currently available (kept in this scope until you untick them)"
 msgstr ""
 "Non disponibili al momento (restano in questo accesso finché non li "
 "deselezioni)"
 
-#: admin/class-mcp-admin.php:231
+#: admin/class-mcp-admin.php:232
 msgid "Running checks…"
 msgstr "Controlli in corso…"
 
 #. translators: %s: error message
-#: admin/class-mcp-admin.php:233
+#: admin/class-mcp-admin.php:234
 #, php-format
 msgid "Doctor failed to run: %s"
 msgstr "Impossibile eseguire la diagnosi: %s"
 
-#: admin/class-mcp-admin.php:234
+#: admin/class-mcp-admin.php:235
 msgid "Server-side checks"
 msgstr "Controlli lato server"
 
-#: admin/class-mcp-admin.php:235
+#: admin/class-mcp-admin.php:236
 msgid "From your browser (outside the server)"
 msgstr "Dal tuo browser (fuori dal server)"
 
 #. translators: %s: how to fix a failed check
-#: admin/class-mcp-admin.php:237
+#: admin/class-mcp-admin.php:238
 #, php-format
 msgid "Fix: %s"
 msgstr "Soluzione: %s"
 
-#: admin/class-mcp-admin.php:239
+#: admin/class-mcp-admin.php:240
 msgctxt "connection check result"
 msgid "pass"
 msgstr "superato"
 
-#: admin/class-mcp-admin.php:240
+#: admin/class-mcp-admin.php:241
 msgctxt "connection check result"
 msgid "warning"
 msgstr "avviso"
 
-#: admin/class-mcp-admin.php:241
+#: admin/class-mcp-admin.php:242
 msgctxt "connection check result"
 msgid "fail"
 msgstr "non superato"
 
-#: admin/class-mcp-admin.php:242
+#: admin/class-mcp-admin.php:243
 msgctxt "connection check result"
 msgid "error"
 msgstr "errore"
 
-#: admin/class-mcp-admin.php:243
+#: admin/class-mcp-admin.php:244
 msgctxt "connection check result"
 msgid "skipped"
 msgstr "saltato"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:247
+#: admin/class-mcp-admin.php:248
 #, php-format
 msgid "Failed: %d"
 msgstr "Non superati: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:249
+#: admin/class-mcp-admin.php:250
 #, php-format
 msgid "Errors: %d"
 msgstr "Errori: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:251
+#: admin/class-mcp-admin.php:252
 #, php-format
 msgid "Warnings: %d"
 msgstr "Avvisi: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:253
+#: admin/class-mcp-admin.php:254
 #, php-format
 msgid "Passed: %d"
 msgstr "Superati: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:255
+#: admin/class-mcp-admin.php:256
 #, php-format
 msgid "Skipped: %d"
 msgstr "Saltati: %d"
 
-#: admin/class-mcp-admin.php:257
+#: admin/class-mcp-admin.php:258
 msgid "GET MCP endpoint"
 msgstr "GET all'endpoint MCP"
 
-#: admin/class-mcp-admin.php:258
+#: admin/class-mcp-admin.php:259
 msgid "POST MCP endpoint"
 msgstr "POST all'endpoint MCP"
 
 #. translators: %s: discovery URL path, e.g. /oauth-authorization-server
-#: admin/class-mcp-admin.php:260
+#: admin/class-mcp-admin.php:261
 #, php-format
 msgid "OAuth discovery %s"
 msgstr "Discovery OAuth %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:262
+#: admin/class-mcp-admin.php:263
 #, php-format
 msgid "HTTP %s"
 msgstr "HTTP %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:264
+#: admin/class-mcp-admin.php:265
 #, php-format
 msgid "HTTP %s, non-JSON body"
 msgstr "HTTP %s, risposta non JSON"
 
 #. translators: %s: browser error message
-#: admin/class-mcp-admin.php:266
+#: admin/class-mcp-admin.php:267
 #, php-format
 msgid "Network error: %s"
 msgstr "Errore di rete: %s"
 
-#: admin/class-mcp-admin.php:267
+#: admin/class-mcp-admin.php:268
 msgid ""
 "See the server-side result for this URL; if that passed, the block is at "
 "your network edge (CDN/WAF)."
@@ -2373,7 +2373,7 @@ msgstr ""
 "Controlla il risultato lato server per questo URL; se è superato, il blocco "
 "è al bordo della tua rete (CDN/WAF)."
 
-#: admin/class-mcp-admin.php:268
+#: admin/class-mcp-admin.php:269
 msgid ""
 "Your browser could not reach the site at all (DNS, TLS, or connection "
 "refused). Remote AI clients will hit the same wall."
@@ -2381,76 +2381,76 @@ msgstr ""
 "Il browser non è riuscito a raggiungere il sito (DNS, TLS o connessione "
 "rifiutata). I client IA remoti incontreranno lo stesso ostacolo."
 
-#: admin/class-mcp-admin.php:318 admin/class-mcp-admin.php:338
-#: admin/class-mcp-admin.php:360
+#: admin/class-mcp-admin.php:319 admin/class-mcp-admin.php:339
+#: admin/class-mcp-admin.php:361
 msgid "Select an access level before saving."
 msgstr "Seleziona un livello di accesso prima di salvare."
 
-#: admin/class-mcp-admin.php:322
+#: admin/class-mcp-admin.php:323
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "Chiave API creata. Copiarla ora — verrà mostrata una sola volta."
 
-#: admin/class-mcp-admin.php:330
+#: admin/class-mcp-admin.php:331
 msgid "API key revoked."
 msgstr "Chiave API revocata."
 
-#: admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:341
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr ""
 "Ambito della chiave aggiornato. Avrà effetto alla prossima richiesta della "
 "chiave."
 
-#: admin/class-mcp-admin.php:342
+#: admin/class-mcp-admin.php:343
 msgid "Could not update key scope."
 msgstr "Impossibile aggiornare l'ambito della chiave."
 
-#: admin/class-mcp-admin.php:351
+#: admin/class-mcp-admin.php:352
 msgid "Connection revoked."
 msgstr "Connessione revocata."
 
-#: admin/class-mcp-admin.php:362
+#: admin/class-mcp-admin.php:363
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr ""
 "Ambito della connessione aggiornato. Avrà effetto alla prossima richiesta "
 "della connessione."
 
-#: admin/class-mcp-admin.php:364
+#: admin/class-mcp-admin.php:365
 msgid "Could not update connection scope."
 msgstr "Impossibile aggiornare l'ambito della connessione."
 
-#: admin/class-mcp-admin.php:420
+#: admin/class-mcp-admin.php:421
 msgid "Browser sign-in enabled."
 msgstr "Accesso dal browser attivato."
 
-#: admin/class-mcp-admin.php:454
+#: admin/class-mcp-admin.php:455
 msgid "Settings saved."
 msgstr "Impostazioni salvate."
 
-#: admin/class-mcp-admin.php:461
+#: admin/class-mcp-admin.php:462
 msgid "Audit log cleared."
 msgstr "Registro di controllo svuotato."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:479
+#: admin/class-mcp-admin.php:480
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Modifica n. %1$d annullata.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:494
+#: admin/class-mcp-admin.php:495
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%1$d di %2$d voci del batch annullate."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:510
+#: admin/class-mcp-admin.php:511
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Checkpoint n. %1$d creato (%2$s)."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:523
+#: admin/class-mcp-admin.php:524
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2460,7 +2460,7 @@ msgstr ""
 "verificato. Checkpoint di sicurezza precedente al ripristino: #%4$d."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:526
+#: admin/class-mcp-admin.php:527
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2469,101 +2469,101 @@ msgstr ""
 "Database ripristinato dal checkpoint #%1$d — %2$d tabelle, %3$s righe "
 "controllate. Checkpoint di sicurezza precedente al ripristino: #%4$d."
 
-#: admin/class-mcp-admin.php:539
+#: admin/class-mcp-admin.php:540
 msgid "Checkpoint deleted."
 msgstr "Checkpoint eliminato."
 
-#: admin/class-mcp-admin.php:612
+#: admin/class-mcp-admin.php:613
 msgid "Connections"
 msgstr "Connessioni"
 
-#: admin/class-mcp-admin.php:613
+#: admin/class-mcp-admin.php:614
 msgid "Activity"
 msgstr "Attività"
 
-#: admin/class-mcp-admin.php:614
+#: admin/class-mcp-admin.php:615
 msgid "Logs"
 msgstr "Registri"
 
-#: admin/class-mcp-admin.php:615
+#: admin/class-mcp-admin.php:616
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: admin/class-mcp-admin.php:616
+#: admin/class-mcp-admin.php:617
 msgid "About"
 msgstr "Informazioni"
 
-#: admin/class-mcp-admin.php:627
+#: admin/class-mcp-admin.php:628
 msgid "Cowboy MCP sections"
 msgstr "Sezioni di Cowboy MCP"
 
-#: admin/class-mcp-admin.php:660
+#: admin/class-mcp-admin.php:663
 msgid "Power mode is on. Open Power mode settings."
 msgstr "Power mode è attiva. Apri le impostazioni della Power mode."
 
-#: admin/class-mcp-admin.php:660
+#: admin/class-mcp-admin.php:663
 msgid "Power mode on"
 msgstr "Power mode attiva"
 
-#: admin/class-mcp-admin.php:662
+#: admin/class-mcp-admin.php:665
 msgid "Power mode is off. Open Power mode settings."
 msgstr "Power mode è disattivata. Apri le impostazioni della Power mode."
 
-#: admin/class-mcp-admin.php:662
+#: admin/class-mcp-admin.php:665
 msgid "Power mode off"
 msgstr "Power mode disattivata"
 
-#: admin/class-mcp-admin.php:665
+#: admin/class-mcp-admin.php:668
 msgid "Safe mode off"
 msgstr "Safe mode disattivata"
 
-#: admin/class-mcp-admin.php:688
+#: admin/class-mcp-admin.php:691
 msgid "Every request from AI apps is rejected."
 msgstr "Ogni richiesta delle app di IA viene rifiutata."
 
-#: admin/class-mcp-admin.php:688
+#: admin/class-mcp-admin.php:691
 msgid "MCP server is off."
 msgstr "Il server MCP è disattivato."
 
-#: admin/class-mcp-admin.php:689
+#: admin/class-mcp-admin.php:692
 msgid "Turn on in Settings"
 msgstr "Attiva nelle Impostazioni"
 
-#: admin/class-mcp-admin.php:717
+#: admin/class-mcp-admin.php:720
 msgid "Pagination"
 msgstr "Paginazione"
 
-#: admin/class-mcp-admin.php:718
+#: admin/class-mcp-admin.php:721
 msgid "Previous"
 msgstr "Precedente"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:721
+#: admin/class-mcp-admin.php:724
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Pagina %1$d di %2$d"
 
-#: admin/class-mcp-admin.php:723
+#: admin/class-mcp-admin.php:726
 msgid "Next"
 msgstr "Successivo"
 
-#: admin/class-mcp-admin.php:732
+#: admin/class-mcp-admin.php:735
 msgid "Project home, guides, and news."
 msgstr "Home del progetto, guide e novità."
 
-#: admin/class-mcp-admin.php:732
+#: admin/class-mcp-admin.php:735
 msgid "Website"
 msgstr "Sito web"
 
-#: admin/class-mcp-admin.php:733
+#: admin/class-mcp-admin.php:736
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:733
+#: admin/class-mcp-admin.php:736
 msgid "Source, issues & releases."
 msgstr "Codice sorgente, issue e release."
 
-#: admin/class-mcp-admin.php:734
+#: admin/class-mcp-admin.php:737
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2571,11 +2571,11 @@ msgstr ""
 "Chiedi nel forum di supporto di WordPress.org. Incolla il report della "
 "Diagnostica della connessione per ottenere una risposta più rapida."
 
-#: admin/class-mcp-admin.php:734
+#: admin/class-mcp-admin.php:737
 msgid "Get help"
 msgstr "Ottieni aiuto"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:738
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2583,12 +2583,12 @@ msgstr ""
 "Ti piace Cowboy MCP? Una recensione su WordPress.org aiuta altri proprietari "
 "di siti a trovarlo."
 
-#: admin/class-mcp-admin.php:735 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:738 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "Lascia una recensione"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:743
+#: admin/class-mcp-admin.php:746
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -2650,6 +2650,46 @@ msgstr "Esegui la diagnostica della connessione"
 #: admin/class-mcp-feedback.php:206
 msgid "Thanks!"
 msgstr "Grazie!"
+
+#: admin/class-mcp-hub-promo.php:88
+msgid "Every site you manage. One connection to your AI."
+msgstr "Tutti i siti che gestisci. Una sola connessione alla tua IA."
+
+#: admin/class-mcp-hub-promo.php:89
+msgid ""
+"You already run this site through your AI. Hub does the same across every "
+"site you manage: content, plugin updates with backup and rollback, malware "
+"clean-up, speed, SEO, accessibility, client reports. Any host, any AI app, "
+"nothing has to move. This free plugin stays free."
+msgstr "Gestisci già questo sito con la tua IA. Hub fa lo stesso su tutti i siti che amministri: contenuti, aggiornamenti dei plugin con backup e ripristino, pulizia dei malware, velocità, SEO, accessibilità, report per i clienti. Qualsiasi hosting, qualsiasi app di IA, niente da spostare. Questo plugin gratuito resta gratuito."
+
+#: admin/class-mcp-hub-promo.php:91
+msgid "One prompt, every site, every task"
+msgstr "Un prompt, ogni sito, ogni attività"
+
+#: admin/class-mcp-hub-promo.php:92
+msgid "Ten sites or a hundred, one request"
+msgstr "Dieci siti o cento, una sola richiesta"
+
+#: admin/class-mcp-hub-promo.php:93
+msgid "Works even if the site is down"
+msgstr "Funziona anche se il sito è giù"
+
+#: admin/class-mcp-hub-promo.php:94
+msgid "Schedule changes across the whole fleet"
+msgstr "Pianifica modifiche su tutti i tuoi siti"
+
+#: admin/class-mcp-hub-promo.php:97
+msgid "Get early access"
+msgstr "Ottieni l’accesso anticipato"
+
+#: admin/class-mcp-hub-promo.php:103
+msgid "Hide the Cowboy Hub banner"
+msgstr "Nascondi il banner di Cowboy Hub"
+
+#: admin/class-mcp-hub-promo.php:124
+msgid "Manage multiple sites? <b>Check out Cowboy Hub</b>"
+msgstr "Gestisci più siti? <b>Scopri Cowboy Hub</b>"
 
 #: includes/class-mcp-oauth.php:1129
 msgid "Unknown client"
