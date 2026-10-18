@@ -4,9 +4,15 @@ Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
 = 1.7.4 =
+* New: connect Meta Muse and Muse Code from the Connections tab. Both are set up by pasting a message into the chat, and the page confirms when the app has signed in. Sites behind Cloudflare see a note about the Browser Integrity Check that blocks Muse's MCP client.
+* New: OpenClaw and Hermes Agent panels under "Automation & developers". Each leads with a message to paste into the agent's chat; the terminal commands, config files and API-key setups are one click away. Hermes signs in with its published identity.
+* New: the n8n panel leads with OAuth2, which takes fewer steps than a key: n8n registers itself and the approval page opens on its own. The API key is the collapsed alternative, as on every other panel.
+* Improved: every connection screen shows the exact link or message you paste, with its own Copy button that turns on browser sign-in and opens pairing for 30 minutes. "Open <app>" now only opens the app, the cloud-app panels read as one flat numbered list, and each panel ends with a short read-only prompt to try.
+* Improved: the Connection Doctor checks whether Cloudflare's Browser Integrity Check blocks AI apps from reaching the MCP endpoint, and prints the rule to add.
+* Changed: the ChatGPT and Claude setup steps follow the current apps. ChatGPT no longer needs Developer mode: Plugins → Add → Add custom MCP server, then the plugin sits in the chat's + menu; custom servers need a Business, Enterprise or Edu workspace (Pro: read-only). Claude's Add custom connector dialog now detects the sign-in settings itself, and its recommended "Use Claude's published identity" option works with this plugin.
 * Fix: ChatGPT shows file contents, posts, patterns and templates again. Results that carry a `content` field came through as an empty `{}` in ChatGPT; `wp_read_file`, `wp_get_post`, `wp_create_post`, `wp_update_post`, `wp_get_pattern` and `wp_get_template` now also return structured output, which ChatGPT reads correctly. Thanks to the WordPress.org user who reported it and tested the fix.
 * Fix: `wp_list_directory` with `recursive: true` lists subdirectories instead of failing with an exception.
-* Changed: the ChatGPT and Claude setup steps on the Connections tab follow the current apps. ChatGPT no longer needs Developer mode: Plugins → Add → Add custom MCP server, then the plugin sits in the chat's + menu; custom servers need a Business, Enterprise or Edu workspace (Pro: read-only). Claude's Add custom connector dialog now detects the sign-in settings itself, and its recommended "Use Claude's published identity" option works with this plugin.
+* Fix: a terminal app that signs in again from a different local port (Muse Code does) is accepted; the sign-in page used to refuse the new port.
 
 = 1.7.3 =
 * New: connect Perplexity, Grok and the Gemini app from the Connections tab. One click copies your site link and opens the app, and the page confirms when the app has signed in. There is also an n8n panel with the MCP Client Tool fields ready to copy.
