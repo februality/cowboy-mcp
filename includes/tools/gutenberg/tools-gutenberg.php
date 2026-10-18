@@ -967,6 +967,22 @@ $cowboy_mcp_gutenberg_tools = [
         'destructiveHint' => false,
         'idempotentHint'  => true,
         'openWorldHint'   => false,
+    ], [
+        // structuredContent is required for ChatGPT: a text-only result whose JSON has a
+        // top-level "content" key renders as {} there (live-verified 2026-10-18).
+        'type'       => 'object',
+        'properties' => [
+            'name'         => [ 'type' => 'string',  'description' => 'Registered pattern name (source "registered" only)' ],
+            'id'           => [ 'type' => 'integer', 'description' => 'wp_block post ID (source "user" only)' ],
+            'title'        => [ 'type' => 'string' ],
+            'source'       => [ 'type' => 'string',  'enum' => [ 'registered', 'user' ] ],
+            'synced'       => [ 'type' => 'boolean', 'description' => 'User patterns only' ],
+            'categories'   => [ 'type' => 'array',   'items' => [ 'type' => 'string' ] ],
+            'content'      => [ 'type' => 'string',  'description' => 'Block markup' ],
+            'content_hash' => [ 'type' => 'string',  'description' => 'md5 of content (user patterns only)' ],
+            'blocks'       => [ 'type' => 'array',   'items' => [ 'type' => 'object' ], 'description' => 'Block tree summary (path, name, …)' ],
+        ],
+        'required'   => [ 'title', 'source', 'categories', 'content', 'blocks' ],
     ] ),
 
     Cowboy_MCP_Tools::tool( 'wp_create_pattern', '[Gutenberg] Create a user pattern (wp_block post). Synced patterns update everywhere they are used; unsynced patterns are copied on insert.', [
@@ -1380,6 +1396,24 @@ if ( wp_is_block_theme() ) {
         'destructiveHint' => false,
         'idempotentHint'  => true,
         'openWorldHint'   => false,
+    ], [
+        // structuredContent is required for ChatGPT: a text-only result whose JSON has a
+        // top-level "content" key renders as {} there (live-verified 2026-10-18).
+        'type'       => 'object',
+        'properties' => [
+            'id'           => [ 'type' => 'string', 'description' => 'Template id "theme//slug"' ],
+            'type'         => [ 'type' => 'string', 'enum' => [ 'wp_template', 'wp_template_part' ] ],
+            'title'        => [ 'type' => 'string' ],
+            'description'  => [ 'type' => 'string' ],
+            'source'       => [ 'type' => 'string', 'description' => 'theme | custom | plugin' ],
+            'has_override' => [ 'type' => 'boolean', 'description' => 'A DB post overrides the theme file' ],
+            'post_id'      => [ 'type' => [ 'integer', 'null' ], 'description' => 'Backing DB post, if any' ],
+            'area'         => [ 'type' => [ 'string', 'null' ], 'description' => 'Template parts only' ],
+            'content'      => [ 'type' => 'string', 'description' => 'Block markup' ],
+            'content_hash' => [ 'type' => [ 'string', 'null' ], 'description' => 'md5 of content when a DB post backs it' ],
+            'blocks'       => [ 'type' => 'array', 'items' => [ 'type' => 'object' ], 'description' => 'Block tree summary (path, name, …)' ],
+        ],
+        'required'   => [ 'id', 'type', 'title', 'source', 'has_override', 'content', 'blocks' ],
     ] );
 
     $cowboy_mcp_gutenberg_tools[] = Cowboy_MCP_Tools::tool( 'wp_save_template', '[Gutenberg] Save a template or template part: updates the DB customization, materializes an override for a theme-file template, or creates a new custom one (unknown id + content). Undo of a first edit reverts to the theme file.', [

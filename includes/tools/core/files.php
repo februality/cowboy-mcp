@@ -157,7 +157,19 @@ return [
     'tools' => [
         Cowboy_MCP_Tools::tool( 'wp_read_file', '[Files] Read the contents of a theme or plugin file.', [
             'path' => [ 'type' => 'string', 'description' => 'Path relative to wp-content/ (e.g. themes/flavor/style.css)', 'required' => true ],
-        ], [ 'title' => 'Read File', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ]),
+        ], [ 'title' => 'Read File', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ], [
+            // Declared so call_tool() also emits structuredContent: ChatGPT's connector
+            // renders a text-only result whose JSON has a top-level "content" key as {}
+            // (live-verified 2026-10-18); structuredContent is read correctly.
+            'type'       => 'object',
+            'properties' => [
+                'path'     => [ 'type' => 'string',  'description' => 'Path relative to wp-content/' ],
+                'size'     => [ 'type' => 'integer', 'description' => 'File size in bytes' ],
+                'modified' => [ 'type' => 'string',  'description' => 'Last modified, UTC, Y-m-d H:i:s' ],
+                'content'  => [ 'type' => 'string',  'description' => 'File content (a placeholder message when the file is over 500 KB)' ],
+            ],
+            'required'   => [ 'path', 'size', 'modified', 'content' ],
+        ]),
 
         Cowboy_MCP_Tools::tool( 'wp_write_file', '[Files] Write or overwrite a theme/plugin file. Creates parent directories if needed. PHP content is syntax-checked before it lands. Writes into mu-plugins/ are refused unless Power mode is on (must-use plugins load on every request, including this endpoint, and cannot be paused by WordPress recovery mode) - write a regular plugin under plugins/ and activate it with wp_activate_plugin instead.', [
             'path'    => [ 'type' => 'string', 'description' => 'Path relative to wp-content/', 'required' => true ],
@@ -256,7 +268,9 @@ return [
 
             $count = 0;
             foreach ( $iterator as $item ) {
-                if ( $item->isDot() ) continue;
+                // The recursive iterator already skips dots (FilesystemIterator::SKIP_DOTS)
+                // and yields SplFileInfo, which has no isDot() — only DirectoryIterator does.
+                if ( ! $recursive && $item->isDot() ) continue;
                 if ( Cowboy_MCP_Security::is_protected_storage_path( $item->getPathname() ) ) {
                     continue;
                 }

@@ -5,6 +5,41 @@ defined( 'ABSPATH' ) || exit;
  * Format a WP_Post into a consistent response shape.
  * Superset of resource_single_post(): adds meta, terms, author_id, parent, menu_order.
  */
+/**
+ * outputSchema shared by wp_get_post / wp_create_post / wp_update_post (all return
+ * cowboy_mcp_format_post()). Declaring it makes call_tool() emit structuredContent,
+ * which ChatGPT's connector needs: a text-only result whose JSON has a top-level
+ * "content" key is rendered as {} there (live-verified 2026-10-18). terms/meta are
+ * PHP arrays that encode as [] when empty and as objects otherwise, hence the
+ * two-type declarations; change_id/batch_id are appended by the dispatcher on writes.
+ */
+function cowboy_mcp_post_output_schema(): array {
+    return [
+        'type'       => 'object',
+        'properties' => [
+            'ID'         => [ 'type' => 'integer' ],
+            'title'      => [ 'type' => 'string' ],
+            'slug'       => [ 'type' => 'string' ],
+            'status'     => [ 'type' => 'string' ],
+            'type'       => [ 'type' => 'string', 'description' => 'Post type' ],
+            'content'    => [ 'type' => 'string', 'description' => 'Post content as stored (block markup / HTML)' ],
+            'excerpt'    => [ 'type' => 'string' ],
+            'date'       => [ 'type' => 'string', 'description' => 'Site-timezone Y-m-d H:i:s' ],
+            'modified'   => [ 'type' => 'string', 'description' => 'Site-timezone Y-m-d H:i:s' ],
+            'author'     => [ 'type' => 'string', 'description' => 'Author display name' ],
+            'author_id'  => [ 'type' => 'integer' ],
+            'parent'     => [ 'type' => 'integer' ],
+            'menu_order' => [ 'type' => 'integer' ],
+            'permalink'  => [ 'type' => 'string' ],
+            'terms'      => [ 'type' => [ 'object', 'array' ], 'description' => 'taxonomy => [ { term_id, name, slug } ]; an empty list when the post has no terms' ],
+            'meta'       => [ 'type' => [ 'object', 'array' ], 'description' => 'meta key => [ values ]; an empty list when the post has no meta' ],
+            'change_id'  => [ 'type' => 'integer', 'description' => 'Undo journal entry (writes only)' ],
+            'batch_id'   => [ 'description' => 'Set when the write ran inside wp_batch_execute' ],
+        ],
+        'required'   => [ 'ID', 'title', 'slug', 'status', 'type', 'content', 'date', 'modified', 'permalink' ],
+    ];
+}
+
 function cowboy_mcp_format_post( WP_Post $post ): array {
     $taxonomies = get_object_taxonomies( $post->post_type, 'names' );
     $terms      = [];
@@ -105,7 +140,7 @@ return [
             'destructiveHint' => false,
             'idempotentHint'  => true,
             'openWorldHint'   => false,
-        ] ),
+        ], cowboy_mcp_post_output_schema() ),
 
         Cowboy_MCP_Tools::tool( 'wp_create_post', '[Content] Create a new post, page, or custom post type.', [
             'title'      => [ 'type' => 'string',  'description' => 'Post title', 'required' => true ],
@@ -126,7 +161,7 @@ return [
             'destructiveHint' => false,
             'idempotentHint'  => false,
             'openWorldHint'   => false,
-        ] ),
+        ], cowboy_mcp_post_output_schema() ),
 
         Cowboy_MCP_Tools::tool( 'wp_update_post', '[Content] Update an existing post, page, or custom post type. Only provided fields are changed.', [
             'post_id'    => [ 'type' => 'integer', 'description' => 'Post ID to update', 'required' => true ],
@@ -147,7 +182,7 @@ return [
             'destructiveHint' => false,
             'idempotentHint'  => true,
             'openWorldHint'   => false,
-        ] ),
+        ], cowboy_mcp_post_output_schema() ),
 
         Cowboy_MCP_Tools::tool( 'wp_delete_post', '[Content] Delete or trash a post, page, or custom post type.', [
             'post_id' => [ 'type' => 'integer', 'description' => 'Post ID to delete', 'required' => true ],
