@@ -186,13 +186,13 @@ class Cowboy_MCP_Admin_Connections {
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'opencode',    'local' => 'works' ],
             // Meta's terminal agent: no `mcp add` command, so the panel writes ~/.config/muse/settings.json and then runs `muse mcp login` (verified against Muse Code 1.4.8, 2026-10-14).
             'muse-code'      => [ 'label' => 'Muse Code',      'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'muse-code',   'local' => 'works' ],
+            'n8n'            => [ 'label' => 'n8n',            'group' => 'automation',  'type' => 'n8n',        'watch' => 'n8n',         'local' => 'works' ],
             // OpenClaw (self-hosted agent gateway): `openclaw mcp add … --auth oauth` + `openclaw mcp login`; DCR "OpenClaw MCP" on 127.0.0.1:8989 (verified live against openclaw 2026.10.4, 2026-10-16).
-            'openclaw'       => [ 'label' => 'OpenClaw',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'openclaw',    'local' => 'works' ],
+            'openclaw'       => [ 'label' => 'OpenClaw',       'group' => 'automation',  'type' => 'oauth-cli',  'watch' => 'openclaw',    'local' => 'works' ],
             // Hermes Agent (Nous Research): `hermes mcp add <name> --url … --auth oauth` signs in at once. It identifies itself with a
             // CIMD document on main (CIMD_DOCUMENT_HOSTS has nousresearch.github.io) and with DCR "Hermes Agent" on older builds, so
             // no 'cimd' flag: the Copy still opens the window for the DCR case (verified 2026-10-16).
-            'hermes'         => [ 'label' => 'Hermes Agent',   'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'hermes',      'local' => 'works' ],
-            'n8n'            => [ 'label' => 'n8n',            'group' => 'automation',  'type' => 'n8n',        'watch' => 'n8n',         'local' => 'works' ],
+            'hermes'         => [ 'label' => 'Hermes Agent',   'group' => 'automation',  'type' => 'oauth-cli',  'watch' => 'hermes',      'local' => 'works' ],
         ];
     }
 
