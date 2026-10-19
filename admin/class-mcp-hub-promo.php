@@ -121,7 +121,7 @@ class Cowboy_MCP_Hub_Promo {
             '<a class="cmcp-hub-pill" data-cmcp-hub-pill href="%1$s" target="_blank" rel="noopener noreferrer"%2$s><span>%3$s</span></a>',
             esc_url( self::url( 'pill' ) ),
             $hidden ? ' hidden' : '',
-            wp_kses( __( 'Manage multiple sites? <b>Check out Cowboy Hub</b>', 'cowboy-mcp' ), [ 'b' => [] ] )
+            wp_kses( __( 'Managing multiple sites? <b>Check out Cowboy Hub</b>', 'cowboy-mcp' ), [ 'b' => [] ] )
         );
     }
 

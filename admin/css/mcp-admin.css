@@ -442,8 +442,8 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 @media (max-width: 1180px) { .cmcp-hub-art { width: 340px; height: 97px; } }
 @media (max-width: 1000px) { .wrap.cmcp > .cmcp-hub { grid-template-columns: 1fr; } .cmcp-hub-art { display: none; } }
 @media (max-width: 782px) { .wrap.cmcp > .cmcp-hub { padding: 16px 16px 18px; } }
-/* dismissed state: a black pill at the end of the tab row; a wave of green pixels sweeps through it every 6 s */
-.wrap.cmcp .cmcp-hub-pill { position: relative; overflow: hidden; isolation: isolate; margin-inline-start: auto; align-self: center; display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 13px; border-radius: 999px; background: var(--cmcp-code-bg); border: 1px solid #2f4536; color: #fff; font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color .2s ease; }
+/* dismissed state: a black pill in the brand row, right after the version; a wave of green pixels sweeps through it every 6 s */
+.wrap.cmcp .cmcp-hub-pill { position: relative; overflow: hidden; isolation: isolate; margin-inline-start: 4px; display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 13px; border-radius: 999px; background: var(--cmcp-code-bg); border: 1px solid #2f4536; color: #fff; font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color .2s ease; }
 .wrap.cmcp .cmcp-hub-pill b { font-weight: 600; }
 .wrap.cmcp .cmcp-hub-pill:hover, .wrap.cmcp .cmcp-hub-pill:focus-visible { color: #fff; background: #0f1711; }
 /* hover: no border change; the wave widens a little and runs faster with no rest, brightness stays close to resting so the white caption keeps its contrast */

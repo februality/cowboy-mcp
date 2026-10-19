@@ -623,13 +623,13 @@ class Cowboy_MCP_Admin {
                     <img class="cmcp-logo" src="<?php echo esc_url( COWBOY_MCP_URL . 'admin/images/icon-128.png' ); ?>" alt="" width="32" height="32">
                     <span class="cmcp-name"><?php esc_html_e( 'Cowboy MCP', 'cowboy-mcp' ); ?></span>
                     <span class="cmcp-ver">v<?php echo esc_html( COWBOY_MCP_VERSION ); ?></span>
+                    <?php Cowboy_MCP_Hub_Promo::render_pill( ! Cowboy_MCP_Hub_Promo::is_dismissed() ); ?>
                     <?php self::render_exceptions( $settings ); ?>
                 </div>
                 <nav class="cmcp-tabs" aria-label="<?php esc_attr_e( 'Cowboy MCP sections', 'cowboy-mcp' ); ?>">
                     <?php foreach ( $tabs as $slug => $label ) : ?>
                         <a class="cmcp-tab" href="<?php echo esc_url( self::url( [ 'tab' => $slug ] ) ); ?>"<?php echo $slug === $active_tab ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $label ); ?></a>
                     <?php endforeach; ?>
-                    <?php Cowboy_MCP_Hub_Promo::render_pill( ! Cowboy_MCP_Hub_Promo::is_dismissed() ); ?>
                 </nav>
             </header>
             <?php self::render_offbar( $settings ); ?>
