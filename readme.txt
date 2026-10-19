@@ -303,15 +303,15 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 == Changelog ==
 
 = 1.7.4 =
-* New: connect Meta Muse and Muse Code from the Connections tab. Setup is a single message pasted into the chat: the app configures itself, signs in on your site, and the page confirms the connection. Sites behind Cloudflare are shown the one firewall rule Muse needs.
-* New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect the same way, with one message pasted into the agent's chat. Terminal commands, config files and an API-key setup are available.
-* New: n8n connects with OAuth2. n8n registers itself and your site asks for approval, so there is no secret to create or copy. The API-key setup remains available.
-* Improved: every connection screen shows the exact link or message to paste, each in its own field with a Copy button. Copying turns on browser sign-in and opens pairing for 30 minutes, and the "Open <app>" buttons simply open the app. Each panel is one short numbered list and ends with a read-only example prompt that confirms the connection within a minute.
-* Improved: the Connection Doctor detects when Cloudflare's Browser Integrity Check keeps AI apps from reaching the MCP endpoint and provides the rule to add.
-* Changed: the ChatGPT and Claude setup steps reflect the current versions of both apps. ChatGPT is now two clicks away: open Plugins, click Add, choose Add custom MCP server, and the site appears in the chat's + menu, with no Developer mode involved. OpenAI offers custom MCP servers on Business, Enterprise and Edu workspaces, with read-only use on Pro. Claude's Add custom connector dialog detects the sign-in settings automatically, and its recommended "Use Claude's published identity" option is fully supported.
-* Fix: ChatGPT shows file contents, posts, patterns and templates again. Results carrying a `content` field arrived in ChatGPT as an empty `{}`; the affected tools now also return structured output, which ChatGPT reads correctly. Thanks to the WordPress.org user who reported the issue and tested the fix.
-* Fix: `wp_list_directory` with `recursive: true` lists subdirectories instead of failing with an exception.
-* Fix: a terminal app that signs in again from a different local port (as Muse Code does) is accepted; the sign-in page previously refused the new port.
+* New: connect Meta Muse and Muse Code from the Connections tab. Setup is one message pasted into the chat: the app configures itself and signs in. Sites behind Cloudflare are shown the firewall rule Muse needs.
+* New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect with one pasted message. Terminal commands, config files and an API-key setup are available.
+* New: n8n connects with OAuth2: it registers itself and your site asks for approval, with no secret to copy. The API-key setup remains available.
+* Improved: every connection panel shows the exact link or message to paste, each with a Copy button that turns on browser sign-in and opens pairing for 30 minutes; the "Open <app>" buttons only open the app. Each panel is one short numbered list ending with a read-only test prompt.
+* Improved: the Connection Doctor detects Cloudflare's Browser Integrity Check blocking the MCP endpoint and shows the rule to add.
+* Changed: ChatGPT and Claude setup steps match the current apps. ChatGPT: open Plugins, click Add, choose Add custom MCP server, and the site appears in the chat's + menu, no Developer mode needed. Custom MCP servers are available on Business, Enterprise and Edu workspaces, read-only on Pro. Claude's Add custom connector dialog detects the sign-in settings itself, and its recommended "Use Claude's published identity" option is supported.
+* Fix: ChatGPT shows file contents, posts, patterns and templates again. Results with a `content` field arrived as an empty `{}`; the affected tools now also return structured output. Thanks to the WordPress.org user who reported and tested it.
+* Fix: `wp_list_directory` with `recursive: true` no longer fails with an exception.
+* Fix: a terminal app that signs in again from a different local port (as Muse Code does) is no longer refused.
 
 = Earlier versions =
 
