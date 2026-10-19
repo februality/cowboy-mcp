@@ -2711,8 +2711,8 @@ msgid "Hide the Cowboy Hub banner"
 msgstr "Cowboy-Hub-Banner ausblenden"
 
 #: admin/class-mcp-hub-promo.php:124
-msgid "Managing multiple sites? <b>Check out Cowboy Hub</b>"
-msgstr "Sie verwalten mehrere Websites? <b>Entdecken Sie Cowboy Hub</b>"
+msgid "Managing multiple sites? Check out Cowboy Hub"
+msgstr "Sie verwalten mehrere Websites? Entdecken Sie Cowboy Hub"
 
 #: includes/class-mcp-oauth.php:1129
 msgid "Unknown client"
