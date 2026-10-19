@@ -5,7 +5,7 @@ release; older entries are kept here.
 
 = 1.7.4 =
 * New: connect Meta Muse and Muse Code from the Connections tab. Setup is a single message pasted into the chat: the app configures itself, signs in on your site, and the page confirms the connection. Sites behind Cloudflare are shown the one firewall rule Muse needs.
-* New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect the same way, with one message pasted into the agent's chat. Terminal commands, config files and an API-key setup are available in each panel for people who prefer them.
+* New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect the same way, with one message pasted into the agent's chat. Terminal commands, config files and an API-key setup are available.
 * New: n8n connects with OAuth2. n8n registers itself and your site asks for approval, so there is no secret to create or copy. The API-key setup remains available.
 * Improved: every connection screen shows the exact link or message to paste, each in its own field with a Copy button. Copying turns on browser sign-in and opens pairing for 30 minutes, and the "Open <app>" buttons simply open the app. Each panel is one short numbered list and ends with a read-only example prompt that confirms the connection within a minute.
 * Improved: the Connection Doctor detects when Cloudflare's Browser Integrity Check keeps AI apps from reaching the MCP endpoint and provides the rule to add.
