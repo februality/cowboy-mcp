@@ -309,7 +309,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * Improved: every connection panel shows the exact link or message to paste, each with a Copy button that turns on browser sign-in and opens pairing for 30 minutes; the "Open <app>" buttons only open the app. Each panel is one short numbered list ending with a read-only test prompt.
 * Improved: the Connection Doctor detects Cloudflare's Browser Integrity Check blocking the MCP endpoint and shows the rule to add.
 * Changed: ChatGPT and Claude setup steps match the current apps. ChatGPT: open Plugins, click Add, choose Add custom MCP server, and the site appears in the chat's + menu, no Developer mode needed. Custom MCP servers are available on Business, Enterprise and Edu workspaces, read-only on Pro. Claude's Add custom connector dialog detects the sign-in settings itself, and its recommended "Use Claude's published identity" option is supported.
-* Fix: ChatGPT shows file contents, posts, patterns and templates again. Results with a `content` field arrived as an empty `{}`; the affected tools now also return structured output. Thanks to the WordPress.org user who reported and tested it.
+* Fix: ChatGPT shows file contents, posts, patterns and templates again. Results with a `content` field arrived as an empty `{}`; the affected tools now also return structured output. Thanks to @kuzey2004 for the report and testing.
 * Fix: `wp_list_directory` with `recursive: true` no longer fails with an exception.
 * Fix: a terminal app that signs in again from a different local port (as Muse Code does) is no longer refused.
 
