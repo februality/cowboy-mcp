@@ -19,6 +19,8 @@ Cowboy MCP connects your WordPress site to Claude, ChatGPT, Cursor, Gemini or an
 
 https://www.youtube.com/watch?v=poFkhBgzq-s
 
+Guides: [connect Claude to WordPress](https://cowboymcp.com/connect-wordpress-to-claude?utm_source=wporg&utm_medium=listing) · [connect ChatGPT to WordPress](https://cowboymcp.com/connect-wordpress-to-chatgpt?utm_source=wporg&utm_medium=listing) · [every AI app compared](https://cowboymcp.com/connect?utm_source=wporg&utm_medium=listing).
+
 * 💬 **Do everything by chat** - create and edit posts and pages, run your WooCommerce shop, manage users and menus, tidy the media library, change settings, and fix errors when they crop up.
 * ↩️ **Undo any change** - a per-change undo journal and one-click database checkpoints let you roll back a single edit or the entire site.
 * 🔄 **Updates plugins & themes safely** - backup first, health check after, one-command undo if anything breaks.
@@ -171,11 +173,11 @@ Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in o
 
 * **Nothing in the middle.** Cowboy MCP runs on your server, on any host: no account, no relay, no credits, no quota.
 * **Every tool is free.** Cowboy MCP ships plugins, themes, database and WooCommerce tools GPL-licensed, with no paid tier.
-* **Typed tools with undo, not a PHP shell.** Tools that execute arbitrary PHP are built for development copies. Cowboy MCP gives the agent typed tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills ([compared with Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira)).
+* **Typed tools with undo, not a PHP shell.** Tools that execute arbitrary PHP are built for development copies. Cowboy MCP gives the agent typed tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills ([compared with Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira?utm_source=wporg&utm_medium=listing)).
 * **A full safety net, not just an undo button.** A per-change journal with conflict detection, whole-database checkpoints, automatic restore of broken updates, dry run, safe mode and an always-on audit log.
 * **A complete server today, wired into the official pieces.** The Abilities API and the official MCP adapter are a framework; Cowboy MCP is the turnkey server and bridges both ways on WordPress 6.9+. Needs WordPress 6.2+, no Composer, Node.js or build step.
 
-Guides and comparisons: [cowboymcp.com](https://cowboymcp.com).
+Guides and comparisons: [cowboymcp.com](https://cowboymcp.com/?utm_source=wporg&utm_medium=listing).
 
 = Works with =
 
@@ -204,7 +206,7 @@ Headless or CI? Click **Generate API key** on the Connections tab (it is shown o
 
 **Claude desktop / web (no terminal):** click **Add to Claude** on the Connections tab (Claude opens with your site already filled in; browser sign-in is switched on for you) and approve with one click. (Requires a public HTTPS site; on a local site use the `mcp-remote` bridge shown on the Connections tab.)
 
-**Every other client:** the Connections tab shows a ready-to-copy setup for each, and [cowboymcp.com](https://cowboymcp.com) has step-by-step guides.
+**Every other client:** the Connections tab shows a ready-to-copy setup for each, and [cowboymcp.com](https://cowboymcp.com/?utm_source=wporg&utm_medium=listing) has step-by-step guides.
 
 == Frequently Asked Questions ==
 
@@ -262,7 +264,7 @@ You don't need to. The Abilities API (WordPress 6.9+) and the official MCP Adapt
 
 = How does it compare with Novamira? =
 
-Novamira is built for development and staging copies and gives the agent a PHP shell. Cowboy MCP is built for live sites: typed tools, safe mode, undo, database checkpoints and an audit log, all free, installed from WordPress.org. See the full [Cowboy MCP vs Novamira comparison](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira).
+Novamira is built for development and staging copies and gives the agent a PHP shell. Cowboy MCP is built for live sites: typed tools, safe mode, undo, database checkpoints and an audit log, all free, installed from WordPress.org. See the full [Cowboy MCP vs Novamira comparison](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira?utm_source=wporg&utm_medium=listing).
 
 = Can I vibe code my WordPress site? =
 
@@ -274,7 +276,7 @@ No telemetry and no phone-home - your data stays on your server. The only outbou
 
 = Does it work with the WordPress Abilities API? =
 
-Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a `cowboy-mcp/*` ability, so `wp ability run`, the core Abilities REST endpoint, the official MCP Adapter and the AI plugin's Abilities Explorer all reach it - and every call still goes through safe mode, dry run, the audit log and the undo journal. Callers need an administrator account; `wp_cli` and `wp_write_file` are only exposed while Power mode is on. In the other direction, abilities registered by other plugins appear as tools for your agent; they run their own permission checks and are not undoable. Both directions have a switch under Settings. Request formats and examples: [Cowboy MCP 1.6.4 release notes](https://cowboymcp.com/news/cowboy-mcp-1-6-4).
+Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a `cowboy-mcp/*` ability, so `wp ability run`, the core Abilities REST endpoint, the official MCP Adapter and the AI plugin's Abilities Explorer all reach it - and every call still goes through safe mode, dry run, the audit log and the undo journal. Callers need an administrator account; `wp_cli` and `wp_write_file` are only exposed while Power mode is on. In the other direction, abilities registered by other plugins appear as tools for your agent; they run their own permission checks and are not undoable. Both directions have a switch under Settings. Request formats and examples: [Cowboy MCP 1.6.4 release notes](https://cowboymcp.com/news/cowboy-mcp-1-6-4?utm_source=wporg&utm_medium=listing).
 
 = Does it work on multisite? =
 
