@@ -1,7 +1,7 @@
 === Cowboy MCP - Free MCP Server with Undo for Claude & ChatGPT ===
 Contributors: februality
 Donate link: https://cowboymcp.com/tip
-Tags: mcp, ai-agent, model-context-protocol, claude, claude-code
+Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
@@ -43,16 +43,15 @@ MCP (Model Context Protocol) is the open standard AI assistants use to work with
 
 * **Manage content by chat** - draft, edit, schedule, and publish posts and pages; upload media; sort categories and tags; build navigation menus.
 * **Edit pages block by block** - your agent reads any page as a Gutenberg block tree and makes surgical edits: update a heading, move a section, swap a pattern. On block themes it can edit Site Editor templates and global styles too - all undoable.
-* **Run the back office** - add and edit users, change roles, and tidy the media library: find every image missing alt text and fix it in one go. Deleted media is recoverable, and the site can never be left without an administrator.
+* **Run the back office** - add and edit users, change roles, and tidy the media library: find every image missing alt text and fix it in one go.
 * **Run your store** - update WooCommerce products, prices, orders, refunds, coupons and inventory in bulk; pull sales reports.
-* **Fix things that break** - read error logs, test emails and HTTP requests, inspect hooks and REST routes, check transients and rewrite rules, and repair database tables. No SSH required.
+* **Fix things that break** - read error logs, test emails and HTTP requests, inspect hooks and REST routes, check transients and rewrite rules, and repair database tables.
 * **Do the developer stuff** - run WP-CLI commands, edit files in `wp-content`, and take site snapshots before big changes.
 * **Vibe code your site** - describe the theme tweak or feature you want; your agent writes the code, checks the error log and fixes what it broke - with undo and checkpoints behind it.
 * **Keep SEO tidy** - read, write and audit Yoast SEO, Rank Math, All in One SEO or SEOPress meta across the site with one vocabulary.
 * **Roll back a post** - list a post's revisions, see a git-style diff of what changed, and restore any revision (the restore itself is undoable).
 * **Run your events** - create and edit The Events Calendar events, venues and organizers; with Events Calendar Pro, manage recurring series and cancel single dates.
-* **Plug into the WordPress Abilities API** - every tool is also a `cowboy-mcp/*` ability (with safe mode, the audit log and undo still in front), and abilities other plugins register become tools for your agent.
-* **Works on any host** - shared hosting, managed WordPress, a VPS or a local dev site; nothing to install beyond the plugin, no WordPress.com account or Jetpack plan.
+* **Plug into the WordPress Abilities API** - every tool is also a `cowboy-mcp/*` ability, with safe mode, the audit log and undo still in front, and abilities other plugins register become tools for your agent.
 
 = Tool coverage =
 
@@ -165,6 +164,7 @@ Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in o
 * **Safe plugin and theme updates** - file backup and database checkpoint first, then a health check that restores the previous version if the site breaks.
 * **Audit log** - every tool call, error and authentication event on the Logs tab; pruned after 30 days.
 * **AI agent permissions** - each API key and OAuth connection can be full access, read-only, or a custom list of tools.
+* **Inert until you connect something** - the endpoint goes live on activation but refuses every request until you create an API key or approve an app in your browser; there is no default credential and browser sign-in is off until you turn it on.
 * **Hashed keys, rate limits, origin checks** - keys are shown once and stored as one-way hashes, requests are rate-limited per key, and unknown browser origins are rejected.
 * **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection, file writes confined to `wp-content`, and last-administrator protection. Power mode lifts some for rare jobs; only a human can switch it on in wp-admin.
 * **Connection Doctor** - a one-click self-test that names what blocks a connection (HTTPS, REST, OAuth, Cloudflare, firewalls, caching), with a report to paste into a support topic.
@@ -174,14 +174,13 @@ Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in o
 * **Nothing in the middle.** Cowboy MCP runs on your server, on any host: no account, no relay, no credits, no quota.
 * **Every tool is free.** Cowboy MCP ships plugins, themes, database and WooCommerce tools GPL-licensed, with no paid tier.
 * **Typed tools with undo, not a PHP shell.** Tools that execute arbitrary PHP are built for development copies. Cowboy MCP gives the agent typed tools wrapped in safe mode, dry run, undo and checkpoints, so it can be trusted on the site that pays the bills ([compared with Novamira](https://cowboymcp.com/compare/cowboy-mcp-vs-novamira?utm_source=wporg&utm_medium=listing)).
-* **A full safety net, not just an undo button.** A per-change journal with conflict detection, whole-database checkpoints, automatic restore of broken updates, dry run, safe mode and an always-on audit log.
 * **A complete server today, wired into the official pieces.** The Abilities API and the official MCP adapter are a framework; Cowboy MCP is the turnkey server and bridges both ways on WordPress 6.9+. Needs WordPress 6.2+, no Composer, Node.js or build step.
 
 Guides and comparisons: [cowboymcp.com](https://cowboymcp.com/?utm_source=wporg&utm_medium=listing).
 
 = Works with =
 
-Integrations that light up automatically: WooCommerce, Gutenberg and the Site Editor, Yoast SEO, Rank Math, All in One SEO, SEOPress, The Events Calendar (and Events Calendar Pro), Advanced Custom Fields (ACF), Elementor, Beaver Builder, SiteOrigin Page Builder and Widgets Bundle, Wordfence, WP Rocket, LiteSpeed Cache, W3 Total Cache, WPForms, Gravity Forms and Contact Form 7.
+Integrations that light up automatically: WooCommerce, Gutenberg and the Site Editor, Yoast SEO, Rank Math, All in One SEO, SEOPress, The Events Calendar (and Events Calendar Pro), Advanced Custom Fields (ACF), Elementor, Beaver Builder, SiteOrigin Page Builder and Widgets Bundle (most other page builders are supported too, through the post content and meta tools), Wordfence, WP Rocket, LiteSpeed Cache, W3 Total Cache, WPForms, Gravity Forms and Contact Form 7.
 
 = External services =
 

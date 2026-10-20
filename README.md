@@ -1,6 +1,6 @@
 # Cowboy MCP 🤠 — Free WordPress MCP Server with Undo
 
-<!-- TODO owner: Connections-tab screenshot or GIF here -->
+![The Connections tab: pick your AI app, add the site with one click or a pasted link, and sign in through your browser](https://ps.w.org/cowboy-mcp/assets/screenshot-1.png)
 
 ▶ **[Watch the 90-second demo](https://www.youtube.com/watch?v=poFkhBgzq-s)**
 
@@ -45,6 +45,8 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 | Beaver Builder / SiteOrigin | 7 / 12 | builder pages, layouts with dry-run diff, modules, global settings / layouts and row/widget edits, prebuilt layouts, widgets, settings, Widgets Bundle activation |
 | Revisions / Events | 3 / 13 | list, diff & restore post revisions / The Events Calendar events, venues, organizers + Events Calendar Pro recurrence |
 | SEO / Cache / Forms | 4 / 4 / 1 | Yoast, Rank Math, All in One SEO & SEOPress meta read/write/audit / WP Rocket, LiteSpeed, W3TC / WPForms, Gravity Forms, CF7 |
+
+Most other page builders are supported too: a builder that keeps its layout in post content or post meta is edited through the standard post tools, with the same dry run and per-change undo.
 
 Plus **17 read-only resources** (incl. `wordpress://tools/catalog`), **4 resource templates** (`wordpress://posts/{id}`, `wordpress://options/{name}`, `wordpress://plugins/{slug}`, `wordpress://users/{id}`) and **8 workflow prompts** with argument auto-completion. Integrations register only when their plugin is active.
 
