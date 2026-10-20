@@ -1772,6 +1772,7 @@ class Cowboy_MCP_Rollback {
 		$after_undo      = $type === 'db_rows'
 			? [ 'values' => self::db_rows_current_values( $row['before_state']['rows'] ?? [] ) ]
 			: self::snapshot( $type, $id );
+		$verification    = self::verify_restore( $type, $row['before_state'], $after_undo );
 		$redo_supported = ! ( $type === 'media' && $redo_action === 'delete' );
 		$redo_reason    = 'Re-creating a deleted attachment is not supported.';
 		if ( $type === 'media_file' ) {
@@ -1822,7 +1823,17 @@ class Cowboy_MCP_Rollback {
 			$note = 'Files restored to the previous version. Database changes made by the update (migrations) are NOT reverted — restore the pre-update checkpoint if the update ran migrations.';
 		}
 
+		if ( $verification['verified'] === false ) {
+			$note = trim( ( $note ? $note . ' ' : '' ) . 'Verification: the live state still differs from the captured before-state in '
+				. implode( ', ', $verification['differences'] ) . '. Inspect the object before relying on this undo.' );
+		}
 		$response = [ 'undone' => true, 'change_id' => $change_id, 'redo_change_id' => $redo_change_id, 'note' => $note ];
+		if ( $verification['verified'] !== null ) {
+			$response['verified'] = $verification['verified'];
+			if ( $verification['verified'] === false ) {
+				$response['differences'] = $verification['differences'];
+			}
+		}
 		if ( $marked === false || $marked === 0 ) {
 			$response['warning'] = 'Object restored, but the journal row could not be marked undone (possible concurrent undo).';
 		}
@@ -1981,6 +1992,56 @@ class Cowboy_MCP_Rollback {
 		// its own (e.g. TEC's shutdown re-sync) — never evidence of a later edit.
 		unset( $state['_volatile'] );
 		return hash( 'sha256', (string) wp_json_encode( self::canonical( $state ) ) );
+	}
+
+	/**
+	 * After an undo, compare the live state with the before-state it restored.
+	 * Returns [ 'verified' => bool|null, 'differences' => string[] ]; null means the
+	 * type has no comparable snapshot (raw db rows). Fields WordPress rewrites on
+	 * every save (post_modified*) and `_volatile` blobs are ignored. Advisory only:
+	 * a false never fails the undo, it is surfaced in the tool result.
+	 */
+	public static function verify_restore( string $type, ?array $expected, ?array $actual ): array {
+		if ( $type === 'db_rows' ) {
+			return [ 'verified' => null, 'differences' => [] ];
+		}
+		if ( $expected === null || $actual === null ) {
+			$ok = ( $expected === null ) === ( $actual === null );
+			return [ 'verified' => $ok, 'differences' => $ok ? [] : [ $expected === null ? 'object still exists' : 'object missing' ] ];
+		}
+		$exp = self::canonical( self::verifiable( $expected ) );
+		$act = self::canonical( self::verifiable( $actual ) );
+		if ( wp_json_encode( $exp ) === wp_json_encode( $act ) ) {
+			return [ 'verified' => true, 'differences' => [] ];
+		}
+		$diff = [];
+		foreach ( array_unique( array_merge( array_keys( $exp ), array_keys( $act ) ) ) as $k ) {
+			$e = $exp[ $k ] ?? null;
+			$a = $act[ $k ] ?? null;
+			if ( wp_json_encode( $e ) === wp_json_encode( $a ) ) {
+				continue;
+			}
+			if ( is_array( $e ) && is_array( $a ) ) {
+				foreach ( array_unique( array_merge( array_keys( $e ), array_keys( $a ) ) ) as $sk ) {
+					if ( wp_json_encode( $e[ $sk ] ?? null ) !== wp_json_encode( $a[ $sk ] ?? null ) ) {
+						$diff[] = "{$k}.{$sk}";
+					}
+				}
+			} else {
+				$diff[] = (string) $k;
+			}
+		}
+		$diff = array_slice( $diff, 0, 20 );
+		return [ 'verified' => $diff === [], 'differences' => $diff ];
+	}
+
+	/** Strip the fields a restore cannot reproduce byte-for-byte. */
+	private static function verifiable( array $state ): array {
+		unset( $state['_volatile'] );
+		if ( isset( $state['post'] ) && is_array( $state['post'] ) ) {
+			unset( $state['post']['post_modified'], $state['post']['post_modified_gmt'] );
+		}
+		return $state;
 	}
 
 	/* ── Row IO ────────────────────────────────────────────── */

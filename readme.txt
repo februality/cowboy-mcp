@@ -44,12 +44,12 @@ MCP (Model Context Protocol) is the open standard AI assistants use to work with
 * **Manage content by chat** - draft, edit, schedule, and publish posts and pages; upload media; sort categories and tags; build navigation menus.
 * **Edit pages block by block** - your agent reads any page as a Gutenberg block tree and makes surgical edits: update a heading, move a section, swap a pattern. On block themes it can edit Site Editor templates and global styles too - all undoable.
 * **Run the back office** - add and edit users, change roles, and tidy the media library: find every image missing alt text and fix it in one go.
-* **Run your store** - update WooCommerce products, prices, orders, refunds, coupons and inventory in bulk; pull sales reports.
+* **Run your store** - update WooCommerce products, prices, orders, refunds, coupons and inventory; pull sales reports.
 * **Fix things that break** - read error logs, test emails and HTTP requests, inspect hooks and REST routes, check transients and rewrite rules, and repair database tables.
 * **Do the developer stuff** - run WP-CLI commands, edit files in `wp-content`, and take site snapshots before big changes.
 * **Vibe code your site** - describe the theme tweak or feature you want; your agent writes the code, checks the error log and fixes what it broke - with undo and checkpoints behind it.
-* **Keep SEO tidy** - read, write and audit Yoast SEO, Rank Math, All in One SEO or SEOPress meta across the site with one vocabulary.
-* **Roll back a post** - list a post's revisions, see a git-style diff of what changed, and restore any revision (the restore itself is undoable).
+* **Keep SEO tidy** - read, write and audit Yoast SEO, Rank Math, All in One SEO or SEOPress meta across the site.
+* **Roll back a post** - list a post's revisions, see a git-style diff of what changed, and restore any revision.
 * **Run your events** - create and edit The Events Calendar events, venues and organizers; with Events Calendar Pro, manage recurring series and cancel single dates.
 * **Plug into the WordPress Abilities API** - every tool is also a `cowboy-mcp/*` ability, with safe mode, the audit log and undo still in front, and abilities other plugins register become tools for your agent.
 
