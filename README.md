@@ -1,21 +1,19 @@
 # Cowboy MCP 🤠 — Free WordPress MCP Server with Undo
 
-[![Watch the 90-second demo: manage WordPress by just asking](https://img.youtube.com/vi/poFkhBgzq-s/maxresdefault.jpg)](https://www.youtube.com/watch?v=poFkhBgzq-s)
+Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Gemini, Grok, Perplexity, Muse, Cursor, VS Code, Claude Code, Codex, n8n, OpenClaw, Hermes Agent** and any other MCP client can manage the site in plain English through **203 tools** — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
+
+![Version](https://img.shields.io/badge/version-1.7.4-34ff7a) ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4) ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b) ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue) [![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
+
+**Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/) (one click, auto-updates)\
+**Try it in your browser:** [Live Preview](https://wordpress.org/plugins/cowboy-mcp/?preview=1)\
+**Website & guides:** [cowboymcp.com](https://cowboymcp.com)\
+**Connect your app:** [cowboymcp.com/connect](https://cowboymcp.com/connect)\
+**Questions:** [support forum](https://wordpress.org/support/plugin/cowboy-mcp/)\
+**Bugs:** [issues](https://github.com/februality/cowboy-mcp/issues)
 
 ▶ **[Watch the 90-second demo](https://www.youtube.com/watch?v=poFkhBgzq-s)**
 
-Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Gemini, Grok, Perplexity, Muse, Cursor, VS Code, Claude Code, Codex, n8n, OpenClaw, Hermes Agent** and any other MCP client can manage the site in plain English through **203 tools** — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
-
-![Version](https://img.shields.io/badge/version-1.7.4-34ff7a)
-![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b)
-![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4)
-![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b)
-![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)
-[![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
-
-**Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/) (one click, auto-updates) · **Try it in your browser:** [Live Preview](https://wordpress.org/plugins/cowboy-mcp/?preview=1) · **Website & guides:** [cowboymcp.com](https://cowboymcp.com) · **Connect your app:** [cowboymcp.com/connect](https://cowboymcp.com/connect) · **Questions:** [support forum](https://wordpress.org/support/plugin/cowboy-mcp/) · **Bugs:** [issues](https://github.com/februality/cowboy-mcp/issues)
-
-![The Connections tab: pick your AI app, add the site with one click or a pasted link, and sign in through your browser](https://ps.w.org/cowboy-mcp/assets/screenshot-1.png)
+<a href="https://ps.w.org/cowboy-mcp/assets/screenshot-1.png"><img src="https://ps.w.org/cowboy-mcp/assets/screenshot-1.png" width="480" alt="The Connections tab: pick your AI app, add the site with one click or a pasted link, and sign in through your browser"></a>
 
 ---
 
