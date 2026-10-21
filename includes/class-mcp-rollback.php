@@ -1504,6 +1504,12 @@ class Cowboy_MCP_Rollback {
 				update_post_meta( (int) $post_id, '_thumbnail_id', $attachment_id );
 			}
 		}
+		// WordPress 7.2+ crop lineage: point the edited copies back at their original.
+		foreach ( (array) ( $refs['edited_copy_ids'] ?? [] ) as $copy_id ) {
+			if ( get_post_type( (int) $copy_id ) === 'attachment' ) {
+				update_post_meta( (int) $copy_id, '_wp_attachment_edit_root_id', $attachment_id );
+			}
+		}
 		if ( ! empty( $refs['site_icon'] ) ) {
 			update_option( 'site_icon', $attachment_id );
 		}
