@@ -1,6 +1,6 @@
 # Cowboy MCP 🤠 — Free WordPress MCP Server with Undo
 
-![The Connections tab: pick your AI app, add the site with one click or a pasted link, and sign in through your browser](https://ps.w.org/cowboy-mcp/assets/screenshot-1.png)
+[![Watch the 90-second demo: manage WordPress by just asking](https://img.youtube.com/vi/poFkhBgzq-s/maxresdefault.jpg)](https://www.youtube.com/watch?v=poFkhBgzq-s)
 
 ▶ **[Watch the 90-second demo](https://www.youtube.com/watch?v=poFkhBgzq-s)**
 
@@ -14,6 +14,8 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 [![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
 
 **Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/) (one click, auto-updates) · **Try it in your browser:** [Live Preview](https://wordpress.org/plugins/cowboy-mcp/?preview=1) · **Website & guides:** [cowboymcp.com](https://cowboymcp.com) · **Connect your app:** [cowboymcp.com/connect](https://cowboymcp.com/connect) · **Questions:** [support forum](https://wordpress.org/support/plugin/cowboy-mcp/) · **Bugs:** [issues](https://github.com/februality/cowboy-mcp/issues)
+
+![The Connections tab: pick your AI app, add the site with one click or a pasted link, and sign in through your browser](https://ps.w.org/cowboy-mcp/assets/screenshot-1.png)
 
 ---
 
