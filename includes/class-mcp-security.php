@@ -922,7 +922,7 @@ class Cowboy_MCP_Security {
     }
 
     /** wp-config constants whose exact values are redacted from WP-CLI output. */
-    private const SECRET_CONSTANTS = [ 'DB_PASSWORD', 'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT' ];
+    private const SECRET_CONSTANTS = [ 'DB_PASSWORD', 'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT', 'WP_SECRETS_KEY', 'WP_SECRETS_KEY_PREVIOUS' ];
 
     /**
      * Backstop for wp_cli output: redact what the gate cannot predict from the

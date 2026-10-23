@@ -1504,6 +1504,12 @@ class Cowboy_MCP_Rollback {
 				update_post_meta( (int) $post_id, '_thumbnail_id', $attachment_id );
 			}
 		}
+		// WordPress 7.2+ crop lineage: point the edited copies back at their original.
+		foreach ( (array) ( $refs['edited_copy_ids'] ?? [] ) as $copy_id ) {
+			if ( get_post_type( (int) $copy_id ) === 'attachment' ) {
+				update_post_meta( (int) $copy_id, '_wp_attachment_edit_root_id', $attachment_id );
+			}
+		}
 		if ( ! empty( $refs['site_icon'] ) ) {
 			update_option( 'site_icon', $attachment_id );
 		}
@@ -2002,8 +2008,14 @@ class Cowboy_MCP_Rollback {
 	 * a false never fails the undo, it is surfaced in the tool result.
 	 */
 	public static function verify_restore( string $type, ?array $expected, ?array $actual ): array {
-		if ( $type === 'db_rows' ) {
+		// db_rows has no comparable snapshot; media_file's before-state is the handler's
+		// trash bookkeeping and snapshot() returns null for it even after a good restore.
+		if ( $type === 'db_rows' || $type === 'media_file' ) {
 			return [ 'verified' => null, 'differences' => [] ];
+		}
+		// Installer rows also journal backup_zip/folder; only the version is live state.
+		if ( ( $type === 'plugin_files' || $type === 'theme_files' ) && $expected !== null ) {
+			$expected = array_intersect_key( $expected, [ 'version' => true ] );
 		}
 		if ( $expected === null || $actual === null ) {
 			$ok = ( $expected === null ) === ( $actual === null );

@@ -64,6 +64,11 @@ function cowboy_mcp_media_file_set( int $attachment_id ): array {
  * every _thumbnail_id row pointing at the attachment, so without this an undone
  * deletion returns the image but leaves the posts that used it with no featured
  * image — a silent half-undo.
+ *
+ * WordPress 7.2+ also records crop lineage: an image edited through the REST
+ * media edit endpoint is saved as a new attachment carrying the original's id in
+ * _wp_attachment_edit_root_id, and deleting the original strips that meta from
+ * every edited copy. Older cores have no such rows, so the list is just empty.
  */
 function cowboy_mcp_media_references( int $attachment_id ): array {
     global $wpdb;
@@ -72,8 +77,14 @@ function cowboy_mcp_media_references( int $attachment_id ): array {
         "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_thumbnail_id' AND meta_value = %d",
         $attachment_id
     ) );
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+    $edited_copy_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attachment_edit_root_id' AND meta_value = %d",
+        $attachment_id
+    ) );
     return [
         'thumbnail_post_ids' => array_map( 'intval', (array) $thumbnail_post_ids ),
+        'edited_copy_ids'    => array_map( 'intval', (array) $edited_copy_ids ),
         'site_icon'          => (int) get_option( 'site_icon' ) === $attachment_id,
         'custom_logo'        => (int) get_theme_mod( 'custom_logo' ) === $attachment_id,
     ];
