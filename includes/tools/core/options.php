@@ -22,11 +22,13 @@ return [
     ],
     'handlers' => [
         'wp_update_option' => function ( array $a ) {
-            $opt = (string) ( $a['option_name'] ?? '' );
-            $hard = Cowboy_MCP_Security::is_hard_protected_option( $opt );
-            if ( Cowboy_MCP_Security::is_protected_option( $opt )
-                && ( $hard || ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
-                $hint = $hard ? '' : ' An administrator can enable Power mode to allow this.';
+            $opt   = (string) ( $a['option_name'] ?? '' );
+            $block = Cowboy_MCP_Security::option_write_block( $opt );
+            if ( 'invalid' === $block ) {
+                return new WP_Error( 'invalid_option_name', 'Option names must be plain ASCII (letters, digits, punctuation).' );
+            }
+            if ( 'hard' === $block || ( 'soft' === $block && ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
+                $hint = 'hard' === $block ? '' : ' An administrator can enable Power mode to allow this.';
                 return new WP_Error( 'option_blocked', "Option '{$opt}' is protected and cannot be modified via MCP.{$hint}" );
             }
 
