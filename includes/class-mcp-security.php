@@ -45,9 +45,61 @@ class Cowboy_MCP_Security {
     /* ── Option denylist ───────────────────────────────────── */
 
     /**
+     * Whether an option/meta/transient name is plain printable ASCII once trimmed.
+     *
+     * The options table compares names with an accent-, width- and case-insensitive
+     * collation (utf8mb4_unicode_520_ci, utf8mb4_0900_ai_ci), so `cowböy_mcp_settings`,
+     * a fullwidth letter or a zero-width space selects and updates the real
+     * `cowboy_mcp_settings` row while matching none of the denylist patterns. Every
+     * name check below treats a non-plain name as protected (fail closed).
+     */
+    public static function is_plain_name( string $name ): bool {
+        return (bool) preg_match( '/^[\x20-\x7e]+$/', trim( $name ) );
+    }
+
+    /**
+     * Stored option names a write to $name binds to. The table collation, not PHP,
+     * decides which rows `WHERE option_name = %s` matches, so write gates judge these
+     * as well as the name the agent sent.
+     *
+     * @return string[]
+     */
+    public static function stored_option_names( string $name ): array {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- collation probe; must hit the table, never the options cache.
+        $rows = $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name = %s", trim( $name ) ) );
+        return array_map( 'strval', (array) $rows );
+    }
+
+    /**
+     * Why a write to option $name must be refused: 'invalid' (not plain ASCII),
+     * 'hard' (never writable), 'soft' (writable only in Power mode), or null.
+     * Checks the given name and every stored name it binds to.
+     */
+    public static function option_write_block( string $name ): ?string {
+        if ( ! self::is_plain_name( $name ) ) {
+            return 'invalid';
+        }
+        $names = array_unique( array_merge( [ $name ], self::stored_option_names( $name ) ) );
+        $block = null;
+        foreach ( $names as $candidate ) {
+            if ( self::is_hard_protected_option( $candidate ) ) {
+                return 'hard';
+            }
+            if ( self::is_protected_option( $candidate ) ) {
+                $block = 'soft';
+            }
+        }
+        return $block;
+    }
+
+    /**
      * Whether an option is protected from writes (wp_update_option, wp_woo_update_setting).
      */
     public static function is_protected_option( string $name ): bool {
+        if ( ! self::is_plain_name( $name ) ) {
+            return true;
+        }
         $name = strtolower( trim( $name ) );
         if ( in_array( $name, self::PROTECTED_OPTIONS, true ) ) {
             return true;
@@ -82,6 +134,9 @@ class Cowboy_MCP_Security {
      * template, stylesheet, cron, {prefix}user_roles, woocommerce_*_settings, …).
      */
     public static function is_hard_protected_option( string $name ): bool {
+        if ( ! self::is_plain_name( $name ) ) {
+            return true;
+        }
         $name = strtolower( trim( $name ) );
         if ( $name === 'cowboy_mcp_api_keys' || $name === 'cowboy_mcp_settings' ) {
             return true;
@@ -477,6 +532,7 @@ class Cowboy_MCP_Security {
                 $re = '/^' . strtr( preg_quote( strtolower( $w ), '/' ), [ '\\*' => '.*', '%' => '.*', '\\?' => '.' ] ) . '$/';
                 foreach ( [ 'cowboy_mcp_new_key_1', '_transient_cowboy_mcp_oauth_reg_open' ] as $ours ) {
                     if ( str_starts_with( strtolower( $w ), 'cowboy_mcp_' ) || preg_match( '/^(_site)?_transient_(timeout_)?cowboy_mcp_/i', $w )
+                        || ! self::is_plain_name( $w )
                         || ( strpbrk( $w, '*%?' ) && preg_match( $re, $ours ) ) ) {
                         return "Transient {$w} belongs to Cowboy MCP (sign-in codes, one-time keys).";
                     }
@@ -753,9 +809,14 @@ class Cowboy_MCP_Security {
         if ( 'option' === $noun || 'transient' === $noun ) {
             $verb           = isset( $positionals[1] ) ? strtolower( $positionals[1] ) : '';
             $name           = isset( $positionals[2] ) ? strtolower( $positionals[2] ) : '';
-            $own            = str_starts_with( $name, 'cowboy_mcp_' ) || (bool) preg_match( '/^(_site)?_transient_(timeout_)?cowboy_mcp_/', $name );
+            // A non-ASCII name can collate onto one of ours (see is_plain_name()).
+            $own            = str_starts_with( $name, 'cowboy_mcp_' ) || (bool) preg_match( '/^(_site)?_transient_(timeout_)?cowboy_mcp_/', $name )
+                || ( '' !== $name && ! self::is_plain_name( $name ) );
             $is_write_verb  = in_array( $verb, [ 'update', 'delete', 'add', 'set' ], true ) && $own;
-            $is_patch_touch = 'option' === $noun && $verb === 'patch' && self::cli_tokens_contain( $t['tokens'], 'cowboy_mcp_' );
+            // `option patch <action> <name> …` carries the name one slot later.
+            $patch_name     = isset( $positionals[3] ) ? (string) $positionals[3] : '';
+            $is_patch_touch = 'option' === $noun && $verb === 'patch'
+                && ( self::cli_tokens_contain( $t['tokens'], 'cowboy_mcp_' ) || ( '' !== $patch_name && ! self::is_plain_name( $patch_name ) ) );
             if ( $is_write_verb || $is_patch_touch ) {
                 return [
                     'blocked' => true,
