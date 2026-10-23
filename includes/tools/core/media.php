@@ -96,10 +96,163 @@ function cowboy_mcp_media_usage( int $attachment_id ): array {
     return $used_as;
 }
 
+/** Largest file wp_upload_media downloads from a url or a chat attachment, in bytes. */
+function cowboy_mcp_media_max_bytes(): int {
+    /**
+     * Filter the largest file wp_upload_media will download, in bytes.
+     *
+     * @param int $bytes Default 50 MB.
+     */
+    return (int) apply_filters( 'cowboy_mcp_media_max_bytes', 50 * MB_IN_BYTES );
+}
+
+/**
+ * Download $url to a temp file. Redirects are followed by hand (at most 3) so every
+ * hop passes the SSRF check, and the body streams to disk with a size cap.
+ *
+ * @param bool $chat_file A ChatGPT attachment link: the address check stays on in
+ *                        Power mode, and refusals read as an expired link.
+ * @return string|WP_Error Temp file path.
+ */
+function cowboy_mcp_media_download( string $url, string $name_hint, bool $chat_file = false ) {
+    $max       = cowboy_mcp_media_max_bytes();
+    $unguarded = ! $chat_file && Cowboy_MCP_Security::power_mode_enabled();
+
+    for ( $hop = 0; $hop <= 3; $hop++ ) {
+        $check = Cowboy_MCP_Security::validate_url_ssrf( $url, $chat_file );
+        if ( is_wp_error( $check ) ) {
+            return $check;
+        }
+
+        $tmp  = Cowboy_MCP_Compat::tempnam( $name_hint );
+        $args = [
+            'timeout'             => 30,
+            'redirection'         => 0,
+            'stream'              => true,
+            'filename'            => $tmp,
+            'limit_response_size' => $max + 1, // one byte over the cap = too large
+        ];
+        // Power mode uses the unguarded transport so internal/private addresses are reachable.
+        $response = $unguarded ? wp_remote_get( $url, $args ) : wp_safe_remote_get( $url, $args );
+        if ( is_wp_error( $response ) ) {
+            wp_delete_file( $tmp );
+            return $response;
+        }
+
+        $code     = (int) wp_remote_retrieve_response_code( $response );
+        $location = wp_remote_retrieve_header( $response, 'location' );
+        $location = (string) ( is_array( $location ) ? end( $location ) : $location );
+        if ( in_array( $code, [ 301, 302, 303, 307, 308 ], true ) && '' !== $location ) {
+            wp_delete_file( $tmp );
+            $url = WP_Http::make_absolute_url( $location, $url );
+            continue;
+        }
+        if ( 200 !== $code ) {
+            wp_delete_file( $tmp );
+            if ( $chat_file ) {
+                return new WP_Error( 'download_failed', "The chat file link was refused (HTTP {$code}). These links expire: attach the file to the chat again and retry." );
+            }
+            return new WP_Error( 'download_failed', "Failed to download URL (HTTP {$code})." );
+        }
+
+        clearstatcache( true, $tmp );
+        $size = is_file( $tmp ) ? (int) filesize( $tmp ) : 0;
+        if ( $size > $max ) {
+            wp_delete_file( $tmp );
+            return new WP_Error( 'file_too_large', sprintf( 'The file is larger than %s, the most this site downloads.', size_format( $max ) ) );
+        }
+        if ( 0 === $size ) {
+            wp_delete_file( $tmp );
+            return new WP_Error( 'download_failed', 'Downloaded file is empty.' );
+        }
+        return $tmp;
+    }
+
+    return new WP_Error( 'download_failed', 'Too many redirects.' );
+}
+
+/**
+ * File name for a chat attachment: its own name, else one derived from the MIME
+ * type or the content. Never the download URL, which is an opaque signed link.
+ */
+function cowboy_mcp_media_chat_filename( array $file, string $tmp ): string {
+    $name = sanitize_file_name( wp_basename( (string) ( $file['file_name'] ?? '' ) ) );
+    if ( '' === pathinfo( $name, PATHINFO_EXTENSION ) ) {
+        $mime = (string) ( $file['mime_type'] ?? '' );
+        if ( '' === $mime || 'application/octet-stream' === $mime ) {
+            $mime = (string) wp_get_image_mime( $tmp );
+        }
+        $ext  = '' !== $mime ? wp_get_default_extension_for_mime_type( $mime ) : false;
+        $name = ( '' !== $name ? $name : 'upload' ) . ( $ext ? ".{$ext}" : '' );
+    }
+    return $name;
+}
+
+/**
+ * Optionally resize and/or convert an image before it enters the library
+ * (convert_to, max_width, max_height, quality). Uses core's WP_Image_Editor.
+ *
+ * @return array{0:string,1:string}|WP_Error [temp path, file name].
+ */
+function cowboy_mcp_media_process_image( string $tmp, string $name, array $a ) {
+    $convert = (string) ( $a['convert_to'] ?? '' );
+    $max_w   = max( 0, (int) ( $a['max_width'] ?? 0 ) );
+    $max_h   = max( 0, (int) ( $a['max_height'] ?? 0 ) );
+    $quality = (int) ( $a['quality'] ?? 0 );
+    if ( '' === $convert && ! $max_w && ! $max_h && ! $quality ) {
+        return [ $tmp, $name ];
+    }
+
+    $mime = wp_get_image_mime( $tmp );
+    if ( ! $mime ) {
+        return new WP_Error( 'not_an_image', 'convert_to, max_width, max_height and quality apply to images only.' );
+    }
+    $target = match ( $convert ) {
+        ''      => $mime,
+        'jpeg'  => 'image/jpeg',
+        'png'   => 'image/png',
+        'webp'  => 'image/webp',
+        'avif'  => 'image/avif',
+        default => null,
+    };
+    if ( null === $target ) {
+        return new WP_Error( 'invalid_params', 'convert_to must be jpeg, png, webp or avif.' );
+    }
+    if ( ! wp_image_editor_supports( [ 'mime_type' => $target ] ) ) {
+        return new WP_Error( 'convert_unsupported', "This server's image library cannot write {$target}." );
+    }
+
+    $editor = wp_get_image_editor( $tmp );
+    if ( is_wp_error( $editor ) ) {
+        return $editor;
+    }
+    $editor->maybe_exif_rotate();
+    $size = $editor->get_size();
+    if ( ( $max_w && $size['width'] > $max_w ) || ( $max_h && $size['height'] > $max_h ) ) {
+        $resized = $editor->resize( $max_w ?: null, $max_h ?: null, false );
+        if ( is_wp_error( $resized ) ) {
+            return $resized;
+        }
+    }
+    if ( $quality ) {
+        $editor->set_quality( min( 100, max( 1, $quality ) ) );
+    }
+
+    $ext   = wp_get_default_extension_for_mime_type( $target ) ?: 'img';
+    $saved = $editor->save( get_temp_dir() . 'cmcp-' . wp_generate_password( 8, false ) . '.' . $ext, $target );
+    if ( is_wp_error( $saved ) ) {
+        return $saved;
+    }
+    wp_delete_file( $tmp );
+    $base = preg_replace( '/\.[^.]*$/', '', $name );
+    return [ $saved['path'], ( '' !== $base ? $base : 'upload' ) . '.' . pathinfo( $saved['path'], PATHINFO_EXTENSION ) ];
+}
+
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_upload_media', '[Media] Upload a media file from base64 data or a remote URL.', [
-            'source_type'  => [ 'type' => 'string',  'description' => 'Source type: base64 or url', 'required' => true, 'enum' => [ 'base64', 'url' ] ],
+        Cowboy_MCP_Tools::tool( 'wp_upload_media', '[Media] Upload a media file from a ChatGPT chat attachment, a remote URL, or base64 data. Images can be resized and converted (jpeg, png, webp, avif) on the way in. ChatGPT: pass the attached file as cowboy_run\'s top-level file input, not inside arguments.', [
+            'source_type'  => [ 'type' => 'string',  'description' => 'Where the file comes from: file (a ChatGPT chat attachment), url, or base64. Inferred from which of file, url or data is given.', 'enum' => [ 'file', 'url', 'base64' ] ],
+            'file'         => [ 'type' => 'object',  'description' => 'A file attached in the ChatGPT conversation', 'properties' => Cowboy_MCP_Tools::file_param_properties(), 'required' => [ 'download_url', 'file_id' ] ],
             'data'         => [ 'type' => 'string',  'description' => 'Base64-encoded file data (when source_type is base64)' ],
             'url'          => [ 'type' => 'string',  'description' => 'Remote URL to download (when source_type is url)' ],
             'filename'     => [ 'type' => 'string',  'description' => 'Desired filename (required for base64)' ],
@@ -108,6 +261,10 @@ return [
             'caption'      => [ 'type' => 'string',  'description' => 'Attachment caption' ],
             'description'  => [ 'type' => 'string',  'description' => 'Attachment description' ],
             'post_id'      => [ 'type' => 'integer', 'description' => 'Parent post ID to attach to' ],
+            'convert_to'   => [ 'type' => 'string',  'description' => 'Images only: convert to this format', 'enum' => [ 'jpeg', 'png', 'webp', 'avif' ] ],
+            'max_width'    => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this width in pixels (keeps aspect ratio)', 'minimum' => 1 ],
+            'max_height'   => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this height in pixels (keeps aspect ratio)', 'minimum' => 1 ],
+            'quality'      => [ 'type' => 'integer', 'description' => 'Images only: encoder quality 1-100 for jpeg/webp/avif', 'minimum' => 1, 'maximum' => 100 ],
         ], [
             'title'           => 'Upload Media',
             'readOnlyHint'    => false,
@@ -164,55 +321,55 @@ return [
     'handlers' => [
         'wp_upload_media' => function ( array $a ) {
 
-            $source_type = $a['source_type'];
-            $post_id     = (int) ( $a['post_id'] ?? 0 );
+            $post_id = (int) ( $a['post_id'] ?? 0 );
+            $file    = $a['file'] ?? null;
+            if ( is_string( $file ) ) {
+                $file = json_decode( $file, true ); // some clients send the object as JSON text
+            }
+            $source_type = (string) ( $a['source_type'] ?? '' );
+            if ( '' === $source_type ) {
+                $source_type = match ( true ) {
+                    ! empty( $file )      => 'file',
+                    ! empty( $a['url'] )  => 'url',
+                    ! empty( $a['data'] ) => 'base64',
+                    default               => '',
+                };
+            }
 
-            if ( $source_type === 'url' ) {
+            if ( $source_type === 'file' ) {
+                if ( ! is_array( $file ) ) {
+                    return new WP_Error( 'missing_file', 'file is required when source_type is file (a ChatGPT attachment with download_url and file_id).' );
+                }
+                $download = trim( (string) ( $file['download_url'] ?? '' ) );
+                if ( '' === $download ) {
+                    return new WP_Error( 'missing_file', 'The attachment arrived without a download link. Attach the file to the chat again, or pass a public url instead.' );
+                }
+                if ( ! preg_match( '#^https?://#i', $download ) ) {
+                    return new WP_Error( 'invalid_file', "'{$download}' is a path inside ChatGPT's code sandbox, not a file this site can download. Attach the file to the chat message itself, then pass it as cowboy_run's file input." );
+                }
+
+                $tmp = cowboy_mcp_media_download( $download, (string) ( $file['file_name'] ?? 'upload' ), true );
+                if ( is_wp_error( $tmp ) ) {
+                    return $tmp;
+                }
+                $filename = ! empty( $a['filename'] ) ? sanitize_file_name( $a['filename'] ) : cowboy_mcp_media_chat_filename( $file, $tmp );
+                // Chat attachments are arbitrary user files: refuse types a browser
+                // would run, even where a plugin lets the media library accept them.
+                if ( preg_match( '/\.(svgz?|x?html?|xml|m?js|css|php\d*|phtml|phar)$/i', $filename ) ) {
+                    wp_delete_file( $tmp );
+                    return new WP_Error( 'invalid_type', 'SVG, HTML, XML, JavaScript, CSS and PHP files are not accepted from a chat attachment.' );
+                }
+            } elseif ( $source_type === 'url' ) {
                 if ( empty( $a['url'] ) ) {
                     return new WP_Error( 'missing_url', 'URL is required when source_type is url.' );
                 }
-
-                // SSRF protection: only allow http/https and reject private/internal IPs.
-                $url       = esc_url_raw( $a['url'] );
-                $ssrf_check = Cowboy_MCP_Security::validate_url_ssrf( $url );
-                if ( is_wp_error( $ssrf_check ) ) {
-                    return $ssrf_check;
+                $url      = esc_url_raw( $a['url'] );
+                $url_name = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) ) ?: 'download';
+                $tmp      = cowboy_mcp_media_download( $url, $url_name );
+                if ( is_wp_error( $tmp ) ) {
+                    return $tmp;
                 }
-
-                // Use wp_safe_remote_get() for built-in SSRF protection; Power mode uses the
-                // unguarded transport so internal/private addresses are reachable.
-                $response = Cowboy_MCP_Security::power_mode_enabled()
-                    ? wp_remote_get( $url, [ 'timeout' => 30 ] )
-                    : wp_safe_remote_get( $url, [ 'timeout' => 30 ] );
-                if ( is_wp_error( $response ) ) return $response;
-
-                $response_code = wp_remote_retrieve_response_code( $response );
-                if ( $response_code !== 200 ) {
-                    return new WP_Error( 'download_failed', "Failed to download URL (HTTP {$response_code})." );
-                }
-
-                $body = wp_remote_retrieve_body( $response );
-                if ( empty( $body ) ) {
-                    return new WP_Error( 'download_failed', 'Downloaded file is empty.' );
-                }
-
-                $tmp = Cowboy_MCP_Compat::tempnam( basename( wp_parse_url( $a['url'], PHP_URL_PATH ) ) ?: 'download' );
-                if ( file_put_contents( $tmp, $body ) === false ) {
-                    wp_delete_file( $tmp );
-                    return new WP_Error( 'write_failed', 'Failed to write downloaded file to temp location.' );
-                }
-
-                $filename   = $a['filename'] ?? basename( wp_parse_url( $a['url'], PHP_URL_PATH ) ) ?: 'download';
-                $file_array = [
-                    'name'     => sanitize_file_name( $filename ),
-                    'tmp_name' => $tmp,
-                ];
-
-                $attachment_id = Cowboy_MCP_Compat::handle_sideload( $file_array, $post_id );
-                if ( is_wp_error( $attachment_id ) ) {
-                    wp_delete_file( $tmp );
-                    return $attachment_id;
-                }
+                $filename = sanitize_file_name( $a['filename'] ?? $url_name );
             } elseif ( $source_type === 'base64' ) {
                 if ( empty( $a['data'] ) ) {
                     return new WP_Error( 'missing_data', 'Base64 data is required when source_type is base64.' );
@@ -231,19 +388,22 @@ return [
                     wp_delete_file( $tmp );
                     return new WP_Error( 'write_failed', 'Failed to write decoded data to temp location.' );
                 }
-
-                $file_array = [
-                    'name'     => sanitize_file_name( $a['filename'] ),
-                    'tmp_name' => $tmp,
-                ];
-
-                $attachment_id = Cowboy_MCP_Compat::handle_sideload( $file_array, $post_id );
-                if ( is_wp_error( $attachment_id ) ) {
-                    wp_delete_file( $tmp );
-                    return $attachment_id;
-                }
+                $filename = sanitize_file_name( $a['filename'] );
             } else {
-                return new WP_Error( 'invalid_source', "source_type must be 'base64' or 'url'." );
+                return new WP_Error( 'invalid_source', 'Pass a file (ChatGPT attachment), a url, or base64 data with a filename.' );
+            }
+
+            $processed = cowboy_mcp_media_process_image( $tmp, $filename, $a );
+            if ( is_wp_error( $processed ) ) {
+                wp_delete_file( $tmp );
+                return $processed;
+            }
+            [ $tmp, $filename ] = $processed;
+
+            $attachment_id = Cowboy_MCP_Compat::handle_sideload( [ 'name' => $filename, 'tmp_name' => $tmp ], $post_id );
+            if ( is_wp_error( $attachment_id ) ) {
+                wp_delete_file( $tmp );
+                return $attachment_id;
             }
 
             // Set optional metadata.
@@ -258,11 +418,15 @@ return [
                 update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $a['alt_text'] ) );
             }
 
+            $meta = wp_get_attachment_metadata( $attachment_id );
             return [
                 'created'       => true,
                 'attachment_id' => $attachment_id,
                 'url'           => wp_get_attachment_url( $attachment_id ),
                 'filename'      => basename( get_attached_file( $attachment_id ) ),
+                'mime_type'     => get_post_mime_type( $attachment_id ),
+                'width'         => isset( $meta['width'] ) ? (int) $meta['width'] : null,
+                'height'        => isset( $meta['height'] ) ? (int) $meta['height'] : null,
             ];
         },
 

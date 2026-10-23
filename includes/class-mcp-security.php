@@ -1027,9 +1027,10 @@ class Cowboy_MCP_Security {
      * (all A + AAAA records) must be public. Rejects private, reserved, loopback,
      * link-local (cloud metadata 169.254.0.0/16) and unique-local addresses.
      *
+     * @param bool $always Keep the address check on in Power mode (chat file links).
      * @return bool|WP_Error
      */
-    public static function validate_url_ssrf( string $url ): bool|WP_Error {
+    public static function validate_url_ssrf( string $url, bool $always = false ): bool|WP_Error {
         $scheme = wp_parse_url( $url, PHP_URL_SCHEME );
         if ( ! in_array( $scheme, [ 'http', 'https' ], true ) ) {
             return new WP_Error( 'invalid_scheme', 'Only http and https URLs are allowed.' );
@@ -1038,7 +1039,7 @@ class Cowboy_MCP_Security {
         // Power mode lifts the private/reserved-IP rejection. Scheme validation (above)
         // still applies; the transport is also switched to the unguarded variant at the
         // call sites so WordPress does not re-block the request.
-        if ( self::power_mode_enabled() ) {
+        if ( ! $always && self::power_mode_enabled() ) {
             return true;
         }
 

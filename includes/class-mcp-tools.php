@@ -236,10 +236,24 @@ class Cowboy_MCP_Tools {
             if ( $inner_tool === 'cowboy_run' || $inner_tool === 'cowboy_discover' ) {
                 return new WP_Error( 'invalid_params', 'Cannot invoke gateway meta-tools through cowboy_run.', [ 'code' => -32602 ] );
             }
+            $inner_args = $args['arguments'] ?? [];
+            // ChatGPT fills `openai/fileParams` only on top-level inputs of a listed tool,
+            // so a file attached in the chat arrives on cowboy_run itself. Hand it to an
+            // inner tool that takes a `file` input (wp_upload_media).
+            if ( isset( $args['file'] ) && '' !== $args['file'] ) {
+                if ( ! isset( self::$tool_map[ $inner_tool ]['inputSchema']['properties']['file'] ) ) {
+                    return new WP_Error( 'invalid_params', "The file input is only accepted with tool=wp_upload_media, not {$inner_tool}.", [ 'code' => -32602 ] );
+                }
+                $inner_args         = is_array( $inner_args ) ? $inner_args : [];
+                $inner_args['file'] = $args['file'];
+                if ( 'wp_upload_media' === $inner_tool && empty( $inner_args['source_type'] ) ) {
+                    $inner_args['source_type'] = 'file';
+                }
+            }
             $log_id = self::mcp_log( 'tool_call', [ 'tool' => 'cowboy_run', 'inner_tool' => $inner_tool ] );
             $result = self::call_tool( [
                 'name'      => $inner_tool,
-                'arguments' => $args['arguments'] ?? [],
+                'arguments' => $inner_args,
             ] );
             Cowboy_MCP_Audit_Log::set_result( $log_id, self::result_status( $result ) );
             return $result;
@@ -795,6 +809,12 @@ class Cowboy_MCP_Tools {
                         'type'        => 'object',
                         'description' => "Tool arguments per the tool's inputSchema",
                     ],
+                    'file' => [
+                        'type'        => 'object',
+                        'description' => 'A file the user attached in the chat (ChatGPT). Only with tool="wp_upload_media"; put title, alt_text, post_id and resize options in arguments.',
+                        'properties'  => self::file_param_properties(),
+                        'required'    => [ 'download_url', 'file_id' ],
+                    ],
                 ],
                 [
                     'readOnlyHint'    => false,
@@ -802,7 +822,20 @@ class Cowboy_MCP_Tools {
                     'idempotentHint'  => false,
                     'openWorldHint'   => true,
                 ]
-            ),
+            ) + [ '_meta' => [ 'openai/fileParams' => [ 'file' ] ] ],
+        ];
+    }
+
+    /**
+     * Properties of an `openai/fileParams` file object. OpenAI's Apps SDK requires
+     * all four to be declared; ChatGPT always sends download_url and file_id.
+     */
+    public static function file_param_properties(): array {
+        return [
+            'download_url' => [ 'type' => 'string', 'description' => 'Temporary download link ChatGPT provides for the file' ],
+            'file_id'      => [ 'type' => 'string', 'description' => 'ChatGPT file id' ],
+            'mime_type'    => [ 'type' => 'string', 'description' => 'MIME type, e.g. image/png' ],
+            'file_name'    => [ 'type' => 'string', 'description' => 'Original file name' ],
         ];
     }
 
