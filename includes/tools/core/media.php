@@ -96,6 +96,26 @@ function cowboy_mcp_media_usage( int $attachment_id ): array {
     return $used_as;
 }
 
+/** Input properties of wp_upload_media (also the allowlist its handler checks). */
+function cowboy_mcp_media_upload_properties(): array {
+    return [
+        'source_type'  => [ 'type' => 'string',  'description' => 'Where the file comes from: file (a ChatGPT chat attachment), url, or base64. Inferred from which of file, url or data is given.', 'enum' => [ 'file', 'url', 'base64' ] ],
+        'file'         => [ 'type' => 'object',  'description' => 'A file attached in the ChatGPT conversation', 'properties' => Cowboy_MCP_Tools::file_param_properties(), 'required' => [ 'download_url', 'file_id' ] ],
+        'data'         => [ 'type' => 'string',  'description' => 'Base64-encoded file data (when source_type is base64)' ],
+        'url'          => [ 'type' => 'string',  'description' => 'Remote URL to download (when source_type is url)' ],
+        'filename'     => [ 'type' => 'string',  'description' => 'Desired filename (required for base64)' ],
+        'title'        => [ 'type' => 'string',  'description' => 'Attachment title' ],
+        'alt_text'     => [ 'type' => 'string',  'description' => 'Image alt text' ],
+        'caption'      => [ 'type' => 'string',  'description' => 'Attachment caption' ],
+        'description'  => [ 'type' => 'string',  'description' => 'Attachment description' ],
+        'post_id'      => [ 'type' => 'integer', 'description' => 'Parent post ID to attach to' ],
+        'convert_to'   => [ 'type' => 'string',  'description' => 'Images only: convert to this format', 'enum' => [ 'jpeg', 'png', 'webp', 'avif' ] ],
+        'max_width'    => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this width in pixels (keeps aspect ratio)', 'minimum' => 1 ],
+        'max_height'   => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this height in pixels (keeps aspect ratio)', 'minimum' => 1 ],
+        'quality'      => [ 'type' => 'integer', 'description' => 'Images only: encoder quality 1-100 for jpeg/webp/avif', 'minimum' => 1, 'maximum' => 100 ],
+    ];
+}
+
 /** Largest file wp_upload_media downloads from a url or a chat attachment, in bytes. */
 function cowboy_mcp_media_max_bytes(): int {
     /**
@@ -250,22 +270,7 @@ function cowboy_mcp_media_process_image( string $tmp, string $name, array $a ) {
 
 return [
     'tools' => [
-        Cowboy_MCP_Tools::tool( 'wp_upload_media', '[Media] Upload a media file from a ChatGPT chat attachment, a remote URL, or base64 data. Images can be resized and converted (jpeg, png, webp, avif) on the way in. ChatGPT: pass the attached file as cowboy_run\'s top-level file input, not inside arguments.', [
-            'source_type'  => [ 'type' => 'string',  'description' => 'Where the file comes from: file (a ChatGPT chat attachment), url, or base64. Inferred from which of file, url or data is given.', 'enum' => [ 'file', 'url', 'base64' ] ],
-            'file'         => [ 'type' => 'object',  'description' => 'A file attached in the ChatGPT conversation', 'properties' => Cowboy_MCP_Tools::file_param_properties(), 'required' => [ 'download_url', 'file_id' ] ],
-            'data'         => [ 'type' => 'string',  'description' => 'Base64-encoded file data (when source_type is base64)' ],
-            'url'          => [ 'type' => 'string',  'description' => 'Remote URL to download (when source_type is url)' ],
-            'filename'     => [ 'type' => 'string',  'description' => 'Desired filename (required for base64)' ],
-            'title'        => [ 'type' => 'string',  'description' => 'Attachment title' ],
-            'alt_text'     => [ 'type' => 'string',  'description' => 'Image alt text' ],
-            'caption'      => [ 'type' => 'string',  'description' => 'Attachment caption' ],
-            'description'  => [ 'type' => 'string',  'description' => 'Attachment description' ],
-            'post_id'      => [ 'type' => 'integer', 'description' => 'Parent post ID to attach to' ],
-            'convert_to'   => [ 'type' => 'string',  'description' => 'Images only: convert to this format', 'enum' => [ 'jpeg', 'png', 'webp', 'avif' ] ],
-            'max_width'    => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this width in pixels (keeps aspect ratio)', 'minimum' => 1 ],
-            'max_height'   => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this height in pixels (keeps aspect ratio)', 'minimum' => 1 ],
-            'quality'      => [ 'type' => 'integer', 'description' => 'Images only: encoder quality 1-100 for jpeg/webp/avif', 'minimum' => 1, 'maximum' => 100 ],
-        ], [
+        Cowboy_MCP_Tools::tool( 'wp_upload_media', '[Media] Upload a media file from a ChatGPT chat attachment, a remote URL, or base64 data. Images can be resized and converted (jpeg, png, webp, avif) on the way in. ChatGPT: pass the attached file as cowboy_run\'s top-level file input, not inside arguments.', cowboy_mcp_media_upload_properties(), [
             'title'           => 'Upload Media',
             'readOnlyHint'    => false,
             'destructiveHint' => false,
@@ -320,6 +325,18 @@ return [
     ],
     'handlers' => [
         'wp_upload_media' => function ( array $a ) {
+
+            // Unknown arguments would be dropped silently (a model that sends
+            // `format: "webp"` would get an unconverted file and report success).
+            $valid   = array_merge( array_keys( cowboy_mcp_media_upload_properties() ), [ 'dry_run', 'confirm' ] );
+            $unknown = array_diff( array_keys( $a ), $valid );
+            if ( $unknown ) {
+                return new WP_Error( 'invalid_params', sprintf(
+                    'Unknown argument(s): %s. wp_upload_media accepts: %s. Use convert_to for the format and max_width / max_height for the size.',
+                    implode( ', ', $unknown ),
+                    implode( ', ', array_diff( $valid, [ 'dry_run', 'confirm' ] ) )
+                ) );
+            }
 
             $post_id = (int) ( $a['post_id'] ?? 0 );
             $file    = $a['file'] ?? null;
