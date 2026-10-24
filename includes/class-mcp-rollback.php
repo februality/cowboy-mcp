@@ -1770,7 +1770,8 @@ class Cowboy_MCP_Rollback {
 			$pre_undo     = self::snapshot( $type, $id );
 			$current_hash = self::state_hash( $pre_undo );
 		}
-		if ( ! $force && $row['after_hash'] !== null && $row['after_hash'] !== '' && $current_hash !== $row['after_hash'] ) {
+		if ( ! $force && $row['after_hash'] !== null && $row['after_hash'] !== '' && $current_hash !== $row['after_hash']
+			&& ! self::legacy_ping_hash_matches( $type, $pre_undo, (string) $row['after_hash'] ) ) {
 			return new WP_Error(
 				'undo_conflict',
 				"Conflict: '{$row['object_label']}' ({$type} {$id}) has been modified since change #{$change_id} was made. "
@@ -2010,6 +2011,32 @@ class Cowboy_MCP_Rollback {
 			unset( $v );
 		}
 		return $state;
+	}
+
+	/**
+	 * Journal rows written before 1.7.5 hashed post snapshots WITH core's ping queue
+	 * (PING_META). Core always stores both keys as a single '1', so the four
+	 * combinations cover every after_hash such a row can hold: no false conflict
+	 * after the upgrade, while a real edit still changes all four hashes.
+	 */
+	private static function legacy_ping_hash_matches( string $type, ?array $live, string $after_hash ): bool {
+		if ( $live === null || ( $type !== 'post' && $type !== 'tec_event' ) ) {
+			return false;
+		}
+		foreach ( [ [ '_encloseme' ], [ '_pingme' ], self::PING_META ] as $keys ) {
+			$state = $live;
+			foreach ( $keys as $k ) {
+				if ( $type === 'tec_event' ) {
+					$state['post']['meta'][ $k ] = [ '1' ];
+				} else {
+					$state['meta'][ $k ] = [ '1' ];
+				}
+			}
+			if ( hash_equals( $after_hash, self::state_hash( $state ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** sha256 of canonical JSON; null (absent object) → ABSENT_HASH sentinel. */

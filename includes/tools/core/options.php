@@ -25,7 +25,7 @@ return [
             $opt   = (string) ( $a['option_name'] ?? '' );
             $block = Cowboy_MCP_Security::option_write_block( $opt );
             if ( 'invalid' === $block ) {
-                return new WP_Error( 'invalid_option_name', 'Option names must be plain ASCII (letters, digits, punctuation).' );
+                return new WP_Error( 'invalid_option_name', 'Option names must be plain ASCII (letters, digits, punctuation), at most 191 characters.' );
             }
             if ( 'hard' === $block || ( 'soft' === $block && ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
                 $hint = 'hard' === $block ? '' : ' An administrator can enable Power mode to allow this.';

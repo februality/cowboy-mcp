@@ -296,7 +296,7 @@ return [
             // gateway's secret key or endpoint to an attacker-controlled value).
             $block = Cowboy_MCP_Security::option_write_block( $key );
             if ( 'invalid' === $block ) {
-                return new WP_Error( 'invalid_option_name', 'Setting keys must be plain ASCII (letters, digits, punctuation).' );
+                return new WP_Error( 'invalid_option_name', 'Setting keys must be plain ASCII (letters, digits, punctuation), at most 191 characters.' );
             }
             if ( 'hard' === $block || ( 'soft' === $block && ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
                 return new WP_Error( 'protected', "Setting '{$key}' is protected and cannot be modified via MCP." );

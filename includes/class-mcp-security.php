@@ -54,7 +54,11 @@ class Cowboy_MCP_Security {
      * name check below treats a non-plain name as protected (fail closed).
      */
     public static function is_plain_name( string $name ): bool {
-        return (bool) preg_match( '/^[\x20-\x7e]+$/', trim( $name ) );
+        $name = trim( $name );
+        // Longer than wp_options.option_name (191): wpdb turns strict mode off, so MySQL
+        // cuts the name on save, and a PAD SPACE collation then matches `default_role`
+        // + spaces + `x` against the real `default_role` row (overwritten in wp-env).
+        return strlen( $name ) <= 191 && (bool) preg_match( '/^[\x20-\x7e]+$/', $name );
     }
 
     /**
