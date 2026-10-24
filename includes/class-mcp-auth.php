@@ -74,6 +74,10 @@ class Cowboy_MCP_Auth {
             'last_used' => null,
             'prefix'   => substr( $raw_key, 0, 8 ),  // visible prefix for identification
         ];
+        // Who made it: on multisite a key only works while its creator is a super admin.
+        if ( get_current_user_id() > 0 ) {
+            $record['created_by'] = get_current_user_id();
+        }
 
         $sanitized_scope = self::sanitize_scope( $scope );
         if ( null !== $sanitized_scope ) {
@@ -296,6 +300,19 @@ class Cowboy_MCP_Auth {
                 if ( ! self::check_rate_limit( $id, $settings['rate_limit'] ?? 120 ) ) {
                     self::log( 'rate_limit_exceeded', self::$current_key_context );
                     return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
+                }
+
+                // Multisite: wp_cli, the file tools and checkpoints reach the whole network,
+                // so a key must have been made by a super admin, and it runs as that user.
+                // Keys from before created_by existed (or from WP-CLI) fail closed there.
+                if ( is_multisite() ) {
+                    $creator = (int) ( $record['created_by'] ?? 0 );
+                    if ( $creator <= 0 || ! Cowboy_MCP_Security::user_is_plugin_admin( $creator ) ) {
+                        self::log( 'auth_key_not_network_admin', self::$current_key_context );
+                        return new WP_Error( 'mcp_unauthorized', 'On multisite, API keys must be created by a network administrator. Create a new key in Settings > Cowboy MCP.', [ 'status' => 401 ] );
+                    }
+                    wp_set_current_user( $creator );
+                    return true;
                 }
 
                 // Set current user to admin so WP capabilities work.

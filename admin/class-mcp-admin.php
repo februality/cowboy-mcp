@@ -32,7 +32,7 @@ class Cowboy_MCP_Admin {
         add_options_page(
             __( 'Cowboy MCP', 'cowboy-mcp' ),
             __( 'Cowboy MCP', 'cowboy-mcp' ),
-            'manage_options',
+            Cowboy_MCP_Security::admin_capability(),
             self::SLUG,
             [ __CLASS__, 'render_page' ]
         );
@@ -46,7 +46,7 @@ class Cowboy_MCP_Admin {
         }
         delete_transient( 'cowboy_mcp_activation_redirect' );
 
-        if ( ! current_user_can( 'manage_options' ) || wp_doing_ajax() ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) || wp_doing_ajax() ) {
             return;
         }
         // Never hijack a bulk "activate selected plugins" action.
@@ -70,7 +70,7 @@ class Cowboy_MCP_Admin {
      * again even if nobody clicked the ×.
      */
     private static function setup_notice_due(): bool {
-        if ( ! get_option( 'cowboy_mcp_setup_notice' ) || ! current_user_can( 'manage_options' ) ) {
+        if ( ! get_option( 'cowboy_mcp_setup_notice' ) || ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             return false;
         }
         $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -99,7 +99,7 @@ class Cowboy_MCP_Admin {
 
     public static function ajax_dismiss_setup_notice(): void {
         check_ajax_referer( 'cowboy_mcp_dismiss_setup_notice' );
-        if ( current_user_can( 'manage_options' ) ) {
+        if ( current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             delete_option( 'cowboy_mcp_setup_notice' );
         }
         wp_die();
@@ -107,7 +107,7 @@ class Cowboy_MCP_Admin {
 
     public static function ajax_dismiss_blocked(): void {
         check_ajax_referer( 'cowboy_mcp_dismiss_blocked' );
-        if ( current_user_can( 'manage_options' ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
+        if ( current_user_can( Cowboy_MCP_Security::admin_capability() ) && class_exists( 'Cowboy_MCP_OAuth' ) ) {
             Cowboy_MCP_OAuth::clear_blocked_attempts();
         }
         wp_die();
@@ -115,7 +115,7 @@ class Cowboy_MCP_Admin {
 
     public static function ajax_connect_status(): void {
         check_ajax_referer( 'cowboy_mcp_connect_status' );
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             wp_send_json_error( null, 403 );
         }
         $w = Cowboy_MCP_Admin_Connections::connect_watch();
@@ -136,7 +136,7 @@ class Cowboy_MCP_Admin {
      */
     public static function ajax_start_connect(): void {
         check_ajax_referer( 'cowboy_mcp_start_connect' );
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             wp_send_json_error( null, 403 );
         }
         $client = sanitize_key( wp_unslash( $_POST['client'] ?? '' ) );
@@ -275,7 +275,7 @@ class Cowboy_MCP_Admin {
 
     public static function ajax_dismiss_new_key(): void {
         check_ajax_referer( 'cowboy_mcp_dismiss_new_key' );
-        if ( current_user_can( 'manage_options' ) ) {
+        if ( current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             delete_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
         }
         wp_die();
@@ -285,7 +285,7 @@ class Cowboy_MCP_Admin {
 
     public static function ajax_set_conn_client(): void {
         check_ajax_referer( 'cowboy_mcp_set_conn_client' );
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             wp_die( '', '', 403 );
         }
         $client = sanitize_text_field( wp_unslash( $_POST['client'] ?? '' ) );
@@ -304,7 +304,7 @@ class Cowboy_MCP_Admin {
     /* ── Action handler (key gen / revoke / settings / audit log) ── */
 
     public static function handle_actions(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             return;
         }
 

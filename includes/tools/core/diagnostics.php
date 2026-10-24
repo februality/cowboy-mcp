@@ -545,7 +545,7 @@ return [
 								'name'    => $name,
 								'value'   => Cowboy_MCP_Security::is_sensitive_option( $name )
 									? '[REDACTED]'
-									: ( is_string( $value ) ? mb_substr( $value, 0, 500 ) : $value ),
+									: Cowboy_MCP_Security::redact_option_value( is_string( $value ) ? mb_substr( $value, 0, 500 ) : $value ),
 								'expires' => $timeout ? gmdate( 'Y-m-d H:i:s', (int) $timeout ) : 'permanent',
 							];
 						}, $rows ?: [] ),
@@ -579,7 +579,7 @@ return [
 								'name'    => $name,
 								'value'   => Cowboy_MCP_Security::is_sensitive_option( $name )
 									? '[REDACTED]'
-									: ( is_string( $value ) ? mb_substr( $value, 0, 500 ) : $value ),
+									: Cowboy_MCP_Security::redact_option_value( is_string( $value ) ? mb_substr( $value, 0, 500 ) : $value ),
 								'expires' => $timeout ? gmdate( 'Y-m-d H:i:s', (int) $timeout ) : 'permanent',
 							];
 						}, $rows ?: [] ),

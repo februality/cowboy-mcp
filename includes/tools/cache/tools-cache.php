@@ -222,7 +222,8 @@ return [
             return [
                 'provider' => $provider['provider'],
                 'version'  => $provider['version'],
-                'settings' => $settings,
+                // Licence keys and CDN / Cloudflare credentials live in these blobs.
+                'settings' => Cowboy_MCP_Security::redact_option_value( $settings ),
             ];
         },
     ],

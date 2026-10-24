@@ -12,6 +12,58 @@ function cowboy_mcp_acf_normalize_object_id( string $id ) {
 }
 
 /**
+ * Refuse ACF value writes that land on storage the other tools protect.
+ *
+ * ACF stores a value under the field's NAME whether or not the field is registered
+ * (and the agent can register one through wp_acf_create_field_group), so the name is
+ * judged as the raw meta key / option name it becomes:
+ *  - options pages and any unrecognised string object id write option `{id}_{name}`
+ *    → the option write gate (hard-protected never, the soft list only in Power mode);
+ *  - users → no role/capability/level keys and nothing is_blocked_meta_key() refuses;
+ *  - posts, terms, comments → is_blocked_meta_key().
+ */
+function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error {
+    $name = $field_name;
+    if ( function_exists( 'acf_get_field' ) ) {
+        $field = acf_get_field( $field_name );
+        if ( is_array( $field ) && ! empty( $field['name'] ) ) {
+            $name = (string) $field['name'];
+        }
+    }
+
+    if ( function_exists( 'acf_decode_post_id' ) ) {
+        $decoded = acf_decode_post_id( $object_id );
+        $type    = (string) ( $decoded['type'] ?? 'post' );
+        $id      = $decoded['id'] ?? $object_id;
+    } else {
+        $type = is_int( $object_id ) ? 'post' : 'option';
+        $id   = $object_id;
+        if ( is_string( $object_id ) && preg_match( '/^(user|term|comment)_(\d+)$/', $object_id, $m ) ) {
+            $type = $m[1];
+            $id   = (int) $m[2];
+        }
+    }
+
+    if ( 'option' === $type ) {
+        $option = $id . '_' . $name;
+        $block  = Cowboy_MCP_Security::option_write_block( $option );
+        if ( 'invalid' === $block || 'hard' === $block
+            || ( 'soft' === $block && ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
+            return new WP_Error( 'protected_option', "This ACF value would be stored in the protected option '{$option}'." );
+        }
+        return null;
+    }
+
+    if ( Cowboy_MCP_Security::is_blocked_meta_key( $name ) ) {
+        return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a protected meta key." );
+    }
+    if ( 'user' === $type && preg_match( '/(capabilities|user_level)$/i', $name ) ) {
+        return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a user's role or capability meta; use wp_update_user to change roles." );
+    }
+    return null;
+}
+
+/**
  * Recursively format a field definition for schema discovery.
  *
  * Expands sub_fields (repeater/group) and layouts (flexible content)
@@ -299,6 +351,10 @@ return [
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
             }
+            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            if ( $gate ) {
+                return $gate;
+            }
             if ( ! array_key_exists( 'value', $a ) ) {
                 return new WP_Error( 'missing_param', 'value is required.' );
             }
@@ -322,6 +378,10 @@ return [
 
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
+            }
+            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            if ( $gate ) {
+                return $gate;
             }
 
             $result = delete_field( $field_name, $object_id );
@@ -347,6 +407,10 @@ return [
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
             }
+            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            if ( $gate ) {
+                return $gate;
+            }
 
             $row_number = add_row( $field_name, $value, $object_id );
 
@@ -370,6 +434,10 @@ return [
 
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
+            }
+            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            if ( $gate ) {
+                return $gate;
             }
             if ( $row_number < 1 ) {
                 return new WP_Error( 'invalid_param', 'row_number must be >= 1.' );
@@ -396,6 +464,10 @@ return [
 
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
+            }
+            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            if ( $gate ) {
+                return $gate;
             }
             if ( $row_number < 1 ) {
                 return new WP_Error( 'invalid_param', 'row_number must be >= 1.' );

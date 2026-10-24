@@ -252,10 +252,20 @@ return [
         'wp_woo_create_customer' => function ( array $a ) {
             $email    = sanitize_email( $a['email'] ?? '' );
             $username = $a['username'] ?? '';
-            $password = $a['password'] ?? wp_generate_password();
+            $password = ( isset( $a['password'] ) && $a['password'] !== '' ) ? $a['password'] : wp_generate_password();
 
             if ( empty( $email ) || ! is_email( $email ) ) {
                 return new WP_Error( 'invalid_email', 'A valid email address is required.' );
+            }
+
+            // A chosen password needs Power mode, as in wp_create_user (a generated one does not).
+            if ( isset( $a['password'] ) && $a['password'] !== '' ) {
+                $gate = function_exists( 'cowboy_mcp_user_write_gate' )
+                    ? cowboy_mcp_user_write_gate( [ 'password' => $a['password'] ], null )
+                    : new WP_Error( 'unavailable', 'User safety checks are unavailable.' );
+                if ( is_wp_error( $gate ) ) {
+                    return $gate;
+                }
             }
 
             $customer = new WC_Customer();
@@ -303,6 +313,17 @@ return [
 
             if ( ! $customer->get_id() ) {
                 return new WP_Error( 'not_found', "Customer not found: {$id}" );
+            }
+
+            // A customer is a WordPress user (any user, administrators included), and
+            // set_email() rewrites user_email: same rules as wp_update_user.
+            if ( isset( $a['email'] ) && $a['email'] !== '' ) {
+                $gate = function_exists( 'cowboy_mcp_user_write_gate' )
+                    ? cowboy_mcp_user_write_gate( [ 'email' => sanitize_email( $a['email'] ) ], get_userdata( $id ) ?: null )
+                    : new WP_Error( 'unavailable', 'User safety checks are unavailable.' );
+                if ( is_wp_error( $gate ) ) {
+                    return $gate;
+                }
             }
 
             if ( isset( $a['email'] ) )      $customer->set_email( sanitize_email( $a['email'] ) );

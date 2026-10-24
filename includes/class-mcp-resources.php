@@ -606,7 +606,8 @@ class Cowboy_MCP_Resources {
         }
         $value = get_option( $name, '__MCP_NOT_FOUND__' );
         if ( $value === '__MCP_NOT_FOUND__' ) return null;
-        return [ 'option_name' => $name, 'value' => $value ];
+        // Settings blobs (SMTP, licences, CDN) keep credentials under innocuous option names.
+        return [ 'option_name' => $name, 'value' => Cowboy_MCP_Security::redact_option_value( $value ) ];
     }
 
     private static function resource_single_plugin( string $slug ) {

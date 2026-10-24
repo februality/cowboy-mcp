@@ -623,7 +623,7 @@ class Cowboy_MCP_Doctor {
 	// AJAX + CLI adapters implemented in Tasks 4 and 7.
 	public static function ajax_run(): void {
 		check_ajax_referer( 'cowboy_mcp_doctor' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ], 403 );
 		}
 		$settings = Cowboy_MCP_Tools::get_settings();

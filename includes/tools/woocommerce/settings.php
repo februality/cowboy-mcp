@@ -273,7 +273,7 @@ return [
 
             return [
                 'key'   => $key,
-                'value' => $value,
+                'value' => Cowboy_MCP_Security::redact_option_value( $value ),
             ];
         },
 

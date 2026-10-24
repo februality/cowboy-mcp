@@ -60,7 +60,7 @@ class Cowboy_MCP_Hub_Promo {
      * reads the current screen.
      */
     public static function banner_due(): bool {
-        if ( ! current_user_can( 'manage_options' ) || ! Cowboy_MCP_Auth::site_has_credentials() ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) || ! Cowboy_MCP_Auth::site_has_credentials() ) {
             return false;
         }
         if ( self::is_dismissed() ) {
@@ -70,7 +70,7 @@ class Cowboy_MCP_Hub_Promo {
     }
 
     public static function pill_due(): bool {
-        return current_user_can( 'manage_options' )
+        return current_user_can( Cowboy_MCP_Security::admin_capability() )
             && Cowboy_MCP_Auth::site_has_credentials()
             && self::is_dismissed();
     }
@@ -167,7 +167,7 @@ class Cowboy_MCP_Hub_Promo {
 
     public static function ajax_dismiss(): void {
         check_ajax_referer( self::NONCE );
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             wp_send_json_error( null, 403 );
         }
         update_user_meta( get_current_user_id(), self::META_KEY, self::CAMPAIGN );

@@ -114,7 +114,7 @@ class Cowboy_MCP_Feedback {
      * Full gate for the current admin request: capability + screen + should_ask().
      */
     public static function is_due(): bool {
-        if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'get_current_screen' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) || ! function_exists( 'get_current_screen' ) ) {
             return false;
         }
         $screen = get_current_screen();
@@ -213,7 +213,7 @@ class Cowboy_MCP_Feedback {
 
     public static function ajax_decide(): void {
         check_ajax_referer( 'cowboy_mcp_feedback' );
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             wp_send_json_error( null, 403 );
         }
         $decision = sanitize_key( wp_unslash( $_POST['decision'] ?? '' ) );

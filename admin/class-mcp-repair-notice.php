@@ -16,7 +16,7 @@ class Cowboy_MCP_Repair_Notice {
 	}
 
 	public static function is_due(): bool {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
 			return false;
 		}
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -96,7 +96,7 @@ class Cowboy_MCP_Repair_Notice {
 
 	public static function handle_repair(): void {
 		check_admin_referer( 'cowboy_mcp_placeholder_repair' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'cowboy-mcp' ) );
 		}
 		$r = Cowboy_MCP_Placeholder_Repair::start(); // state drives the notice shown after the redirect
@@ -109,7 +109,7 @@ class Cowboy_MCP_Repair_Notice {
 
 	public static function ajax_dismiss(): void {
 		check_ajax_referer( 'cowboy_mcp_dismiss_repair' );
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
 			$s = Cowboy_MCP_Placeholder_Repair::state();
 			$which = sanitize_key( wp_unslash( $_POST['which'] ?? '' ) );
 			if ( 'found' === $which ) {

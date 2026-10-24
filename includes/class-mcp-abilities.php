@@ -180,7 +180,7 @@ class Cowboy_MCP_Abilities {
 
     /** Ability permission callback. Plain bool — a WP_Error here makes WP_Ability::execute() _doing_it_wrong(). */
     public static function can_execute( string $tool ): bool {
-        return self::enabled() && current_user_can( 'manage_options' ) && self::is_exposable( $tool );
+        return self::enabled() && current_user_can( Cowboy_MCP_Security::admin_capability() ) && self::is_exposable( $tool );
     }
 
     /** True while an ability execution is on the call stack (nested dispatch policy). */
@@ -202,7 +202,7 @@ class Cowboy_MCP_Abilities {
     public static function filter_visibility( $include, $ability ) {
         if ( $include && is_object( $ability ) && method_exists( $ability, 'get_name' )
             && str_starts_with( (string) $ability->get_name(), self::NAMESPACE . '/' )
-            && ! current_user_can( 'manage_options' ) ) {
+            && ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             return false;
         }
         return $include;

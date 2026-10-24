@@ -997,7 +997,7 @@ class Cowboy_MCP_OAuth {
 
         // Fail closed: the bound user must still exist and remain an administrator.
         $user = get_user_by( 'id', (int) $rec['user_id'] );
-        if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+        if ( ! $user || ! Cowboy_MCP_Security::user_is_plugin_admin( $user ) ) {
             self::revoke_token_record( $id );
             return new WP_Error( 'revoked_token', 'Bound user no longer authorized.' );
         }
@@ -1067,7 +1067,7 @@ class Cowboy_MCP_OAuth {
         }
 
         $user = get_user_by( 'id', (int) $rec['user_id'] );
-        if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+        if ( ! $user || ! Cowboy_MCP_Security::user_is_plugin_admin( $user ) ) {
             unset( $refresh[ $id ] );
             update_option( self::REFRESH_OPTION, $refresh, false );
             if ( ! empty( $rec['access_id'] ) ) {
@@ -1497,7 +1497,7 @@ class Cowboy_MCP_OAuth {
         }
 
         $user = get_user_by( 'id', (int) $ctx['user_id'] );
-        if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+        if ( ! $user || ! Cowboy_MCP_Security::user_is_plugin_admin( $user ) ) {
             return self::rest_error( 'invalid_grant', 'Authorizing user is no longer permitted.', 400 );
         }
 
@@ -1610,7 +1610,7 @@ class Cowboy_MCP_OAuth {
             wp_safe_redirect( wp_login_url( self::current_authorize_url() ) );
             exit;
         }
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
             self::authorize_fatal( __( 'You must be an administrator to authorize this connection.', 'cowboy-mcp' ) );
         }
 
