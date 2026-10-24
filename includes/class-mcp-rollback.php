@@ -1778,7 +1778,7 @@ class Cowboy_MCP_Rollback {
 		$after_undo      = $type === 'db_rows'
 			? [ 'values' => self::db_rows_current_values( $row['before_state']['rows'] ?? [] ) ]
 			: self::snapshot( $type, $id );
-		$verification    = self::verify_restore( $type, $row['before_state'], $after_undo );
+		$verification    = self::verify_restore( $type, $row['before_state'], $after_undo, (string) $row['action'] );
 		$redo_supported = ! ( $type === 'media' && $redo_action === 'delete' );
 		$redo_reason    = 'Re-creating a deleted attachment is not supported.';
 		if ( $type === 'media_file' ) {
@@ -2007,10 +2007,13 @@ class Cowboy_MCP_Rollback {
 	 * every save (post_modified*) and `_volatile` blobs are ignored. Advisory only:
 	 * a false never fails the undo, it is surfaced in the tool result.
 	 */
-	public static function verify_restore( string $type, ?array $expected, ?array $actual ): array {
+	public static function verify_restore( string $type, ?array $expected, ?array $actual, string $action = '' ): array {
 		// db_rows has no comparable snapshot; media_file's before-state is the handler's
 		// trash bookkeeping and snapshot() returns null for it even after a good restore.
-		if ( $type === 'db_rows' || $type === 'media_file' ) {
+		// A deleted menu or WooCommerce object comes back under a NEW id, so a snapshot
+		// of the old id is always empty.
+		if ( $type === 'db_rows' || $type === 'media_file'
+			|| ( $action === 'delete' && ( $type === 'menu' || $type === 'wc_object' ) ) ) {
 			return [ 'verified' => null, 'differences' => [] ];
 		}
 		// Installer rows also journal backup_zip/folder; only the version is live state.
@@ -2049,9 +2052,14 @@ class Cowboy_MCP_Rollback {
 
 	/** Strip the fields a restore cannot reproduce byte-for-byte. */
 	private static function verifiable( array $state ): array {
-		unset( $state['_volatile'] );
+		// reassigned_to records what a user delete did; a live user snapshot always has null.
+		unset( $state['_volatile'], $state['reassigned_to'] );
 		if ( isset( $state['post'] ) && is_array( $state['post'] ) ) {
 			unset( $state['post']['post_modified'], $state['post']['post_modified_gmt'] );
+			// A draft with no fixed date (zero post_date_gmt) gets post_date = now on every save.
+			if ( ( $state['post']['post_date_gmt'] ?? '' ) === '0000-00-00 00:00:00' ) {
+				unset( $state['post']['post_date'] );
+			}
 		}
 		return $state;
 	}
