@@ -121,11 +121,13 @@ class Cowboy_MCP_Checkpoint {
 
 	/* ── Table selection ───────────────────────────────────── */
 
-	/** Live prefix-scoped tables, excluding the plugin's own bookkeeping tables. */
+	/**
+	 * Live tables of this site (multisite: never other sites' or the network-wide ones),
+	 * excluding the plugin's own bookkeeping tables.
+	 */
 	public static function site_tables(): array {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix ) . '%' ) );
+		$tables = Cowboy_MCP_Compat::site_tables();
 		$own    = [
 			$wpdb->prefix . 'cowboy_mcp_audit_log',
 			$wpdb->prefix . 'cowboy_mcp_undo_journal',
@@ -354,6 +356,13 @@ class Cowboy_MCP_Checkpoint {
 		if ( empty( $tables ) ) {
 			return new WP_Error( 'checkpoint_failed', 'Checkpoint has no recorded table list.' );
 		}
+		// Multisite main-site checkpoints from before 1.7.5 also hold every other site's tables
+		// and the network-wide ones. Those are left out of the restore: only this site's come back.
+		$skipped = array_values( array_filter( $tables, [ 'Cowboy_MCP_Compat', 'is_foreign_table' ] ) );
+		$tables  = array_values( array_diff( $tables, $skipped ) );
+		if ( empty( $tables ) ) {
+			return new WP_Error( 'checkpoint_failed', 'Checkpoint holds none of this site\'s tables.' );
+		}
 
 		// 1. Safety net: checkpoint the CURRENT state first, so the restore is reversible.
 		$pre = self::create( "Pre-restore safety checkpoint (before restoring #{$id})", 'pre_restore' );
@@ -372,7 +381,7 @@ class Cowboy_MCP_Checkpoint {
 		$checksums = json_decode( (string) ( $row['checksums'] ?? '' ), true );
 		$method    = is_array( $checksums ) && $checksums ? 'content' : 'rows';
 		self::drop_prefixed( self::TEMP_PREFIX );
-		$imported = self::import_as_temp( $path, $tables, 'rows' === $method );
+		$imported = self::import_as_temp( $path, $tables, 'rows' === $method, $skipped );
 		if ( is_wp_error( $imported ) ) {
 			self::drop_prefixed( self::TEMP_PREFIX );
 			return $imported;
@@ -380,7 +389,7 @@ class Cowboy_MCP_Checkpoint {
 		$legacy_rewritten = (int) $imported;
 
 		// 4. Verify row counts against the recorded manifest.
-		$expected = (array) json_decode( (string) $row['tables'], true );
+		$expected = array_diff_key( (array) json_decode( (string) $row['tables'], true ), array_flip( $skipped ) );
 		foreach ( $expected as $t => $count ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$actual = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM `' . self::TEMP_PREFIX . $t . '`' );
@@ -451,7 +460,7 @@ class Cowboy_MCP_Checkpoint {
 		// Scan after the journal row exists: a slow or failing scan must never lose the ledger entry.
 		$found = self::count_placeholders();
 
-		return [
+		$result = [
 			'restored'                  => true,
 			'checkpoint_id'             => $id,
 			'tables_count'              => count( $tables ),
@@ -465,10 +474,15 @@ class Cowboy_MCP_Checkpoint {
 			],
 			'summary'                   => $summary,
 		];
+		if ( $skipped ) {
+			$result['skipped_tables'] = count( $skipped );
+			$result['note']           = 'This checkpoint also holds other network sites\' tables and the network-wide tables (taken before 1.7.5); only this site\'s tables were restored.';
+		}
+		return $result;
 	}
 
 	/** Stream the dump, rewriting table names to the temp prefix, executing line by line. */
-	private static function import_as_temp( string $path, array $tables, bool $legacy = false ): int|WP_Error {
+	private static function import_as_temp( string $path, array $tables, bool $legacy = false, array $skip = [] ): int|WP_Error {
 		global $wpdb;
 		$gz = gzopen( $path, 'rb' );
 		if ( ! $gz ) {
@@ -496,6 +510,10 @@ class Cowboy_MCP_Checkpoint {
 			}
 			$stmt = trim( $line );
 			if ( $stmt === '' ) {
+				continue;
+			}
+			// Statements of a table left out of this restore (see restore()) are not run at all.
+			if ( $skip && preg_match( '/^(?:INSERT INTO|DROP TABLE IF EXISTS|CREATE TABLE) `([^`]+)`/', $stmt, $m ) && in_array( $m[1], $skip, true ) ) {
 				continue;
 			}
 			if ( str_starts_with( $stmt, 'INSERT INTO ' ) || str_starts_with( $stmt, 'DROP TABLE IF EXISTS ' ) ) {

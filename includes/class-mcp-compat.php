@@ -297,12 +297,17 @@ class Cowboy_MCP_Compat {
 	 * Faithfully mirrors core: fires delete_user, deletes or reassigns the
 	 * user's posts and links, deletes user meta and the user row, clears caches,
 	 * and fires deleted_user. Uses only wp-includes core functions + $wpdb.
+	 * On multisite, as core does, the user is only removed from the current site
+	 * (remove_user_from_blog()): the account and its other sites stay.
 	 *
-	 * @param int      $id       User ID to delete.
-	 * @param int|null $reassign User ID to reassign content to, or null to delete content.
+	 * @param int      $id         User ID to delete.
+	 * @param int|null $reassign   User ID to reassign content to, or null to delete content.
+	 * @param bool     $everywhere Multisite: delete the account itself, not just this site's
+	 *                             membership. Callers must first make sure the user belongs to
+	 *                             no other site (only this site's content is handled).
 	 * @return bool True on success, false if the user does not exist.
 	 */
-	public static function delete_user( int $id, ?int $reassign = null ): bool {
+	public static function delete_user( int $id, ?int $reassign = null, bool $everywhere = false ): bool {
 		global $wpdb;
 
 		$user = new WP_User( $id );
@@ -363,15 +368,22 @@ class Cowboy_MCP_Compat {
 			}
 		}
 
-		// Delete user meta by meta id (fires the usual meta hooks).
-		$meta_ids = $wpdb->get_col( $wpdb->prepare( "SELECT umeta_id FROM {$wpdb->usermeta} WHERE user_id = %d", $id ) );
-		foreach ( (array) $meta_ids as $mid ) {
-			delete_metadata_by_mid( 'user', $mid );
-		}
+		if ( is_multisite() && ! $everywhere ) {
+			// Content is handled above, so no $reassign here (it would only re-run the UPDATE).
+			if ( is_wp_error( remove_user_from_blog( $id, get_current_blog_id() ) ) ) {
+				return false;
+			}
+		} else {
+			// Delete user meta by meta id (fires the usual meta hooks).
+			$meta_ids = $wpdb->get_col( $wpdb->prepare( "SELECT umeta_id FROM {$wpdb->usermeta} WHERE user_id = %d", $id ) );
+			foreach ( (array) $meta_ids as $mid ) {
+				delete_metadata_by_mid( 'user', $mid );
+			}
 
-		// Remove any residual meta rows then the user row.
-		$wpdb->delete( $wpdb->usermeta, [ 'user_id' => $id ], [ '%d' ] );
-		$wpdb->delete( $wpdb->users, [ 'ID' => $id ], [ '%d' ] );
+			// Remove any residual meta rows then the user row.
+			$wpdb->delete( $wpdb->usermeta, [ 'user_id' => $id ], [ '%d' ] );
+			$wpdb->delete( $wpdb->users, [ 'ID' => $id ], [ '%d' ] );
+		}
 
 		clean_user_cache( $user );
 
@@ -927,5 +939,48 @@ class Cowboy_MCP_Compat {
 		}
 		global $wpdb;
 		return $wpdb->base_prefix . $name;
+	}
+
+	/* ============================================================
+	 * Site tables (multisite-aware table scope)
+	 * ============================================================ */
+
+	/**
+	 * Every table that belongs to the current site. On a single site that is every table
+	 * carrying $wpdb->prefix. On a multisite main site the prefix is also the network's base
+	 * prefix, so `{prefix}%` also matches every other site's tables and the network-wide ones —
+	 * is_foreign_table() takes those out.
+	 *
+	 * @param bool $with_network Keep the network-wide tables (main site only; for the
+	 *                           check/repair tools — checkpoints never take them).
+	 */
+	public static function site_tables( bool $with_network = false ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix ) . '%' ) );
+		return array_values( array_filter( $tables, fn( $t ) => ! self::is_foreign_table( (string) $t, $with_network ) ) );
+	}
+
+	/**
+	 * True for a table that matches the current site's prefix but is not the site's own:
+	 * on a multisite main site, another site's table (`{base}{blog_id}_…`) or a network-wide
+	 * table (users, usermeta, blogs, site, sitemeta, …) unless $with_network. Always false elsewhere.
+	 */
+	public static function is_foreign_table( string $table, bool $with_network = false ): bool {
+		global $wpdb;
+		if ( ! is_multisite() || $wpdb->prefix !== $wpdb->base_prefix ) {
+			return false;
+		}
+		if ( 1 === preg_match( '/^' . preg_quote( $wpdb->base_prefix, '/' ) . '\d+_/', $table ) ) {
+			return true;
+		}
+		if ( $with_network ) {
+			return false;
+		}
+		$network = [ $wpdb->users, $wpdb->usermeta ];
+		foreach ( array_merge( $wpdb->global_tables, $wpdb->ms_global_tables, $wpdb->old_ms_global_tables ) as $name ) {
+			$network[] = $wpdb->base_prefix . $name;
+		}
+		return in_array( $table, $network, true );
 	}
 }

@@ -12,10 +12,9 @@ defined( 'ABSPATH' ) || exit;
  */
 function cowboy_mcp_validate_table_name( string $table ): string|WP_Error {
     global $wpdb;
-    $like   = $wpdb->esc_like( $wpdb->prefix ) . '%';
-    $tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-    if ( ! in_array( $table, $tables, true ) ) {
-        return new WP_Error( 'not_found', "Table '{$table}' does not exist or is outside this site's table prefix ({$wpdb->prefix})." );
+    // Multisite main site: other sites' tables share its prefix, so they are excluded explicitly.
+    if ( ! in_array( $table, Cowboy_MCP_Compat::site_tables( true ), true ) ) {
+        return new WP_Error( 'not_found', "Table '{$table}' does not exist or is not one of this site's tables (prefix {$wpdb->prefix}; on multisite, other sites' tables are excluded)." );
     }
     return $table;
 }
@@ -111,12 +110,13 @@ return [
             global $wpdb;
             $like = $wpdb->esc_like( $wpdb->prefix ) . '%';
             $rows = $wpdb->get_results( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+            $rows = array_filter( $rows ?: [], static fn( $row ) => ! Cowboy_MCP_Compat::is_foreign_table( (string) ( $row['Name'] ?? '' ), true ) );
             $tables = array_map( static fn( $row ) => [
                 'name'       => $row['Name'] ?? '',
                 'rows'       => isset( $row['Rows'] ) ? (int) $row['Rows'] : null,
                 'size_bytes' => isset( $row['Data_length'], $row['Index_length'] ) ? ( (int) $row['Data_length'] + (int) $row['Index_length'] ) : null,
                 'engine'     => $row['Engine'] ?? null,
-            ], $rows ?: [] );
+            ], array_values( $rows ) );
             return [ 'tables' => $tables ];
         },
 

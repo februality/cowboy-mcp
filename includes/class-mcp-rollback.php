@@ -1646,7 +1646,15 @@ class Cowboy_MCP_Rollback {
 					return new WP_Error( 'undo_conflict', 'Undoing this creation would delete the last administrator.' );
 				}
 			}
-			return Cowboy_MCP_Compat::delete_user( $uid, null )
+			// Multisite: the creation made a network account, so its undo deletes the account —
+			// but only while nothing outside this site depends on it.
+			if ( is_multisite() ) {
+				$elsewhere = array_diff( array_keys( get_blogs_of_user( $uid, true ) ), [ get_current_blog_id() ] );
+				if ( $elsewhere || is_super_admin( $uid ) ) {
+					return new WP_Error( 'undo_conflict', "User #{$uid} has since been added to another site in the network or made a super admin; undoing the creation would delete the account everywhere. Remove them from this site with wp_delete_user instead." );
+				}
+			}
+			return Cowboy_MCP_Compat::delete_user( $uid, null, true )
 				? true
 				: new WP_Error( 'undo_failed', "Could not remove user #{$uid}." );
 		}

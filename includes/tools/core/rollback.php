@@ -23,7 +23,7 @@ return [
             'force'      => [ 'type' => 'boolean', 'description' => 'Override the changed-since conflict check', 'default' => false ],
         ], [ 'title' => 'Undo Change', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false ]),
 
-        Cowboy_MCP_Tools::tool( 'wp_create_checkpoint', '[Rollback] Snapshot the entire WordPress database (prefix-scoped SQL dump) so it can be restored later with wp_restore_checkpoint. Use before risky multi-step work. Auto-checkpoints are also taken before mutating wp_cli commands when enabled.', [
+        Cowboy_MCP_Tools::tool( 'wp_create_checkpoint', '[Rollback] Snapshot the entire WordPress database (prefix-scoped SQL dump) so it can be restored later with wp_restore_checkpoint. Use before risky multi-step work. Auto-checkpoints are also taken before mutating wp_cli commands when enabled. On multisite it covers this site\'s tables only — not other sites\' tables and not the network-wide users tables.', [
             'label' => [ 'type' => 'string', 'description' => 'Human-readable label (e.g. "Before menu restructure")' ],
         ], [ 'title' => 'Create Checkpoint', 'readOnlyHint' => false, 'destructiveHint' => false, 'idempotentHint' => false, 'openWorldHint' => false ]),
 

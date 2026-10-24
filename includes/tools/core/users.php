@@ -379,6 +379,9 @@ return [
             if ( ! $result ) {
                 return new WP_Error( 'delete_failed', "Failed to delete user {$user_id}." );
             }
+            if ( is_multisite() ) {
+                return [ 'deleted' => true, 'user_id' => $user_id, 'reassigned_to' => $reassign, 'scope' => 'site', 'note' => 'Removed from this site only; the account and its other sites are unchanged.' ];
+            }
             return [ 'deleted' => true, 'user_id' => $user_id, 'reassigned_to' => $reassign ];
         },
     ],
