@@ -52,6 +52,21 @@ class Cowboy_MCP_Rollback {
 	 */
 	private const TEC_VOLATILE_META = [ '_tribe_modified_fields', '_EventOccurrencesCount' ];
 
+	/**
+	 * Core's ping queue: every save of a published post re-adds these
+	 * (_publish_post_hook) and the do_pings cron deletes them on a later request.
+	 * Not post data, so snapshots leave them out (a cron run is never a conflict)
+	 * and restore_post() leaves the live rows alone.
+	 */
+	private const PING_META = [ '_encloseme', '_pingme' ];
+
+	/** Real columns of {$wpdb->comments}; get_comment( …, ARRAY_A ) adds children, populated_children, post_fields. */
+	private const COMMENT_COLUMNS = [
+		'comment_ID', 'comment_post_ID', 'comment_author', 'comment_author_email', 'comment_author_url',
+		'comment_author_IP', 'comment_date', 'comment_date_gmt', 'comment_content', 'comment_karma',
+		'comment_approved', 'comment_agent', 'comment_type', 'comment_parent', 'user_id',
+	];
+
 	/** @var array|null Current capture handle (between begin() and commit()/discard()). */
 	private static ?array $pending = null;
 
@@ -589,6 +604,7 @@ class Cowboy_MCP_Rollback {
 				}
 				$meta = get_post_meta( (int) $id );
 				unset( $meta['_edit_lock'], $meta['_edit_last'] ); // volatile; false conflicts
+				$meta = array_diff_key( $meta, array_flip( self::PING_META ) );
 				$terms = [];
 				foreach ( get_object_taxonomies( $post['post_type'] ) as $tax ) {
 					$t = wp_get_object_terms( (int) $id, $tax, [ 'fields' => 'ids' ] );
@@ -1104,10 +1120,14 @@ class Cowboy_MCP_Rollback {
 		$live_id = (int) $result;
 
 		// Meta: clear current, re-add captured (values are stored serialized-raw arrays).
+		// The ping queue stays as core left it; journal rows from before 1.7.5 still carry it.
+		$meta = array_diff_key( (array) $state['meta'], array_flip( self::PING_META ) );
 		foreach ( array_keys( get_post_meta( $live_id ) ) as $k ) {
-			delete_post_meta( $live_id, $k );
+			if ( ! in_array( $k, self::PING_META, true ) ) {
+				delete_post_meta( $live_id, $k );
+			}
 		}
-		foreach ( $state['meta'] as $k => $values ) {
+		foreach ( $meta as $k => $values ) {
 			foreach ( (array) $values as $v ) {
 				add_post_meta( $live_id, $k, self::slash_deep( maybe_unserialize( $v ) ) );
 			}
@@ -1403,9 +1423,12 @@ class Cowboy_MCP_Rollback {
 			$row['comment_ID'] = $cid;
 			wp_update_comment( wp_slash( $row ) );
 		} else {
+			$row = array_intersect_key( (array) $state['comment'], array_flip( self::COMMENT_COLUMNS ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->insert( $wpdb->comments, $state['comment'] );
-			wp_update_comment_count( (int) $state['comment']['comment_post_ID'] );
+			if ( ! $wpdb->insert( $wpdb->comments, $row ) ) {
+				return new WP_Error( 'undo_failed', "Could not reinsert comment #{$cid}." );
+			}
+			wp_update_comment_count( (int) $row['comment_post_ID'] );
 		}
 		foreach ( array_keys( get_comment_meta( $cid ) ) as $k ) {
 			delete_comment_meta( $cid, $k );
@@ -2056,6 +2079,10 @@ class Cowboy_MCP_Rollback {
 		unset( $state['_volatile'], $state['reassigned_to'] );
 		if ( isset( $state['post'] ) && is_array( $state['post'] ) ) {
 			unset( $state['post']['post_modified'], $state['post']['post_modified_gmt'] );
+			// Before-states journaled by 1.7.4 and earlier still include the ping queue.
+			if ( isset( $state['meta'] ) && is_array( $state['meta'] ) ) {
+				$state['meta'] = array_diff_key( $state['meta'], array_flip( self::PING_META ) );
+			}
 			// A draft with no fixed date (zero post_date_gmt) gets post_date = now on every save.
 			if ( ( $state['post']['post_date_gmt'] ?? '' ) === '0000-00-00 00:00:00' ) {
 				unset( $state['post']['post_date'] );
