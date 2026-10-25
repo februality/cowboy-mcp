@@ -60,27 +60,63 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
                     : "This ACF value would be stored in the protected option '{$option}'." );
             }
         }
-        $current = get_option( $twin, null );
-        if ( null !== $current && ! cowboy_mcp_acf_is_field_ref( $current ) ) {
-            return cowboy_mcp_acf_reference_collision( $twin );
+        foreach ( cowboy_mcp_acf_stored_rows( 'option', 0, $twin ) as $row ) {
+            if ( ! cowboy_mcp_acf_is_field_ref( $row[1] ) ) {
+                return cowboy_mcp_acf_reference_collision( $twin );
+            }
         }
         return null;
     }
 
-    if ( Cowboy_MCP_Security::is_blocked_meta_key( $name ) ) {
-        return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a protected meta key." );
+    // The meta tables compare keys like the options table (case/accent/width-insensitive,
+    // PAD SPACE), so the name is judged trimmed and as every stored key it binds to.
+    if ( ! Cowboy_MCP_Security::is_plain_name( $name ) ) {
+        return new WP_Error( 'protected_meta', "Field name '{$name}' must be plain printable ASCII." );
     }
-    if ( 'user' === $type && preg_match( '/(capabilities|user_level)$/i', $name ) ) {
-        return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a user's role or capability meta; use wp_update_user to change roles." );
+    $meta_id = in_array( $type, [ 'post', 'term', 'user', 'comment' ], true ) && is_numeric( $id ) ? (int) $id : 0;
+    $keys    = [ trim( $name ) ];
+    if ( $meta_id ) {
+        $keys = array_unique( array_merge( $keys, array_column( cowboy_mcp_acf_stored_rows( $type, $meta_id, $name ), 0 ) ) );
     }
-    // Not is_blocked_meta_key() on the twin: every `_{name}` starts with `_`.
-    $twin = '_' . $name;
-    if ( in_array( $type, [ 'post', 'term', 'user', 'comment' ], true ) && is_numeric( $id )
-        && metadata_exists( $type, (int) $id, $twin )
-        && ! cowboy_mcp_acf_is_field_ref( get_metadata( $type, (int) $id, $twin, true ) ) ) {
-        return cowboy_mcp_acf_reference_collision( $twin );
+    foreach ( $keys as $key ) {
+        if ( Cowboy_MCP_Security::is_blocked_meta_key( $key ) ) {
+            return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a protected meta key." );
+        }
+        if ( 'user' === $type && preg_match( '/(capabilities|user_level)$/i', $key ) ) {
+            return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a user's role or capability meta; use wp_update_user to change roles." );
+        }
+    }
+    // Not is_blocked_meta_key() on the twin: every `_{name}` starts with `_`. Every row
+    // it binds to must already be an ACF reference (update_metadata() rewrites them all).
+    $twin = '_' . trim( $name );
+    if ( $meta_id ) {
+        foreach ( cowboy_mcp_acf_stored_rows( $type, $meta_id, $twin ) as $row ) {
+            if ( ! cowboy_mcp_acf_is_field_ref( $row[1] ) ) {
+                return cowboy_mcp_acf_reference_collision( $twin );
+            }
+        }
     }
     return null;
+}
+
+/**
+ * The rows a write to $key binds to, as [ stored key, raw value ] pairs: option rows,
+ * or one object's meta rows. Read from the table, never a cache — the collation decides
+ * which rows `= %s` matches (see Cowboy_MCP_Security::stored_option_names()).
+ */
+function cowboy_mcp_acf_stored_rows( string $type, int $id, string $key ): array {
+    global $wpdb;
+    if ( 'option' === $type ) {
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- collation probe; must hit the table, never the options cache.
+        return (array) $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name = %s", $key ), ARRAY_N );
+    }
+    $table = _get_meta_table( $type );
+    if ( ! $table ) {
+        return [];
+    }
+    $column = sanitize_key( $type . '_id' );
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- collation probe; table and column come from _get_meta_table() / the decoded ACF type.
+    return (array) $wpdb->get_results( $wpdb->prepare( "SELECT meta_key, meta_value FROM {$table} WHERE {$column} = %d AND meta_key = %s", $id, $key ), ARRAY_N );
 }
 
 /**
@@ -96,9 +132,15 @@ function cowboy_mcp_acf_check_args( array $a ): array|WP_Error {
     return $gate ?? $a;
 }
 
-/** Whether a stored hidden-reference value is ACF's own: '' or a field key. */
+/** Whether a stored hidden-reference value is ACF's own: '' or a field key (ACF's own test). */
 function cowboy_mcp_acf_is_field_ref( $value ): bool {
-    return '' === $value || ( is_string( $value ) && 1 === preg_match( '/^field_[A-Za-z0-9_]+$/', $value ) );
+    if ( '' === $value ) {
+        return true;
+    }
+    if ( ! is_string( $value ) ) {
+        return false;
+    }
+    return function_exists( 'acf_is_field_key' ) ? (bool) acf_is_field_key( $value ) : str_starts_with( $value, 'field_' );
 }
 
 function cowboy_mcp_acf_reference_collision( string $twin ): WP_Error {
