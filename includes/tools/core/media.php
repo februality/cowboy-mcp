@@ -107,6 +107,25 @@ function cowboy_mcp_media_usage( int $attachment_id ): array {
     return $used_as;
 }
 
+/**
+ * Refuse wp_upload_media arguments outside its schema. Unknown arguments would be
+ * dropped silently (a model that sends `format: "webp"` would get an unconverted file
+ * and report success). Runs before the dry-run / safe-mode previews (PRE_DISPATCH)
+ * and again in the handler.
+ */
+function cowboy_mcp_media_check_args( array $a ): array|WP_Error {
+    $valid   = array_merge( array_keys( cowboy_mcp_media_upload_properties() ), [ 'dry_run', 'confirm' ] );
+    $unknown = array_diff( array_keys( $a ), $valid );
+    if ( $unknown ) {
+        return new WP_Error( 'invalid_params', sprintf(
+            'Unknown argument(s): %s. wp_upload_media accepts: %s. Use convert_to for the format and max_width / max_height for the size.',
+            implode( ', ', $unknown ),
+            implode( ', ', array_diff( $valid, [ 'dry_run', 'confirm' ] ) )
+        ) );
+    }
+    return $a;
+}
+
 /** Input properties of wp_upload_media (also the allowlist its handler checks). */
 function cowboy_mcp_media_upload_properties(): array {
     return [
@@ -337,16 +356,9 @@ return [
     'handlers' => [
         'wp_upload_media' => function ( array $a ) {
 
-            // Unknown arguments would be dropped silently (a model that sends
-            // `format: "webp"` would get an unconverted file and report success).
-            $valid   = array_merge( array_keys( cowboy_mcp_media_upload_properties() ), [ 'dry_run', 'confirm' ] );
-            $unknown = array_diff( array_keys( $a ), $valid );
-            if ( $unknown ) {
-                return new WP_Error( 'invalid_params', sprintf(
-                    'Unknown argument(s): %s. wp_upload_media accepts: %s. Use convert_to for the format and max_width / max_height for the size.',
-                    implode( ', ', $unknown ),
-                    implode( ', ', array_diff( $valid, [ 'dry_run', 'confirm' ] ) )
-                ) );
+            $checked = cowboy_mcp_media_check_args( $a );
+            if ( is_wp_error( $checked ) ) {
+                return $checked;
             }
 
             $post_id = (int) ( $a['post_id'] ?? 0 );

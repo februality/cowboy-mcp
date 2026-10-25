@@ -83,6 +83,19 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
     return null;
 }
 
+/**
+ * The write gate for the five ACF write tools, run before the dry-run / safe-mode
+ * previews (PRE_DISPATCH) so a preview refuses what the handler refuses. Args unchanged.
+ */
+function cowboy_mcp_acf_check_args( array $a ): array|WP_Error {
+    $field_name = $a['field_name'] ?? '';
+    if ( ! is_string( $field_name ) || '' === $field_name ) {
+        return $a; // the handler reports the missing field_name
+    }
+    $gate = cowboy_mcp_acf_write_gate( $field_name, cowboy_mcp_acf_normalize_object_id( (string) ( $a['object_id'] ?? '' ) ) );
+    return $gate ?? $a;
+}
+
 /** Whether a stored hidden-reference value is ACF's own: '' or a field key. */
 function cowboy_mcp_acf_is_field_ref( $value ): bool {
     return '' === $value || ( is_string( $value ) && 1 === preg_match( '/^field_[A-Za-z0-9_]+$/', $value ) );
