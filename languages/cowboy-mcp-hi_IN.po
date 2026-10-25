@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-18 16:03-0700\n"
+"POT-Creation-Date: 2026-10-24 10:08-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Hindi\n"
@@ -2412,7 +2412,7 @@ msgstr "सेटिंग्स"
 msgid "About"
 msgstr "परिचय"
 
-#: admin/class-mcp-admin.php:628
+#: admin/class-mcp-admin.php:629
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP के अनुभाग"
 
@@ -2579,7 +2579,11 @@ msgid ""
 "site you manage: content, plugin updates with backup and rollback, malware "
 "clean-up, speed, SEO, accessibility, client reports. Any host, any AI app, "
 "nothing has to move. This free plugin stays free."
-msgstr "आप इस साइट को पहले से ही अपने AI से चला रहे हैं। Hub यही काम आपकी हर साइट पर करता है: कंटेंट, बैकअप और रोलबैक के साथ प्लगइन अपडेट, मैलवेयर सफ़ाई, स्पीड, SEO, एक्सेसिबिलिटी, क्लाइंट रिपोर्ट। कोई भी होस्ट, कोई भी AI ऐप, कुछ भी स्थानांतरित करने की ज़रूरत नहीं। यह मुफ़्त प्लगइन मुफ़्त ही रहेगा।"
+msgstr ""
+"आप इस साइट को पहले से ही अपने AI से चला रहे हैं। Hub यही काम आपकी हर साइट पर करता "
+"है: कंटेंट, बैकअप और रोलबैक के साथ प्लगइन अपडेट, मैलवेयर सफ़ाई, स्पीड, SEO, एक्सेसिबिलिटी, "
+"क्लाइंट रिपोर्ट। कोई भी होस्ट, कोई भी AI ऐप, कुछ भी स्थानांतरित करने की ज़रूरत नहीं। यह "
+"मुफ़्त प्लगइन मुफ़्त ही रहेगा।"
 
 #: admin/class-mcp-hub-promo.php:91
 msgid "One prompt, every site, every task"
@@ -2608,6 +2612,79 @@ msgstr "Cowboy Hub बैनर छिपाएँ"
 #: admin/class-mcp-hub-promo.php:124
 msgid "Managing multiple sites? Check out Cowboy Hub"
 msgstr "कई साइटें प्रबंधित करते हैं? Cowboy Hub देखें"
+
+#: admin/class-mcp-repair-notice.php:49
+msgid ""
+"Cowboy MCP could not record an undo point for the repair, so it stopped. "
+"Nothing was left half-repaired."
+msgstr "Cowboy MCP मरम्मत के लिए पूर्ववत बिंदु दर्ज नहीं कर सका, इसलिए वह रुक गया। कुछ भी आधा-अधूरा ठीक नहीं छोड़ा गया।"
+
+#. translators: %d: number of damaged values
+#: admin/class-mcp-repair-notice.php:55
+#, php-format
+msgid "Cowboy MCP found %d value damaged by an earlier checkpoint restore."
+msgid_plural ""
+"Cowboy MCP found %d values damaged by an earlier checkpoint restore."
+msgstr[0] "Cowboy MCP को पहले के चेकपॉइंट पुनर्स्थापन से क्षतिग्रस्त %d मान मिला।"
+msgstr[1] "Cowboy MCP को पहले के चेकपॉइंट पुनर्स्थापन से क्षतिग्रस्त %d मान मिले।"
+
+#: admin/class-mcp-repair-notice.php:57
+msgid ""
+"An older version's restore saved <code>%</code> signs incorrectly, which can "
+"break permalinks and page layouts."
+msgstr "पुराने संस्करण के पुनर्स्थापन ने <code>%</code> चिह्न गलत तरीके से सहेजे, जिससे पर्मालिंक और पेज लेआउट बिगड़ सकते हैं।"
+
+#: admin/class-mcp-repair-notice.php:61
+msgid "Repair now"
+msgstr "अभी ठीक करें"
+
+#: admin/class-mcp-repair-notice.php:62
+msgid "See what will change"
+msgstr "देखें क्या बदलेगा"
+
+#. translators: %d: number of further damaged values not listed
+#: admin/class-mcp-repair-notice.php:66
+#, php-format
+msgid "and %d more"
+msgstr "और %d"
+
+#: admin/class-mcp-repair-notice.php:70
+msgid ""
+"Cowboy MCP takes a checkpoint first, and you can undo the repair from the "
+"Activity tab."
+msgstr "Cowboy MCP पहले एक चेकपॉइंट बनाता है, और आप गतिविधि टैब से मरम्मत को पूर्ववत कर सकते हैं।"
+
+#. translators: %d: number of damaged values
+#: admin/class-mcp-repair-notice.php:77
+#, php-format
+msgid "Cowboy MCP is repairing %d damaged value…"
+msgid_plural "Cowboy MCP is repairing %d damaged values…"
+msgstr[0] "Cowboy MCP %d क्षतिग्रस्त मान ठीक कर रहा है…"
+msgstr[1] "Cowboy MCP %d क्षतिग्रस्त मान ठीक कर रहा है…"
+
+#: admin/class-mcp-repair-notice.php:78
+msgid "You can leave this page; it finishes in the background."
+msgstr "आप यह पेज छोड़ सकते हैं; मरम्मत पृष्ठभूमि में पूरी होगी।"
+
+#. translators: %d: number of repaired values
+#: admin/class-mcp-repair-notice.php:85
+#, php-format
+msgid "Cowboy MCP repaired %d value."
+msgid_plural "Cowboy MCP repaired %d values."
+msgstr[0] "Cowboy MCP ने %d मान ठीक किया।"
+msgstr[1] "Cowboy MCP ने %d मान ठीक किए।"
+
+#. translators: %s: URL of the Activity tab
+#: admin/class-mcp-repair-notice.php:89
+#, php-format
+msgid ""
+"Permalinks and layouts should look right again. Something off? <a "
+"href=\"%s\">Undo the repair</a> on the Activity tab."
+msgstr "पर्मालिंक और लेआउट अब फिर से सही दिखने चाहिए। कुछ गड़बड़ है? गतिविधि टैब पर <a href=\"%s\">मरम्मत पूर्ववत करें</a>।"
+
+#: admin/class-mcp-repair-notice.php:100
+msgid "Sorry, you are not allowed to do that."
+msgstr "क्षमा करें, आपको ऐसा करने की अनुमति नहीं है।"
 
 #: includes/class-mcp-oauth.php:1129
 msgid "Unknown client"

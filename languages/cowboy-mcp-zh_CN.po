@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-18 16:03-0700\n"
+"POT-Creation-Date: 2026-10-24 10:08-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -2358,7 +2358,7 @@ msgstr "设置"
 msgid "About"
 msgstr "关于"
 
-#: admin/class-mcp-admin.php:628
+#: admin/class-mcp-admin.php:629
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP 分区"
 
@@ -2522,7 +2522,10 @@ msgid ""
 "site you manage: content, plugin updates with backup and rollback, malware "
 "clean-up, speed, SEO, accessibility, client reports. Any host, any AI app, "
 "nothing has to move. This free plugin stays free."
-msgstr "你已经通过 AI 管理这个站点。Hub 把同样的能力扩展到你管理的每一个站点：内容、带备份与回滚的插件更新、恶意代码清理、速度、SEO、无障碍、客户报告。任何主机、任何 AI 应用，无需迁移。这个免费插件将一直免费。"
+msgstr ""
+"你已经通过 AI 管理这个站点。Hub 把同样的能力扩展到你管理的每一个站点：内容、"
+"带备份与回滚的插件更新、恶意代码清理、速度、SEO、无障碍、客户报告。任何主机、"
+"任何 AI 应用，无需迁移。这个免费插件将一直免费。"
 
 #: admin/class-mcp-hub-promo.php:91
 msgid "One prompt, every site, every task"
@@ -2551,6 +2554,76 @@ msgstr "隐藏 Cowboy Hub 横幅"
 #: admin/class-mcp-hub-promo.php:124
 msgid "Managing multiple sites? Check out Cowboy Hub"
 msgstr "管理多个站点？了解 Cowboy Hub"
+
+#: admin/class-mcp-repair-notice.php:49
+msgid ""
+"Cowboy MCP could not record an undo point for the repair, so it stopped. "
+"Nothing was left half-repaired."
+msgstr "Cowboy MCP 无法为修复记录撤销点，因此已停止。没有任何内容处于修复一半的状态。"
+
+#. translators: %d: number of damaged values
+#: admin/class-mcp-repair-notice.php:55
+#, php-format
+msgid "Cowboy MCP found %d value damaged by an earlier checkpoint restore."
+msgid_plural ""
+"Cowboy MCP found %d values damaged by an earlier checkpoint restore."
+msgstr[0] "Cowboy MCP 发现 %d 个值因先前的检查点恢复而损坏。"
+
+#: admin/class-mcp-repair-notice.php:57
+msgid ""
+"An older version's restore saved <code>%</code> signs incorrectly, which can "
+"break permalinks and page layouts."
+msgstr "旧版本的恢复功能错误地保存了 <code>%</code> 符号，可能导致固定链接和页面布局出错。"
+
+#: admin/class-mcp-repair-notice.php:61
+msgid "Repair now"
+msgstr "立即修复"
+
+#: admin/class-mcp-repair-notice.php:62
+msgid "See what will change"
+msgstr "查看将要更改的内容"
+
+#. translators: %d: number of further damaged values not listed
+#: admin/class-mcp-repair-notice.php:66
+#, php-format
+msgid "and %d more"
+msgstr "以及另外 %d 个"
+
+#: admin/class-mcp-repair-notice.php:70
+msgid ""
+"Cowboy MCP takes a checkpoint first, and you can undo the repair from the "
+"Activity tab."
+msgstr "Cowboy MCP 会先创建检查点，你可以在“活动”选项卡中撤销修复。"
+
+#. translators: %d: number of damaged values
+#: admin/class-mcp-repair-notice.php:77
+#, php-format
+msgid "Cowboy MCP is repairing %d damaged value…"
+msgid_plural "Cowboy MCP is repairing %d damaged values…"
+msgstr[0] "Cowboy MCP 正在修复 %d 个损坏的值…"
+
+#: admin/class-mcp-repair-notice.php:78
+msgid "You can leave this page; it finishes in the background."
+msgstr "你可以离开此页面；修复会在后台完成。"
+
+#. translators: %d: number of repaired values
+#: admin/class-mcp-repair-notice.php:85
+#, php-format
+msgid "Cowboy MCP repaired %d value."
+msgid_plural "Cowboy MCP repaired %d values."
+msgstr[0] "Cowboy MCP 已修复 %d 个值。"
+
+#. translators: %s: URL of the Activity tab
+#: admin/class-mcp-repair-notice.php:89
+#, php-format
+msgid ""
+"Permalinks and layouts should look right again. Something off? <a "
+"href=\"%s\">Undo the repair</a> on the Activity tab."
+msgstr "固定链接和布局应该已恢复正常。有问题？在“活动”选项卡中<a href=\"%s\">撤销修复</a>。"
+
+#: admin/class-mcp-repair-notice.php:100
+msgid "Sorry, you are not allowed to do that."
+msgstr "抱歉，你无权执行此操作。"
 
 #: includes/class-mcp-oauth.php:1129
 msgid "Unknown client"

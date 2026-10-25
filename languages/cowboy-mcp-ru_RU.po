@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-18 16:03-0700\n"
+"POT-Creation-Date: 2026-10-24 10:08-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Russian\n"
@@ -2471,7 +2471,7 @@ msgstr "Настройки"
 msgid "About"
 msgstr "О плагине"
 
-#: admin/class-mcp-admin.php:628
+#: admin/class-mcp-admin.php:629
 msgid "Cowboy MCP sections"
 msgstr "Разделы Cowboy MCP"
 
@@ -2639,7 +2639,12 @@ msgid ""
 "site you manage: content, plugin updates with backup and rollback, malware "
 "clean-up, speed, SEO, accessibility, client reports. Any host, any AI app, "
 "nothing has to move. This free plugin stays free."
-msgstr "Вы уже управляете этим сайтом через ИИ. Hub делает то же самое на всех ваших сайтах: контент, обновления плагинов с резервной копией и откатом, очистка от вредоносного кода, скорость, SEO, доступность, отчёты для клиентов. Любой хостинг, любое приложение ИИ, ничего переносить не нужно. Этот бесплатный плагин остаётся бесплатным."
+msgstr ""
+"Вы уже управляете этим сайтом через ИИ. Hub делает то же самое на всех ваших "
+"сайтах: контент, обновления плагинов с резервной копией и откатом, очистка "
+"от вредоносного кода, скорость, SEO, доступность, отчёты для клиентов. Любой "
+"хостинг, любое приложение ИИ, ничего переносить не нужно. Этот бесплатный "
+"плагин остаётся бесплатным."
 
 #: admin/class-mcp-hub-promo.php:91
 msgid "One prompt, every site, every task"
@@ -2668,6 +2673,82 @@ msgstr "Скрыть баннер Cowboy Hub"
 #: admin/class-mcp-hub-promo.php:124
 msgid "Managing multiple sites? Check out Cowboy Hub"
 msgstr "Управляете несколькими сайтами? Посмотрите Cowboy Hub"
+
+#: admin/class-mcp-repair-notice.php:49
+msgid ""
+"Cowboy MCP could not record an undo point for the repair, so it stopped. "
+"Nothing was left half-repaired."
+msgstr "Cowboy MCP не смог создать точку отмены для исправления и остановился. Ничего не осталось исправленным наполовину."
+
+#. translators: %d: number of damaged values
+#: admin/class-mcp-repair-notice.php:55
+#, php-format
+msgid "Cowboy MCP found %d value damaged by an earlier checkpoint restore."
+msgid_plural ""
+"Cowboy MCP found %d values damaged by an earlier checkpoint restore."
+msgstr[0] "Cowboy MCP нашёл %d значение, повреждённое прежним восстановлением контрольной точки."
+msgstr[1] "Cowboy MCP нашёл %d значения, повреждённые прежним восстановлением контрольной точки."
+msgstr[2] "Cowboy MCP нашёл %d значений, повреждённых прежним восстановлением контрольной точки."
+
+#: admin/class-mcp-repair-notice.php:57
+msgid ""
+"An older version's restore saved <code>%</code> signs incorrectly, which can "
+"break permalinks and page layouts."
+msgstr "Восстановление в старой версии неправильно сохранило знаки <code>%</code>, из-за чего могут сломаться постоянные ссылки и макеты страниц."
+
+#: admin/class-mcp-repair-notice.php:61
+msgid "Repair now"
+msgstr "Исправить сейчас"
+
+#: admin/class-mcp-repair-notice.php:62
+msgid "See what will change"
+msgstr "Посмотреть, что изменится"
+
+#. translators: %d: number of further damaged values not listed
+#: admin/class-mcp-repair-notice.php:66
+#, php-format
+msgid "and %d more"
+msgstr "и ещё %d"
+
+#: admin/class-mcp-repair-notice.php:70
+msgid ""
+"Cowboy MCP takes a checkpoint first, and you can undo the repair from the "
+"Activity tab."
+msgstr "Cowboy MCP сначала создаёт контрольную точку, и исправление можно отменить на вкладке «Активность»."
+
+#. translators: %d: number of damaged values
+#: admin/class-mcp-repair-notice.php:77
+#, php-format
+msgid "Cowboy MCP is repairing %d damaged value…"
+msgid_plural "Cowboy MCP is repairing %d damaged values…"
+msgstr[0] "Cowboy MCP исправляет %d повреждённое значение…"
+msgstr[1] "Cowboy MCP исправляет %d повреждённых значения…"
+msgstr[2] "Cowboy MCP исправляет %d повреждённых значений…"
+
+#: admin/class-mcp-repair-notice.php:78
+msgid "You can leave this page; it finishes in the background."
+msgstr "Можно уйти с этой страницы: исправление завершится в фоне."
+
+#. translators: %d: number of repaired values
+#: admin/class-mcp-repair-notice.php:85
+#, php-format
+msgid "Cowboy MCP repaired %d value."
+msgid_plural "Cowboy MCP repaired %d values."
+msgstr[0] "Cowboy MCP исправил %d значение."
+msgstr[1] "Cowboy MCP исправил %d значения."
+msgstr[2] "Cowboy MCP исправил %d значений."
+
+#. translators: %s: URL of the Activity tab
+#: admin/class-mcp-repair-notice.php:89
+#, php-format
+msgid ""
+"Permalinks and layouts should look right again. Something off? <a "
+"href=\"%s\">Undo the repair</a> on the Activity tab."
+msgstr "Постоянные ссылки и макеты должны снова выглядеть правильно. Что-то не так? <a href=\"%s\">Отмените исправление</a> на вкладке «Активность»."
+
+#: admin/class-mcp-repair-notice.php:100
+msgid "Sorry, you are not allowed to do that."
+msgstr "Извините, у вас нет прав на это действие."
 
 #: includes/class-mcp-oauth.php:1129
 msgid "Unknown client"
