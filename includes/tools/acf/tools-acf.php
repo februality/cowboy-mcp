@@ -14,13 +14,17 @@ function cowboy_mcp_acf_normalize_object_id( string $id ) {
 /**
  * Refuse ACF value writes that land on storage the other tools protect.
  *
- * ACF stores a value under the field's NAME whether or not the field is registered
- * (and the agent can register one through wp_acf_create_field_group), so the name is
- * judged as the raw meta key / option name it becomes:
+ * ACF stores a value under the field's NAME whether or not the field is registered,
+ * so the name is judged as the raw meta key / option name it becomes:
  *  - options pages and any unrecognised string object id write option `{id}_{name}`
  *    → the option write gate (hard-protected never, the soft list only in Power mode);
  *  - users → no role/capability/level keys and nothing is_blocked_meta_key() refuses;
  *  - posts, terms, comments → is_blocked_meta_key().
+ * Next to every value ACF also writes a hidden reference — option `_{id}_{name}`, meta
+ * `_{name}` — holding the field key, or '' for a name it does not know (ACF 6.8.10).
+ * That row is judged too: the option twin through the same option gate, and on any
+ * target an existing twin must already be an ACF reference, never someone else's row
+ * (a field named `price` would otherwise blank a product's `_price`).
  */
 function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error {
     $name = $field_name;
@@ -46,10 +50,19 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
 
     if ( 'option' === $type ) {
         $option = $id . '_' . $name;
-        $block  = Cowboy_MCP_Security::option_write_block( $option );
-        if ( 'invalid' === $block || 'hard' === $block
-            || ( 'soft' === $block && ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
-            return new WP_Error( 'protected_option', "This ACF value would be stored in the protected option '{$option}'." );
+        $twin   = '_' . $option;
+        foreach ( [ $option, $twin ] as $target ) {
+            $block = Cowboy_MCP_Security::option_write_block( $target );
+            if ( 'invalid' === $block || 'hard' === $block
+                || ( 'soft' === $block && ! Cowboy_MCP_Security::power_mode_enabled() ) ) {
+                return new WP_Error( 'protected_option', $target === $twin
+                    ? "This ACF value would also write its hidden reference to the protected option '{$twin}'."
+                    : "This ACF value would be stored in the protected option '{$option}'." );
+            }
+        }
+        $current = get_option( $twin, null );
+        if ( null !== $current && ! cowboy_mcp_acf_is_field_ref( $current ) ) {
+            return cowboy_mcp_acf_reference_collision( $twin );
         }
         return null;
     }
@@ -60,7 +73,23 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
     if ( 'user' === $type && preg_match( '/(capabilities|user_level)$/i', $name ) ) {
         return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a user's role or capability meta; use wp_update_user to change roles." );
     }
+    // Not is_blocked_meta_key() on the twin: every `_{name}` starts with `_`.
+    $twin = '_' . $name;
+    if ( in_array( $type, [ 'post', 'term', 'user', 'comment' ], true ) && is_numeric( $id )
+        && metadata_exists( $type, (int) $id, $twin )
+        && ! cowboy_mcp_acf_is_field_ref( get_metadata( $type, (int) $id, $twin, true ) ) ) {
+        return cowboy_mcp_acf_reference_collision( $twin );
+    }
     return null;
+}
+
+/** Whether a stored hidden-reference value is ACF's own: '' or a field key. */
+function cowboy_mcp_acf_is_field_ref( $value ): bool {
+    return '' === $value || ( is_string( $value ) && 1 === preg_match( '/^field_[A-Za-z0-9_]+$/', $value ) );
+}
+
+function cowboy_mcp_acf_reference_collision( string $twin ): WP_Error {
+    return new WP_Error( 'acf_reference_collision', "ACF stores a hidden reference '{$twin}' next to this value, and that row already holds other data on this object. Use a different field name." );
 }
 
 /**
