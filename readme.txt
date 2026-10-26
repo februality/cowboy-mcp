@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.4
+Stable tag: 1.7.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -277,7 +277,7 @@ Yes, both ways, on WordPress 6.9 or newer. Every allowed tool is registered as a
 
 = Does it work on multisite? =
 
-Cowboy MCP is built for single sites and is not network-aware. On a multisite network, activate it on each site you want an agent to manage (not network-wide) and generate keys on that site; its plugin tools do recognise network-activated plugins when activating or deactivating.
+Cowboy MCP is built for single sites and is not network-aware. On a multisite network, activate it on each site you want an agent to manage (not network-wide). Only super admins can open its settings, create keys or approve apps on that site. Checkpoints and user deletes stay inside that site, and the plugin tools recognise network-activated plugins when activating or deactivating.
 
 = Connection problems: 401/404, "registration is closed", a refused redirect host, or a connector that stopped after a staging sync =
 
@@ -301,16 +301,18 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.4 =
-* New: connect Meta Muse and Muse Code from the Connections tab. Setup is one message pasted into the chat: the app configures itself and signs in. Sites behind Cloudflare are shown the firewall rule Muse needs.
-* New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect with one pasted message. Terminal commands, config files and an API-key setup are available.
-* New: n8n connects with OAuth2: it registers itself and your site asks for approval, with no secret to copy. The API-key setup remains available.
-* Improved: every connection panel shows the exact link or message to paste, each with a Copy button that turns on browser sign-in and opens pairing for 30 minutes; the "Open <app>" buttons only open the app. Each panel is one short numbered list ending with a read-only test prompt.
-* Improved: the Connection Doctor detects Cloudflare's Browser Integrity Check blocking the MCP endpoint and shows the rule to add.
-* Changed: ChatGPT and Claude setup steps match the current apps. ChatGPT: open Plugins, click Add, choose Add custom MCP server, and the site appears in the chat's + menu, no Developer mode needed. Custom MCP servers are available on Business, Enterprise and Edu workspaces, read-only on Pro. Claude's Add custom connector dialog detects the sign-in settings itself, and its recommended "Use Claude's published identity" option is supported.
-* Fix: ChatGPT shows file contents, posts, patterns and templates again. Results with a `content` field arrived as an empty `{}`; the affected tools now also return structured output. Thanks to @kuzey2004 for the report and testing.
-* Fix: `wp_list_directory` with `recursive: true` no longer fails with an exception.
-* Fix: a terminal app that signs in again from a different local port (as Muse Code does) is no longer refused.
+= 1.7.5 =
+* New: files attached in a ChatGPT conversation can go straight into the Media Library. Every upload can also be resized and converted to WebP, AVIF, JPEG or PNG on the way in.
+* New: an undo now reports whether the restored item matches what was saved before the change, and lists any field that differs.
+* Fix: undoing a permanent comment delete brings the comment back. It reported success without restoring it.
+* Fix: undoing an edit to a published post no longer reports a conflict after WordPress has sent the post's pingbacks.
+* Fix: dry runs and safe-mode previews no longer promise success for a call the tool would refuse, such as an upload with unknown arguments.
+* Fix: on WordPress 7.2, undoing a media delete keeps the link between an edited image and its original.
+* Fix: the "Repair now" notice is translated in all 12 bundled languages.
+* Multisite fix: a checkpoint on the main site of a network now holds only that site's tables; it included every site's tables and the network tables. Restoring an older checkpoint restores only the current site. `wp_delete_user` removes a user from the current site only, as described, instead of deleting the account from the whole network.
+* Multisite change: Cowboy MCP is now managed by super admins only. On a network, API keys created before 1.7.5 or with WP-CLI, and connections approved by a site administrator, stop working until a super admin creates or approves them again.
+* Changed: without Power mode, `wp_cli db query` runs read-only queries only, and `wp_cli search-replace` must name its tables and cannot change options, users or network tables.
+* Security: stronger protection for settings and credentials. Option, ACF and WooCommerce customer writes are checked more strictly, and passwords, licence keys and API tokens stored inside option values are hidden when an agent reads them.
 
 = Earlier versions =
 

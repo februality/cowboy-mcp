@@ -3,6 +3,19 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.7.5 =
+* New: files attached in a ChatGPT conversation can go straight into the Media Library. Every upload can also be resized and converted to WebP, AVIF, JPEG or PNG on the way in.
+* New: an undo now reports whether the restored item matches what was saved before the change, and lists any field that differs.
+* Fix: undoing a permanent comment delete brings the comment back. It reported success without restoring it.
+* Fix: undoing an edit to a published post no longer reports a conflict after WordPress has sent the post's pingbacks.
+* Fix: dry runs and safe-mode previews no longer promise success for a call the tool would refuse, such as an upload with unknown arguments.
+* Fix: on WordPress 7.2, undoing a media delete keeps the link between an edited image and its original.
+* Fix: the "Repair now" notice is translated in all 12 bundled languages.
+* Multisite fix: a checkpoint on the main site of a network now holds only that site's tables; it included every site's tables and the network tables. Restoring an older checkpoint restores only the current site. `wp_delete_user` removes a user from the current site only, as described, instead of deleting the account from the whole network.
+* Multisite change: Cowboy MCP is now managed by super admins only. On a network, API keys created before 1.7.5 or with WP-CLI, and connections approved by a site administrator, stop working until a super admin creates or approves them again.
+* Changed: without Power mode, `wp_cli db query` runs read-only queries only, and `wp_cli search-replace` must name its tables and cannot change options, users or network tables.
+* Security: stronger protection for settings and credentials. Option, ACF and WooCommerce customer writes are checked more strictly, and passwords, licence keys and API tokens stored inside option values are hidden when an agent reads them.
+
 = 1.7.4 =
 * New: connect Meta Muse and Muse Code from the Connections tab. Setup is one message pasted into the chat: the app configures itself and signs in. Sites behind Cloudflare are shown the firewall rule Muse needs.
 * New: OpenClaw and Hermes Agent panels under "Automation & developers". Both connect with one pasted message. Terminal commands, config files and an API-key setup are available.
