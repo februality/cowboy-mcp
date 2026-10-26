@@ -100,7 +100,7 @@ ChatGPT connects with the same one-click sign-in from a Business, Enterprise or 
 
 = Connect Perplexity, Grok and Gemini =
 
-Perplexity (Pro, Max or Enterprise), Grok (free plan works) and the Gemini app (personal US Google account) each add a custom MCP server by URL: click the app's **Open** button on the Connections tab (it copies your connection link), paste the link where the app asks for a server URL, then approve the sign-in on your own site. They connect from the vendor's cloud, so the site needs a public HTTPS address.
+Perplexity (Pro, Max or Enterprise), Grok (free plan works) and the Gemini app (personal US Google account) each add a custom MCP server by URL: copy your connection link from the app's panel on the Connections tab, click **Open** to go to the app, paste the link where it asks for a server URL, then approve the sign-in on your own site. They connect from the vendor's cloud, so the site needs a public HTTPS address.
 
 = Connect Meta Muse =
 
@@ -108,7 +108,7 @@ Muse and Muse Code set up from a pasted message: click **Copy message** on the M
 
 = Connect n8n =
 
-Add an **MCP Client Tool** node: Endpoint = your connection link, Server Transport = HTTP Streamable, Authentication = **OAuth2** (n8n registers itself and opens the sign-in; self-hosted n8n adds its host under Browser sign-in → Additional allowed hosts) or **Bearer Auth** with an API key. Execute the node once to see cowboy_discover and cowboy_run.
+Add an **MCP Client Tool** node: Endpoint = your connection link, Server Transport = HTTP Streamable, Authentication = **MCP OAuth2** (n8n registers itself and opens the sign-in; self-hosted n8n adds its host under Browser sign-in → Additional allowed hosts) or **Bearer Auth** with an API key. Execute the node once to see cowboy_discover and cowboy_run.
 
 = Connect OpenClaw and Hermes Agent =
 
@@ -311,6 +311,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * Fix: the "Repair now" notice is translated in all 12 bundled languages.
 * Multisite fix: a checkpoint on the main site of a network now holds only that site's tables; it included every site's tables and the network tables. Restoring an older checkpoint restores only the current site. `wp_delete_user` removes a user from the current site only, as described, instead of deleting the account from the whole network.
 * Multisite change: Cowboy MCP is now managed by super admins only. On a network, API keys created before 1.7.5 or with WP-CLI, and connections approved by a site administrator, stop working until a super admin creates or approves them again.
+* Changed: connection steps match the current apps again: Gemini's new Connectors page, Perplexity's Plugins menu, OpenCode 2 (the command now adds `--global` and signs in with `opencode mcp auth`), n8n's MCP OAuth2 option, VS Code's Customizations view, and current Muse, Grok, ChatGPT and Claude wording.
 * Changed: without Power mode, `wp_cli db query` runs read-only queries only, and `wp_cli search-replace` must name its tables and cannot change options, users or network tables.
 * Security: stronger protection for settings and credentials. Option, ACF and WooCommerce customer writes are checked more strictly, and passwords, licence keys and API tokens stored inside option values are hidden when an agent reads them.
 

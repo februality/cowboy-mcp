@@ -171,7 +171,7 @@ class Cowboy_MCP_Admin_Connections {
             'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'bridge' ],
             'chatgpt'        => [ 'label' => 'ChatGPT',        'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'chatgpt',     'local' => 'tunnel' ],
             // open_url: Grok verified from docs.x.ai 2026-10-07; the other two are candidates until Task 4 verifies them live (record URL + date here).
-            'gemini-app'     => [ 'label' => 'Gemini',         'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'gemini-app',  'local' => 'tunnel', 'open_url' => 'https://gemini.google.com/apps',               'open_host' => 'gemini.google.com' ], // /apps = Connected Apps page with the Custom apps field (verified 2026-10-11)
+            'gemini-app'     => [ 'label' => 'Gemini',         'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'gemini-app',  'local' => 'tunnel', 'open_url' => 'https://gemini.google.com/customize/connectors', 'open_host' => 'gemini.google.com' ], // Customize → Connectors with the + Custom button (/apps redirects here; verified 2026-10-26)
             'grok'           => [ 'label' => 'Grok',           'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'grok',        'local' => 'tunnel', 'open_url' => 'https://grok.com/connectors',                  'open_host' => 'grok.com' ],
             'perplexity'     => [ 'label' => 'Perplexity',     'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'perplexity',  'local' => 'tunnel', 'open_url' => 'https://www.perplexity.ai/computer/connectors', 'open_host' => 'www.perplexity.ai' ],
             // Meta Muse (US). Verified live 2026-10-14: no Settings entry for custom connectors — Muse creates one when asked in chat; DCR name "Muse", callback agent.meta.ai/api/hatch/oauth/callback.
@@ -260,7 +260,7 @@ class Cowboy_MCP_Admin_Connections {
             <div class="mcp-local-details-body">
                 <?php if ( ! $oauth_on ) { self::render_enable_first(); } ?>
                 <p><?php echo wp_kses( __( 'Already added? Claude reports that a connector with this URL already exists. Find it under <strong>Customize → Connectors</strong> and click <strong>Connect</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
-                <p><?php echo wp_kses( __( 'Custom connectors work on every Claude plan (Free is limited to one). On Team and Enterprise, an organization owner adds the connector first under <strong>Organization settings → Connectors</strong>; members then click <strong>Connect</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                <p><?php echo wp_kses( __( 'Custom connectors work on every Claude plan (Free is limited to one). On Team and Enterprise, an organization owner adds the connector first under <strong>Organization settings → Connectors</strong> (<strong>Add → Custom → Web</strong>); members then click <strong>Connect</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
                 <?php if ( $org ) : ?>
                     <div class="cmcp-org-add"><?php esc_html_e( 'Organization owner on Team or Enterprise?', 'cowboy-mcp' ); ?>
                         <?php self::render_add_to_claude_form( 'org', 'cmcp-linkbtn', __( 'Add it for your organization', 'cowboy-mcp' ) ); ?></div>
@@ -308,7 +308,7 @@ class Cowboy_MCP_Admin_Connections {
         // Whole sentences per client (not sprintf'd names) so translators get
         // complete, grammatical strings.
         $approve_text = $is_chatgpt
-            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>. Back in ChatGPT, review the tools it found and install the plugin; in a chat, pick it from the <strong>+</strong> menu or type <strong>@</strong> and its name.', 'cowboy-mcp' )
+            ? __( 'ChatGPT opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>. Back in ChatGPT, review the tools it found and install the plugin, then start a new chat and type <strong>@</strong> and its name.', 'cowboy-mcp' )
             : __( 'Claude opens a sign-in page on <strong>your site</strong>. Click <strong>Approve</strong>, then switch the connector on under <strong>+ → Connectors</strong> in a chat.', 'cowboy-mcp' );
 
         if ( $show_warning && ! $reachable ) {
@@ -367,12 +367,13 @@ class Cowboy_MCP_Admin_Connections {
             <?php
             self::step_close();
             // No Developer mode step any more: ChatGPT adds custom servers straight from Plugins behind a per-server risk
-            // acknowledgement (help.openai.com article 12584461; live-checked 2026-10-18: Plugins → Add ▾ → Add custom MCP server,
+            // acknowledgement (help.openai.com article 12584461, re-read 2026-10-26: "plus button" + install, then @ in a new chat;
+            // live-checked 2026-10-18 and 2026-10-26: Plugins → Add ▾ → Add custom MCP server,
             // fields Name / Server URL / Authentication = OAuth, checkbox, "Create as a plugin"; the plugin then sits in the chat's + menu).
             self::step_open( '3', __( 'Paste the link', 'cowboy-mcp' ), '' );
             ?>
                 <p><?php
-                    echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>Add</strong> and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] );
+                    echo wp_kses( __( 'Go to <code>Plugins</code>, click <strong>Add</strong> (or <strong>+</strong>) and choose <strong>Add custom MCP server</strong>.', 'cowboy-mcp' ), [ 'code' => [], 'strong' => [] ] );
                     echo ' ';
                     echo wp_kses( __( 'Name it, paste the link as the <strong>Server URL</strong>, keep Authentication on <strong>OAuth</strong>, tick the risk acknowledgement and click <strong>Create as a plugin</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] );
                 ?></p>
@@ -423,9 +424,9 @@ class Cowboy_MCP_Admin_Connections {
         return match ( $slug ) {
             'perplexity' => [
                 'go'      => 'perplexity.ai',
-                'go_note' => wp_kses( __( 'Sign in, then open <strong>Customize → Connectors</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                'paste'   => wp_kses( __( 'Click <strong>+ Custom connector</strong> and choose <strong>Add MCP connector</strong>. Give it a name, paste the link as the <strong>MCP server URL</strong> (Advanced already says OAuth and Streamable HTTP), tick the acknowledgement and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                'connect' => wp_kses( __( 'Open the new connector and click <strong>Add connector</strong> — Perplexity opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'go_note' => wp_kses( __( 'Sign in, then open <strong>Plugins</strong> in the sidebar (<strong>Customize → Connectors</strong> on accounts that do not have it yet).', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'paste'   => wp_kses( __( 'Click <strong>Add custom</strong> (<strong>+ Custom connector</strong> on the older page), choose <strong>Add MCP connector</strong> and, if asked, <strong>Remote</strong>. Give it a name, paste the link as the <strong>MCP server URL</strong> (keep OAuth and Streamable HTTP), tick the acknowledgement and click <strong>Add</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'connect' => wp_kses( __( 'Click the new connector’s card (then <strong>Add connector</strong> if it asks) — Perplexity opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'top'   => wp_kses( __( '<strong>Needs Perplexity Pro, Max or Enterprise.</strong> The free plan has no custom connectors.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'plan'  => esc_html__( 'Verified on Pro (2026-10-12). On Enterprise, an admin has to allow member custom connectors first.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Perplexity, the connector shows a check mark. Ask a question that names it; Perplexity asks you to reply <code>yes</code> before its first tool run.', 'cowboy-mcp' ), [ 'code' => [] ] ),
@@ -435,14 +436,14 @@ class Cowboy_MCP_Admin_Connections {
                 'go_note' => '',
                 'paste'   => wp_kses( __( 'Click <strong>New Connector</strong>, choose <strong>Custom</strong>, give it a name and paste the link as the <strong>Server URL</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'connect' => wp_kses( __( 'Click <strong>Add Connector</strong> — Grok opens the sign-in in a popup.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                'plan'  => esc_html__( 'Works on the free plan (verified 2026-10-12) as well as SuperGrok and X Premium+. On Business and Enterprise workspaces an admin provisions the connector first.', 'cowboy-mcp' ),
+                'plan'  => esc_html__( 'Connectors are available on every Grok plan, the free plan included (verified 2026-10-12). On Business and Enterprise workspaces an admin provisions the connector first.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Grok, the connector shows as <strong>Added</strong>. In a chat, type <code>@</code> to pick it.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
             'gemini-app' => [
-                'go'      => 'gemini.google.com/apps',
+                'go'      => 'gemini.google.com',
                 'go_note' => wp_kses( __( 'Sign in to Gemini with a <strong>personal</strong> Google account — work and school accounts do not get Custom apps.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                'paste'   => wp_kses( __( 'Under <strong>Settings → Connected Apps → Custom apps</strong>, paste the link into <strong>Add a custom app link</strong> and click <strong>Next</strong> twice.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
-                'connect' => wp_kses( __( 'Tick the acknowledgement, click <strong>Connect</strong>, then <strong>Agree and continue</strong> — Gemini opens the sign-in page.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'paste'   => wp_kses( __( 'Open <strong>Customize → Connectors</strong>, click <strong>+ Custom</strong>, paste the link as the <strong>MCP Server URL</strong> and click <strong>Next</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'connect' => wp_kses( __( 'Follow Gemini’s prompts (tick the acknowledgement, <strong>Connect</strong>, <strong>Agree and continue</strong>) — Gemini opens the sign-in page.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 'plan'  => esc_html__( 'Google lists no plan requirement (verified on a Google AI Plus account). You need a personal Google account in the United States, 18 or over, with Gemini in English and Keep Activity on; work and school accounts do not get Custom apps.', 'cowboy-mcp' ),
                 'after' => wp_kses( __( 'Back in Gemini, click <strong>Connect</strong> on the “Save your custom app” card. In a chat, type <code>@</code> to pick the app; Gemini asks you to allow its first tool run.', 'cowboy-mcp' ), [ 'strong' => [], 'code' => [] ] ),
             ],
@@ -459,8 +460,8 @@ class Cowboy_MCP_Admin_Connections {
                 // reads no prompt parameter from the URL — checked 2026-10-16). A chat message creates one, so the panel
                 // hands over the exact message that worked live on 2026-10-14 instead of the bare link.
                 'message' => self::muse_connector_message(),
-                'plan'  => esc_html__( 'Meta offers Muse to adults in the United States. Meta does not review custom connectors, so add only sites you manage.', 'cowboy-mcp' ),
-                'after' => wp_kses( __( 'Muse asks you to approve each request it sends to your site (<strong>Allow once</strong> or <strong>Always allow this site</strong>).', 'cowboy-mcp' ), [ 'strong' => [] ] ),
+                'plan'  => esc_html__( 'Meta offers Muse in the United States and Canada. Meta does not review custom connectors, so add only sites you manage.', 'cowboy-mcp' ),
+                'after' => wp_kses( __( 'Muse asks you to approve the requests it sends to your site: <strong>Allow once</strong>, <strong>Allow for this site</strong> or <strong>Always allow</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
                 // Shown only when this admin page came through Cloudflare (CF-Ray): everyone else would read a warning that does not apply.
                 'cloudflare' => wp_kses( __( 'This site is behind Cloudflare: its Browser Integrity Check blocks Muse with error 1010. Turn it off for <code>/wp-json/cowboy-mcp/</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             ],
@@ -606,11 +607,12 @@ class Cowboy_MCP_Admin_Connections {
             ),
             wp_kses( __( 'Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>.', 'cowboy-mcp' ), [ 'strong' => [] ] ),
             wp_kses(
-                // Claude's dialog (2026-10-18) detects the sign-in settings itself; its OAuth-client choices are "Use Claude's published
+                // Claude's dialog (2026-10-18) detects the sign-in settings itself (some organizations get one more Continue first,
+                // support.claude.com 11175166, 2026-10-26 — hence "finish with Add"); its OAuth-client choices are "Use Claude's published
                 // identity" (CIMD, the recommended default) and "Register automatically" (DCR) — both are paths this plugin serves.
                 $link_above
-                    ? __( 'Name it, paste the link above and click <strong>Continue</strong>. Keep the sign-in settings Claude detects (either OAuth client option works) and click <strong>Add</strong>.', 'cowboy-mcp' )
-                    : __( 'Name it, paste the link from step 1 and click <strong>Continue</strong>. Keep the sign-in settings Claude detects (either OAuth client option works) and click <strong>Add</strong>.', 'cowboy-mcp' ),
+                    ? __( 'Name it, paste the link above and click <strong>Continue</strong>. Keep the sign-in settings Claude detects (either OAuth client option works) and finish with <strong>Add</strong>.', 'cowboy-mcp' )
+                    : __( 'Name it, paste the link from step 1 and click <strong>Continue</strong>. Keep the sign-in settings Claude detects (either OAuth client option works) and finish with <strong>Add</strong>.', 'cowboy-mcp' ),
                 [ 'strong' => [] ]
             ),
         ];
@@ -785,7 +787,7 @@ class Cowboy_MCP_Admin_Connections {
             'codex'       => esc_html__( 'Run this in your terminal. Codex opens your browser to sign in.', 'cowboy-mcp' ),
             /* translators: %s: the MCP server name used in the command */
             'gemini-cli'  => wp_kses( sprintf( __( 'Run this in your terminal, then start <code>gemini</code>: it opens your browser to sign in (if it does not, run <code>/mcp auth %s</code>).', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] ),
-            'opencode'    => esc_html__( 'Run this in your terminal. Opencode opens your browser to sign in the first time it connects.', 'cowboy-mcp' ),
+            'opencode'    => esc_html__( 'Run these in your terminal. The second line opens your browser to sign in.', 'cowboy-mcp' ),
             'muse-code'   => wp_kses( __( 'Start <code>muse</code> and paste this message. Muse adds the server to its settings; approve the change when it asks.', 'cowboy-mcp' ), [ 'code' => [] ] ),
             // OpenClaw and Hermes are driven from chat apps, so the pasted message is the default (owner, 2026-10-17); the
             // terminal commands sit in the collapsed "Use the terminal instead" row (render_terminal_details()).
@@ -821,6 +823,8 @@ class Cowboy_MCP_Admin_Connections {
                 <?php endif; ?>
                 <?php if ( 'claude-code' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--no-browser</code> to the second line and open the printed URL in a local browser.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <?php elseif ( 'opencode' === $slug ) : ?>
+                    <p class="description"><?php echo wp_kses( __( 'Opencode 1.x: leave out <code>--global</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'muse-code' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--headless</code> and paste back the address your browser ends on.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'openclaw' === $slug ) : ?>
@@ -996,7 +1000,7 @@ class Cowboy_MCP_Admin_Connections {
             <dl class="cmcp-fields">
                 <dt><?php esc_html_e( 'Endpoint', 'cowboy-mcp' ); ?></dt><dd><?php self::render_paste_field( 'mcp-n8n-ep', $endpoint, '', __( 'Copy endpoint URL', 'cowboy-mcp' ), [ 'start' => 'n8n', 'mode' => 'oauth' ] ); ?></dd>
                 <dt><?php esc_html_e( 'Server Transport', 'cowboy-mcp' ); ?></dt><dd><code>HTTP Streamable</code></dd>
-                <dt><?php esc_html_e( 'Authentication', 'cowboy-mcp' ); ?></dt><dd><?php echo wp_kses( __( '<strong>OAuth2</strong> — create a new OAuth2 credential and click Connect. n8n registers itself with this site and opens the sign-in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></dd>
+                <dt><?php esc_html_e( 'Authentication', 'cowboy-mcp' ); ?></dt><dd><?php echo wp_kses( __( '<strong>MCP OAuth2</strong> — create a new MCP OAuth2 API credential, keep <strong>Use Dynamic Client Registration</strong> on and click Connect. n8n registers itself with this site and opens the sign-in.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></dd>
             </dl>
             <p class="description"><?php
                 /* translators: %s: URL of the Settings tab */
@@ -1057,6 +1061,8 @@ class Cowboy_MCP_Admin_Connections {
                 <?php self::render_code( 'mcp-cmd-' . $slug, self::install_snippet( $slug, $domain, $endpoint, $key_display ), self::snippet_title( $slug ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'key' ] ); ?>
                 <?php if ( 'codex' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Codex reads the key each time it starts, so also add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</code>).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <?php elseif ( 'opencode' === $slug ) : ?>
+                    <p class="description"><?php echo wp_kses( __( 'Opencode 1.x: leave out <code>--global</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'hermes' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Hermes asks for the key when you run this and stores it in <code>~/.hermes/.env</code>; the config file only references it.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
@@ -1158,8 +1164,9 @@ class Cowboy_MCP_Admin_Connections {
         return match ( $slug ) {
             'claude-code'    => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
             'codex'          => 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'codex mcp add ' . $domain . ' --url ' . $endpoint . ' --bearer-token-env-var COWBOY_MCP_API_KEY',
-            // opencode's --header takes KEY=VALUE (opencode mcp add --help, 1.18.35).
-            'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint . ' --header "Authorization=Bearer ' . $key_display . '"',
+            // opencode's --header takes KEY=VALUE (opencode mcp add --help, 1.18 and 2.1). 2.x writes to the project config unless
+            // --global is given; 1.x always writes globally and rejects --global (both checked 2026-10-26), hence the panel's note.
+            'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint . ' --global --header "Authorization=Bearer ' . $key_display . '"',
             'cursor'         => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
             'gemini-cli'     => 'gemini mcp add --scope user --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint, 'headers' => [ 'Authorization' => 'Bearer ' . $key_display ] ], JSON_UNESCAPED_SLASHES ) . "'",
@@ -1234,7 +1241,8 @@ class Cowboy_MCP_Admin_Connections {
             'claude-code'    => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . "\n" . 'claude mcp login ' . $domain,
             'codex'          => 'codex mcp add ' . $domain . ' --url ' . $endpoint,
             'gemini-cli'     => 'gemini mcp add -s user -t http ' . $domain . ' ' . $endpoint,
-            'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint,
+            // 2.x does not sign in on its own (opencode.ai/v2/docs/mcp-servers: /mcps or `mcp auth`); 1.x has the same `mcp auth`.
+            'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint . ' --global' . "\n" . 'opencode mcp auth ' . $domain,
             'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, '' ),
             'muse-code'      => 'muse mcp login ' . $domain,
@@ -1256,7 +1264,8 @@ class Cowboy_MCP_Admin_Connections {
         return match ( $slug ) {
             // Gemini CLI signs in at startup only with oauth.enabled (docs/tools/mcp-server.md).
             'gemini-cli'     => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"httpUrl\": \"{$endpoint}\",\n      \"oauth\": { \"enabled\": true }\n    }\n  }\n}",
-            'opencode'       => "{\n  \"mcp\": {\n    \"{$domain}\": {\n      \"type\": \"remote\",\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
+            // 2.x shape (mcp.servers); 1.18 reads it too (checked 2026-10-26).
+            'opencode'       => "{\n  \"mcp\": {\n    \"servers\": {\n      \"{$domain}\": {\n        \"type\": \"remote\",\n        \"url\": \"{$endpoint}\"\n      }\n    }\n  }\n}",
             'cursor'         => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'vscode'         => "{\n  \"servers\": {\n    \"{$domain}\": {\n      \"type\": \"http\",\n      \"url\": \"{$endpoint}\"\n    }\n  }\n}",
             'claude-desktop' => self::bridge_config_snippet( $domain, $endpoint, '' ),
@@ -1312,7 +1321,7 @@ class Cowboy_MCP_Admin_Connections {
             /* translators: %s: the MCP server name shown in the client. */
             'gemini-cli'  => sprintf( __( 'Run <code>gemini mcp list</code> — <code>%s</code> should show as connected.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
-            'vscode'      => sprintf( __( 'Open Copilot Chat in agent mode and click the tools icon — <code>%s</code> should be listed. Errors show under <code>Output → MCP</code>.', 'cowboy-mcp' ), esc_html( $domain ) ),
+            'vscode'      => sprintf( __( 'Run <code>Chat: Open Customizations</code> from the Command Palette and open <code>Tools</code> — <code>%s</code> should be listed. Errors show under <code>MCP: List Servers → Show Output</code>.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
             'muse-code'   => sprintf( __( 'Start <code>muse</code> and run <code>/mcp</code> — <code>%s</code> should be listed with its tools.', 'cowboy-mcp' ), esc_html( $domain ) ),
             /* translators: %s: the MCP server name shown in the client. */
