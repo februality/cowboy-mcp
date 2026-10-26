@@ -13,7 +13,7 @@ release; older entries are kept here.
 * Fix: the "Repair now" notice is translated in all 12 bundled languages.
 * Multisite fix: a checkpoint on the main site of a network now holds only that site's tables; it included every site's tables and the network tables. Restoring an older checkpoint restores only the current site. `wp_delete_user` removes a user from the current site only, as described, instead of deleting the account from the whole network.
 * Multisite change: Cowboy MCP is now managed by super admins only. On a network, API keys created before 1.7.5 or with WP-CLI, and connections approved by a site administrator, stop working until a super admin creates or approves them again.
-* Changed: connection steps match the current apps again: Gemini's new Connectors page, Perplexity's Plugins menu, OpenCode 2 (the command now adds `--global` and signs in with `opencode mcp auth`), n8n's MCP OAuth2 option, VS Code's Customizations view, and current Muse, Grok, ChatGPT and Claude wording.
+* Changed: connection steps updated to match the current AI apps.
 * Changed: without Power mode, `wp_cli db query` runs read-only queries only, and `wp_cli search-replace` must name its tables and cannot change options, users or network tables.
 * Security: stronger protection for settings and credentials. Option, ACF and WooCommerce customer writes are checked more strictly, and passwords, licence keys and API tokens stored inside option values are hidden when an agent reads them.
 
