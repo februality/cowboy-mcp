@@ -70,7 +70,9 @@ function cowboy_mcp_format_post( WP_Post $post ): array {
         'menu_order' => (int) $post->menu_order,
         'permalink'  => get_permalink( $post->ID ),
         'terms'      => $terms,
-        'meta'       => get_post_meta( $post->ID ),
+        // Same redaction as the Woo customer meta tool: plugins keep API keys and
+        // tokens in post meta too.
+        'meta'       => Cowboy_MCP_Security::redact_meta( get_post_meta( $post->ID ) ),
     ];
 }
 

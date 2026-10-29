@@ -15,7 +15,8 @@ function cowboy_mcp_woo_validate_date_range( array $a, array $default_statuses =
     }
 
     $statuses    = $a['status'] ?? $default_statuses;
-    $wc_statuses = array_map( fn( $s ) => 'wc-' . ltrim( $s, 'wc-' ), $statuses );
+    // A prefix, not a character list: ltrim( 'completed', 'wc-' ) is 'ompleted'.
+    $wc_statuses = array_map( fn( $s ) => str_starts_with( (string) $s, 'wc-' ) ? (string) $s : 'wc-' . $s, (array) $statuses );
 
     return [
         'date_after'  => $date_after,

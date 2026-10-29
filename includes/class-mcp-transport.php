@@ -87,6 +87,10 @@ class Cowboy_MCP_Transport {
         $params = $body['params'] ?? [];
         $id     = $body['id'] ?? null;
 
+        if ( ! is_string( $method ) ) {
+            return self::jsonrpc_error( is_int( $id ) || is_string( $id ) ? $id : null, -32600, 'Invalid Request: "method" must be a string.' );
+        }
+
         // Params must be an array (object/array in JSON-RPC).
         if ( ! is_array( $params ) ) {
             return self::jsonrpc_error( $id, -32602, 'Invalid params: must be an object or array.' );
@@ -225,7 +229,7 @@ class Cowboy_MCP_Transport {
      */
     private static function handle_set_log_level( array $params, WP_REST_Request $request ): \stdClass|WP_Error {
         $valid_levels = [ 'debug', 'info', 'notice', 'warning', 'error', 'critical', 'alert', 'emergency' ];
-        $level = $params['level'] ?? '';
+        $level = is_string( $params['level'] ?? null ) ? $params['level'] : '';
         if ( ! in_array( $level, $valid_levels, true ) ) {
             return new WP_Error( 'invalid_params', "Invalid log level: {$level}", [ 'code' => -32602 ] );
         }
@@ -343,7 +347,7 @@ class Cowboy_MCP_Transport {
         $ver    = get_bloginfo( 'version' );
         $prefix = $wpdb->prefix;
 
-        $settings  = get_option( 'cowboy_mcp_settings', [] );
+        $settings  = Cowboy_MCP_Tools::get_settings();
         $safe_mode = ! empty( $settings['safe_mode'] ) ? 'ON' : 'OFF';
 
         $text = "You are connected to the WordPress site \"{$name}\" at {$url} (domain: {$host}).\n"

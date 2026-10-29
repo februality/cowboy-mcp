@@ -54,8 +54,8 @@ class Cowboy_MCP_Prompts {
      * Handle prompts/get — return a prompt with rendered messages.
      */
     public static function get_prompt( array $params ): array|WP_Error {
-        $name = $params['name'] ?? '';
-        $args = $params['arguments'] ?? [];
+        $name = is_string( $params['name'] ?? null ) ? $params['name'] : '';
+        $args = is_array( $params['arguments'] ?? null ) ? $params['arguments'] : [];
         $defs = self::definitions();
 
         if ( ! isset( $defs[ $name ] ) ) {

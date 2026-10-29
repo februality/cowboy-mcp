@@ -126,6 +126,13 @@ return [
             if ( $wpdb->last_error ) {
                 return new WP_Error( 'db_error', $wpdb->last_error );
             }
+            // Other requests' statements: literals masked (passwords, tokens, personal data).
+            foreach ( (array) $rows as &$row ) {
+                if ( isset( $row['Info'] ) && is_string( $row['Info'] ) ) {
+                    $row['Info'] = Cowboy_MCP_Security::redact_sql_literals( $row['Info'] );
+                }
+            }
+            unset( $row );
             return [ 'processes' => $rows ?: [] ];
         },
 

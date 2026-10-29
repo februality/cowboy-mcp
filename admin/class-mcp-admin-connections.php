@@ -542,6 +542,10 @@ class Cowboy_MCP_Admin_Connections {
      */
     private static function muse_connector_message(): string {
         $name = trim( wp_strip_all_tags( html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES, 'UTF-8' ) ) );
+        // The site title can be set through the MCP tools and lands in a message pasted to
+        // an AI app: only a short name, no sentences, line breaks or instructions.
+        $name = trim( (string) preg_replace( '/\s+/u', ' ', (string) preg_replace( '/[^\p{L}\p{N} &\'_-]/u', ' ', $name ) ) );
+        $name = function_exists( 'mb_substr' ) ? mb_substr( $name, 0, 60 ) : substr( $name, 0, 60 );
         if ( '' === $name ) {
             $name = (string) wp_parse_url( home_url(), PHP_URL_HOST );
         }

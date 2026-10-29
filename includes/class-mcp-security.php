@@ -1357,6 +1357,32 @@ class Cowboy_MCP_Security {
         return (string) $text;
     }
 
+    /**
+     * Mask secret-looking query values in a logged URL (password-reset `key=`,
+     * `token=`, signatures, one-time codes), on top of scrub_secrets(). Display only.
+     */
+    public static function redact_url_query( string $url ): string {
+        return (string) preg_replace_callback(
+            '/([?&;])([^=&#\s]+)=([^&#\s]*)/',
+            static function ( array $m ): string {
+                $name = strtolower( (string) preg_replace( '/[^a-z]/i', '', rawurldecode( $m[2] ) ) );
+                return preg_match( '/key|token|pass|pwd|secret|auth|code|nonce|sig|session|hash|otp|ticket|credential/', $name )
+                    ? $m[1] . $m[2] . '=[REDACTED]'
+                    : $m[0];
+            },
+            self::scrub_secrets( $url )
+        );
+    }
+
+    /**
+     * Mask the string literals in a SQL statement shown to an agent (another
+     * request's query in the process list may carry a password, a token or a
+     * user's personal data). Display only.
+     */
+    public static function redact_sql_literals( string $sql ): string {
+        return (string) preg_replace( [ "/'(?:[^'\\\\]|\\\\.|'')*'/s", '/"(?:[^"\\\\]|\\\\.|"")*"/s' ], [ "'?'", '"?"' ], $sql );
+    }
+
     /** wp-config constants whose exact values are redacted from WP-CLI output. */
     private const SECRET_CONSTANTS = [ 'DB_PASSWORD', 'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT', 'WP_SECRETS_KEY', 'WP_SECRETS_KEY_PREVIOUS' ];
 

@@ -545,7 +545,9 @@ return [
 					if ( empty( $search ) ) {
 						return new WP_Error( 'invalid_params', 'Search pattern is required for search action.' );
 					}
-					$like = '%' . $wpdb->esc_like( '_transient_' ) . $wpdb->esc_like( $search ) . '%';
+					// Anchored at the prefix: a leading wildcard also matched `_site_transient_*`
+					// rows, whose names the prefix strip below then garbled past the redaction.
+					$like = $wpdb->esc_like( '_transient_' ) . '%' . $wpdb->esc_like( (string) $search ) . '%';
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 					$rows = $wpdb->get_results( $wpdb->prepare(
 						"SELECT option_name, option_value FROM {$wpdb->options}
@@ -562,7 +564,7 @@ return [
 						'action_taken' => 'search',
 						'search'       => $search,
 						'transients'   => array_map( function ( $row ) use ( $wpdb ) {
-							$name    = str_replace( '_transient_', '', $row['option_name'] );
+							$name    = substr( (string) $row['option_name'], strlen( '_transient_' ) );
 							$timeout = $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 								"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
 								'_transient_timeout_' . $name
@@ -596,7 +598,7 @@ return [
 					return [
 						'action_taken' => 'list',
 						'transients'   => array_map( function ( $row ) use ( $wpdb ) {
-							$name    = str_replace( '_transient_', '', $row['option_name'] );
+							$name    = substr( (string) $row['option_name'], strlen( '_transient_' ) );
 							$timeout = $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 								"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
 								'_transient_timeout_' . $name

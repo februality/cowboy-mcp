@@ -256,6 +256,9 @@ class Cowboy_MCP_Doctor {
 	 * public name may resolve to a private IP from inside its own network. The
 	 * URL is always built here from rest_url()/home_url() - never caller input.
 	 */
+	/** Label of the throwaway key the authenticated loopback check uses. */
+	private const SELFTEST_LABEL = 'Connection Doctor self-test (auto-revoked)';
+
 	private static function loopback( string $method, string $url, array $args = [] ): array|WP_Error {
 		return wp_remote_request( $url, array_merge( [
 			'method'      => $method,
@@ -323,10 +326,27 @@ class Cowboy_MCP_Doctor {
 		if ( ! empty( $opts['skip_auth_roundtrip'] ) ) {
 			$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'pass', 'You reached this tool through the authenticated endpoint - the path is proven working.' );
 		} else {
-			$minted = Cowboy_MCP_Auth::generate_key( 'Connection Doctor self-test (auto-revoked)' );
+			// A run killed before `finally` leaves its key behind: sweep any old ones first.
+			foreach ( Cowboy_MCP_Auth::list_keys() as $k ) {
+				if ( self::SELFTEST_LABEL === ( $k['label'] ?? '' ) && (int) ( $k['created'] ?? 0 ) < time() - 5 * MINUTE_IN_SECONDS ) {
+					Cowboy_MCP_Auth::revoke_key( (string) $k['id'] );
+					Cowboy_MCP_Audit_Log::log( 'doctor_key_revoked', [ 'key_id' => (string) $k['id'] ] );
+				}
+			}
+			// Read-only (initialize needs nothing more), and never sent to a redirect target.
+			$minted = Cowboy_MCP_Auth::generate_key( self::SELFTEST_LABEL, [ 'mode' => 'read_only' ] );
 			Cowboy_MCP_Audit_Log::log( 'doctor_key_minted', [ 'key_id' => $minted['id'] ] );
 			try {
-				$r = self::loopback( 'POST', $endpoint, [ 'headers' => [ 'Content-Type' => 'application/json', 'Accept' => 'application/json, text/event-stream', 'Authorization' => 'Bearer ' . $minted['key'] ], 'body' => self::initialize_body() ] );
+				$auth_args = [ 'redirection' => 0, 'headers' => [ 'Content-Type' => 'application/json', 'Accept' => 'application/json, text/event-stream', 'Authorization' => 'Bearer ' . $minted['key'] ], 'body' => self::initialize_body() ];
+				$r         = self::loopback( 'POST', $endpoint, $auth_args );
+				// One same-host redirect (http -> https, trailing slash) is followed by hand.
+				$location = is_wp_error( $r ) ? '' : (string) wp_remote_retrieve_header( $r, 'location' );
+				if ( '' !== $location && in_array( (int) wp_remote_retrieve_response_code( $r ), [ 301, 302, 307, 308 ], true ) ) {
+					$next = WP_Http::make_absolute_url( $location, $endpoint );
+					if ( strtolower( (string) wp_parse_url( $next, PHP_URL_HOST ) ) === strtolower( (string) wp_parse_url( $endpoint, PHP_URL_HOST ) ) ) {
+						$r = self::loopback( 'POST', $next, $auth_args );
+					}
+				}
 				if ( is_wp_error( $r ) ) {
 					$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', 'POST failed: ' . $r->get_error_message() );
 				} else {

@@ -73,6 +73,7 @@ class Cowboy_MCP_Auth {
             'created'  => time(),
             'last_used' => null,
             'prefix'   => substr( $raw_key, 0, 8 ),  // visible prefix for identification
+            'lookup'   => self::key_lookup( $raw_key ),
         ];
         // Who made it: on multisite a key only works while its creator is a super admin.
         if ( get_current_user_id() > 0 ) {
@@ -94,6 +95,36 @@ class Cowboy_MCP_Auth {
             'label'   => $record['label'],
             'created' => $record['created'],
         ];
+    }
+
+    /**
+     * O(1) lookup value for an API key: sha256 of the 256-bit random secret, the same
+     * scheme as OAuth tokens. It identifies a presented key without running bcrypt
+     * over every stored key, so a valid key is recognised before the per-IP failure
+     * limit and an invalid one costs no hashing. The bcrypt `hash` stays the record's
+     * proof for keys made before the lookup existed (it is added on their first use).
+     */
+    private static function key_lookup( string $raw_key ): string {
+        return hash( 'sha256', 'cowboy_mcp_key|' . $raw_key );
+    }
+
+    /**
+     * Merge $changes into one key record as it is stored NOW (not the copy read at the
+     * start of this request), so a revoke or scope change made meanwhile is never
+     * written back over. No-op when the key no longer exists.
+     */
+    private static function update_key_record( string $id, array $changes ): void {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- must bypass the request's option cache
+        $raw  = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::OPTION_KEY ) );
+        $keys = is_string( $raw ) ? maybe_unserialize( $raw ) : [];
+        if ( ! is_array( $keys ) || ! isset( $keys[ $id ] ) || ! is_array( $keys[ $id ] ) ) {
+            return;
+        }
+        $keys[ $id ] = array_merge( $keys[ $id ], $changes );
+        wp_cache_delete( self::OPTION_KEY, 'options' );
+        wp_cache_delete( 'alloptions', 'options' );
+        update_option( self::OPTION_KEY, $keys );
     }
 
     /**
@@ -213,27 +244,38 @@ class Cowboy_MCP_Auth {
             return new WP_Error( 'mcp_disabled', 'MCP server is disabled.', [ 'status' => 503 ] );
         }
 
-        // Per-IP throttle on FAILED authentication attempts, checked before any token
-        // work. Only requests that fail below count toward it (note_auth_failure()), so
-        // it bounds credential stuffing and bcrypt CPU cost without ever throttling a
-        // caller holding a valid credential — those are governed by the per-key limit.
+        // Per-IP throttle on FAILED authentication attempts. A valid credential is
+        // recognised first (OAuth tokens and API keys both by an O(1) hash lookup), so a
+        // shared egress IP or a proxy that hides client addresses can never lock a real
+        // credential out; only callers that fail count toward it (note_auth_failure()),
+        // and only they are refused once it is spent. It bounds credential stuffing and
+        // the bcrypt cost of keys made before the lookup existed.
         $client_ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
-        if ( $client_ip !== '' && self::rate_limit_exhausted( 'ip_' . md5( $client_ip ), self::IP_RATE_LIMIT ) ) {
-            self::log( 'rate_limit_ip_exceeded', [ 'ip' => $client_ip ] );
-            return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
-        }
+        // A CORS preflight carries no credentials by design: never count it as a failure.
+        $preflight = 'OPTIONS' === strtoupper( (string) $request->get_method() );
 
         // Origin validation (MCP Streamable HTTP spec; defense-in-depth vs DNS rebinding).
         // Browser clients send Origin; CLI/agent clients omit it — reject only a present,
         // non-allowed Origin so legitimate non-browser clients are unaffected.
         $origin = $request->get_header( 'Origin' );
         if ( $origin && ! self::is_allowed_origin( $origin ) ) {
-            self::log( 'origin_rejected', [ 'origin' => $origin ] );
+            if ( ! self::ip_limited( $client_ip ) ) {
+                self::log( 'origin_rejected', [ 'origin' => $origin ] );
+            }
+            if ( ! $preflight ) {
+                self::note_auth_failure( $client_ip );
+            }
             return new WP_Error( 'mcp_forbidden', 'Origin not allowed.', [ 'status' => 403 ] );
         }
 
         $auth_header = $request->get_header( 'Authorization' );
         if ( ! $auth_header || ! str_starts_with( $auth_header, 'Bearer ' ) ) {
+            if ( $preflight ) {
+                return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
+            }
+            if ( self::ip_limited( $client_ip ) ) {
+                return self::ip_limit_error( $client_ip );
+            }
             self::log( 'auth_missing_header', [
                 'ip'              => sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) ),
                 'x_forwarded_for' => $request->get_header( 'X-Forwarded-For' ) ?: null,
@@ -250,17 +292,17 @@ class Cowboy_MCP_Auth {
         // store; everything downstream (current user, settings, rate limits) then
         // behaves exactly like an API key.
         if ( str_starts_with( $token, 'cmcp_at_' ) ) {
-            if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || ! Cowboy_MCP_OAuth::is_enabled() ) {
-                self::note_auth_failure( $client_ip );
-                self::send_www_authenticate();
-                return new WP_Error( 'mcp_unauthorized', 'OAuth connector is not enabled.', [ 'status' => 401 ] );
-            }
-            $user_id = Cowboy_MCP_OAuth::validate_access_token( $token );
+            $user_id = ( class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::is_enabled() )
+                ? Cowboy_MCP_OAuth::validate_access_token( $token )
+                : new WP_Error( 'oauth_disabled', 'OAuth connector is not enabled.' );
             if ( is_wp_error( $user_id ) ) {
+                if ( self::ip_limited( $client_ip ) ) {
+                    return self::ip_limit_error( $client_ip );
+                }
                 self::log( 'auth_invalid_oauth', [ 'reason' => $user_id->get_error_code() ] );
                 self::note_auth_failure( $client_ip );
                 self::send_www_authenticate();
-                return new WP_Error( 'mcp_unauthorized', 'Invalid or expired access token.', [ 'status' => 401 ] );
+                return new WP_Error( 'mcp_unauthorized', 'oauth_disabled' === $user_id->get_error_code() ? 'OAuth connector is not enabled.' : 'Invalid or expired access token.', [ 'status' => 401 ] );
             }
             self::$current_key_context = Cowboy_MCP_OAuth::$last_token_context;
             if ( ! self::check_rate_limit( self::$current_key_context['key_id'] ?? 'oauth', $settings['rate_limit'] ?? 120 ) ) {
@@ -271,59 +313,74 @@ class Cowboy_MCP_Auth {
             return true;
         }
 
-        $keys = get_option( self::OPTION_KEY, [] );
-
-        // Check the token against every key with bcrypt. The stored `prefix` is derived
-        // from the secret, so it must NOT be used as a fast-path gate — doing so leaks
-        // key bytes via timing. Key counts are tiny, so checking all is cheap.
-        foreach ( $keys as $id => &$record ) {
-            if ( empty( $record['hash'] ) ) {
-                continue;
+        $keys   = get_option( self::OPTION_KEY, [] );
+        $lookup = self::key_lookup( $token );
+        $match  = null;
+        foreach ( (array) $keys as $id => $record ) {
+            if ( is_array( $record ) && ! empty( $record['lookup'] ) && hash_equals( (string) $record['lookup'], $lookup ) ) {
+                $match = (string) $id;
+                break;
             }
-            if ( wp_check_password( $token, $record['hash'] ) ) {
-                // Throttle last_used updates (at most once per minute).
-                $now = time();
-                if ( empty( $record['last_used'] ) || ( $now - $record['last_used'] ) >= 60 ) {
-                    $record['last_used'] = $now;
-                    update_option( self::OPTION_KEY, $keys );
+        }
+        if ( null === $match ) {
+            // Only keys made before the lookup existed still need bcrypt. The stored
+            // `prefix` is derived from the secret, so it must NOT be used as a fast-path
+            // gate — doing so leaks key bytes via timing.
+            if ( self::ip_limited( $client_ip ) ) {
+                return self::ip_limit_error( $client_ip );
+            }
+            foreach ( (array) $keys as $id => $record ) {
+                if ( is_array( $record ) && empty( $record['lookup'] ) && ! empty( $record['hash'] ) && wp_check_password( $token, $record['hash'] ) ) {
+                    $match = (string) $id;
+                    self::update_key_record( $match, [ 'lookup' => $lookup ] );
+                    break;
                 }
+            }
+        }
 
-                // Populate key context for structured logging.
-                self::$current_key_context = [
-                    'key_id'     => $id,
-                    'key_label'  => $record['label'] ?? '',
-                    'key_prefix' => $record['prefix'] ?? '',
-                    'scope'      => ( isset( $record['scope'] ) && is_array( $record['scope'] ) ) ? $record['scope'] : null,
-                ];
+        if ( null !== $match ) {
+            $record = $keys[ $match ];
+            // Throttle last_used updates (at most once per minute).
+            $now = time();
+            if ( empty( $record['last_used'] ) || ( $now - $record['last_used'] ) >= 60 ) {
+                self::update_key_record( $match, [ 'last_used' => $now ] );
+            }
 
-                // Rate limit check.
-                if ( ! self::check_rate_limit( $id, $settings['rate_limit'] ?? 120 ) ) {
-                    self::log( 'rate_limit_exceeded', self::$current_key_context );
-                    return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
+            // Populate key context for structured logging.
+            self::$current_key_context = [
+                'key_id'     => $match,
+                'key_label'  => $record['label'] ?? '',
+                'key_prefix' => $record['prefix'] ?? '',
+                'scope'      => ( isset( $record['scope'] ) && is_array( $record['scope'] ) ) ? $record['scope'] : null,
+            ];
+
+            // Rate limit check.
+            if ( ! self::check_rate_limit( $match, $settings['rate_limit'] ?? 120 ) ) {
+                self::log( 'rate_limit_exceeded', self::$current_key_context );
+                return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
+            }
+
+            // Multisite: wp_cli, the file tools and checkpoints reach the whole network,
+            // so a key must have been made by a super admin, and it runs as that user.
+            // Keys from before created_by existed (or from WP-CLI) fail closed there.
+            if ( is_multisite() ) {
+                $creator = (int) ( $record['created_by'] ?? 0 );
+                if ( $creator <= 0 || ! Cowboy_MCP_Security::user_is_plugin_admin( $creator ) ) {
+                    self::log( 'auth_key_not_network_admin', self::$current_key_context );
+                    return new WP_Error( 'mcp_unauthorized', 'On multisite, API keys must be created by a network administrator. Create a new key in Settings > Cowboy MCP.', [ 'status' => 401 ] );
                 }
-
-                // Multisite: wp_cli, the file tools and checkpoints reach the whole network,
-                // so a key must have been made by a super admin, and it runs as that user.
-                // Keys from before created_by existed (or from WP-CLI) fail closed there.
-                if ( is_multisite() ) {
-                    $creator = (int) ( $record['created_by'] ?? 0 );
-                    if ( $creator <= 0 || ! Cowboy_MCP_Security::user_is_plugin_admin( $creator ) ) {
-                        self::log( 'auth_key_not_network_admin', self::$current_key_context );
-                        return new WP_Error( 'mcp_unauthorized', 'On multisite, API keys must be created by a network administrator. Create a new key in Settings > Cowboy MCP.', [ 'status' => 401 ] );
-                    }
-                    wp_set_current_user( $creator );
-                    return true;
-                }
-
-                // Set current user to admin so WP capabilities work.
-                $admins = get_users( [ 'role' => 'administrator', 'number' => 1 ] );
-                if ( empty( $admins ) ) {
-                    return new WP_Error( 'mcp_no_admin', 'No administrator account found. MCP requires at least one admin user.', [ 'status' => 500 ] );
-                }
-                wp_set_current_user( $admins[0]->ID );
-
+                wp_set_current_user( $creator );
                 return true;
             }
+
+            // Set current user to admin so WP capabilities work.
+            $admins = get_users( [ 'role' => 'administrator', 'number' => 1 ] );
+            if ( empty( $admins ) ) {
+                return new WP_Error( 'mcp_no_admin', 'No administrator account found. MCP requires at least one admin user.', [ 'status' => 500 ] );
+            }
+            wp_set_current_user( $admins[0]->ID );
+
+            return true;
         }
 
         self::log( 'auth_invalid_key', [ 'token_hash' => substr( hash( 'sha256', $token ), 0, 12 ) ] );
@@ -514,5 +571,20 @@ class Cowboy_MCP_Auth {
             return;
         }
         self::check_rate_limit( 'ip_' . md5( $client_ip ), self::IP_RATE_LIMIT );
+    }
+
+    /** Whether this IP has spent its failed-attempt budget for the current window. */
+    private static function ip_limited( string $client_ip ): bool {
+        return $client_ip !== '' && self::rate_limit_exhausted( 'ip_' . md5( $client_ip ), self::IP_RATE_LIMIT );
+    }
+
+    /** The 429 for a spent IP budget; audit-logged once per IP per window, not per request. */
+    private static function ip_limit_error( string $client_ip ): WP_Error {
+        $flag = 'cowboy_mcp_rl_logged_' . md5( $client_ip );
+        if ( false === get_transient( $flag ) ) {
+            set_transient( $flag, 1, self::RATE_LIMIT_WINDOW );
+            self::log( 'rate_limit_ip_exceeded', [ 'ip' => $client_ip ] );
+        }
+        return new WP_Error( 'mcp_rate_limit', 'Rate limit exceeded.', [ 'status' => 429 ] );
     }
 }

@@ -413,6 +413,19 @@ class Cowboy_MCP_Checkpoint {
 			}
 		}
 
+		// 4c. Bootstrap invariant, atomically: the live credential / settings rows go into the
+		//     restored options table BEFORE the swap, so there is no moment (a request dying
+		//     between swap and step 6) in which the checkpoint's old keys, scopes or
+		//     power_mode are live. Step 6 re-applies them again through the options API.
+		if ( in_array( $wpdb->options, $tables, true ) ) {
+			$names = array_keys( $preserved );
+			$in    = implode( ',', array_fill( 0, count( $names ), '%s' ) );
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name IN ({$in})", self::TEMP_PREFIX . $wpdb->options, ...$names ) );
+			$wpdb->query( $wpdb->prepare( "INSERT INTO %i (option_name, option_value, autoload) SELECT option_name, option_value, autoload FROM %i WHERE option_name IN ({$in})", self::TEMP_PREFIX . $wpdb->options, $wpdb->options, ...$names ) );
+			// phpcs:enable
+		}
+
 		// 5. Atomic multi-table swap.
 		$live  = self::site_tables();
 		$pairs = [];
@@ -543,6 +556,13 @@ class Cowboy_MCP_Checkpoint {
 					$rewritten += (int) $n;
 				}
 			} else {
+				// dump_table() writes nothing but DROP / CREATE / INSERT, so anything else is
+				// not ours: fail closed rather than execute it (stored content must never
+				// become a statement, whatever escaping a db.php drop-in uses).
+				if ( ! preg_match( '/^CREATE (?:TABLE|(?:ALGORITHM=\w+ )?(?:DEFINER=\S+ )?(?:SQL SECURITY \w+ )?VIEW) `([^`]+)`/', $stmt, $cm ) || ! isset( $temp_map[ $cm[1] ] ) ) {
+					gzclose( $gz );
+					return new WP_Error( 'checkpoint_failed', 'Checkpoint contains a statement this plugin never writes; aborting restore (originals untouched).' );
+				}
 				// Schema statements (CREATE TABLE): whole-statement rewrite so any
 				// self-references (e.g. FK REFERENCES) follow the temp prefix too.
 				$stmt = str_replace( $search, $replace, $stmt );

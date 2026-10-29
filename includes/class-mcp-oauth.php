@@ -28,6 +28,8 @@ class Cowboy_MCP_OAuth {
      * connection of the vendor. Rows written before 1.7.6 are keyed by the URL.
      */
     const CIMD_GRANT_PREFIX = 'cimd_g_';
+    /** Used refresh records kept per connection for reuse detection (see rotate_refresh_token()). */
+    const MAX_USED_REFRESH = 20;
     // Registration is unauthenticated by design (RFC 7591), so everything it stores is bounded.
     const MAX_CLIENT_NAME_LEN  = 100;
     const MAX_REDIRECT_URIS    = 10;  // VS Code registers six; leave headroom
@@ -339,7 +341,10 @@ class Cowboy_MCP_OAuth {
             }
         }
         $host  = '' !== $uri ? strtolower( (string) wp_parse_url( $uri, PHP_URL_HOST ) ) : '';
-        $slug  = self::client_slug_for_row( [ 'client_name' => (string) ( $body['client_name'] ?? '' ), 'redirect_uris' => (array) ( $body['redirect_uris'] ?? [] ) ] );
+        // Named from the redirect host only: anyone can send this request, and a
+        // loopback registration's client_name ("Claude Code") is unverified, so it must
+        // not put a trusted app's name on an admin notice that offers "Enable".
+        $slug  = self::client_slug_for_row( [ 'client_name' => '', 'redirect_uris' => (array) ( $body['redirect_uris'] ?? [] ) ] );
         $app   = null !== $slug ? self::CLIENT_LABELS[ $slug ] : ( '' !== $host ? self::app_label_for_host( $host ) : 'An unknown app' );
         $allowlisted = '' !== $uri && self::redirect_uri_allowed( $uri );
         $now   = time();
@@ -729,7 +734,8 @@ class Cowboy_MCP_OAuth {
     }
 
     public static function verify_pkce( string $verifier, string $challenge, string $method ): bool {
-        if ( $method !== 'S256' || $verifier === '' || $challenge === '' ) {
+        // RFC 7636 §4.1: 43-128 unreserved characters (a short verifier is guessable).
+        if ( $method !== 'S256' || $challenge === '' || ! preg_match( '/^[A-Za-z0-9._~-]{43,128}$/', $verifier ) ) {
             return false;
         }
         $computed = self::base64url_encode( hash( 'sha256', $verifier, true ) );
@@ -1036,11 +1042,18 @@ class Cowboy_MCP_OAuth {
             return new WP_Error( 'revoked_token', 'Bound user no longer authorized.' );
         }
 
-        // Throttle last_used writes (≤ once/min).
+        // Throttle last_used writes (≤ once/min). Written onto the record as stored NOW,
+        // not this request's copy, so a token revoked meanwhile is never written back.
         $now = time();
         if ( empty( $rec['last_used'] ) || ( $now - (int) $rec['last_used'] ) >= 60 ) {
-            $tokens[ $id ]['last_used'] = $now;
-            update_option( self::TOKENS_OPTION, $tokens, false );
+            global $wpdb;
+            wp_cache_delete( self::TOKENS_OPTION, 'options' );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- must bypass the request's option cache
+            $fresh = maybe_unserialize( (string) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::TOKENS_OPTION ) ) );
+            if ( is_array( $fresh ) && isset( $fresh[ $id ] ) ) {
+                $fresh[ $id ]['last_used'] = $now;
+                update_option( self::TOKENS_OPTION, $fresh, false );
+            }
         }
 
         $clients = get_option( self::CLIENTS_OPTION, [] );
@@ -1114,6 +1127,16 @@ class Cowboy_MCP_OAuth {
         // used=true records are intentionally retained until TTL expiry — do NOT prune them early;
         // they are the replay-detection proof that a token was already consumed.
         $refresh[ $id ]['used'] = true;
+        // Bounded: a connection that refreshes in a loop must not grow this option until
+        // writes fail. Only its newest used records are kept for reuse detection; an older
+        // replayed token is simply unknown (still refused).
+        $used = array_filter( $refresh, static fn( $r ) => ! empty( $r['used'] ) && ( $r['client_id'] ?? '' ) === $rec['client_id'] );
+        if ( count( $used ) > self::MAX_USED_REFRESH ) {
+            uasort( $used, static fn( $a, $b ) => (int) ( $b['created'] ?? 0 ) <=> (int) ( $a['created'] ?? 0 ) );
+            foreach ( array_slice( array_keys( $used ), self::MAX_USED_REFRESH ) as $old ) {
+                unset( $refresh[ $old ] );
+            }
+        }
         update_option( self::REFRESH_OPTION, $refresh, false );
         if ( ! empty( $rec['access_id'] ) ) {
             self::revoke_token_record( (string) $rec['access_id'] );
@@ -1422,6 +1445,11 @@ class Cowboy_MCP_OAuth {
             // Bound DCR abuse: drop the oldest clients that hold no active tokens.
             $clients = self::prune_unused_clients( $clients );
         }
+        if ( count( $clients ) >= self::MAX_CLIENTS ) {
+            // Pruning spares rows from the last few minutes (an approval not yet
+            // exchanged), so a flood inside that window must not grow the option.
+            return self::rest_error( 'temporarily_unavailable', 'Too many apps registered in the last few minutes. Try again shortly.', 429 );
+        }
 
         $now  = time();
         // Truncate, never reject: a long display name must not stop a real client connecting.
@@ -1587,6 +1615,9 @@ class Cowboy_MCP_OAuth {
         $is_post = ( strtoupper( $method ) === 'POST' );
         // phpcs:ignore WordPress.Security.NonceVerification
         $src = $is_post ? $_POST : $_GET;
+        // Every parameter is a string: an array (`resource[]=…`) would make the
+        // sanitizers below throw a TypeError before the login check.
+        $src = array_map( static fn( $v ) => is_string( $v ) ? $v : '', (array) $src );
 
         $client_id    = sanitize_text_field( wp_unslash( $src['client_id'] ?? '' ) );
         $redirect_uri = self::sanitize_redirect_uri( (string) wp_unslash( $src['redirect_uri'] ?? '' ) );

@@ -16,9 +16,13 @@ class Cowboy_MCP_Completion {
      * Handle completion/complete requests.
      */
     public static function complete( array $params ): array|WP_Error {
-        $ref      = $params['ref'] ?? [];
-        $argument = $params['argument'] ?? [];
-        $ref_type = $ref['type'] ?? '';
+        // Malformed shapes are answered as "nothing to complete", never a TypeError.
+        $ref      = is_array( $params['ref'] ?? null ) ? $params['ref'] : [];
+        $argument = is_array( $params['argument'] ?? null ) ? $params['argument'] : [];
+        if ( isset( $argument['value'] ) && ! is_string( $argument['value'] ) ) {
+            $argument['value'] = is_scalar( $argument['value'] ) ? (string) $argument['value'] : '';
+        }
+        $ref_type = is_string( $ref['type'] ?? null ) ? $ref['type'] : '';
 
         return match ( $ref_type ) {
             'ref/prompt'   => self::complete_prompt( $ref, $argument ),

@@ -317,16 +317,22 @@ return [
 
             // A customer is a WordPress user (any user, administrators included), and
             // set_email() rewrites user_email: same rules as wp_update_user.
-            if ( isset( $a['email'] ) && $a['email'] !== '' ) {
+            // The address that would be stored is what gets judged: an input that
+            // sanitize_email() empties would otherwise skip the gate and blank user_email.
+            $email = isset( $a['email'] ) ? sanitize_email( (string) $a['email'] ) : null;
+            if ( null !== $email && '' === $email ) {
+                return new WP_Error( 'invalid_email', 'email is not a valid email address.' );
+            }
+            if ( null !== $email ) {
                 $gate = function_exists( 'cowboy_mcp_user_write_gate' )
-                    ? cowboy_mcp_user_write_gate( [ 'email' => sanitize_email( $a['email'] ) ], get_userdata( $id ) ?: null )
+                    ? cowboy_mcp_user_write_gate( [ 'email' => $email ], get_userdata( $id ) ?: null )
                     : new WP_Error( 'unavailable', 'User safety checks are unavailable.' );
                 if ( is_wp_error( $gate ) ) {
                     return $gate;
                 }
             }
 
-            if ( isset( $a['email'] ) )      $customer->set_email( sanitize_email( $a['email'] ) );
+            if ( null !== $email )           $customer->set_email( $email );
             if ( isset( $a['first_name'] ) ) $customer->set_first_name( $a['first_name'] );
             if ( isset( $a['last_name'] ) )  $customer->set_last_name( $a['last_name'] );
 

@@ -190,7 +190,11 @@ class Cowboy_MCP_Tools {
      */
     public static function get_settings(): array {
         if ( self::$settings_cache === null ) {
-            self::$settings_cache = get_option( 'cowboy_mcp_settings', [] );
+            $settings = get_option( 'cowboy_mcp_settings', [] );
+            $settings = is_array( $settings ) ? $settings : [];
+            // A missing safe_mode key (lost or deleted settings row) means the default, ON.
+            $settings += [ 'safe_mode' => true ];
+            self::$settings_cache = $settings;
         }
         return self::$settings_cache;
     }
@@ -230,6 +234,12 @@ class Cowboy_MCP_Tools {
 
         $name = $params['name'] ?? '';
         $args = $params['arguments'] ?? [];
+        if ( ! is_string( $name ) ) {
+            return new WP_Error( 'invalid_params', 'Tool name must be a string.', [ 'code' => -32602 ] );
+        }
+        if ( ! is_array( $args ) ) {
+            return new WP_Error( 'invalid_params', 'Tool arguments must be an object.', [ 'code' => -32602 ] );
+        }
 
         /**
          * Filter whether a specific tool is allowed to execute.
@@ -256,7 +266,8 @@ class Cowboy_MCP_Tools {
             // so a file attached in the chat arrives on cowboy_run itself. Hand it to an
             // inner tool that takes a `file` input (wp_upload_media).
             if ( isset( $args['file'] ) && '' !== $args['file'] ) {
-                if ( ! isset( self::$tool_map[ $inner_tool ]['inputSchema']['properties']['file'] ) ) {
+                $inner_props = is_string( $inner_tool ) ? ( self::$tool_map[ $inner_tool ]['inputSchema']['properties'] ?? [] ) : [];
+                if ( ! is_array( $inner_props ) || ! isset( $inner_props['file'] ) ) {
                     return new WP_Error( 'invalid_params', "The file input is only accepted with tool=wp_upload_media, not {$inner_tool}.", [ 'code' => -32602 ] );
                 }
                 $inner_args         = is_array( $inner_args ) ? $inner_args : [];

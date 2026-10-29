@@ -1481,6 +1481,18 @@ class Cowboy_MCP_Rollback {
 		if ( $base === '' || $treal === false ) {
 			return new WP_Error( 'undo_failed', 'The trashed files for this attachment are no longer on disk (pruned or removed).' );
 		}
+		// Contain the journaled paths: the trash dir must be ours, and every file a plain
+		// relative path, so a damaged journal row can never move files elsewhere.
+		$trash_root = self::trash_dir();
+		$troot      = is_wp_error( $trash_root ) ? false : realpath( $trash_root );
+		if ( false === $troot || ! str_starts_with( $treal . '/', $troot . '/' ) ) {
+			return new WP_Error( 'undo_failed', 'The journaled trash location is outside the media trash.' );
+		}
+		foreach ( (array) ( $state['files'] ?? [] ) as $rel ) {
+			if ( ! is_string( $rel ) || '' === $rel || str_contains( $rel, '..' ) || str_contains( $rel, "\0" ) || str_starts_with( $rel, '/' ) || str_contains( $rel, '\\' ) ) {
+				return new WP_Error( 'undo_failed', 'The journaled file list is not a list of uploads paths.' );
+			}
+		}
 
 		$moved = [];
 		foreach ( (array) ( $state['files'] ?? [] ) as $rel ) {
@@ -2238,11 +2250,18 @@ class Cowboy_MCP_Rollback {
 		try {
 			$blob = null;
 			if ( isset( $data['before_state'] ) && $data['before_state'] !== null ) {
-				$blob = gzcompress( (string) wp_json_encode( $data['before_state'] ), 6 );
+				$json = wp_json_encode( $data['before_state'] );
+				$blob = false === $json ? null : gzcompress( $json, 6 );
 				if ( $blob === false ) {
 					return null;
 				}
-				if ( strlen( $blob ) > self::MAX_BLOB ) {
+				if ( null === $blob ) {
+					// Unencodable state (e.g. invalid UTF-8 a wp_json_encode() sanity pass
+					// could not repair): an empty blob would read as "did not exist", and
+					// undoing an update would then DELETE the object.
+					$data['status']              = self::STATUS_NOT_UNDOABLE;
+					$data['not_undoable_reason'] = 'The before-state could not be encoded.';
+				} elseif ( strlen( $blob ) > self::MAX_BLOB ) {
 					$data['status']              = self::STATUS_NOT_UNDOABLE;
 					$data['not_undoable_reason'] = 'Before-state exceeded the 16 MB compressed cap.';
 					$blob                        = null;

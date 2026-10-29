@@ -149,19 +149,55 @@ foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
             }
             return $old_value;
         };
-        $undo_add = static function ( $option ) {
+        $undoing  = false;
+        $undo_add = static function ( $option ) use ( &$undoing ) {
             if ( Cowboy_MCP_Security::is_hard_protected_option( (string) $option ) ) {
+                $undoing = true;
                 delete_option( $option );
+                $undoing = false;
                 Cowboy_MCP_Auth::log( 'ability_option_write_blocked', [ 'option' => $option ] );
             }
         };
+        // Deleting is a write too (a deleted cowboy_mcp_settings reads as defaults, keys
+        // and scopes vanish): remember the stored row before delete_option() removes it,
+        // and put it back, byte for byte, once it is gone.
+        $deleting     = [];
+        $note_delete  = static function ( $option ) use ( &$deleting, &$undoing ) {
+            global $wpdb;
+            if ( $undoing || ! Cowboy_MCP_Security::is_hard_protected_option( (string) $option ) ) {
+                return;
+            }
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- the exact stored row, before core deletes it
+            $row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value, autoload FROM {$wpdb->options} WHERE option_name = %s", $option ), ARRAY_A );
+            if ( $row ) {
+                $deleting[ (string) $option ] = $row;
+            }
+        };
+        $undo_delete = static function ( $option ) use ( &$deleting ) {
+            global $wpdb;
+            $row = $deleting[ (string) $option ] ?? null;
+            if ( null === $row ) {
+                return;
+            }
+            unset( $deleting[ (string) $option ] );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- restore the exact serialized row
+            $wpdb->insert( $wpdb->options, [ 'option_name' => (string) $option, 'option_value' => $row['option_value'], 'autoload' => $row['autoload'] ] );
+            wp_cache_delete( (string) $option, 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            wp_cache_delete( 'notoptions', 'options' );
+            Cowboy_MCP_Auth::log( 'ability_option_write_blocked', [ 'option' => $option ] );
+        };
         add_filter( 'pre_update_option', $freeze, 0, 3 );
         add_action( 'added_option', $undo_add, 0, 1 );
+        add_action( 'delete_option', $note_delete, 0, 1 );
+        add_action( 'deleted_option', $undo_delete, 0, 1 );
         try {
             return $ability->execute( $input );   // data or WP_Error; call_tool() encodes / formats either
         } finally {
             remove_filter( 'pre_update_option', $freeze, 0 );
             remove_action( 'added_option', $undo_add, 0 );
+            remove_action( 'delete_option', $note_delete, 0 );
+            remove_action( 'deleted_option', $undo_delete, 0 );
         }
     };
 }

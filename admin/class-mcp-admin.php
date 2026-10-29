@@ -319,7 +319,8 @@ class Cowboy_MCP_Admin {
                 add_settings_error( 'cowboy_mcp', 'scope_invalid', __( 'Select an access level before saving.', 'cowboy-mcp' ), 'error' );
             } else {
                 $result = Cowboy_MCP_Auth::generate_key( $label, $scope );
-                set_transient( 'cowboy_mcp_new_key_' . get_current_user_id(), $result['key'], 3600 );
+                // Plaintext until the next page view shows it once (then deleted): keep it short.
+                set_transient( 'cowboy_mcp_new_key_' . get_current_user_id(), $result['key'], 5 * MINUTE_IN_SECONDS );
                 add_settings_error( 'cowboy_mcp', 'key_created', __( 'API key created. Copy it now — it will only be shown once.', 'cowboy-mcp' ), 'success' );
             }
         }
@@ -639,6 +640,11 @@ class Cowboy_MCP_Admin {
                 <?php
                 $endpoint = rest_url( 'cowboy-mcp/v1/endpoint' );
                 $new_key  = get_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
+                if ( false !== $new_key ) {
+                    // Shown once, as the notice says: never left in the options table (or in
+                    // a checkpoint taken later) after this view.
+                    delete_transient( 'cowboy_mcp_new_key_' . get_current_user_id() );
+                }
                 match ( $active_tab ) {
                     'settings' => Cowboy_MCP_Admin_Settings::render_tab( $settings ),
                     'activity' => Cowboy_MCP_Admin_Activity::render_tab(),

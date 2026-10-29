@@ -966,13 +966,62 @@ class Cowboy_MCP_Compat {
 	 * on a multisite main site, another site's table (`{base}{blog_id}_…`) or a network-wide
 	 * table (users, usermeta, blogs, site, sitemeta, …) unless $with_network. Always false elsewhere.
 	 */
+	/**
+	 * Single site: prefixes of other WordPress installs in the same database whose
+	 * prefix starts with ours, recognised by a `{prefix}{x}options` + `{prefix}{x}posts`
+	 * pair (a plugin's own tables never come as that pair). Cached per request.
+	 *
+	 * @return string[]
+	 */
+	private static function foreign_prefixes(): array {
+		global $wpdb;
+		static $cache = [];
+		if ( isset( $cache[ $wpdb->prefix ] ) ) {
+			return $cache[ $wpdb->prefix ];
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$tables  = array_flip( (array) $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix ) . '%' ) ) );
+		$foreign = [];
+		foreach ( array_keys( $tables ) as $t ) {
+			$t = (string) $t;
+			if ( ! str_ends_with( $t, 'options' ) ) {
+				continue;
+			}
+			$other = substr( $t, 0, -strlen( 'options' ) );
+			if ( $other !== $wpdb->prefix && isset( $tables[ $other . 'posts' ] ) ) {
+				$foreign[] = $other;
+			}
+		}
+		$cache[ $wpdb->prefix ] = $foreign;
+		return $foreign;
+	}
+
 	public static function is_foreign_table( string $table, bool $with_network = false ): bool {
 		global $wpdb;
-		if ( ! is_multisite() || $wpdb->prefix !== $wpdb->base_prefix ) {
+		if ( ! is_multisite() ) {
+			// Single site: another install sharing the database under a longer prefix
+			// (`wp_shop_` next to `wp_`) is not ours either.
+			foreach ( self::foreign_prefixes() as $foreign ) {
+				if ( str_starts_with( $table, $foreign ) ) {
+					return true;
+				}
+			}
 			return false;
 		}
-		if ( 1 === preg_match( '/^' . preg_quote( $wpdb->base_prefix, '/' ) . '\d+_/', $table ) ) {
-			return true;
+		if ( $wpdb->prefix !== $wpdb->base_prefix ) {
+			return false;
+		}
+		// `{base}{N}_…` is another site's only when N is a site (or one that left its
+		// options table behind); a main-site plugin table such as `wp_404_log` is not.
+		if ( 1 === preg_match( '/^' . preg_quote( $wpdb->base_prefix, '/' ) . '(\d+)_/', $table, $m ) ) {
+			static $sites = [];
+			if ( ! isset( $sites[ $m[1] ] ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$sites[ $m[1] ] = null !== get_site( (int) $m[1] ) || null !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->base_prefix . $m[1] . '_options' ) ) );
+			}
+			if ( $sites[ $m[1] ] ) {
+				return true;
+			}
 		}
 		if ( $with_network ) {
 			return false;

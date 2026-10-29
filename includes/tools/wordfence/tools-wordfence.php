@@ -25,9 +25,53 @@ function cowboy_mcp_wordfence_validate_ip( string $ip ): bool {
  */
 function cowboy_mcp_wordfence_is_own_ip( string $ip ): bool {
     if ( class_exists( 'wfUtils' ) && method_exists( 'wfUtils', 'getIP' ) ) {
-        return wfUtils::getIP() === $ip;
+        $own = cowboy_mcp_wordfence_ip_bin( (string) wfUtils::getIP() );
+        // Compared as addresses, not strings (`::ffff:1.2.3.4`, `001.002.003.004`, case).
+        return null !== $own && $own === cowboy_mcp_wordfence_ip_bin( $ip );
     }
     return false;
+}
+
+/** An IPv4 or IPv6 address as 16 bytes (IPv4 mapped into ::ffff:0:0/96), or null. */
+function cowboy_mcp_wordfence_ip_bin( string $ip ): ?string {
+    $ip = trim( $ip, " []\t" );
+    if ( preg_match( '/^\d{1,3}(\.\d{1,3}){3}$/', $ip ) ) {
+        $ip = implode( '.', array_map( 'intval', explode( '.', $ip ) ) ); // leading zeros
+    }
+    $bin = @inet_pton( $ip );
+    if ( false === $bin ) {
+        return null;
+    }
+    return 4 === strlen( $bin ) ? str_repeat( "\0", 10 ) . "\xff\xff" . $bin : $bin;
+}
+
+/** Whether a Wordfence pattern IP range ("a - b" or CIDR) covers the caller's own IP. */
+function cowboy_mcp_wordfence_range_has_own_ip( string $range ): bool {
+    if ( ! class_exists( 'wfUtils' ) || ! method_exists( 'wfUtils', 'getIP' ) ) {
+        return false;
+    }
+    $own = cowboy_mcp_wordfence_ip_bin( (string) wfUtils::getIP() );
+    if ( null === $own ) {
+        return false;
+    }
+    if ( str_contains( $range, '/' ) ) {
+        [ $net, $bits ] = array_pad( explode( '/', $range, 2 ), 2, '' );
+        $net_bin        = cowboy_mcp_wordfence_ip_bin( $net );
+        if ( null === $net_bin || ! is_numeric( $bits ) ) {
+            return false;
+        }
+        $bits = (int) $bits + ( str_contains( $net, ':' ) ? 0 : 96 );
+        $mask = '';
+        for ( $i = 0; $i < 16; $i++ ) {
+            $mask .= chr( $bits >= 8 ? 0xFF : ( $bits > 0 ? ( 0xFF << ( 8 - $bits ) ) & 0xFF : 0 ) );
+            $bits -= 8;
+        }
+        return ( $own & $mask ) === ( $net_bin & $mask );
+    }
+    $parts = array_map( 'trim', explode( '-', $range, 2 ) );
+    $start = cowboy_mcp_wordfence_ip_bin( $parts[0] );
+    $end   = cowboy_mcp_wordfence_ip_bin( $parts[1] ?? $parts[0] );
+    return null !== $start && null !== $end && strcmp( $own, $start ) >= 0 && strcmp( $own, $end ) <= 0;
 }
 
 /**
@@ -131,8 +175,9 @@ function cowboy_mcp_wordfence_format_hit( array $hit ): array {
         'ip'         => $ip,
         'status_code'=> $hit['statusCode'] ?? null,
         'is_google'  => $hit['isGoogle'] ?? 0,
-        'url'        => $hit['URL'] ?? '',
-        'referer'    => $hit['referer'] ?? '',
+        // Password-reset keys, tokens and signed links in visitors' URLs are masked.
+        'url'        => Cowboy_MCP_Security::redact_url_query( (string) ( $hit['URL'] ?? '' ) ),
+        'referer'    => Cowboy_MCP_Security::redact_url_query( (string) ( $hit['referer'] ?? '' ) ),
         'user_agent' => $hit['UA'] ?? '',
         'action'     => $hit['action'] ?? '',
         'action_description' => $hit['actionDescription'] ?? '',
@@ -803,6 +848,9 @@ return [
 
             if ( $ip_range === '' && $hostname === '' && $user_agent === '' && $referrer === '' ) {
                 return new WP_Error( 'invalid_param', 'At least one pattern field is required: ip_range, hostname, user_agent, or referrer.' );
+            }
+            if ( $ip_range !== '' && cowboy_mcp_wordfence_range_has_own_ip( $ip_range ) ) {
+                return new WP_Error( 'self_block', 'Refusing to block an IP range that includes the address this request comes from.' );
             }
 
             if ( method_exists( 'wfBlock', 'createPattern' ) ) {

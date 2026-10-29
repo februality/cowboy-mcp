@@ -231,6 +231,9 @@ class Cowboy_MCP_Audit_Log {
 			} elseif ( 'download_url' === $key && is_string( $value ) ) {
 				// Chat file links are signed: keep host and path, drop the signature.
 				$value = preg_replace( '/[?#].*$/s', '?[REDACTED]', $value );
+			} elseif ( is_string( $value ) && str_starts_with( ltrim( $value ), '{' ) && is_array( json_decode( $value, true ) ) ) {
+				// An object sent as JSON text (some clients send `file` this way).
+				$value = (string) wp_json_encode( self::redact_sensitive( json_decode( $value, true ) ), JSON_UNESCAPED_SLASHES );
 			} elseif ( is_string( $value ) && class_exists( 'Cowboy_MCP_Security' ) ) {
 				// Scrub Bearer tokens / raw MCP keys that slip through as free-text values.
 				$value = Cowboy_MCP_Security::scrub_secrets( $value );
