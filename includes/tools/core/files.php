@@ -99,8 +99,12 @@ function cowboy_mcp_is_executable_name( string $name ): bool {
     }
     $parts = explode( '.', ltrim( $name, '.' ) );
     array_shift( $parts ); // the base name
-    $exec = [ 'php', 'php2', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8', 'phtml', 'phtm', 'pht', 'phps', 'phar', 'inc', 'shtml', 'shtm', 'stm', 'cgi', 'pl', 'py', 'asp', 'aspx', 'jsp', 'htaccess' ];
-    return (bool) array_intersect( $parts, $exec );
+    $last  = (string) array_pop( $parts );
+    $php   = [ 'php', 'php2', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8', 'phtml', 'phtm', 'pht', 'phps', 'phar' ];
+    $exec  = array_merge( $php, [ 'inc', 'shtml', 'shtm', 'stm', 'cgi', 'pl', 'py', 'asp', 'aspx', 'jsp', 'htaccess' ] );
+    // The final extension against every handler; earlier ones against PHP's (the
+    // AddHandler case), so `invoice.pl.pdf` stays an ordinary upload.
+    return in_array( $last, $exec, true ) || (bool) array_intersect( $parts, $php );
 }
 
 /**

@@ -884,8 +884,8 @@ class Cowboy_MCP_Tools {
      * Handle the cowboy_discover meta-tool: search/browse tools.
      */
     private static function handle_discover_tools( array $args ): array|WP_Error {
-        $query    = trim( $args['query'] ?? '' );
-        $category = $args['category'] ?? '';
+        $query    = trim( is_scalar( $args['query'] ?? null ) ? (string) $args['query'] : '' );
+        $category = is_string( $args['category'] ?? null ) ? $args['category'] : '';
 
         if ( $query === '' && $category === '' ) {
             return new WP_Error( 'invalid_params', 'Provide a query, a category, or both.', [ 'code' => -32602 ] );

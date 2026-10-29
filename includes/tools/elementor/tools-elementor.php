@@ -54,7 +54,35 @@ function cowboy_mcp_elementor_save_content( int $post_id, array $data ): bool|WP
 /**
  * Recursively validate that all elements in the tree have elType keys.
  */
-function cowboy_mcp_elementor_validate_elements( array $elements, bool $allow_unfiltered = false, string $path = '' ): ?WP_Error {
+/** Script-capable values in one element's settings (see Cowboy_MCP_Security::value_risk()). */
+function cowboy_mcp_elementor_settings_risk( array $settings ): int {
+    $n = 0;
+    array_walk_recursive( $settings, static function ( $v, $k ) use ( &$n ): void {
+        if ( is_string( $v ) ) {
+            $n += Cowboy_MCP_Security::value_risk( $v, (string) $k );
+        }
+    } );
+    return $n;
+}
+
+/** element id => settings risk, over a stored Elementor tree. */
+function cowboy_mcp_elementor_risk_map( array $elements, array $map = [] ): array {
+    foreach ( $elements as $el ) {
+        if ( is_array( $el ) && isset( $el['id'] ) ) {
+            $map[ (string) $el['id'] ] = cowboy_mcp_elementor_settings_risk( is_array( $el['settings'] ?? null ) ? $el['settings'] : [] );
+        }
+        if ( ! empty( $el['elements'] ) && is_array( $el['elements'] ) ) {
+            $map = cowboy_mcp_elementor_risk_map( $el['elements'], $map );
+        }
+    }
+    return $map;
+}
+
+/**
+ * $stored_risk (cowboy_mcp_elementor_risk_map() of the saved tree) lets an element the
+ * agent sends back unchanged keep content a human put there; only an increase counts.
+ */
+function cowboy_mcp_elementor_validate_elements( array $elements, bool $allow_unfiltered = false, string $path = '', array $stored_risk = [] ): ?WP_Error {
     foreach ( $elements as $i => $el ) {
         $current_path = $path ? "{$path}[{$i}]" : "index {$i}";
         if ( ! isset( $el['elType'] ) ) {
@@ -73,21 +101,16 @@ function cowboy_mcp_elementor_validate_elements( array $elements, bool $allow_un
             }
             // Every other setting, nested repeater items included: Elementor prints
             // many of them (text-editor `editor`, headings, link URLs) without kses.
-            $risky = null;
-            array_walk_recursive( $el['settings'], static function ( $v, $k ) use ( &$risky ): void {
-                if ( null === $risky && is_string( $v ) && Cowboy_MCP_Security::script_capable_count( $v ) > 0 ) {
-                    $risky = (string) $k;
-                }
-            } );
-            if ( null !== $risky ) {
+            $before = $stored_risk[ (string) ( $el['id'] ?? '' ) ] ?? 0;
+            if ( cowboy_mcp_elementor_settings_risk( $el['settings'] ) > $before ) {
                 return new WP_Error(
                     'unfiltered_html_blocked',
-                    "Element at {$current_path} has script-capable content in setting '{$risky}'. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)."
+                    "Element at {$current_path} adds script-capable content to its settings. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)."
                 );
             }
         }
         if ( ! empty( $el['elements'] ) && is_array( $el['elements'] ) ) {
-            $nested_error = cowboy_mcp_elementor_validate_elements( $el['elements'], $allow_unfiltered, $current_path );
+            $nested_error = cowboy_mcp_elementor_validate_elements( $el['elements'], $allow_unfiltered, $current_path, $stored_risk );
             if ( $nested_error ) return $nested_error;
         }
     }
@@ -334,7 +357,8 @@ return [
             // Validate that all elements (including nested) have elType, and block raw
             // HTML/custom-code settings unless the caller explicitly opts in.
             $allow_unfiltered = ! empty( $a['allow_unfiltered_html'] );
-            $validation_error = cowboy_mcp_elementor_validate_elements( $elements, $allow_unfiltered );
+            $stored           = cowboy_mcp_elementor_get_content( $template_id );
+            $validation_error = cowboy_mcp_elementor_validate_elements( $elements, $allow_unfiltered, '', is_array( $stored ) ? cowboy_mcp_elementor_risk_map( $stored ) : [] );
             if ( $validation_error ) {
                 return $validation_error;
             }
@@ -422,8 +446,9 @@ return [
             foreach ( [ 'colors', 'typography' ] as $group ) {
                 if ( isset( $a[ $group ] ) && is_array( $a[ $group ] ) ) {
                     $bad = false;
-                    array_walk_recursive( $a[ $group ], static function ( $v ) use ( &$bad ): void {
-                        if ( is_string( $v ) && preg_match( '#</?[a-z!/]|[{};]#i', $v ) ) {
+                    array_walk_recursive( $a[ $group ], static function ( $v, $k ) use ( &$bad ): void {
+                        // Labels (`title`) are not printed into CSS; every other value is.
+                        if ( is_string( $v ) && ( preg_match( '#</?[a-z!/]#i', $v ) || ( ! in_array( (string) $k, [ 'title', '_id' ], true ) && preg_match( '/[{};]/', $v ) ) ) ) {
                             $bad = true;
                         }
                     } );

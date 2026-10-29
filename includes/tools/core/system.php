@@ -38,6 +38,32 @@ function cowboy_mcp_search_replace_normalize_args( array $args ): array|WP_Error
     return $args;
 }
 
+/**
+ * Whether replacing $search with $replace in $old adds script-capable markup. Only
+ * a window around each occurrence is compared (the text outside every window is
+ * identical before and after), so a site-wide replace over thousands of long posts
+ * costs a few hundred bytes per occurrence, not two scans of every post.
+ */
+function cowboy_mcp_search_replace_adds_markup( string $old, string $search, string $replace ): bool {
+    if ( '' === $search ) {
+        return false;
+    }
+    $pad    = 256;
+    $new    = str_replace( $search, $replace, $old );
+    $delta  = strlen( $replace ) - strlen( $search );
+    $offset = 0;
+    for ( $i = 0; false !== ( $p = strpos( $old, $search, $offset ) ); $i++ ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+        $np    = $p + $i * $delta;
+        $o     = substr( $old, max( 0, $p - $pad ), min( $p, $pad ) + strlen( $search ) + $pad );
+        $n     = substr( $new, max( 0, $np - $pad ), min( $np, $pad ) + strlen( $replace ) + $pad );
+        if ( Cowboy_MCP_Security::script_capable_count( $n ) > Cowboy_MCP_Security::script_capable_count( $o ) ) {
+            return true;
+        }
+        $offset = $p + strlen( $search );
+    }
+    return false;
+}
+
 /** WHERE clause shared by the handler and the dry-run preview. */
 function cowboy_mcp_search_replace_where( array $a ): string {
     global $wpdb;
@@ -244,11 +270,10 @@ return [
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $targets = $wpdb->get_results( $select_sql, ARRAY_A ) ?: [];
 
-                // REPLACE() is case-sensitive and non-overlapping, like str_replace().
+                // REPLACE() is case-sensitive and non-overlapping, like str_replace() / strpos().
                 if ( empty( $a['allow_unfiltered_html'] ) ) {
                     foreach ( $targets as $t ) {
-                        $old = (string) $t['post_content'];
-                        if ( Cowboy_MCP_Security::script_capable_count( str_replace( $search, $replace, $old ) ) > Cowboy_MCP_Security::script_capable_count( $old ) ) {
+                        if ( cowboy_mcp_search_replace_adds_markup( (string) $t['post_content'], $search, $replace ) ) {
                             return new WP_Error( 'unfiltered_html_blocked', "Replacing in post #{$t['ID']} would add script-capable markup to it. Nothing was changed. Pass allow_unfiltered_html: true to permit it." );
                         }
                     }

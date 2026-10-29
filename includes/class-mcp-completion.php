@@ -34,8 +34,8 @@ class Cowboy_MCP_Completion {
     /* ── Prompt completions ──────────────────────────────────── */
 
     private static function complete_prompt( array $ref, array $argument ): array {
-        $prompt_name = $ref['name'] ?? '';
-        $arg_name    = $argument['name'] ?? '';
+        $prompt_name = is_string( $ref['name'] ?? null ) ? $ref['name'] : '';
+        $arg_name    = is_string( $argument['name'] ?? null ) ? $argument['name'] : '';
         $prefix      = $argument['value'] ?? '';
 
         // Dynamic special-case: bulk-content-update/post_type returns live post types.

@@ -262,6 +262,12 @@ class Cowboy_MCP_Audit_Log {
 	 */
 	private static function key_is_sensitive( string $key ): bool {
 		$norm = preg_replace( '/[^a-z]/', '', strtolower( $key ) ); // apiKey -> apikey, access_token -> accesstoken
+		// Names that only look like it: post/comment author fields, SEO keywords, and the
+		// meta/option key a `{key, value}` pair names (its value is judged by names_secret()).
+		$norm = str_replace( [ 'author', 'keyword', 'metakey', 'optionkey', 'metakeys' ], '', (string) $norm );
+		if ( 'key' === $norm || 'keys' === $norm ) {
+			return false;
+		}
 		foreach ( self::REDACTED_KEY_PARTS as $part ) {
 			if ( $norm !== '' && str_contains( $norm, $part ) ) {
 				return true;

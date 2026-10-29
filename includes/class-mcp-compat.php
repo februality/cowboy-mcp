@@ -962,11 +962,6 @@ class Cowboy_MCP_Compat {
 	}
 
 	/**
-	 * True for a table that matches the current site's prefix but is not the site's own:
-	 * on a multisite main site, another site's table (`{base}{blog_id}_…`) or a network-wide
-	 * table (users, usermeta, blogs, site, sitemeta, …) unless $with_network. Always false elsewhere.
-	 */
-	/**
 	 * Single site: prefixes of other WordPress installs in the same database whose
 	 * prefix starts with ours, recognised by a `{prefix}{x}options` + `{prefix}{x}posts`
 	 * pair (a plugin's own tables never come as that pair). Cached per request.
@@ -996,6 +991,12 @@ class Cowboy_MCP_Compat {
 		return $foreign;
 	}
 
+	/**
+	 * True for a table that matches the current site's prefix but is not the site's own:
+	 * on a multisite main site, another site's table (`{base}{blog_id}_…`) or a network-wide
+	 * table (users, usermeta, blogs, site, sitemeta, …) unless $with_network; on a single
+	 * site, another install's table under a longer prefix (see foreign_prefixes()).
+	 */
 	public static function is_foreign_table( string $table, bool $with_network = false ): bool {
 		global $wpdb;
 		if ( ! is_multisite() ) {

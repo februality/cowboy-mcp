@@ -206,19 +206,17 @@ function cowboy_mcp_gutenberg_gate_theme_json( array $fragment, bool $allow_unfi
         if ( ! is_string( $value ) ) {
             continue;
         }
+        if ( $key === 'css' && preg_match( '#</?\w+#', $value ) ) {
+            return new WP_Error( 'unfiltered_html_blocked', "Markup is not allowed in CSS (key path: {$key_path})." );
+        }
         // Every theme.json string can end up in the inline <style> core prints (WP 6.2-6.9
-        // print it raw, so `</style>` breaks out into the page; 7.x refuses the whole
-        // stylesheet instead). No consent flag makes markup safe there.
-        if ( preg_match( '#</?[a-z!/]#i', $value ) ) {
-            return new WP_Error( 'unfiltered_html_blocked', $key === 'css'
-                ? "Markup is not allowed in CSS (key path: {$key_path})."
-                : "Markup is not allowed in global styles or settings (key path: {$key_path})." );
+        // print it raw, so a closing tag breaks out into the page; 7.x refuses the whole
+        // stylesheet instead). No consent flag makes that safe.
+        if ( preg_match( '#</|<\s*(?:style|script)\b#i', $value ) ) {
+            return new WP_Error( 'unfiltered_html_blocked', "A closing tag is not allowed in global styles or settings (key path: {$key_path})." );
         }
         if ( ! $allow_unfiltered && $key !== 'css' ) {
             $reason = cowboy_mcp_gutenberg_unfiltered_reason( $value );
-            if ( $reason === null && Cowboy_MCP_Security::script_capable_count( $value ) > 0 ) {
-                $reason = 'script-capable content';
-            }
             if ( $reason !== null ) {
                 return new WP_Error( 'unfiltered_html_blocked', "Value at {$key_path} contains {$reason}. Pass allow_unfiltered_html: true to permit it." );
             }
@@ -741,14 +739,17 @@ function cowboy_mcp_gutenberg_get_user_pattern( int $id ): WP_Post|WP_Error {
  * policy. The gate inspects the raw string; kses is applied per-node via
  * cowboy_mcp_gutenberg_kses_tree() so block delimiter comments survive.
  */
-function cowboy_mcp_gutenberg_filter_full_content( string $content, bool $allow_unfiltered, string $context ): string|WP_Error {
+function cowboy_mcp_gutenberg_filter_full_content( string $content, bool $allow_unfiltered, string $context, string $current = '' ): string|WP_Error {
     $parsed = cowboy_mcp_gutenberg_parse( $content );
     if ( ! $allow_unfiltered ) {
         if ( cowboy_mcp_gutenberg_contains_html_block( $parsed ) ) {
             return new WP_Error( 'unfiltered_html_blocked', "{$context} contains a core/html block. Pass allow_unfiltered_html: true to permit it." );
         }
         $reason = cowboy_mcp_gutenberg_unfiltered_reason( $content );
-        if ( $reason === null && Cowboy_MCP_Security::blocks_attrs_risk( $parsed ) > 0 ) {
+        // Comparative: an untouched block of the stored content (an icon block with inline
+        // SVG in its attrs) may come back as it was; only added risk counts.
+        $before = '' === $current ? 0 : Cowboy_MCP_Security::blocks_attrs_risk( cowboy_mcp_gutenberg_parse( $current ) );
+        if ( $reason === null && Cowboy_MCP_Security::blocks_attrs_risk( $parsed ) > $before ) {
             $reason = 'block attributes with script-capable values (or a tagName naming a script element)';
         }
         if ( $reason !== null ) {
@@ -1318,7 +1319,7 @@ $cowboy_mcp_gutenberg_handlers = [
             $changed[]          = 'title';
         }
         if ( isset( $a['content'] ) ) {
-            $content = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content' );
+            $content = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content', (string) $post->post_content );
             if ( is_wp_error( $content ) ) {
                 return $content;
             }
@@ -1532,7 +1533,8 @@ if ( wp_is_block_theme() ) {
 
         $content = null;
         if ( isset( $a['content'] ) ) {
-            $content = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content' );
+            $existing = cowboy_mcp_gutenberg_get_template_object( $id, $type );
+            $content  = cowboy_mcp_gutenberg_filter_full_content( (string) $a['content'], $allow, 'content', is_wp_error( $existing ) ? '' : (string) $existing->content );
             if ( is_wp_error( $content ) ) {
                 return $content;
             }

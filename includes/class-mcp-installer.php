@@ -284,15 +284,16 @@ class Cowboy_MCP_Installer {
 	}
 
 	/**
-	 * Resolve a stylesheet to an INSTALLED theme. `WP_Theme::exists()` is
-	 * true for any existing directory, parent-relative paths included, so a
-	 * name must be a key of wp_get_themes() and its directory must sit inside
-	 * its theme root. `$main_root_only` also requires the default theme root
-	 * (the installer builds paths from it).
+	 * Resolve a stylesheet to an INSTALLED theme. `WP_Theme::exists()` is true for
+	 * any existing directory, parent-relative paths included, so the name must be a
+	 * key of wp_get_themes() (which only lists folders found inside a theme root) and
+	 * carry no `..` / absolute / backslash parts. Symlinked themes stay usable.
+	 * `$main_root_only` also requires the default theme root (the installer builds
+	 * paths from it).
 	 */
 	public static function installed_theme( string $stylesheet, bool $main_root_only = false ): WP_Theme|WP_Error {
 		$not_found = new WP_Error( 'not_found', "Theme '{$stylesheet}' is not installed." );
-		if ( $stylesheet === '' || str_contains( $stylesheet, '..' ) || str_contains( $stylesheet, '\\' ) || str_starts_with( $stylesheet, '/' ) ) {
+		if ( $stylesheet === '' || str_contains( $stylesheet, '..' ) || str_contains( $stylesheet, '\\' ) || str_contains( $stylesheet, "\0" ) || str_starts_with( $stylesheet, '/' ) ) {
 			return $not_found;
 		}
 		$themes = wp_get_themes( [ 'errors' => null ] );
@@ -300,12 +301,7 @@ class Cowboy_MCP_Installer {
 			return $not_found;
 		}
 		$theme = $themes[ $stylesheet ];
-		$root  = realpath( (string) $theme->get_theme_root() );
-		$dir   = realpath( (string) $theme->get_stylesheet_directory() );
-		if ( $root === false || $dir === false || ! str_starts_with( $dir, rtrim( $root, '/\\' ) . DIRECTORY_SEPARATOR ) ) {
-			return $not_found;
-		}
-		if ( $main_root_only && realpath( get_theme_root() ) !== $root ) {
+		if ( $main_root_only && untrailingslashit( (string) $theme->get_theme_root() ) !== untrailingslashit( (string) get_theme_root() ) ) {
 			return new WP_Error( 'unsupported_theme_root', "Theme '{$stylesheet}' lives outside the main themes directory; manage it from wp-admin." );
 		}
 		return $theme;

@@ -351,6 +351,7 @@ return [
 			// as the first URL: core's per-hop check (wp_safe_remote_*) only learned the
 			// link-local / CGNAT ranges in WordPress 7.1.
 			$power = Cowboy_MCP_Security::power_mode_enabled();
+			$hop   = 0;
 			if ( $power ) {
 				$response = wp_remote_request( $url, $request_args );
 			} else {
@@ -409,7 +410,7 @@ return [
 				'headers'        => $header_array,
 				'body'           => $body,
 				'body_truncated' => $truncated,
-				'redirects'      => (int) ( $response['http_response']?->get_response_object()?->redirects ?? 0 ),
+				'redirects'      => $power ? (int) ( $response['http_response']?->get_response_object()?->redirects ?? 0 ) : $hop,
 			];
 		},
 

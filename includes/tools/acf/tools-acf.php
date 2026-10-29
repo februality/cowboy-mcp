@@ -193,8 +193,8 @@ function cowboy_mcp_acf_check_args( array $a ): array|WP_Error {
     if ( array_key_exists( 'value', $a ) && empty( $a['allow_unfiltered_html'] ) ) {
         $risky = false;
         $value = is_array( $a['value'] ) ? $a['value'] : [ $a['value'] ];
-        array_walk_recursive( $value, static function ( $v ) use ( &$risky ): void {
-            if ( is_string( $v ) && Cowboy_MCP_Security::script_capable_count( $v ) > 0 ) {
+        array_walk_recursive( $value, static function ( $v, $k ) use ( &$risky ): void {
+            if ( is_string( $v ) && Cowboy_MCP_Security::value_risk( $v, (string) $k ) > 0 ) {
                 $risky = true;
             }
         } );
@@ -515,7 +515,8 @@ return [
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
             }
-            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            $gate = cowboy_mcp_acf_check_args( $a ); // write gate + value markup check (also PRE_DISPATCH)
+            $gate = is_wp_error( $gate ) ? $gate : null;
             if ( $gate ) {
                 return $gate;
             }
@@ -571,7 +572,8 @@ return [
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
             }
-            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            $gate = cowboy_mcp_acf_check_args( $a ); // write gate + value markup check (also PRE_DISPATCH)
+            $gate = is_wp_error( $gate ) ? $gate : null;
             if ( $gate ) {
                 return $gate;
             }
@@ -599,7 +601,8 @@ return [
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
             }
-            $gate = cowboy_mcp_acf_write_gate( $field_name, $object_id );
+            $gate = cowboy_mcp_acf_check_args( $a ); // write gate + value markup check (also PRE_DISPATCH)
+            $gate = is_wp_error( $gate ) ? $gate : null;
             if ( $gate ) {
                 return $gate;
             }

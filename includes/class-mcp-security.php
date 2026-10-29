@@ -345,7 +345,7 @@ class Cowboy_MCP_Security {
      * elements, inline event handlers (also `/`-separated, `<svg/onload=…>`),
      * script / data-HTML URLs and srcdoc / formaction attributes.
      */
-    private const SCRIPT_CAPABLE = '#<\s*/?\s*(script|iframe|frame|frameset|object|embed|applet|style|link|meta|base|form|svg|math|template|noscript|xml|animate|set)\b|[\s"\'/]on[a-z]+\s*=|(?:java|vb)script\s*:|data\s*:\s*text/html|\bsrcdoc\s*=|\bformaction\s*=|\bxlink:href\s*=#i';
+    private const SCRIPT_CAPABLE = '#<\s*/?\s*(script|iframe|frame|frameset|object|embed|applet|style|link|meta|base|form|svg|math|template|noscript|xml|animate|set)\b|[\s"\'/]on[a-z]+\s*=|[=\s"\'(`](?:java|vb)script\s*:|data\s*:\s*text/html|\bsrcdoc\s*=|\bformaction\s*=|\bxlink:href\s*=#i';
 
     /**
      * How many script-capable constructs a fragment holds, counted the way a browser
@@ -387,8 +387,25 @@ class Cowboy_MCP_Security {
             if ( 'tagName' === $k && in_array( strtolower( (string) preg_replace( '/[^a-zA-Z0-9_:-]/', '', $v ) ), self::RAW_TEXT_TAGS, true ) ) {
                 $n++;
             }
-            $n += self::script_capable_count( $v );
+            $n += self::value_risk( $v, (string) $k );
         } );
+        return $n;
+    }
+
+    /**
+     * script_capable_count() for a named setting value, plus one when a URL-type
+     * setting (`url`, `href`, `link`, `src`, `*_url`, …) holds a script URL as its whole
+     * value (`javascript:x` is a link there, but prose — "JavaScript: The Good Parts" —
+     * in a heading or text setting).
+     */
+    public static function value_risk( string $value, string $key = '' ): int {
+        $n = self::script_capable_count( $value );
+        if ( preg_match( '/(?:^|_)(?:url|href|link|src|action)$/i', $key ) ) {
+            $flat = strtolower( (string) preg_replace( '/[\x00-\x20]+/', '', html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) );
+            if ( str_starts_with( $flat, 'javascript:' ) || str_starts_with( $flat, 'vbscript:' ) || str_starts_with( $flat, 'data:text/html' ) ) {
+                $n++;
+            }
+        }
         return $n;
     }
 
@@ -506,7 +523,7 @@ class Cowboy_MCP_Security {
      * practice: administrator is the only stock role holding them, and it is
      * already privileged via manage_options. (WooCommerce's shop_manager carries
      * none of them; older WC releases did, which is why this list once excluded
-     * them.)
+     * them.) The two code caps below are the exception (see there).
      *
      * `unfiltered_html` is script in every admin's browser (an admin session is
      * code execution), and `create_users` hands out new accounts; on a single site
