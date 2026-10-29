@@ -20,6 +20,14 @@ class Cowboy_MCP_OAuth {
     const REFRESH_TTL    = 2592000;
     const CODE_TTL       = 60;
     const MAX_CLIENTS    = 100;
+    /**
+     * A metadata-document client_id is the vendor's public URL, the same for every
+     * user of that app, so each Approve stores its own connection row under a fresh
+     * key (`cimd_url` = the URL) and its tokens carry that key. Scope, Edit access,
+     * Revoke and refresh-reuse revocation then act on one connection, never on every
+     * connection of the vendor. Rows written before 1.7.6 are keyed by the URL.
+     */
+    const CIMD_GRANT_PREFIX = 'cimd_g_';
     // Registration is unauthenticated by design (RFC 7591), so everything it stores is bounded.
     const MAX_CLIENT_NAME_LEN  = 100;
     const MAX_REDIRECT_URIS    = 10;  // VS Code registers six; leave headroom
@@ -843,6 +851,32 @@ class Cowboy_MCP_OAuth {
         return null !== self::resolve_client( $client_id );
     }
 
+    /** Whether a stored row (key) is a connection of the metadata-document client $client_id. */
+    private static function row_belongs_to( string $row_key, string $client_id ): bool {
+        if ( $row_key === $client_id ) {
+            return true;
+        }
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        return str_starts_with( $row_key, self::CIMD_GRANT_PREFIX ) && $client_id !== ''
+            && (string) ( $clients[ $row_key ]['cimd_url'] ?? '' ) === $client_id;
+    }
+
+    /** Token endpoint: a stored or signed client, or a metadata-document URL with at least one connection here. */
+    private static function client_known_for_tokens( string $client_id ): bool {
+        if ( self::client_is_known( $client_id ) ) {
+            return true;
+        }
+        if ( ! self::is_cimd_client_id( $client_id ) ) {
+            return false;
+        }
+        foreach ( get_option( self::CLIENTS_OPTION, [] ) as $row ) {
+            if ( is_array( $row ) && (string) ( $row['cimd_url'] ?? '' ) === $client_id ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /* ── Tokens ────────────────────────────────────────────── */
 
     private static function revoke_token_record( string $access_id ): void {
@@ -1052,7 +1086,7 @@ class Cowboy_MCP_OAuth {
         if ( ! hash_equals( (string) $rec['secret_hash'], hash( 'sha256', $secret ) ) ) {
             return new WP_Error( 'invalid_grant', 'Refresh token mismatch.' );
         }
-        if ( $client_id !== '' && $client_id !== $rec['client_id'] ) {
+        if ( $client_id !== '' && ! self::row_belongs_to( (string) $rec['client_id'], $client_id ) ) {
             return new WP_Error( 'invalid_grant', 'Client mismatch.' );
         }
         if ( time() > (int) $rec['expires'] ) {
@@ -1477,7 +1511,7 @@ class Cowboy_MCP_OAuth {
         if ( $code === '' ) {
             return self::rest_error( 'invalid_request', 'Missing code.', 400 );
         }
-        if ( ! self::client_is_known( $client_id ) ) {
+        if ( ! self::client_known_for_tokens( $client_id ) ) {
             // RFC 6749 §5.2. MCP clients treat invalid_client as "registration is
             // gone — register again"; invalid_grant only makes them drop tokens.
             // Checked before the code is read so an unknown client cannot burn it.
@@ -1501,7 +1535,13 @@ class Cowboy_MCP_OAuth {
             return self::rest_error( 'invalid_grant', 'Authorizing user is no longer permitted.', 400 );
         }
 
-        $t = self::issue_tokens( (int) $ctx['user_id'], $client_id, (string) $ctx['aud'], (string) $ctx['scope'] );
+        // A metadata-document client's tokens belong to the connection row its Approve wrote.
+        $row_key = (string) ( $ctx['grant_id'] ?? $client_id );
+        if ( ! self::row_belongs_to( $row_key, $client_id ) ) {
+            return self::rest_error( 'invalid_grant', 'This connection was revoked before the code was exchanged.', 400 );
+        }
+
+        $t = self::issue_tokens( (int) $ctx['user_id'], $row_key, (string) $ctx['aud'], (string) $ctx['scope'] );
         return self::rest_json( [
             'access_token'  => $t['access_token'],
             'token_type'    => 'Bearer',
@@ -1515,7 +1555,7 @@ class Cowboy_MCP_OAuth {
         $refresh   = (string) $request->get_param( 'refresh_token' );
         $client_id = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
 
-        if ( $client_id !== '' && ! self::client_is_known( $client_id ) ) {
+        if ( $client_id !== '' && ! self::client_known_for_tokens( $client_id ) ) {
             return self::rest_error( 'invalid_client', 'Unknown client. Register again.', 401 );
         }
 
@@ -1629,9 +1669,10 @@ class Cowboy_MCP_OAuth {
                 Cowboy_MCP_Auth::log( 'oauth_cimd_rejected', [ 'args' => [ 'code' => 'redirect_uri', 'host' => (string) wp_parse_url( $client_id, PHP_URL_HOST ) ] ] );
                 self::authorize_fatal( __( 'Invalid redirect_uri for this client.', 'cowboy-mcp' ) );
             }
-            // Name and redirect_uris always come from the document; the stored row only
-            // carries what this site decided (scope, timestamps).
-            $client = array_merge( $doc, array_intersect_key( (array) $client, [ 'tool_scope' => 1, 'created' => 1, 'last_used' => 1 ] ) );
+            // Name and redirect_uris always come from the document. Every Approve starts a
+            // new connection (see CIMD_GRANT_PREFIX), so no earlier connection's scope is
+            // offered or carried over.
+            $client = $doc;
         }
 
         // Malformed requests get an error page, never a redirect: anyone can register a
@@ -1684,22 +1725,21 @@ class Cowboy_MCP_OAuth {
                 self::clear_blocked_attempts(); // the "<App> tried to connect" notice is answered, same as after a registration
                 Cowboy_MCP_Auth::log( 'oauth_client_adopted', [ 'redirect_host' => (string) wp_parse_url( $redirect_uri, PHP_URL_HOST ) ] );
             }
+            $row_key = $client_id;
             if ( $cimd ) {
-                // First write for a metadata-document client: the row exists only so the
-                // code exchange, refreshes, listing, revocation and scoping find it.
+                // A metadata-document client gets a connection row of its own on every
+                // Approve: the client_id is shared by every user of that app.
                 $clients = get_option( self::CLIENTS_OPTION, [] );
-                $fresh   = empty( $clients[ $client_id ] );
-                if ( $fresh && count( $clients ) >= self::MAX_CLIENTS ) {
+                if ( count( $clients ) >= self::MAX_CLIENTS ) {
                     $clients = self::prune_unused_clients( $clients );
                 }
-                $clients[ $client_id ] = array_merge( (array) ( $clients[ $client_id ] ?? [] ), $client );
+                $row_key             = self::CIMD_GRANT_PREFIX . self::random_id();
+                $clients[ $row_key ] = array_merge( $client, [ 'client_id' => $row_key, 'cimd_url' => $client_id, 'created' => time() ] );
                 update_option( self::CLIENTS_OPTION, $clients, false );
-                if ( $fresh ) {
-                    Cowboy_MCP_Auth::log( 'oauth_client_cimd', [ 'args' => [ 'client_name' => $client['client_name'], 'host' => (string) wp_parse_url( $client_id, PHP_URL_HOST ) ] ] );
-                }
+                Cowboy_MCP_Auth::log( 'oauth_client_cimd', [ 'args' => [ 'client_name' => $client['client_name'], 'host' => (string) wp_parse_url( $client_id, PHP_URL_HOST ) ] ] );
             }
 
-            $code = self::issue_authorization_code( [
+            $code_ctx = [
                 'client_id'             => $client_id,
                 'redirect_uri'          => $redirect_uri,
                 'code_challenge'        => $challenge,
@@ -1707,12 +1747,16 @@ class Cowboy_MCP_OAuth {
                 'user_id'               => get_current_user_id(),
                 'scope'                 => $scope,
                 'aud'                   => self::resource_url(),
-            ] );
+            ];
+            if ( $cimd ) {
+                $code_ctx['grant_id'] = $row_key;
+            }
+            $code = self::issue_authorization_code( $code_ctx );
 
             $scope_mode   = sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_oauth_scope_mode'] ?? 'full' ) );
-            $current_mode = $clients[ $client_id ]['tool_scope']['mode'] ?? 'full';
+            $current_mode = $clients[ $row_key ]['tool_scope']['mode'] ?? 'full';
             if ( 'read_only' === $scope_mode ) {
-                $clients[ $client_id ]['tool_scope'] = [ 'mode' => 'read_only', 'allowed_tools' => [] ];
+                $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'read_only', 'allowed_tools' => [] ];
             } elseif ( 'keep_custom' === $scope_mode && 'custom' === $current_mode ) {
                 // Re-consent without touching the existing custom scope.
             } else {
@@ -1720,10 +1764,10 @@ class Cowboy_MCP_OAuth {
                 // replaced by this full-access approval. A stale "keep_custom"
                 // posted against a scope that is no longer custom falls back to
                 // full, fail-safe, rather than silently discarding nothing.
-                unset( $clients[ $client_id ]['tool_scope'] );
+                unset( $clients[ $row_key ]['tool_scope'] );
             }
-            unset( $clients[ $client_id ]['rehydrated'] );
-            $clients[ $client_id ]['last_used'] = time();
+            unset( $clients[ $row_key ]['rehydrated'] );
+            $clients[ $row_key ]['last_used'] = time();
             update_option( self::CLIENTS_OPTION, $clients, false );
 
             $sep = ( strpos( $redirect_uri, '?' ) === false ) ? '?' : '&';
