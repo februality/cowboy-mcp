@@ -418,12 +418,12 @@ class Cowboy_MCP_Checkpoint {
 		//     between swap and step 6) in which the checkpoint's old keys, scopes or
 		//     power_mode are live. Step 6 re-applies them again through the options API.
 		if ( in_array( $wpdb->options, $tables, true ) ) {
-			$names = array_keys( $preserved );
-			$in    = implode( ',', array_fill( 0, count( $names ), '%s' ) );
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name IN ({$in})", self::TEMP_PREFIX . $wpdb->options, ...$names ) );
-			$wpdb->query( $wpdb->prepare( "INSERT INTO %i (option_name, option_value, autoload) SELECT option_name, option_value, autoload FROM %i WHERE option_name IN ({$in})", self::TEMP_PREFIX . $wpdb->options, $wpdb->options, ...$names ) );
-			// phpcs:enable
+			foreach ( array_keys( $preserved ) as $opt ) {
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE option_name = %s', self::TEMP_PREFIX . $wpdb->options, $opt ) );
+				$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (option_name, option_value, autoload) SELECT option_name, option_value, autoload FROM %i WHERE option_name = %s', self::TEMP_PREFIX . $wpdb->options, $wpdb->options, $opt ) );
+				// phpcs:enable
+			}
 		}
 
 		// 5. Atomic multi-table swap.
