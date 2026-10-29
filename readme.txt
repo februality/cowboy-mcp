@@ -301,19 +301,16 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.5 =
-* New: files attached in a ChatGPT conversation can go straight into the Media Library. Every upload can also be resized and converted to WebP, AVIF, JPEG or PNG on the way in.
-* New: an undo now reports whether the restored item matches what was saved before the change, and lists any field that differs.
-* Fix: undoing a permanent comment delete brings the comment back. It reported success without restoring it.
-* Fix: undoing an edit to a published post no longer reports a conflict after WordPress has sent the post's pingbacks.
-* Fix: dry runs and safe-mode previews no longer promise success for a call the tool would refuse, such as an upload with unknown arguments.
-* Fix: on WordPress 7.2, undoing a media delete keeps the link between an edited image and its original.
-* Fix: the "Repair now" notice is translated in all 12 bundled languages.
-* Multisite fix: a checkpoint on the main site of a network now holds only that site's tables; it included every site's tables and the network tables. Restoring an older checkpoint restores only the current site. `wp_delete_user` removes a user from the current site only, as described, instead of deleting the account from the whole network.
-* Multisite change: Cowboy MCP is now managed by super admins only. On a network, API keys created before 1.7.5 or with WP-CLI, and connections approved by a site administrator, stop working until a super admin creates or approves them again.
-* Changed: connection steps updated to match the current AI apps.
-* Changed: without Power mode, `wp_cli db query` runs read-only queries only, and `wp_cli search-replace` must name its tables and cannot change options, users or network tables.
-* Security: stronger protection for settings and credentials. Option, ACF and WooCommerce customer writes are checked more strictly, and passwords, licence keys and API tokens stored inside option values are hidden when an agent reads them.
+= 1.7.6 =
+* Changed: every approval of Claude Code, Codex, ChatGPT, Claude or Perplexity is now its own entry under Connected apps, with its own access level, Edit access and Revoke. Reconnecting an app adds a new entry with the access you choose on the approval screen; the earlier one stays listed until it expires.
+* Changed: Editors count as a privileged role on single sites, like Administrators. Creating or promoting an Editor, or changing an Editor's email, needs Power mode.
+* Changed: `wp_search_replace`, uploads of SVG, HTML, XML, JS or CSS files from a link or base64 data, and ACF field values refuse script content unless the call passes `allow_unfiltered_html: true`. Content already on the site can be sent back unchanged.
+* Changed: read-only and custom-access connections list and read only the resources their access covers.
+* Changed: without Power mode, `wp_cli db query` cannot read option or user-meta values, and `wp_cli db search` must name the tables it searches.
+* Improved: API keys are recognised faster, and a valid key keeps working while failed attempts from the same IP address are being rate limited. Existing keys are upgraded automatically on their first use.
+* Fix: WooCommerce reports filtered by order status count completed and cancelled orders.
+* Fix: malformed requests get a JSON-RPC error instead of a server error.
+* Security: hardening from an internal review across WP-CLI, file, theme, media and download handling, redirects, undo and secret redaction. No action is needed after updating.
 
 = Earlier versions =
 
