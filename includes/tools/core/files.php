@@ -71,12 +71,36 @@ function cowboy_mcp_is_blocked_upload_write( string $full ): bool {
     if ( $base === '' ) {
         return false;
     }
-    $uploads_real = realpath( $base ) ?: $base;
-    if ( ! str_starts_with( $full . '/', $uploads_real . '/' ) ) {
+    // Multisite: a sub-site's basedir is uploads/sites/N; every site's files sit
+    // under the network's uploads root and are served the same way.
+    $roots = [ $base, (string) preg_replace( '#[/\\\\]sites[/\\\\]\d+$#', '', $base ) ];
+    $in    = false;
+    foreach ( array_unique( $roots ) as $root ) {
+        if ( Cowboy_MCP_Security::path_within_folded( $full, realpath( $root ) ?: $root ) || Cowboy_MCP_Security::path_within_folded( $full, $root ) ) {
+            $in = true;
+        }
+    }
+    if ( ! $in ) {
         return false; // not in uploads
     }
-    $ext = strtolower( pathinfo( $full, PATHINFO_EXTENSION ) );
-    return in_array( $ext, [ 'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps', 'phar', 'pht', 'htaccess' ], true );
+    return cowboy_mcp_is_executable_name( basename( str_replace( '\\', '/', $full ) ) );
+}
+
+/**
+ * Whether a file name could be run by the web server rather than served as data:
+ * a handler-mapped extension in ANY position (Apache AddHandler runs `x.php.jpg`),
+ * or a per-directory server config file. Windows ignores trailing dots/spaces and
+ * the `::$DATA` stream suffix, so those are removed first.
+ */
+function cowboy_mcp_is_executable_name( string $name ): bool {
+    $name = strtolower( (string) preg_replace( '/(::\$data)?[. ]*$/i', '', $name ) );
+    if ( in_array( $name, [ '.htaccess', '.htpasswd', '.user.ini', 'web.config', 'php.ini' ], true ) ) {
+        return true;
+    }
+    $parts = explode( '.', ltrim( $name, '.' ) );
+    array_shift( $parts ); // the base name
+    $exec = [ 'php', 'php2', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8', 'phtml', 'phtm', 'pht', 'phps', 'phar', 'inc', 'shtml', 'shtm', 'stm', 'cgi', 'pl', 'py', 'asp', 'aspx', 'jsp', 'htaccess' ];
+    return (bool) array_intersect( $parts, $exec );
 }
 
 /**
@@ -94,7 +118,8 @@ function cowboy_mcp_is_blocked_mu_plugin_write( string $full ): bool {
     $content = realpath( Cowboy_MCP_Compat::content_dir() ) ?: Cowboy_MCP_Compat::content_dir();
     $mu      = $content . '/mu-plugins';
     $mu_real = realpath( $mu ) ?: $mu; // dir may not exist yet, or be a symlink
-    return str_starts_with( $full . '/', $mu_real . '/' ) || str_starts_with( $full . '/', $mu . '/' );
+    // Case-folded: on macOS/Windows `MU-Plugins/x.php` is the real mu-plugins.
+    return Cowboy_MCP_Security::path_within_folded( $full, $mu_real ) || Cowboy_MCP_Security::path_within_folded( $full, $mu );
 }
 
 /**
@@ -111,6 +136,12 @@ function cowboy_mcp_php_syntax_error( string $content ): ?string {
         return str_contains( $msg, ' on line ' ) ? $msg : $msg . ' on line ' . $e->getLine();
     }
     return null;
+}
+
+/** Whether a file is one whose whole job is to hold credentials or a database copy. */
+function cowboy_mcp_is_secret_file( string $full ): bool {
+    $name = strtolower( basename( str_replace( '\\', '/', $full ) ) );
+    return (bool) preg_match( '/\.(sql|sql\.gz|sql\.zip|sqlite|sqlite3|db|dump|env|pem|key|p12|pfx|bak|old|orig|swp)$|^\.env(\..*)?$|^\.htpasswd$|^wp-config.*\.php|^\.?my\.cnf$|^auth\.json$|^id_(rsa|ed25519|ecdsa)/', $name );
 }
 
 /** Whether a path is executed by PHP (used to decide when to lint before writing). */
@@ -187,17 +218,28 @@ return [
     ],
     'handlers' => [
         'wp_read_file' => function ( array $a ) {
-            $path = cowboy_mcp_resolve_wp_content_path( $a['path'] );
+            $path = cowboy_mcp_resolve_wp_content_path( (string) $a['path'] );
             if ( is_wp_error( $path ) ) return $path;
             if ( ! is_file( $path ) ) {
                 return new WP_Error( 'not_found', "File not found: {$a['path']}" );
             }
-            $size = filesize( $path );
+            // A read-only or custom-scoped credential that cannot write files reads code
+            // and assets, not the site's credentials: files whose job is to hold them
+            // (database dumps, env and key files, wp-config copies) are refused, and
+            // the rest get the wp_cli output backstop (password hashes, tokens, URL
+            // credentials, wp-config secret values). Credentials that may also write
+            // files read raw, so a read-modify-write never writes a mask back.
+            $confined = null !== Cowboy_MCP_Security::current_scope() && ! Cowboy_MCP_Tools::tool_permitted( 'wp_write_file' );
+            if ( $confined && cowboy_mcp_is_secret_file( $path ) ) {
+                return new WP_Error( 'secret_file', "{$a['path']} looks like a database dump, key or config file; this credential's scope cannot read it." );
+            }
+            $size    = filesize( $path );
+            $content = ( $size > 512000 ) ? '(File too large to return — ' . size_format( $size ) . ')' : (string) file_get_contents( $path );
             return [
                 'path'     => $a['path'],
                 'size'     => $size,
                 'modified' => gmdate( 'Y-m-d H:i:s', filemtime( $path ) ),
-                'content'  => ( $size > 512000 ) ? '(File too large to return — ' . size_format( $size ) . ')' : file_get_contents( $path ),
+                'content'  => $confined ? Cowboy_MCP_Security::scrub_cli_output( $content ) : $content,
             ];
         },
 

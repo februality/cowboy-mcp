@@ -17,6 +17,14 @@ function cowboy_mcp_search_replace_normalize_args( array $args ): array|WP_Error
         }
         $args[ $key ] = (string) $args[ $key ];
     }
+    // The replacement lands in post_content with no kses pass (SQL REPLACE()), so it
+    // may not carry script-capable markup the search text did not already hold. The
+    // handler also judges every affected row (a split handler can be assembled from
+    // innocent-looking halves).
+    if ( isset( $args['search'], $args['replace'] ) && empty( $args['allow_unfiltered_html'] )
+        && Cowboy_MCP_Security::script_capable_count( $args['replace'] ) > Cowboy_MCP_Security::script_capable_count( $args['search'] ) ) {
+        return new WP_Error( 'unfiltered_html_blocked', 'The replacement adds script-capable markup (a script/iframe/style tag, an inline event handler or a javascript: URL). Pass allow_unfiltered_html: true to permit it.' );
+    }
     if ( array_key_exists( 'post_id', $args ) ) {
         $id = $args['post_id'];
         if ( is_string( $id ) && $id !== '' && ctype_digit( $id ) ) {
@@ -110,6 +118,7 @@ return [
             'post_id'   => [ 'type' => 'integer', 'description' => 'Limit to a single post or page ID (combined with post_type when supplied)', 'minimum' => 1 ],
             'dry_run'   => [ 'type' => 'boolean', 'description' => 'Preview without making changes', 'default' => true ],
             'limit'     => [ 'type' => 'integer', 'description' => 'Max posts to update per call (default 1000)', 'default' => 1000 ],
+            'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit a replacement that adds script-capable markup (script/iframe/style tags, inline event handlers, javascript: URLs) to post content. Off by default: that markup runs for every visitor and admin who views the post.', 'default' => false ],
         ], [ 'title' => 'Search and Replace', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false ]),
 
     ],
@@ -234,6 +243,16 @@ return [
                     . " $where_sql " . $wpdb->prepare( "ORDER BY ID LIMIT %d", $limit );
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $targets = $wpdb->get_results( $select_sql, ARRAY_A ) ?: [];
+
+                // REPLACE() is case-sensitive and non-overlapping, like str_replace().
+                if ( empty( $a['allow_unfiltered_html'] ) ) {
+                    foreach ( $targets as $t ) {
+                        $old = (string) $t['post_content'];
+                        if ( Cowboy_MCP_Security::script_capable_count( str_replace( $search, $replace, $old ) ) > Cowboy_MCP_Security::script_capable_count( $old ) ) {
+                            return new WP_Error( 'unfiltered_html_blocked', "Replacing in post #{$t['ID']} would add script-capable markup to it. Nothing was changed. Pass allow_unfiltered_html: true to permit it." );
+                        }
+                    }
+                }
 
                 foreach ( array_chunk( array_column( $targets, 'ID' ), 500 ) as $chunk ) {
                     $ids_sql    = implode( ',', array_map( 'intval', $chunk ) );

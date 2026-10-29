@@ -153,7 +153,7 @@ class Cowboy_MCP_Security {
     }
 
     /** Key parts (letters only, lower-cased) that mark a nested setting as a secret. */
-    private const SECRET_VALUE_KEY_PARTS = [ 'pass', 'pwd', 'secret', 'token', 'bearer', 'nonce', 'salt', 'licence', 'license', 'credential', 'private', 'signature' ];
+    private const SECRET_VALUE_KEY_PARTS = [ 'pass', 'pwd', 'pswd', 'secret', 'token', 'bearer', 'nonce', 'salt', 'licence', 'license', 'credential', 'private', 'signature', 'dsn', 'webhook', 'jwt', 'cookie', 'session' ];
 
     /**
      * Redact an option value for display: every nested entry whose key reads as a
@@ -178,6 +178,14 @@ class Cowboy_MCP_Security {
             return $value;
         }
         if ( is_string( $value ) ) {
+            // Settings stored as JSON text inside an option: redact the decoded tree.
+            $trim = ltrim( $value );
+            if ( '' !== $trim && ( '{' === $trim[0] || '[' === $trim[0] ) ) {
+                $decoded = json_decode( $value, true );
+                if ( is_array( $decoded ) ) {
+                    return (string) wp_json_encode( self::redact_option_value( $decoded ) );
+                }
+            }
             $value = self::scrub_secrets( $value );
             return (string) preg_replace( '/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}|\bwhsec_[A-Za-z0-9]{8,}/', '[REDACTED]', $value );
         }
@@ -192,6 +200,10 @@ class Cowboy_MCP_Security {
         }
         // apikey, authkey, licensekey, consumerkey, secretkey, cfkey, …
         if ( str_ends_with( $norm, 'key' ) || str_ends_with( $norm, 'keys' ) ) {
+            return true;
+        }
+        // `auth` (not author/authority) and a standalone `pw` segment (smtp_pw, smtpPw).
+        if ( preg_match( '/auth(?!or)/', $norm ) || preg_match( '/(^|[^a-z])pw($|[^a-z])|[a-z]Pw($|[^a-z])/i', $key ) ) {
             return true;
         }
         foreach ( self::SECRET_VALUE_KEY_PARTS as $part ) {
@@ -309,7 +321,90 @@ class Cowboy_MCP_Security {
         $storage = ( realpath( $base ) ?: $base ) . '/cowboy-mcp';
         $real    = realpath( $abs_path );
         $target  = $real !== false ? $real : $abs_path;
-        return $target === $storage || str_starts_with( $target . '/', $storage . '/' );
+        return self::path_within_folded( $target, $storage ) || self::path_within_folded( $target, $base . '/cowboy-mcp' );
+    }
+
+    /**
+     * Whether $path is $dir or inside it, compared the way a case-insensitive
+     * filesystem (macOS, Windows) resolves names: separators unified, case folded.
+     * realpath() keeps the case it was given, so `MU-Plugins/x.php` reaches the
+     * real mu-plugins there. For REFUSAL checks only: on a case-sensitive host it
+     * can only over-match, never let a path through.
+     */
+    public static function path_within_folded( string $path, string $dir ): bool {
+        $norm = static fn( string $p ): string => rtrim( strtolower( str_replace( '\\', '/', $p ) ), '/' );
+        $p    = $norm( $path );
+        $d    = $norm( $dir );
+        return '' !== $d && ( $p === $d || str_starts_with( $p . '/', $d . '/' ) );
+    }
+
+    /* ── Script-capable markup ─────────────────────────────── */
+
+    /**
+     * Markup that runs script or rewrites the page when a human views it: script-ish
+     * elements, inline event handlers (also `/`-separated, `<svg/onload=…>`),
+     * script / data-HTML URLs and srcdoc / formaction attributes.
+     */
+    private const SCRIPT_CAPABLE = '#<\s*/?\s*(script|iframe|frame|frameset|object|embed|applet|style|link|meta|base|form|svg|math|template|noscript|xml|animate|set)\b|[\s"\'/]on[a-z]+\s*=|(?:java|vb)script\s*:|data\s*:\s*text/html|\bsrcdoc\s*=|\bformaction\s*=|\bxlink:href\s*=#i';
+
+    /**
+     * How many script-capable constructs a fragment holds, counted the way a browser
+     * reads it: entities decoded (including semicolon-less numeric ones, which
+     * browsers accept and html_entity_decode() does not) and the tab / newline / NUL
+     * characters URL parsers drop removed first. Used both absolutely (agent-written
+     * strings) and comparatively (a replace may not add any to a document).
+     */
+    public static function script_capable_count( string $html ): int {
+        $text = (string) preg_replace_callback(
+            '/&#(x[0-9a-f]+|\d+);?/i',
+            static function ( array $m ): string {
+                $n = ( 'x' === strtolower( $m[1][0] ) ) ? hexdec( substr( $m[1], 1 ) ) : (int) $m[1];
+                // Every construct matched is ASCII; other code points cannot form one.
+                return ( $n > 0 && $n < 128 ) ? chr( (int) $n ) : ' ';
+            },
+            $html
+        );
+        $text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        $text = str_replace( [ "\t", "\n", "\r", "\0" ], '', $text );
+        return max( (int) preg_match_all( self::SCRIPT_CAPABLE, $html ), (int) preg_match_all( self::SCRIPT_CAPABLE, $text ) );
+    }
+
+    /** Elements a block's `tagName` attribute must never name: tag_escape() keeps them, and they run or swallow the page. */
+    private const RAW_TEXT_TAGS = [ 'script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet', 'template', 'noscript', 'noembed', 'noframes', 'textarea', 'title', 'xmp', 'plaintext', 'base', 'meta', 'link', 'svg', 'math', 'form' ];
+
+    /**
+     * Script-capable values inside block attributes (one parsed block's attrs).
+     * Attributes live in the block-comment JSON, which no kses pass reads, and
+     * dynamic blocks print them: string leaves are counted like markup, and a
+     * `tagName` that tag_escape() resolves to a raw-text / script element counts too.
+     */
+    public static function attrs_risk( array $attrs ): int {
+        $n = 0;
+        array_walk_recursive( $attrs, static function ( $v, $k ) use ( &$n ): void {
+            if ( ! is_string( $v ) ) {
+                return;
+            }
+            if ( 'tagName' === $k && in_array( strtolower( (string) preg_replace( '/[^a-zA-Z0-9_:-]/', '', $v ) ), self::RAW_TEXT_TAGS, true ) ) {
+                $n++;
+            }
+            $n += self::script_capable_count( $v );
+        } );
+        return $n;
+    }
+
+    /** attrs_risk() summed over a parsed block tree (parse_blocks() shape). */
+    public static function blocks_attrs_risk( array $blocks ): int {
+        $n = 0;
+        foreach ( $blocks as $b ) {
+            if ( ! is_array( $b ) ) {
+                continue;
+            }
+            $n += self::attrs_risk( is_array( $b['attrs'] ?? null ) ? $b['attrs'] : [] );
+            if ( ! empty( $b['innerBlocks'] ) && is_array( $b['innerBlocks'] ) ) {
+                $n += self::blocks_attrs_risk( $b['innerBlocks'] );
+            }
+        }
+        return $n;
     }
 
     /* ── Who administers the plugin ────────────────────────── */
@@ -412,13 +507,18 @@ class Cowboy_MCP_Security {
      * already privileged via manage_options. (WooCommerce's shop_manager carries
      * none of them; older WC releases did, which is why this list once excluded
      * them.)
+     *
+     * `unfiltered_html` is script in every admin's browser (an admin session is
+     * code execution), and `create_users` hands out new accounts; on a single site
+     * the stock Editor holds the former, so Editor is privileged there. Multisite
+     * maps unfiltered_html to super admins only, so it does not count for a role.
      */
     private const PRIVILEGED_CAPS = [
         'manage_options',
         'install_plugins', 'edit_plugins', 'activate_plugins', 'update_plugins',
         'install_themes', 'edit_themes', 'update_themes',
-        'edit_files',
-        'edit_users', 'promote_users', 'delete_users',
+        'edit_files', 'unfiltered_html',
+        'edit_users', 'promote_users', 'delete_users', 'create_users',
     ];
 
     /** Whether granting this role hands over settings or code-execution control. */
@@ -428,6 +528,9 @@ class Cowboy_MCP_Security {
             return false;
         }
         foreach ( self::PRIVILEGED_CAPS as $cap ) {
+            if ( 'unfiltered_html' === $cap && is_multisite() ) {
+                continue; // map_meta_cap() keeps it from everyone but super admins
+            }
             if ( ! empty( $role_obj->capabilities[ $cap ] ) ) {
                 return true;
             }
@@ -1246,6 +1349,11 @@ class Cowboy_MCP_Security {
     public static function scrub_secrets( string $text ): string {
         $text = preg_replace( '/\bBearer\s+[A-Za-z0-9._\-]+/i', 'Bearer [REDACTED]', $text );
         $text = preg_replace( '/\bmcp_[0-9a-f]{16,}\b/i', '[REDACTED]', (string) $text );
+        // OAuth tokens are `cmcp_at_<id>.<secret>`: the secret half follows the dot.
+        $text = preg_replace( '/\bcmcp_(?:at|rt)_[A-Za-z0-9_\-]+(?:\.[A-Za-z0-9_\-]+)?/', '[REDACTED]', (string) $text );
+        // Credentials in URLs: userinfo (user:pass@, Sentry-style key@) and webhook paths.
+        $text = preg_replace( '#\b([a-z][a-z0-9+.\-]*://)(?:[^\s/@:"\'<>]+:[^\s/@"\'<>]+|[A-Za-z0-9_\-]{16,})@#i', '$1[REDACTED]@', (string) $text );
+        $text = preg_replace( '#\b(hooks\.slack\.com/(?:services|workflows|triggers)/|discord(?:app)?\.com/api/webhooks/)[^\s"\'<>]+#i', '$1[REDACTED]', (string) $text );
         return (string) $text;
     }
 
@@ -1268,7 +1376,6 @@ class Cowboy_MCP_Security {
                 '/\$[PH]\$[^\s"\',]{31,}/',
                 '/\$argon2(?:id|i|d)\$v=\d+\$[^\s"\']+/',
                 '/\$generic\$[^\s"\',]+/',
-                '/\bcmcp_(?:at|rt)_[A-Za-z0-9_\-]{16,}/',
             ],
             '[REDACTED]',
             $text
@@ -1374,7 +1481,64 @@ class Cowboy_MCP_Security {
         if ( preg_match( '/^(127\.|169\.254\.|10\.|192\.168\.)/', $ip ) ) {
             return false;
         }
+        // PHP's range flags leave these out (and differ across 8.x): CGNAT (also
+        // Alibaba's metadata address and Tailscale), benchmarking, IETF/TEST-NETs,
+        // multicast, IPv6 site-local/multicast/documentation/discard.
+        foreach ( self::NON_PUBLIC_CIDRS as $cidr ) {
+            if ( self::ip_in_cidr( $ip, $cidr ) ) {
+                return false;
+            }
+        }
+        // Addresses that carry an IPv4 address inside (NAT64, 6to4, IPv4-compatible)
+        // reach that IPv4 address: judge it instead.
+        $embedded = self::embedded_ipv4( $ip );
+        if ( null !== $embedded ) {
+            return self::ip_is_public( $embedded );
+        }
         return true;
+    }
+
+    /** Ranges ip_is_public() refuses on top of PHP's NO_PRIV_RANGE / NO_RES_RANGE. */
+    private const NON_PUBLIC_CIDRS = [
+        '0.0.0.0/8', '100.64.0.0/10', '192.0.0.0/24', '192.0.2.0/24', '198.18.0.0/15', '198.51.100.0/24',
+        '203.0.113.0/24', '224.0.0.0/4', '240.0.0.0/4',
+        'fe80::/10', 'fec0::/10', 'fc00::/7', 'ff00::/8', '2001:db8::/32', '100::/64', '2001::/32',
+    ];
+
+    /** Whether an IP address is inside a CIDR block of the same family. */
+    private static function ip_in_cidr( string $ip, string $cidr ): bool {
+        [ $net, $bits ] = explode( '/', $cidr );
+        $a = @inet_pton( $ip );
+        $b = @inet_pton( $net );
+        if ( false === $a || false === $b || strlen( $a ) !== strlen( $b ) ) {
+            return false;
+        }
+        $bits  = (int) $bits;
+        $bytes = intdiv( $bits, 8 );
+        if ( substr( $a, 0, $bytes ) !== substr( $b, 0, $bytes ) ) {
+            return false;
+        }
+        $rest = $bits % 8;
+        if ( 0 === $rest ) {
+            return true;
+        }
+        $mask = ( 0xFF << ( 8 - $rest ) ) & 0xFF;
+        return ( ord( $a[ $bytes ] ) & $mask ) === ( ord( $b[ $bytes ] ) & $mask );
+    }
+
+    /** The IPv4 address inside a NAT64 (64:ff9b::/96, 64:ff9b:1::/48), 6to4 (2002::/16) or IPv4-compatible (::/96) address, or null. */
+    private static function embedded_ipv4( string $ip ): ?string {
+        $bin = @inet_pton( $ip );
+        if ( false === $bin || 16 !== strlen( $bin ) ) {
+            return null;
+        }
+        if ( self::ip_in_cidr( $ip, '64:ff9b::/96' ) || self::ip_in_cidr( $ip, '64:ff9b:1::/48' ) || self::ip_in_cidr( $ip, '::/96' ) ) {
+            return (string) inet_ntop( substr( $bin, 12, 4 ) );
+        }
+        if ( self::ip_in_cidr( $ip, '2002::/16' ) ) {
+            return (string) inet_ntop( substr( $bin, 2, 4 ) );
+        }
+        return null;
     }
 
     /* ── Local-development host heuristics (ADVISORY ONLY) ── */

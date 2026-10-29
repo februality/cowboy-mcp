@@ -35,18 +35,7 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
         }
     }
 
-    if ( function_exists( 'acf_decode_post_id' ) ) {
-        $decoded = acf_decode_post_id( $object_id );
-        $type    = (string) ( $decoded['type'] ?? 'post' );
-        $id      = $decoded['id'] ?? $object_id;
-    } else {
-        $type = is_int( $object_id ) ? 'post' : 'option';
-        $id   = $object_id;
-        if ( is_string( $object_id ) && preg_match( '/^(user|term|comment)_(\d+)$/', $object_id, $m ) ) {
-            $type = $m[1];
-            $id   = (int) $m[2];
-        }
-    }
+    [ $type, $id ] = cowboy_mcp_acf_decode_target( $object_id );
 
     if ( 'option' === $type ) {
         $option = $id . '_' . $name;
@@ -78,6 +67,26 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
     if ( $meta_id ) {
         $keys = array_unique( array_merge( $keys, array_column( cowboy_mcp_acf_stored_rows( $type, $meta_id, $name ), 0 ) ) );
     }
+    // HPOS orders (`woo_order_{id}`): ACF writes through the order object, where an
+    // internal key (`_billing_email`, `_order_total`) is a property setter, so neither
+    // the value nor its hidden `_{name}` reference may name one; an existing twin must
+    // already be an ACF reference, as on the other meta types.
+    if ( 'woo_order' === $type && function_exists( 'wc_get_order' ) && is_numeric( $id ) ) {
+        $order = wc_get_order( (int) $id );
+        if ( $order ) {
+            $store    = $order->get_data_store();
+            $internal = is_object( $store ) && method_exists( $store, 'get_internal_meta_keys' ) ? (array) $store->get_internal_meta_keys() : [];
+            $plain    = trim( $name );
+            if ( array_intersect( [ $plain, '_' . $plain, ltrim( $plain, '_' ) ], $internal ) ) {
+                return new WP_Error( 'protected_meta', "Field name '{$name}' maps to an order property; use the WooCommerce order tools." );
+            }
+            foreach ( (array) $order->get_meta( '_' . $plain, false, 'edit' ) as $meta ) {
+                if ( ! cowboy_mcp_acf_is_field_ref( is_object( $meta ) ? ( $meta->value ?? null ) : $meta ) ) {
+                    return cowboy_mcp_acf_reference_collision( '_' . $plain );
+                }
+            }
+        }
+    }
     foreach ( $keys as $key ) {
         if ( Cowboy_MCP_Security::is_blocked_meta_key( $key ) ) {
             return new WP_Error( 'protected_meta', "Field name '{$name}' maps to a protected meta key." );
@@ -95,6 +104,53 @@ function cowboy_mcp_acf_write_gate( string $field_name, $object_id ): ?WP_Error 
                 return cowboy_mcp_acf_reference_collision( $twin );
             }
         }
+    }
+    return null;
+}
+
+/**
+ * ACF's storage target for an object id, as [ type, id ]: `option` (id = the options
+ * prefix ACF writes under, `options` for "option"), or a meta type with its numeric id.
+ */
+function cowboy_mcp_acf_decode_target( $object_id ): array {
+    if ( function_exists( 'acf_decode_post_id' ) ) {
+        $decoded = acf_decode_post_id( $object_id );
+        return [ (string) ( $decoded['type'] ?? 'post' ), $decoded['id'] ?? $object_id ];
+    }
+    if ( is_int( $object_id ) ) {
+        return [ 'post', $object_id ];
+    }
+    if ( is_string( $object_id ) && preg_match( '/^(user|term|comment|woo_order)_(\d+)$/', $object_id, $m ) ) {
+        return [ $m[1], (int) $m[2] ];
+    }
+    // acf_get_valid_post_id(): "option" is the "options" page.
+    return [ 'option', 'option' === $object_id ? 'options' : $object_id ];
+}
+
+/**
+ * Refuse ACF value reads that would return a secret. get_field() on a name that is
+ * not a registered field falls back to the raw meta row / option `{id}_{name}`, so an
+ * unregistered name is judged as that storage: no secret-named or secret-bearing
+ * options, no meta key is_blocked_meta_key() refuses (internal `_` keys, session
+ * tokens, application passwords, anything named like a credential).
+ */
+function cowboy_mcp_acf_read_gate( string $field_name, $object_id ): ?WP_Error {
+    if ( function_exists( 'acf_get_field' ) ) {
+        $field = acf_get_field( $field_name );
+        if ( is_array( $field ) && ! empty( $field['name'] ) ) {
+            return null; // a field an administrator registered
+        }
+    }
+    [ $type, $id ] = cowboy_mcp_acf_decode_target( $object_id );
+    if ( 'option' === $type ) {
+        $option = $id . '_' . $field_name;
+        if ( ! Cowboy_MCP_Security::is_plain_name( $option ) || Cowboy_MCP_Security::is_secret_bearing_option( $option ) ) {
+            return new WP_Error( 'protected_option', "'{$field_name}' is not a registered ACF field, and the option it reads ('{$option}') holds credentials." );
+        }
+        return null;
+    }
+    if ( ! Cowboy_MCP_Security::is_plain_name( $field_name ) || Cowboy_MCP_Security::is_blocked_meta_key( trim( $field_name ) ) ) {
+        return new WP_Error( 'protected_meta', "'{$field_name}' is not a registered ACF field, and the meta key it reads is protected." );
     }
     return null;
 }
@@ -129,7 +185,24 @@ function cowboy_mcp_acf_check_args( array $a ): array|WP_Error {
         return $a; // the handler reports the missing field_name
     }
     $gate = cowboy_mcp_acf_write_gate( $field_name, cowboy_mcp_acf_normalize_object_id( (string) ( $a['object_id'] ?? '' ) ) );
-    return $gate ?? $a;
+    if ( $gate ) {
+        return $gate;
+    }
+    // ACF values reach the page through themes' the_field()/get_field() output,
+    // usually unescaped, so script-capable strings need the explicit opt-in.
+    if ( array_key_exists( 'value', $a ) && empty( $a['allow_unfiltered_html'] ) ) {
+        $risky = false;
+        $value = is_array( $a['value'] ) ? $a['value'] : [ $a['value'] ];
+        array_walk_recursive( $value, static function ( $v ) use ( &$risky ): void {
+            if ( is_string( $v ) && Cowboy_MCP_Security::script_capable_count( $v ) > 0 ) {
+                $risky = true;
+            }
+        } );
+        if ( $risky ) {
+            return new WP_Error( 'unfiltered_html_blocked', 'The value contains script-capable markup (a script/iframe tag, an inline event handler or a javascript: URL). Pass allow_unfiltered_html: true to permit it.' );
+        }
+    }
+    return $a;
 }
 
 /** Whether a stored hidden-reference value is ACF's own: '' or a field key (ACF's own test). */
@@ -287,6 +360,7 @@ return [
             'field_name' => [ 'type' => 'string', 'description' => 'Field name or field key (keys preferred for first writes)', 'required' => true ],
             'value'      => [ 'description' => 'New value — type depends on field type (string, number, array, etc.)', 'required' => true ],
             'object_id'  => [ 'type' => 'string', 'description' => 'Target object: post ID ("123"), user ("user_2"), term ("term_3"), option ("option")', 'required' => true ],
+            'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit script-capable markup (script/iframe tags, inline event handlers, javascript: URLs) in string values. Off by default: ACF values are printed by themes without filtering.', 'default' => false ],
         ], [
             'title'           => 'Update ACF Field',
             'readOnlyHint'    => false,
@@ -312,6 +386,7 @@ return [
             'field_name' => [ 'type' => 'string', 'description' => 'Repeater/flex field name or key', 'required' => true ],
             'value'      => [ 'type' => 'object', 'description' => 'Sub-field key-value pairs for the new row', 'required' => true ],
             'object_id'  => [ 'type' => 'string', 'description' => 'Target object: post ID ("123"), user ("user_2"), term ("term_3"), option ("option")', 'required' => true ],
+            'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit script-capable markup (script/iframe tags, inline event handlers, javascript: URLs) in string values. Off by default: ACF values are printed by themes without filtering.', 'default' => false ],
         ], [
             'title'           => 'Add ACF Row',
             'readOnlyHint'    => false,
@@ -325,6 +400,7 @@ return [
             'row_number' => [ 'type' => 'integer', 'description' => 'Row number (1-based)', 'required' => true ],
             'value'      => [ 'type' => 'object',  'description' => 'Sub-field key-value pairs to update', 'required' => true ],
             'object_id'  => [ 'type' => 'string',  'description' => 'Target object: post ID ("123"), user ("user_2"), term ("term_3"), option ("option")', 'required' => true ],
+            'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'Permit script-capable markup (script/iframe tags, inline event handlers, javascript: URLs) in string values. Off by default: ACF values are printed by themes without filtering.', 'default' => false ],
         ], [
             'title'           => 'Update ACF Row',
             'readOnlyHint'    => false,
@@ -392,6 +468,10 @@ return [
 
             if ( $field_name === '' ) {
                 return new WP_Error( 'missing_param', 'field_name is required.' );
+            }
+            $gate = cowboy_mcp_acf_read_gate( (string) $field_name, $object_id );
+            if ( $gate ) {
+                return $gate;
             }
 
             $value = get_field( $field_name, $object_id, $format_value );

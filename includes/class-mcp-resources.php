@@ -38,6 +38,67 @@ class Cowboy_MCP_Resources {
     ];
 
     /**
+     * The tool whose scope covers each resource: a scoped credential reads a
+     * resource only when it could call that tool (and the site allows it).
+     * '*' = no tool needed (the catalog is filtered to the scope already);
+     * null = data no single tool returns (any option by name), so only
+     * unscoped, full and read-only credentials may read it.
+     */
+    private const MIRROR_TOOLS = [
+        'wordpress://site/info'              => 'wp_site_info',
+        'wordpress://site/options'           => 'wp_site_info',
+        'wordpress://theme/current'          => 'wp_list_directory',
+        'wordpress://theme/functions'        => 'wp_read_file',
+        'wordpress://theme/style'            => 'wp_read_file',
+        'wordpress://database/schema'        => 'wp_db_list_tables',
+        'wordpress://content/post-types'     => 'wp_list_posts',
+        'wordpress://content/taxonomies'     => 'wp_list_terms',
+        'wordpress://site/htaccess'          => 'wp_read_file',
+        'wordpress://site/wp-config-summary' => 'wp_site_info',
+        'wordpress://tools/catalog'          => '*',
+        'woocommerce://store/info'           => 'wp_woo_get_setting',
+        'woocommerce://products/schema'      => 'wp_woo_list_products',
+        'woocommerce://shipping/zones'       => 'wp_woo_list_shipping_zones',
+        'wordfence://scan/status'            => 'wp_wordfence_get_scan_status',
+        'wordfence://firewall/status'        => 'wp_wordfence_firewall_status',
+        'wordfence://activity/summary'       => 'wp_wordfence_get_activity_report',
+        'wordpress://posts/{id}'             => 'wp_get_post',
+        'wordpress://options/{name}'         => null,
+        'wordpress://plugins/{slug}'         => 'wp_list_plugins',
+        'wordpress://users/{id}'             => 'wp_get_user',
+    ];
+
+    /** The MIRROR_TOOLS key for a resource URI or template, or null for a URI this server does not serve. */
+    private static function mirror_key( string $uri ): ?string {
+        if ( array_key_exists( $uri, self::MIRROR_TOOLS ) ) {
+            return $uri;
+        }
+        foreach ( [ 'posts' => '{id}', 'options' => '{name}', 'plugins' => '{slug}', 'users' => '{id}' ] as $type => $param ) {
+            if ( str_starts_with( $uri, "wordpress://{$type}/" ) ) {
+                return "wordpress://{$type}/{$param}";
+            }
+        }
+        return null;
+    }
+
+    /** Whether the current credential may read a resource URI or template (see MIRROR_TOOLS). Unknown URIs: no. */
+    public static function uri_in_scope( string $uri ): bool {
+        $key = self::mirror_key( $uri );
+        if ( null === $key ) {
+            return false;
+        }
+        $tool = self::MIRROR_TOOLS[ $key ];
+        if ( '*' === $tool ) {
+            return true;
+        }
+        if ( null === $tool ) {
+            $scope = Cowboy_MCP_Security::current_scope();
+            return null === $scope || 'custom' !== ( $scope['mode'] ?? 'custom' );
+        }
+        return Cowboy_MCP_Tools::tool_permitted( $tool );
+    }
+
+    /**
      * Handle resources/list.
      */
     public static function list_resources( array $params ): array {
@@ -154,6 +215,7 @@ class Cowboy_MCP_Resources {
             ];
         }
 
+        $resources = array_values( array_filter( $resources, fn( $r ) => self::uri_in_scope( $r['uri'] ) ) );
         return [ 'resources' => $resources ];
     }
 
@@ -161,14 +223,19 @@ class Cowboy_MCP_Resources {
      * Handle resources/templates/list.
      */
     public static function list_resource_templates( array $params ): array {
-        return [ 'resourceTemplates' => self::TEMPLATES ];
+        return [ 'resourceTemplates' => array_values( array_filter( self::TEMPLATES, fn( $t ) => self::uri_in_scope( $t['uriTemplate'] ) ) ) ];
     }
 
     /**
      * Handle resources/read.
      */
     public static function read_resource( array $params ): array|WP_Error {
-        $uri = $params['uri'] ?? '';
+        $uri = is_string( $params['uri'] ?? null ) ? $params['uri'] : '';
+
+        if ( null !== self::mirror_key( $uri ) && ! self::uri_in_scope( $uri ) ) {
+            Cowboy_MCP_Auth::log( 'resource_scope_denied', array_merge( Cowboy_MCP_Auth::$current_key_context, [ 'args' => [ 'uri' => $uri ] ] ) );
+            return new WP_Error( 'resource_scope_denied', "This credential's scope does not include {$uri}.", [ 'code' => -32603 ] );
+        }
 
         $content = match ( $uri ) {
             'wordpress://site/info'              => self::resource_site_info(),
@@ -276,8 +343,14 @@ class Cowboy_MCP_Resources {
             ARRAY_A
         );
 
+        // Only this site's tables: a shared database can hold other installs (or, on
+        // multisite, other sites) that the credential has no business mapping.
+        $own    = array_flip( Cowboy_MCP_Compat::site_tables( true ) );
         $schema = [];
         foreach ( $rows ?? [] as $row ) {
+            if ( ! isset( $own[ $row['TABLE_NAME'] ] ) ) {
+                continue;
+            }
             $schema[ $row['TABLE_NAME'] ][] = [
                 'field'   => $row['COLUMN_NAME'],
                 'type'    => $row['COLUMN_TYPE'],

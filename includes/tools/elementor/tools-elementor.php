@@ -71,6 +71,20 @@ function cowboy_mcp_elementor_validate_elements( array $elements, bool $allow_un
                     );
                 }
             }
+            // Every other setting, nested repeater items included: Elementor prints
+            // many of them (text-editor `editor`, headings, link URLs) without kses.
+            $risky = null;
+            array_walk_recursive( $el['settings'], static function ( $v, $k ) use ( &$risky ): void {
+                if ( null === $risky && is_string( $v ) && Cowboy_MCP_Security::script_capable_count( $v ) > 0 ) {
+                    $risky = (string) $k;
+                }
+            } );
+            if ( null !== $risky ) {
+                return new WP_Error(
+                    'unfiltered_html_blocked',
+                    "Element at {$current_path} has script-capable content in setting '{$risky}'. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)."
+                );
+            }
         }
         if ( ! empty( $el['elements'] ) && is_array( $el['elements'] ) ) {
             $nested_error = cowboy_mcp_elementor_validate_elements( $el['elements'], $allow_unfiltered, $current_path );
@@ -401,6 +415,22 @@ return [
             $settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
             if ( ! is_array( $settings ) ) {
                 $settings = [];
+            }
+
+            // Kit colours and typography are printed into the site-wide CSS file and
+            // inline <style>: markup is never valid there and no flag lifts that.
+            foreach ( [ 'colors', 'typography' ] as $group ) {
+                if ( isset( $a[ $group ] ) && is_array( $a[ $group ] ) ) {
+                    $bad = false;
+                    array_walk_recursive( $a[ $group ], static function ( $v ) use ( &$bad ): void {
+                        if ( is_string( $v ) && preg_match( '#</?[a-z!/]|[{};]#i', $v ) ) {
+                            $bad = true;
+                        }
+                    } );
+                    if ( $bad ) {
+                        return new WP_Error( 'unfiltered_html_blocked', "Markup and CSS punctuation ({ } ; <) are not allowed in global {$group} values." );
+                    }
+                }
             }
 
             $updated = [];

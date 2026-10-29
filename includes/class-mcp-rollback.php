@@ -879,6 +879,9 @@ class Cowboy_MCP_Rollback {
 				if ( $state === null ) {
 					return new WP_Error( 'undo_unsupported', 'No captured plugin state.' );
 				}
+				if ( empty( $state['active'] ) && Cowboy_MCP_Security::is_own_plugin( plugin_basename( trim( $id ) ) ) ) {
+					return new WP_Error( 'self_target', 'Refusing to deactivate Cowboy MCP itself: this connection would drop and only wp-admin could bring it back.' );
+				}
 				if ( ! empty( $state['active'] ) ) {
 					$r = Cowboy_MCP_Compat::activate_plugin( $id );
 					return is_wp_error( $r ) ? $r : true;
@@ -1765,6 +1768,12 @@ class Cowboy_MCP_Rollback {
 		if ( $row['status'] === self::STATUS_NOT_UNDOABLE ) {
 			return new WP_Error( 'not_undoable', "Change #{$change_id} is not undoable: {$row['not_undoable_reason']}" );
 		}
+		if ( 'admin' !== $actor ) {
+			$denied = self::undo_policy( $row, $force );
+			if ( null !== $denied ) {
+				return $denied;
+			}
+		}
 
 		$type = $row['object_type'];
 		$id   = $row['object_id'];
@@ -1876,6 +1885,96 @@ class Cowboy_MCP_Rollback {
 			$response['warning'] = 'Object restored, but the journal row could not be marked undone (possible concurrent undo).';
 		}
 		return $response;
+	}
+
+	/**
+	 * What an agent's undo may not do (wp-admin's Activity tab is not limited).
+	 * An undo is a write of the journaled object, so it must stay within what the
+	 * credential could write directly: the tool that made the change must be in its
+	 * scope, and the gates that tool applies at write time are applied again when
+	 * the restore could carry state the caller did not just write — a redo (it
+	 * re-applies an earlier agent write, perhaps made in Power mode) or a forced
+	 * undo (it overrides later changes).
+	 */
+	private static function undo_policy( array $row, bool $force ): ?WP_Error {
+		// Scope: judged against the tool that made the original change.
+		if ( null !== Cowboy_MCP_Security::current_scope() && class_exists( 'Cowboy_MCP_Tools' ) ) {
+			$origin = $row;
+			for ( $hops = 0; 'wp_undo_change' === ( $origin['tool'] ?? '' ) && ! empty( $origin['undo_of'] ) && $hops < 50; $hops++ ) {
+				$parent = self::get_row( (int) $origin['undo_of'] );
+				if ( null === $parent ) {
+					break;
+				}
+				$origin = $parent;
+			}
+			$tool = (string) ( $origin['tool'] ?? '' );
+			if ( 'wp_undo_change' === $tool || ! Cowboy_MCP_Tools::tool_permitted( $tool ) ) {
+				return new WP_Error( 'tool_scope_denied', "This credential's scope does not include {$tool}, which made change #{$row['id']}; it cannot undo that change." );
+			}
+		}
+
+		$type  = (string) $row['object_type'];
+		$id    = (string) $row['object_id'];
+		$redo  = 'wp_undo_change' === ( $row['tool'] ?? '' );
+		$power = Cowboy_MCP_Security::power_mode_enabled();
+
+		if ( 'user' === $type ) {
+			return self::user_restore_block( (int) $id, $row['before_state'], $redo || $force, $power );
+		}
+		if ( 'option' === $type && null !== $row['before_state'] ) {
+			$block = Cowboy_MCP_Security::option_write_block( $id );
+			if ( 'hard' === $block || 'invalid' === $block || ( $redo && 'soft' === $block && ! $power ) ) {
+				return new WP_Error( 'protected_option', "Restoring option '{$id}' needs Power mode (or is never allowed through MCP)." );
+			}
+		}
+		if ( 'file' === $type && $redo && null !== $row['before_state'] && function_exists( 'cowboy_mcp_resolve_wp_content_path' ) ) {
+			$full = cowboy_mcp_resolve_wp_content_path( $id );
+			if ( ! is_wp_error( $full ) && function_exists( 'cowboy_mcp_is_blocked_mu_plugin_write' ) && cowboy_mcp_is_blocked_mu_plugin_write( $full ) ) {
+				return new WP_Error( 'mu_plugins_blocked', 'Re-applying a write into mu-plugins needs Power mode.' );
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The users-tool write gates, for restoring a captured user row: never the
+	 * caller's own password, email or role; without Power mode no password
+	 * change, no email change on a privileged account and no privileged role
+	 * grant. $strict = a redo or a forced undo; an ordinary undo restores a state
+	 * nothing has changed since the agent's own write, so only the self rule applies.
+	 */
+	private static function user_restore_block( int $uid, ?array $state, bool $strict, bool $power ): ?WP_Error {
+		global $wpdb;
+		if ( null === $state || empty( $state['user'] ) ) {
+			return null; // undo of a creation: restore_user() keeps its own self / last-admin rules
+		}
+		$live = get_userdata( $uid );
+		if ( ! $live ) {
+			return null; // re-inserting a deleted account restores exactly what was there
+		}
+		$caps_key   = $wpdb->get_blog_prefix() . 'capabilities';
+		$state_caps = maybe_unserialize( ( (array) ( $state['meta'][ $caps_key ] ?? [] ) )[0] ?? '' );
+		$state_caps = is_array( $state_caps ) ? $state_caps : [];
+		$pass_diff  = (string) ( $state['user']['user_pass'] ?? $live->user_pass ) !== (string) $live->user_pass;
+		$mail_diff  = strtolower( (string) ( $state['user']['user_email'] ?? $live->user_email ) ) !== strtolower( (string) $live->user_email );
+		$caps_diff  = array_key_exists( $caps_key, (array) $state['meta'] ) && $state_caps != (array) $live->caps; // phpcs:ignore Universal.Operators.StrictComparisons.LooseNotEqual -- order-insensitive array compare
+
+		if ( $uid === get_current_user_id() && ( $pass_diff || $mail_diff || $caps_diff ) ) {
+			return new WP_Error( 'self_modify', 'This undo would change your own password, email or role, which cannot be done through the MCP endpoint. Power mode does not lift this; undo it from Settings > Cowboy MCP > Activity.' );
+		}
+		if ( ! $strict || $power ) {
+			return null;
+		}
+		$grants_privileged = false;
+		foreach ( $state_caps as $role => $on ) {
+			if ( $on && ! in_array( $role, (array) $live->roles, true ) && Cowboy_MCP_Security::role_is_privileged( (string) $role ) ) {
+				$grants_privileged = true;
+			}
+		}
+		if ( $pass_diff || $grants_privileged || ( $mail_diff && Cowboy_MCP_Security::user_is_privileged( $live ) ) ) {
+			return new WP_Error( 'power_mode_required', 'This redo or forced undo would set a password, a privileged role or a privileged user\'s email, which requires Power mode (or undo it from Settings > Cowboy MCP > Activity).' );
+		}
+		return null;
 	}
 
 	/** Undo several entries newest-first; stop at the first failure/conflict. */
@@ -2301,9 +2400,11 @@ class Cowboy_MCP_Rollback {
 
 	/** Redact secrets and truncate long values for listing display. */
 	private static function preview_state( array $state, string $object_type, string $object_id ): array {
-		if ( $object_type === 'option' && class_exists( 'Cowboy_MCP_Security' )
-			&& Cowboy_MCP_Security::is_sensitive_option( $object_id ) ) {
-			$state['value'] = '[REDACTED]';
+		if ( $object_type === 'option' && class_exists( 'Cowboy_MCP_Security' ) && array_key_exists( 'value', $state ) ) {
+			// Same redaction as every other option read path (resources, settings tools).
+			$state['value'] = Cowboy_MCP_Security::is_sensitive_option( $object_id )
+				? '[REDACTED]'
+				: Cowboy_MCP_Security::redact_option_value( $state['value'] );
 		}
 		$state = Cowboy_MCP_Audit_Log::redact_sensitive( $state );
 		array_walk_recursive( $state, function ( &$v, $k ) {

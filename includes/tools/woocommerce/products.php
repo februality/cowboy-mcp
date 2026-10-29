@@ -6,7 +6,9 @@ defined( 'ABSPATH' ) || exit;
  * Shared between create and update handlers.
  */
 function cowboy_mcp_woo_set_product_fields( WC_Product $product, array $a ): void {
-    if ( isset( $a['name'] ) )              $product->set_name( $a['name'] );
+    // Same filtering as the posts tools: product text is post content shown to
+    // every shopper and admin (the MCP user's unfiltered_html would skip kses).
+    if ( isset( $a['name'] ) )              $product->set_name( sanitize_text_field( (string) $a['name'] ) );
     if ( isset( $a['status'] ) )            $product->set_status( $a['status'] );
     if ( isset( $a['regular_price'] ) ) {
         $price = filter_var( $a['regular_price'], FILTER_VALIDATE_FLOAT );
@@ -17,8 +19,8 @@ function cowboy_mcp_woo_set_product_fields( WC_Product $product, array $a ): voi
         $product->set_sale_price( $price !== false ? (string) $price : '' );
     }
     if ( isset( $a['sku'] ) )               $product->set_sku( $a['sku'] );
-    if ( isset( $a['description'] ) )       $product->set_description( $a['description'] );
-    if ( isset( $a['short_description'] ) ) $product->set_short_description( $a['short_description'] );
+    if ( isset( $a['description'] ) )       $product->set_description( wp_kses_post( (string) $a['description'] ) );
+    if ( isset( $a['short_description'] ) ) $product->set_short_description( wp_kses_post( (string) $a['short_description'] ) );
     if ( isset( $a['manage_stock'] ) )      $product->set_manage_stock( $a['manage_stock'] );
     if ( isset( $a['stock_quantity'] ) )    $product->set_stock_quantity( $a['stock_quantity'] );
     if ( isset( $a['weight'] ) )            $product->set_weight( $a['weight'] );

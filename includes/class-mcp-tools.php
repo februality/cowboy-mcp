@@ -1297,6 +1297,24 @@ class Cowboy_MCP_Tools {
         return [ 'tools' => $tools, 'categories' => self::$tool_categories ];
     }
 
+    /**
+     * Whether the current request may call a built-in tool: it exists, is in the
+     * site's allowed_tools, and is in the credential's scope. Resources and
+     * completions use it to serve only what the same credential could read
+     * through the tool that returns that data.
+     */
+    public static function tool_permitted( string $name ): bool {
+        self::load_domains( false );
+        if ( ! isset( self::$tool_map[ $name ] ) ) {
+            return false;
+        }
+        $allowed = self::get_settings()['allowed_tools'] ?? 'all';
+        if ( $allowed !== 'all' && is_array( $allowed ) && ! in_array( $name, $allowed, true ) ) {
+            return false;
+        }
+        return Cowboy_MCP_Security::tool_in_scope( $name, self::$tool_map[ $name ]['annotations'] ?? [] );
+    }
+
     /** Category of a loaded tool, or null. Inbound wrappers are known once the abilities phase has run. */
     public static function tool_category( string $name ): ?string {
         self::load_domains( false );

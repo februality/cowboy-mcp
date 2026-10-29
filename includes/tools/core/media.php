@@ -143,7 +143,13 @@ function cowboy_mcp_media_upload_properties(): array {
         'max_width'    => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this width in pixels (keeps aspect ratio)', 'minimum' => 1 ],
         'max_height'   => [ 'type' => 'integer', 'description' => 'Images only: scale down to at most this height in pixels (keeps aspect ratio)', 'minimum' => 1 ],
         'quality'      => [ 'type' => 'integer', 'description' => 'Images only: encoder quality 1-100 for jpeg/webp/avif', 'minimum' => 1, 'maximum' => 100 ],
+        'allow_unfiltered_html' => [ 'type' => 'boolean', 'description' => 'url / base64 only: permit SVG, HTML, XML, JavaScript and CSS files, which the browser runs from this site\'s address. Off by default; never allowed for chat attachments.', 'default' => false ],
     ];
+}
+
+/** File names a browser would run or render as a page from the site's own origin. */
+function cowboy_mcp_media_is_active_content( string $filename ): bool {
+    return (bool) preg_match( '/\.(svgz?|x?html?|xht|xml|m?js|css|php\d*|phtml|phar)$/i', $filename );
 }
 
 /** Largest file wp_upload_media downloads from a url or a chat attachment, in bytes. */
@@ -395,7 +401,7 @@ return [
                 $filename = ! empty( $a['filename'] ) ? sanitize_file_name( $a['filename'] ) : cowboy_mcp_media_chat_filename( $file, $tmp );
                 // Chat attachments are arbitrary user files: refuse types a browser
                 // would run, even where a plugin lets the media library accept them.
-                if ( preg_match( '/\.(svgz?|x?html?|xml|m?js|css|php\d*|phtml|phar)$/i', $filename ) ) {
+                if ( cowboy_mcp_media_is_active_content( $filename ) ) {
                     wp_delete_file( $tmp );
                     return new WP_Error( 'invalid_type', 'SVG, HTML, XML, JavaScript, CSS and PHP files are not accepted from a chat attachment.' );
                 }
@@ -433,6 +439,13 @@ return [
                 return new WP_Error( 'invalid_source', 'Pass a file (ChatGPT attachment), a url, or base64 data with a filename.' );
             }
 
+            // The same refusal for url / base64 sources, unless the caller opts in: an
+            // HTML or SVG file in the media library runs script from the site's origin.
+            if ( $source_type !== 'file' && empty( $a['allow_unfiltered_html'] ) && cowboy_mcp_media_is_active_content( $filename ) ) {
+                wp_delete_file( $tmp );
+                return new WP_Error( 'invalid_type', 'SVG, HTML, XML, JavaScript, CSS and PHP files run in the browser from this site. Pass allow_unfiltered_html: true to upload one anyway.' );
+            }
+
             $processed = cowboy_mcp_media_process_image( $tmp, $filename, $a );
             if ( is_wp_error( $processed ) ) {
                 wp_delete_file( $tmp );
@@ -449,10 +462,11 @@ return [
             // Set optional metadata.
             if ( ! empty( $a['title'] ) || ! empty( $a['caption'] ) || ! empty( $a['description'] ) ) {
                 $update = [ 'ID' => $attachment_id ];
-                if ( isset( $a['title'] ) )       $update['post_title']   = $a['title'];
-                if ( isset( $a['caption'] ) )     $update['post_excerpt'] = $a['caption'];
-                if ( isset( $a['description'] ) ) $update['post_content'] = $a['description'];
-                wp_update_post( $update );
+                // Sanitized exactly like wp_update_media: plain text, never markup.
+                if ( isset( $a['title'] ) )       $update['post_title']   = sanitize_text_field( (string) $a['title'] );
+                if ( isset( $a['caption'] ) )     $update['post_excerpt'] = sanitize_textarea_field( (string) $a['caption'] );
+                if ( isset( $a['description'] ) ) $update['post_content'] = sanitize_textarea_field( (string) $a['description'] );
+                wp_update_post( wp_slash( $update ) );
             }
             if ( ! empty( $a['alt_text'] ) ) {
                 update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $a['alt_text'] ) );

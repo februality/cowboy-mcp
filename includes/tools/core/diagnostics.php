@@ -346,12 +346,40 @@ return [
 				$request_args['body'] = $a['body'];
 			}
 
-			// Use the safe transport so WordPress re-validates each redirect hop against
-			// its own SSRF blocklist (defeats DNS-rebinding / 302 → metadata redirects).
 			// Power mode uses the unguarded transport so internal addresses are reachable.
-			$response = Cowboy_MCP_Security::power_mode_enabled()
-				? wp_remote_request( $url, $request_args )
-				: wp_safe_remote_request( $url, $request_args );
+			// Otherwise redirects are followed here, each hop through the same SSRF check
+			// as the first URL: core's per-hop check (wp_safe_remote_*) only learned the
+			// link-local / CGNAT ranges in WordPress 7.1.
+			$power = Cowboy_MCP_Security::power_mode_enabled();
+			if ( $power ) {
+				$response = wp_remote_request( $url, $request_args );
+			} else {
+				$request_args['redirection'] = 0;
+				$current                     = $url;
+				for ( $hop = 0; ; $hop++ ) {
+					$response = wp_safe_remote_request( $current, $request_args );
+					if ( is_wp_error( $response ) ) {
+						break;
+					}
+					$code     = (int) wp_remote_retrieve_response_code( $response );
+					$location = wp_remote_retrieve_header( $response, 'location' );
+					$location = is_array( $location ) ? (string) end( $location ) : (string) $location;
+					if ( $hop >= 2 || '' === $location || ! in_array( $code, [ 301, 302, 303, 307, 308 ], true ) ) {
+						break;
+					}
+					$next  = WP_Http::make_absolute_url( $location, $current );
+					$check = cowboy_mcp_validate_url_ssrf( $next );
+					if ( is_wp_error( $check ) ) {
+						return $check;
+					}
+					// Same method rewrite as WordPress / browsers.
+					if ( 303 === $code || ( in_array( $code, [ 301, 302 ], true ) && 'POST' === $request_args['method'] ) ) {
+						$request_args['method'] = 'GET';
+						unset( $request_args['body'] );
+					}
+					$current = $next;
+				}
+			}
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}

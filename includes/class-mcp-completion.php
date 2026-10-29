@@ -52,6 +52,12 @@ class Cowboy_MCP_Completion {
         $arg_name     = $argument['name'] ?? '';
         $prefix       = $argument['value'] ?? '';
 
+        // Same scope as reading the resource: a credential that cannot read users
+        // must not enumerate them here either.
+        if ( ! is_string( $uri_template ) || ! Cowboy_MCP_Resources::uri_in_scope( $uri_template ) ) {
+            return self::filter_and_format( [], is_string( $prefix ) ? $prefix : '' );
+        }
+
         return match ( $uri_template ) {
             'wordpress://posts/{id}'    => self::filter_and_format( self::get_recent_post_ids( $prefix ), $prefix ),
             'wordpress://options/{name}'=> self::filter_and_format( self::get_option_names( $prefix ), $prefix ),

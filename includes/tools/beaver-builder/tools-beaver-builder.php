@@ -153,6 +153,11 @@ function cowboy_mcp_beaver_unsafe_match( $value, string $key = '' ): ?string {
         if ( preg_match( '/(?:link|url|href|src)$/i', $key ) && stripos( $flat, 'javascript:' ) === 0 ) {
             return 'javascript:';
         }
+        // The shared detector (Cowboy_MCP_Security::script_capable_count()) reads
+        // entities the way a browser does; anything it flags is refused here too.
+        if ( Cowboy_MCP_Security::script_capable_count( $value ) > 0 ) {
+            return 'script-capable markup';
+        }
         return null;
     }
     if ( is_array( $value ) || is_object( $value ) ) {

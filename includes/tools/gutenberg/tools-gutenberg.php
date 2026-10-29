@@ -206,11 +206,19 @@ function cowboy_mcp_gutenberg_gate_theme_json( array $fragment, bool $allow_unfi
         if ( ! is_string( $value ) ) {
             continue;
         }
-        if ( $key === 'css' && preg_match( '#</?\w+#', $value ) ) {
-            return new WP_Error( 'unfiltered_html_blocked', "Markup is not allowed in CSS (key path: {$key_path})." );
+        // Every theme.json string can end up in the inline <style> core prints (WP 6.2-6.9
+        // print it raw, so `</style>` breaks out into the page; 7.x refuses the whole
+        // stylesheet instead). No consent flag makes markup safe there.
+        if ( preg_match( '#</?[a-z!/]#i', $value ) ) {
+            return new WP_Error( 'unfiltered_html_blocked', $key === 'css'
+                ? "Markup is not allowed in CSS (key path: {$key_path})."
+                : "Markup is not allowed in global styles or settings (key path: {$key_path})." );
         }
         if ( ! $allow_unfiltered && $key !== 'css' ) {
             $reason = cowboy_mcp_gutenberg_unfiltered_reason( $value );
+            if ( $reason === null && Cowboy_MCP_Security::script_capable_count( $value ) > 0 ) {
+                $reason = 'script-capable content';
+            }
             if ( $reason !== null ) {
                 return new WP_Error( 'unfiltered_html_blocked', "Value at {$key_path} contains {$reason}. Pass allow_unfiltered_html: true to permit it." );
             }
@@ -284,6 +292,9 @@ function cowboy_mcp_gutenberg_build_block( array $spec, bool $allow_unfiltered, 
         if ( ! $allow_unfiltered && cowboy_mcp_gutenberg_contains_html_block( $parsed ) ) {
             return new WP_Error( 'unfiltered_html_blocked', "markup at {$context} contains a core/html block. Pass allow_unfiltered_html: true to permit it." );
         }
+        if ( ! $allow_unfiltered && Cowboy_MCP_Security::blocks_attrs_risk( $parsed ) > 0 ) {
+            return new WP_Error( 'unfiltered_html_blocked', "markup at {$context} has block attributes with script-capable values (or a tagName naming a script element). Pass allow_unfiltered_html: true to permit it." );
+        }
         // kses the parsed tree's content strings, never the raw markup —
         // see cowboy_mcp_gutenberg_kses_tree() docblock for why.
         if ( ! $allow_unfiltered ) {
@@ -300,6 +311,9 @@ function cowboy_mcp_gutenberg_build_block( array $spec, bool $allow_unfiltered, 
         return new WP_Error( 'unfiltered_html_blocked', "Block spec at {$context} is a core/html block. Pass allow_unfiltered_html: true to permit it." );
     }
     $attrs   = is_array( $spec['attrs'] ?? null ) ? $spec['attrs'] : [];
+    if ( ! $allow_unfiltered && Cowboy_MCP_Security::attrs_risk( $attrs ) > 0 ) {
+        return new WP_Error( 'unfiltered_html_blocked', "Block spec at {$context} has attributes with script-capable values (or a tagName naming a script element). Pass allow_unfiltered_html: true to permit it." );
+    }
     $content = (string) ( $spec['content'] ?? '' );
     $has_kids = ! empty( $spec['inner_blocks'] ) && is_array( $spec['inner_blocks'] );
 
@@ -395,6 +409,9 @@ function cowboy_mcp_gutenberg_index_ops( array $tree, array $ops, bool $allow_un
                 $has_content = isset( $op['content'] ) && is_string( $op['content'] );
                 if ( ! $has_attrs && ! $has_content ) {
                     return new WP_Error( 'invalid_params', "{$ctx}: update needs attrs and/or content." );
+                }
+                if ( $has_attrs && ! $allow_unfiltered && Cowboy_MCP_Security::attrs_risk( $op['attrs'] ) > 0 ) {
+                    return new WP_Error( 'unfiltered_html_blocked', "{$ctx}: attrs for {$path} carry script-capable values (or a tagName naming a script element). Pass allow_unfiltered_html: true to permit it." );
                 }
                 if ( $has_content ) {
                     if ( ! empty( $node['innerBlocks'] ) ) {
@@ -731,6 +748,9 @@ function cowboy_mcp_gutenberg_filter_full_content( string $content, bool $allow_
             return new WP_Error( 'unfiltered_html_blocked', "{$context} contains a core/html block. Pass allow_unfiltered_html: true to permit it." );
         }
         $reason = cowboy_mcp_gutenberg_unfiltered_reason( $content );
+        if ( $reason === null && Cowboy_MCP_Security::blocks_attrs_risk( $parsed ) > 0 ) {
+            $reason = 'block attributes with script-capable values (or a tagName naming a script element)';
+        }
         if ( $reason !== null ) {
             return new WP_Error( 'unfiltered_html_blocked', "{$context} contains {$reason}. Pass allow_unfiltered_html: true to permit it (this writes markup that runs on the front end)." );
         }

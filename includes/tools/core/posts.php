@@ -75,6 +75,22 @@ function cowboy_mcp_format_post( WP_Post $post ): array {
 }
 
 /**
+ * Content goes through wp_kses_post(), which never reads the block-comment JSON that
+ * dynamic blocks print from, so new content may not carry more script-capable block
+ * attributes than the post already had (an untouched block copied back is fine).
+ */
+function cowboy_mcp_post_content_gate( array $a, string $current ): ?WP_Error {
+    if ( ! isset( $a['content'] ) || ! is_string( $a['content'] ) || ! has_blocks( $a['content'] ) ) {
+        return null;
+    }
+    $before = '' === $current ? 0 : Cowboy_MCP_Security::blocks_attrs_risk( parse_blocks( $current ) );
+    if ( Cowboy_MCP_Security::blocks_attrs_risk( parse_blocks( $a['content'] ) ) > $before ) {
+        return new WP_Error( 'unfiltered_html_blocked', 'The content adds block attributes with script-capable values (or a tagName naming a script element). Use wp_edit_blocks with allow_unfiltered_html: true if that is intended.' );
+    }
+    return null;
+}
+
+/**
  * Apply optional post fields from arguments into a wp_insert_post data array.
  * Uses isset() guards so callers can do partial updates.
  */
@@ -257,6 +273,10 @@ return [
             if ( isset( $a['author'] ) && ! get_userdata( (int) $a['author'] ) ) {
                 return new WP_Error( 'invalid_param', "author {$a['author']} is not an existing user." );
             }
+            $gate = cowboy_mcp_post_content_gate( $a, '' );
+            if ( $gate ) {
+                return $gate;
+            }
             cowboy_mcp_set_post_fields( $data, $a );
             if ( isset( $a['date'] ) ) {
                 $when = cowboy_mcp_parse_post_date( (string) $a['date'] );
@@ -313,6 +333,10 @@ return [
                 return new WP_Error( 'invalid_param', "author {$a['author']} is not an existing user." );
             }
 
+            $gate = cowboy_mcp_post_content_gate( $a, (string) $post->post_content );
+            if ( $gate ) {
+                return $gate;
+            }
             $data = [ 'ID' => $post_id ];
             cowboy_mcp_set_post_fields( $data, $a );
             if ( isset( $a['date'] ) ) {
