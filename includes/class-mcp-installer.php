@@ -269,6 +269,34 @@ class Cowboy_MCP_Installer {
 		return null;
 	}
 
+	/**
+	 * Resolve a stylesheet to an INSTALLED theme. `WP_Theme::exists()` is
+	 * true for any existing directory, parent-relative paths included, so a
+	 * name must be a key of wp_get_themes() and its directory must sit inside
+	 * its theme root. `$main_root_only` also requires the default theme root
+	 * (the installer builds paths from it).
+	 */
+	public static function installed_theme( string $stylesheet, bool $main_root_only = false ): WP_Theme|WP_Error {
+		$not_found = new WP_Error( 'not_found', "Theme '{$stylesheet}' is not installed." );
+		if ( $stylesheet === '' || str_contains( $stylesheet, '..' ) || str_contains( $stylesheet, '\\' ) || str_starts_with( $stylesheet, '/' ) ) {
+			return $not_found;
+		}
+		$themes = wp_get_themes( [ 'errors' => null ] );
+		if ( ! isset( $themes[ $stylesheet ] ) ) {
+			return $not_found;
+		}
+		$theme = $themes[ $stylesheet ];
+		$root  = realpath( (string) $theme->get_theme_root() );
+		$dir   = realpath( (string) $theme->get_stylesheet_directory() );
+		if ( $root === false || $dir === false || ! str_starts_with( $dir, rtrim( $root, '/\\' ) . DIRECTORY_SEPARATOR ) ) {
+			return $not_found;
+		}
+		if ( $main_root_only && realpath( get_theme_root() ) !== $root ) {
+			return new WP_Error( 'unsupported_theme_root', "Theme '{$stylesheet}' lives outside the main themes directory; manage it from wp-admin." );
+		}
+		return $theme;
+	}
+
 	/** Self-protection: never let the agent touch cowboy-mcp itself. */
 	public static function is_self( string $slug_or_file ): bool {
 		$first = strstr( $slug_or_file, '/', true ) ?: $slug_or_file;
@@ -471,9 +499,9 @@ class Cowboy_MCP_Installer {
 				'active'  => Cowboy_MCP_Compat::is_plugin_active( $target ),
 			];
 		}
-		$theme = wp_get_theme( $target );
-		if ( ! $theme->exists() ) {
-			return new WP_Error( 'not_found', "Theme '{$target}' is not installed." );
+		$theme = self::installed_theme( $target, true );
+		if ( is_wp_error( $theme ) ) {
+			return $theme;
 		}
 		return [
 			'folder'  => $target,
@@ -702,9 +730,9 @@ class Cowboy_MCP_Installer {
 			$version = (string) ( $plugins[ $target ]['Version'] ?? '' );
 			$id      = str_contains( $target, '/' ) ? dirname( $target ) : $target;
 		} else {
-			$theme = wp_get_theme( $target );
-			if ( ! $theme->exists() ) {
-				return new WP_Error( 'not_found', "Theme '{$target}' is not installed." );
+			$theme = self::installed_theme( $target, true );
+			if ( is_wp_error( $theme ) ) {
+				return $theme;
 			}
 			if ( $target === get_stylesheet() || $target === get_template() ) {
 				return new WP_Error( 'active_delete', "Theme '{$target}' is the active theme (or its parent). Switch themes first with wp_switch_theme." );

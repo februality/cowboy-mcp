@@ -90,10 +90,10 @@ return [
 
             $stylesheet = sanitize_text_field( $a['stylesheet'] );
 
-            // Validate the theme exists.
-            $theme = wp_get_theme( $stylesheet );
-            if ( ! $theme->exists() ) {
-                return new WP_Error( 'not_found', "Theme '{$stylesheet}' is not installed." );
+            // Validate the theme is installed (WP_Theme::exists() alone accepts any existing path).
+            $theme = Cowboy_MCP_Installer::installed_theme( $stylesheet );
+            if ( is_wp_error( $theme ) ) {
+                return $theme;
             }
 
             $previous = get_stylesheet();

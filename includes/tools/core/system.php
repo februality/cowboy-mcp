@@ -160,12 +160,10 @@ return [
             // the cowboy_mcp_ option-write guard, the db query|search SQL blocklist, and
             // the safe-mode allowlist) are evaluated in Cowboy_MCP_Security::wp_cli_gate().
             // They match against a tokenized argv-style word sequence rather than the raw
-            // string — shell_exec() runs this through /bin/sh -c, which strips quotes
-            // before WP-CLI ever sees them, so raw-string prefix/regex matching against
-            // the quoted command is bypassable (e.g. `option update 'cowboy_mcp_settings'
-            // x` reads as identical to the unquoted form to the shell, but not to a
-            // str_starts_with() check). See cli_tokens()/wp_cli_gate() for the full
-            // rationale.
+            // string, and the command that runs is rebuilt from those same tokens
+            // (cli_shell_command()), so quoting cannot make the shell read it differently
+            // (e.g. `option update 'cowboy_mcp_settings' x` is the unquoted form to both).
+            // See cli_tokens()/wp_cli_gate() for the full rationale.
             $gate = Cowboy_MCP_Security::wp_cli_gate(
                 $command,
                 Cowboy_MCP_Security::power_mode_enabled(),
@@ -188,13 +186,11 @@ return [
                 ? Cowboy_MCP_Checkpoint::maybe_auto_checkpoint( $command )
                 : null;
 
-            // In Power mode the caller may pass their own --path; don't append a second one.
-            $has_path = (bool) preg_match( '/(^|\s)--path(=|\s)/i', $command );
-            $wp_path  = Cowboy_MCP_Compat::wp_root();
-            $full     = $has_path
-                ? sprintf( 'wp %s --allow-root 2>&1', escapeshellcmd( $command ) )
-                : sprintf( 'wp %s --path=%s --allow-root 2>&1', escapeshellcmd( $command ), escapeshellarg( $wp_path ) );
-            $output   = shell_exec( $full );
+            // Run the words the gate judged, each escapeshellarg()'d (never the raw
+            // string through escapeshellcmd(), which /bin/sh then re-parses
+            // differently). In Power mode the caller may pass their own --path.
+            $full   = Cowboy_MCP_Security::cli_shell_command( $command, Cowboy_MCP_Compat::wp_root() );
+            $output = shell_exec( $full );
 
             $response = [
                 'command' => 'wp ' . $command,
