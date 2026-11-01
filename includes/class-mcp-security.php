@@ -20,6 +20,12 @@ class Cowboy_MCP_Security {
         'upload_path', 'upload_url_path',
     ];
 
+    /** Cowboy's own settings and credential rows, which an option_name LIKE may not reach. */
+    private const GUARDED_OPTIONS = [
+        'cowboy_mcp_settings', 'cowboy_mcp_api_keys', 'cowboy_mcp_oauth_clients',
+        'cowboy_mcp_oauth_tokens', 'cowboy_mcp_oauth_refresh', 'cowboy_mcp_oauth_blocked',
+    ];
+
     /** Dangerous SQL operations, keyed by detection pattern. Applied to the wp_cli `db query`/`db search` escape hatch. */
     private const SQL_BLOCKED = [
         '/\bDROP\s+DATABASE\b/i'           => 'DROP DATABASE',
@@ -635,6 +641,35 @@ class Cowboy_MCP_Security {
     }
 
     /**
+     * A (normalized) statement with each string in the given quote characters replaced
+     * by '', and those strings' contents in order.
+     *
+     * @return array{0:string,1:string[]}
+     */
+    private static function sql_blank_strings( string $normalized, string $quotes ): array {
+        $out     = '';
+        $strings = [];
+        $len     = strlen( $normalized );
+        for ( $i = 0; $i < $len; ) {
+            $c = $normalized[ $i ];
+            if ( '\'' !== $c && '"' !== $c && '`' !== $c ) {
+                $out .= $c;
+                ++$i;
+                continue;
+            }
+            $end = self::sql_quote_end( $normalized, $i );
+            if ( str_contains( $quotes, $c ) ) {
+                $out      .= "''";
+                $strings[] = substr( $normalized, $i + 1, max( 0, $end - $i - 2 ) );
+            } else {
+                $out .= substr( $normalized, $i, $end - $i );
+            }
+            $i = $end;
+        }
+        return [ $out, $strings ];
+    }
+
+    /**
      * Return the label of the first blocked operation found, or null if clean.
      */
     public static function sql_blocked_reason( string $normalized ): ?string {
@@ -658,6 +693,77 @@ class Cowboy_MCP_Security {
             || stripos( $normalized, 'cowboy_mcp_oauth_clients' ) !== false
             || stripos( $normalized, 'cowboy_mcp_oauth_tokens' ) !== false
             || stripos( $normalized, 'cowboy_mcp_oauth_refresh' ) !== false;
+    }
+
+    /**
+     * Whether a (normalized) statement writes the options table without naming its rows.
+     * sql_touches_secret() can only recognise a name written out, so a hex literal, an
+     * option_id or a built string would pass it. Outside reads and table maintenance, the
+     * options table takes one UPDATE or DELETE on that table alone, whose only WHERE is
+     * option_name = 'plain_name' or IN ('plain_name', ...), neither a hard-protected name,
+     * or on a DELETE, option_name LIKE a pattern that reaches none of GUARDED_OPTIONS.
+     *
+     * Strings don't count as code here, so `post_title='More options'` is no reason to
+     * refuse. Double quotes stay in the table test: under ANSI_QUOTES they name a table.
+     */
+    public static function sql_writes_unnamed_option( string $normalized ): bool {
+        if ( self::sql_is_single_read( $normalized ) ) {
+            return false;
+        }
+        [ $shape, $strings ] = self::sql_blank_strings( $normalized, "'\"" );
+        // PREPARE and EXECUTE IMMEDIATE build a statement no text check sees.
+        if ( preg_match( '/\bPREPARE\b.*\bFROM\b|\bEXECUTE\s+IMMEDIATE\b/i', $shape ) ) {
+            return true;
+        }
+        if ( ! self::sql_names_options_table( self::sql_blank_strings( $normalized, "'" )[0] )
+            || preg_match( '/^(OPTIMIZE|ANALYZE|CHECK)\s+TABLE\s+[\w`,.\s]+;?$/i', $shape ) ) {
+            return false;
+        }
+        $where = '/^(?:UPDATE\s+`?\w*options`?\s+SET\s[^;]*|DELETE\s+FROM\s+`?\w*options`?\s+)\bWHERE\s+`?option_name`?\s*(?:=\s*(\'\')|IN\s*\(\s*(\'\'(?:\s*,\s*\'\')*)\s*\)|LIKE\s+(\'\'))\s*;?$/i';
+        if ( ! preg_match( $where, $shape, $m ) || 1 !== preg_match_all( '/\bWHERE\b/i', $shape )
+            || preg_match( '/\bSET\b.*\boption_name\b.*\bWHERE\b/i', $shape ) ) {
+            return true;
+        }
+        if ( isset( $m[3] ) ) {
+            return ! str_starts_with( strtoupper( $shape ), 'DELETE' ) || self::like_reaches_guarded_option( (string) end( $strings ) );
+        }
+        foreach ( array_slice( $strings, -substr_count( $m[1] . ( $m[2] ?? '' ), "''" ) ) as $name ) {
+            if ( ! preg_match( '/^[\w.\-]+$/D', $name ) || self::is_hard_protected_option( $name ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether SQL names a real options table of this site or its network, however it is
+     * quoted, qualified or cased: a plugin's `wp_gf_addon_options` or a column called
+     * `options` is not one. Whole names only, so anything around them is no way past.
+     */
+    private static function sql_names_options_table( string $sql ): bool {
+        global $wpdb;
+        $names = preg_quote( $wpdb->options, '/' );
+        if ( is_multisite() ) {
+            $names .= '|' . preg_quote( $wpdb->base_prefix, '/' ) . '(?:\d+_)?options';
+        }
+        return 1 === preg_match( '/(?<![\w$])(?:' . $names . ')(?![\w$])/i', $sql );
+    }
+
+    /** Whether a LIKE pattern could match one of GUARDED_OPTIONS, or is more than plain characters and wildcards. */
+    private static function like_reaches_guarded_option( string $pattern ): bool {
+        if ( ! preg_match( '/^[\w.\-%\\\\]+$/D', $pattern ) ) {
+            return true;
+        }
+        $regex = '';
+        foreach ( preg_split( '/(\\\\.|%|_)/s', $pattern, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY ) ?: [] as $part ) {
+            $regex .= match ( true ) {
+                '%' === $part  => '.*',
+                '_' === $part  => '.',
+                '\\' === $part[0] && strlen( $part ) > 1 => preg_quote( substr( $part, 1 ), '/' ),
+                default        => preg_quote( $part, '/' ),
+            };
+        }
+        return [] !== preg_grep( '/^' . $regex . '$/i', self::GUARDED_OPTIONS );
     }
 
     /**
@@ -1349,6 +1455,12 @@ class Cowboy_MCP_Security {
             // Credential/secret access is never lifted, even in Power mode.
             if ( self::sql_touches_secret( $sql ) ) {
                 return [ 'blocked' => true, 'code' => 'blocked', 'message' => 'Query references credential/secret data and is blocked.' ];
+            }
+            // Not lifted by Power mode either: a write to the options table must name its
+            // rows, so the check above can read them. This judges one SQL text. Power mode
+            // keeps other routes to those rows, such as wp_write_file and search-replace.
+            if ( ! $is_search && self::sql_writes_unnamed_option( $sql ) ) {
+                return [ 'blocked' => true, 'code' => 'blocked', 'message' => "A write to the options table must be one UPDATE or DELETE whose only WHERE names its rows: option_name = 'name', IN ('name', ...) or, on a DELETE, LIKE 'pattern'. Use wp option for anything else." ];
             }
             // 4c. Option and user/network meta VALUES hold third-party secrets (API
             //     keys, SMTP passwords, licence keys, session tokens) that every other
