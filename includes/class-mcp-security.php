@@ -574,24 +574,64 @@ class Cowboy_MCP_Security {
     /**
      * Normalize SQL for detection only (never for execution): strip comments and
      * collapse whitespace so blocklist regexes can't be evaded with `DROP/**​/TABLE`.
+     *
+     * Reads quotes the way MySQL does: a `#` or `--` inside a string is text, and
+     * stripping it would hide the live SQL after it. `--` opens a comment only before
+     * whitespace or the end, so `5--1 WHERE …` stays in the scanned text. MySQL EXECUTES
+     * the body of a comment opened with `/*!`, `/*!NNNNN` or MariaDB's `/*M!`, so those
+     * bodies stay too: the version number is ignored on purpose, since we do not know
+     * the server version, and scanning a body the server might skip only over-blocks,
+     * which is the safe direction. An unclosed comment stays, for the same reason.
+     *
+     * Quotes follow the default sql_mode. Under NO_BACKSLASH_ESCAPES, `\'` closes a
+     * string here read as open: text is then scanned, not hidden, except after a `#`
+     * this reading puts outside a string.
      */
     public static function normalize_sql( string $sql ): string {
-        // MySQL EXECUTES the body of `/*! ... */` and version-gated `/*!NNNNN ... */`
-        // comments, so their contents must be unwrapped into the scanned text rather
-        // than stripped — deleting them would hide live SQL from the blocklist
-        // (`/*!50000 DROP */ TABLE t` reaches the server as `DROP TABLE t`). The
-        // version number is ignored on purpose: we do not know the server version, and
-        // scanning a body the server might skip only over-blocks, which is the safe
-        // direction. Must run BEFORE the plain-comment strip below, which would
-        // otherwise swallow these too.
-        $sql = preg_replace( '#/\*!\d*\s*(.*?)\*/#s', ' $1 ', $sql );
-        // Plain block comments /* ... */ are true comments — strip them.
-        $sql = preg_replace( '#/\*.*?\*/#s', ' ', (string) $sql );
-        // Line comments -- ... and # ... to end of line.
-        $sql = preg_replace( '/(--|#)[^\r\n]*/', ' ', (string) $sql );
+        $out  = '';
+        $len  = strlen( $sql );
+        $body = false;   // Inside an executed comment, whose `*/` is dropped.
+        for ( $i = 0; $i < $len; ) {
+            $c = $sql[ $i ];
+            if ( '\'' === $c || '"' === $c || '`' === $c ) {
+                $end  = self::sql_quote_end( $sql, $i );
+                $out .= substr( $sql, $i, $end - $i );
+                $i    = $end;
+            } elseif ( '#' === $c || ( '-' === $c && '--' === substr( $sql, $i, 2 ) && ( $i + 2 >= $len || ctype_space( $sql[ $i + 2 ] ) ) ) ) {
+                $i    = $i + strcspn( $sql, "\r\n", $i );
+                $out .= ' ';
+            } elseif ( preg_match( '#\G/\*M?!\d*#', $sql, $m, 0, $i ) ) {
+                $i   += strlen( $m[0] );
+                $out .= ' ';
+                $body = true;
+            } elseif ( $body && '*/' === substr( $sql, $i, 2 ) ) {
+                $i   += 2;
+                $out .= ' ';
+                $body = false;
+            } elseif ( '/*' === substr( $sql, $i, 2 ) && false !== strpos( $sql, '*/', $i + 2 ) ) {
+                $i    = strpos( $sql, '*/', $i + 2 ) + 2;
+                $out .= ' ';
+            } else {
+                $out .= $c;
+                ++$i;
+            }
+        }
         // Collapse whitespace.
-        $sql = preg_replace( '/\s+/', ' ', (string) $sql );
-        return trim( (string) $sql );
+        return trim( (string) preg_replace( '/\s+/', ' ', $out ) );
+    }
+
+    /** The offset just past the quoted run opening at $i, or the string's end if it never closes. A doubled quote reads as two runs. */
+    private static function sql_quote_end( string $sql, int $i ): int {
+        $quote = $sql[ $i ];
+        $len   = strlen( $sql );
+        for ( ++$i; $i < $len; $i++ ) {
+            if ( '\\' === $sql[ $i ] && '`' !== $quote ) {
+                ++$i;
+            } elseif ( $quote === $sql[ $i ] ) {
+                return $i + 1;
+            }
+        }
+        return $len;
     }
 
     /**
