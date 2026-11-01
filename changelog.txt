@@ -7,6 +7,7 @@ release; older entries are kept here.
 * Changed: Editors count as a privileged role on single sites, like Administrators. Creating or promoting an Editor, or changing an Editor's email, needs Power mode.
 * Changed: `wp_search_replace`, uploads of SVG, HTML, XML, JS or CSS files from a link or base64 data, and ACF field values refuse script content unless the call passes `allow_unfiltered_html: true`. Content already on the site can be sent back unchanged.
 * Changed: without Power mode, `wp_cli db query` cannot read option or user-meta values, and `wp_cli db search` must name the tables it searches.
+* Changed: with Power mode on, `wp_cli db query` can change your site's options table only with one UPDATE or DELETE that names its rows, such as `WHERE option_name = 'name'`. Anything else on that table is refused, so use `wp option` instead. Prepared statements are refused on every table.
 * Improved: every approval of Claude Code, Codex, ChatGPT, Claude or Perplexity is now its own entry under Connected apps, with its own access level, Edit access and Revoke. Reconnecting an app adds a new entry with the access you choose on the approval screen; the earlier one stays listed until it expires.
 * Improved: read-only and custom-access connections list and read only the resources their access covers.
 * Improved: API keys are recognised faster, and a valid key keeps working while failed attempts from the same IP address are being rate limited. Existing keys are upgraded automatically on their first use.

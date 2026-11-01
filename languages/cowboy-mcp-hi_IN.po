@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-26 09:57-0700\n"
+"POT-Creation-Date: 2026-10-28 23:19-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Hindi\n"
@@ -191,7 +191,7 @@ msgid "Create checkpoint now"
 msgstr "अभी चेकपॉइंट बनाएँ"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1705
+#: admin/class-mcp-admin-connections.php:1709
 msgid "Created"
 msgstr "बनाया गया"
 
@@ -208,7 +208,7 @@ msgid "Size"
 msgstr "आकार"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1707
+#: admin/class-mcp-admin-connections.php:1711
 msgid "Actions"
 msgstr "कार्रवाइयाँ"
 
@@ -355,7 +355,11 @@ msgid ""
 "Team and Enterprise, an organization owner adds the connector first under "
 "<strong>Organization settings → Connectors</strong> (<strong>Add → Custom → "
 "Web</strong>); members then click <strong>Connect</strong>."
-msgstr "कस्टम कनेक्टर हर Claude प्लान पर काम करते हैं (Free में केवल एक)। Team और Enterprise पर, संगठन का स्वामी पहले <strong>Organization settings → Connectors</strong> (<strong>Add → Custom → Web</strong>) में कनेक्टर जोड़ता है; इसके बाद सदस्य <strong>Connect</strong> पर क्लिक करते हैं।"
+msgstr ""
+"कस्टम कनेक्टर हर Claude प्लान पर काम करते हैं (Free में केवल एक)। Team और Enterprise "
+"पर, संगठन का स्वामी पहले <strong>Organization settings → Connectors</strong> "
+"(<strong>Add → Custom → Web</strong>) में कनेक्टर जोड़ता है; इसके बाद सदस्य "
+"<strong>Connect</strong> पर क्लिक करते हैं।"
 
 #: admin/class-mcp-admin-connections.php:265
 msgid "Organization owner on Team or Enterprise?"
@@ -377,7 +381,10 @@ msgid ""
 "<strong>Approve</strong>. Back in ChatGPT, review the tools it found and "
 "install the plugin, then start a new chat and type <strong>@</strong> and "
 "its name."
-msgstr "ChatGPT <strong>आपकी साइट</strong> पर एक साइन-इन पेज खोलता है। <strong>Approve</strong> पर क्लिक करें। ChatGPT में वापस आकर मिले हुए टूल देखें और प्लगइन इंस्टॉल करें, फिर नई चैट शुरू करें और <strong>@</strong> और इसका नाम टाइप करें।"
+msgstr ""
+"ChatGPT <strong>आपकी साइट</strong> पर एक साइन-इन पेज खोलता है। "
+"<strong>Approve</strong> पर क्लिक करें। ChatGPT में वापस आकर मिले हुए टूल देखें और "
+"प्लगइन इंस्टॉल करें, फिर नई चैट शुरू करें और <strong>@</strong> और इसका नाम टाइप करें।"
 
 #: admin/class-mcp-admin-connections.php:312
 msgid ""
@@ -421,7 +428,7 @@ msgstr "इसके बजाय हाथ से जोड़ें"
 #: admin/class-mcp-admin-connections.php:344
 #: admin/class-mcp-admin-connections.php:400
 #: admin/class-mcp-admin-connections.php:518
-#: admin/class-mcp-admin-connections.php:1033
+#: admin/class-mcp-admin-connections.php:1037
 msgid "Approve access"
 msgstr "एक्सेस स्वीकृत करें"
 
@@ -453,7 +460,9 @@ msgstr "लिंक पेस्ट करें"
 msgid ""
 "Go to <code>Plugins</code>, click <strong>Add</strong> (or <strong>+</"
 "strong>) and choose <strong>Add custom MCP server</strong>."
-msgstr "<code>Plugins</code> पर जाएँ, <strong>Add</strong> (या <strong>+</strong>) पर क्लिक करें और <strong>Add custom MCP server</strong> चुनें।"
+msgstr ""
+"<code>Plugins</code> पर जाएँ, <strong>Add</strong> (या <strong>+</strong>) पर "
+"क्लिक करें और <strong>Add custom MCP server</strong> चुनें।"
 
 #: admin/class-mcp-admin-connections.php:378
 msgid ""
@@ -491,7 +500,9 @@ msgid ""
 "Sign in, then open <strong>Plugins</strong> in the sidebar "
 "(<strong>Customize → Connectors</strong> on accounts that do not have it "
 "yet)."
-msgstr "साइन इन करें, फिर साइडबार में <strong>Plugins</strong> खोलें (जिन खातों में यह अभी नहीं है, उनमें <strong>Customize → Connectors</strong>)।"
+msgstr ""
+"साइन इन करें, फिर साइडबार में <strong>Plugins</strong> खोलें (जिन खातों में यह अभी "
+"नहीं है, उनमें <strong>Customize → Connectors</strong>)।"
 
 #: admin/class-mcp-admin-connections.php:428
 msgid ""
@@ -500,13 +511,20 @@ msgid ""
 "<strong>Remote</strong>. Give it a name, paste the link as the <strong>MCP "
 "server URL</strong> (keep OAuth and Streamable HTTP), tick the "
 "acknowledgement and click <strong>Add</strong>."
-msgstr "<strong>Add custom</strong> पर क्लिक करें (पुराने पेज पर <strong>+ Custom connector</strong>), <strong>Add MCP connector</strong> चुनें और पूछे जाने पर <strong>Remote</strong> चुनें। एक नाम दें, लिंक को <strong>MCP server URL</strong> के रूप में पेस्ट करें (OAuth और Streamable HTTP रहने दें), पुष्टि वाले बॉक्स पर टिक करें और <strong>Add</strong> पर क्लिक करें।"
+msgstr ""
+"<strong>Add custom</strong> पर क्लिक करें (पुराने पेज पर <strong>+ Custom "
+"connector</strong>), <strong>Add MCP connector</strong> चुनें और पूछे जाने पर "
+"<strong>Remote</strong> चुनें। एक नाम दें, लिंक को <strong>MCP server URL</strong> "
+"के रूप में पेस्ट करें (OAuth और Streamable HTTP रहने दें), पुष्टि वाले बॉक्स पर टिक करें और "
+"<strong>Add</strong> पर क्लिक करें।"
 
 #: admin/class-mcp-admin-connections.php:429
 msgid ""
 "Click the new connector’s card (then <strong>Add connector</strong> if it "
 "asks) — Perplexity opens the sign-in in a popup."
-msgstr "नए कनेक्टर के कार्ड पर क्लिक करें (पूछे जाने पर फिर <strong>Add connector</strong> पर) — Perplexity साइन-इन को एक पॉपअप में खोलता है।"
+msgstr ""
+"नए कनेक्टर के कार्ड पर क्लिक करें (पूछे जाने पर फिर <strong>Add connector</strong> पर) "
+"— Perplexity साइन-इन को एक पॉपअप में खोलता है।"
 
 #: admin/class-mcp-admin-connections.php:430
 msgid ""
@@ -552,7 +570,9 @@ msgid ""
 "Connectors are available on every Grok plan, the free plan included "
 "(verified 2026-10-12). On Business and Enterprise workspaces an admin "
 "provisions the connector first."
-msgstr "कनेक्टर हर Grok प्लान पर उपलब्ध हैं, मुफ़्त प्लान सहित (2026-10-12 को सत्यापित)। Business और Enterprise वर्कस्पेस में पहले एक एडमिन कनेक्टर प्रोविज़न करता है।"
+msgstr ""
+"कनेक्टर हर Grok प्लान पर उपलब्ध हैं, मुफ़्त प्लान सहित (2026-10-12 को सत्यापित)। "
+"Business और Enterprise वर्कस्पेस में पहले एक एडमिन कनेक्टर प्रोविज़न करता है।"
 
 #: admin/class-mcp-admin-connections.php:440
 msgid ""
@@ -575,13 +595,18 @@ msgid ""
 "Open <strong>Customize → Connectors</strong>, click <strong>+ Custom</"
 "strong>, paste the link as the <strong>MCP Server URL</strong> and click "
 "<strong>Next</strong>."
-msgstr "<strong>Customize → Connectors</strong> खोलें, <strong>+ Custom</strong> पर क्लिक करें, लिंक को <strong>MCP Server URL</strong> के रूप में पेस्ट करें और <strong>Next</strong> पर क्लिक करें।"
+msgstr ""
+"<strong>Customize → Connectors</strong> खोलें, <strong>+ Custom</strong> पर "
+"क्लिक करें, लिंक को <strong>MCP Server URL</strong> के रूप में पेस्ट करें और "
+"<strong>Next</strong> पर क्लिक करें।"
 
 #: admin/class-mcp-admin-connections.php:446
 msgid ""
 "Follow Gemini’s prompts (tick the acknowledgement, <strong>Connect</strong>, "
 "<strong>Agree and continue</strong>) — Gemini opens the sign-in page."
-msgstr "Gemini के निर्देशों का पालन करें (पुष्टि वाले बॉक्स पर टिक, <strong>Connect</strong>, <strong>Agree and continue</strong>) — Gemini साइन-इन पेज खोलेगा।"
+msgstr ""
+"Gemini के निर्देशों का पालन करें (पुष्टि वाले बॉक्स पर टिक, <strong>Connect</strong>, "
+"<strong>Agree and continue</strong>) — Gemini साइन-इन पेज खोलेगा।"
 
 #: admin/class-mcp-admin-connections.php:447
 msgid ""
@@ -628,14 +653,19 @@ msgstr ""
 msgid ""
 "Meta offers Muse in the United States and Canada. Meta does not review "
 "custom connectors, so add only sites you manage."
-msgstr "Meta, Muse को संयुक्त राज्य अमेरिका और कनाडा में उपलब्ध कराता है। Meta कस्टम कनेक्टरों की समीक्षा नहीं करता, इसलिए केवल वही साइटें जोड़ें जिन्हें आप स्वयं संभालते हैं।"
+msgstr ""
+"Meta, Muse को संयुक्त राज्य अमेरिका और कनाडा में उपलब्ध कराता है। Meta कस्टम कनेक्टरों की "
+"समीक्षा नहीं करता, इसलिए केवल वही साइटें जोड़ें जिन्हें आप स्वयं संभालते हैं।"
 
 #: admin/class-mcp-admin-connections.php:464
 msgid ""
 "Muse asks you to approve the requests it sends to your site: <strong>Allow "
 "once</strong>, <strong>Allow for this site</strong> or <strong>Always allow</"
 "strong>."
-msgstr "Muse आपकी साइट पर भेजे जाने वाले अनुरोधों के लिए आपकी मंज़ूरी माँगता है: <strong>Allow once</strong>, <strong>Allow for this site</strong> या <strong>Always allow</strong>।"
+msgstr ""
+"Muse आपकी साइट पर भेजे जाने वाले अनुरोधों के लिए आपकी मंज़ूरी माँगता है: <strong>Allow "
+"once</strong>, <strong>Allow for this site</strong> या <strong>Always allow</"
+"strong>।"
 
 #: admin/class-mcp-admin-connections.php:466
 msgid ""
@@ -676,48 +706,48 @@ msgid "Which %s plans work?"
 msgstr "%s के कौन-से प्लान काम करते हैं?"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:556
-#: admin/class-mcp-admin-connections.php:805
-#: admin/class-mcp-admin-connections.php:816
+#: admin/class-mcp-admin-connections.php:560
+#: admin/class-mcp-admin-connections.php:809
+#: admin/class-mcp-admin-connections.php:820
 #, php-format
 msgid "Message for %s"
 msgstr "%s के लिए संदेश"
 
-#: admin/class-mcp-admin-connections.php:559
-#: admin/class-mcp-admin-connections.php:808
-#: admin/class-mcp-admin-connections.php:819
+#: admin/class-mcp-admin-connections.php:563
+#: admin/class-mcp-admin-connections.php:812
+#: admin/class-mcp-admin-connections.php:823
 msgid "Copy message"
 msgstr "संदेश कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:564
+#: admin/class-mcp-admin-connections.php:568
 msgid "Connection link"
 msgstr "कनेक्शन लिंक"
 
-#: admin/class-mcp-admin-connections.php:564
+#: admin/class-mcp-admin-connections.php:568
 msgid "Copy connector URL"
 msgstr "कनेक्टर URL कॉपी करें"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:577
+#: admin/class-mcp-admin-connections.php:581
 #, php-format
 msgid "Open %s"
 msgstr "%s खोलें"
 
-#: admin/class-mcp-admin-connections.php:579
-#: admin/class-mcp-admin-connections.php:632
-#: admin/class-mcp-admin-connections.php:1832
+#: admin/class-mcp-admin-connections.php:583
+#: admin/class-mcp-admin-connections.php:636
+#: admin/class-mcp-admin-connections.php:1836
 msgid "(opens in a new tab)"
 msgstr "(नए टैब में खुलता है)"
 
-#: admin/class-mcp-admin-connections.php:589
+#: admin/class-mcp-admin-connections.php:593
 msgid "Turn on sign-in first:"
 msgstr "पहले साइन-इन चालू करें:"
 
-#: admin/class-mcp-admin-connections.php:590
+#: admin/class-mcp-admin-connections.php:594
 msgid "Turn on browser sign-in"
 msgstr "ब्राउज़र साइन-इन चालू करें"
 
-#: admin/class-mcp-admin-connections.php:604
+#: admin/class-mcp-admin-connections.php:608
 msgid ""
 "In the <strong>Claude</strong> desktop app, go to <code>Customize → "
 "Connectors</code>."
@@ -725,32 +755,38 @@ msgstr ""
 "<strong>Claude</strong> डेस्कटॉप ऐप में <code>Customize → Connectors</code> पर "
 "जाएँ।"
 
-#: admin/class-mcp-admin-connections.php:605
+#: admin/class-mcp-admin-connections.php:609
 msgid "On <code>claude.ai</code>, go to <code>Customize → Connectors</code>."
 msgstr "<code>claude.ai</code> पर <code>Customize → Connectors</code> पर जाएँ।"
 
-#: admin/class-mcp-admin-connections.php:608
+#: admin/class-mcp-admin-connections.php:612
 msgid ""
 "Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
 msgstr ""
 "<strong>+ Add</strong> पर क्लिक करें, फिर <strong>Add custom connector</strong> "
 "पर।"
 
-#: admin/class-mcp-admin-connections.php:614
+#: admin/class-mcp-admin-connections.php:618
 msgid ""
 "Name it, paste the link above and click <strong>Continue</strong>. Keep the "
 "sign-in settings Claude detects (either OAuth client option works) and "
 "finish with <strong>Add</strong>."
-msgstr "इसे एक नाम दें, ऊपर दिया लिंक पेस्ट करें और <strong>Continue</strong> पर क्लिक करें। Claude द्वारा पहचानी गई साइन-इन सेटिंग्स वैसी ही रहने दें (OAuth क्लाइंट का कोई भी विकल्प काम करता है) और अंत में <strong>Add</strong> पर क्लिक करें।"
+msgstr ""
+"इसे एक नाम दें, ऊपर दिया लिंक पेस्ट करें और <strong>Continue</strong> पर क्लिक करें। "
+"Claude द्वारा पहचानी गई साइन-इन सेटिंग्स वैसी ही रहने दें (OAuth क्लाइंट का कोई भी "
+"विकल्प काम करता है) और अंत में <strong>Add</strong> पर क्लिक करें।"
 
-#: admin/class-mcp-admin-connections.php:615
+#: admin/class-mcp-admin-connections.php:619
 msgid ""
 "Name it, paste the link from step 1 and click <strong>Continue</strong>. "
 "Keep the sign-in settings Claude detects (either OAuth client option works) "
 "and finish with <strong>Add</strong>."
-msgstr "इसे एक नाम दें, चरण 1 वाला लिंक पेस्ट करें और <strong>Continue</strong> पर क्लिक करें। Claude द्वारा पहचानी गई साइन-इन सेटिंग्स वैसी ही रहने दें (OAuth क्लाइंट का कोई भी विकल्प काम करता है) और अंत में <strong>Add</strong> पर क्लिक करें।"
+msgstr ""
+"इसे एक नाम दें, चरण 1 वाला लिंक पेस्ट करें और <strong>Continue</strong> पर क्लिक करें। "
+"Claude द्वारा पहचानी गई साइन-इन सेटिंग्स वैसी ही रहने दें (OAuth क्लाइंट का कोई भी "
+"विकल्प काम करता है) और अंत में <strong>Add</strong> पर क्लिक करें।"
 
-#: admin/class-mcp-admin-connections.php:670
+#: admin/class-mcp-admin-connections.php:674
 msgid ""
 "This site runs on your computer, so the cloud connector cannot reach it. "
 "Claude Desktop connects through a <strong>local bridge</strong> instead: the "
@@ -763,11 +799,11 @@ msgstr ""
 "remote</code> पैकेज, जो <code>npx</code> से शुरू होता है (Node.js चाहिए)। यह आपके "
 "ब्राउज़र में साइन इन करता है, और इंटरनेट पर कुछ भी उजागर नहीं होता।"
 
-#: admin/class-mcp-admin-connections.php:672
+#: admin/class-mcp-admin-connections.php:676
 msgid "Add the bridge to Claude Desktop"
 msgstr "Claude Desktop में ब्रिज जोड़ें"
 
-#: admin/class-mcp-admin-connections.php:673
+#: admin/class-mcp-admin-connections.php:677
 msgid ""
 "Run this in Terminal (macOS) or PowerShell (Windows), then fully quit and "
 "reopen the Claude app."
@@ -775,38 +811,38 @@ msgstr ""
 "इसे Terminal (macOS) या PowerShell (Windows) में चलाएँ, फिर Claude ऐप को पूरी तरह "
 "बंद करके दोबारा खोलें।"
 
-#: admin/class-mcp-admin-connections.php:674
-#: admin/class-mcp-admin-connections.php:685
-#: admin/class-mcp-admin-connections.php:698
-#: admin/class-mcp-admin-connections.php:757
-#: admin/class-mcp-admin-connections.php:811
-#: admin/class-mcp-admin-connections.php:822
-#: admin/class-mcp-admin-connections.php:878
-#: admin/class-mcp-admin-connections.php:949
-#: admin/class-mcp-admin-connections.php:980
-#: admin/class-mcp-admin-connections.php:1061
-#: admin/class-mcp-admin-connections.php:1118
+#: admin/class-mcp-admin-connections.php:678
+#: admin/class-mcp-admin-connections.php:689
+#: admin/class-mcp-admin-connections.php:702
+#: admin/class-mcp-admin-connections.php:761
+#: admin/class-mcp-admin-connections.php:815
+#: admin/class-mcp-admin-connections.php:826
+#: admin/class-mcp-admin-connections.php:882
+#: admin/class-mcp-admin-connections.php:953
+#: admin/class-mcp-admin-connections.php:984
+#: admin/class-mcp-admin-connections.php:1065
+#: admin/class-mcp-admin-connections.php:1122
 msgid "Copy setup command"
 msgstr "सेटअप कमांड कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:674
-#: admin/class-mcp-admin-connections.php:677
-#: admin/class-mcp-admin-connections.php:698
+#: admin/class-mcp-admin-connections.php:678
+#: admin/class-mcp-admin-connections.php:681
 #: admin/class-mcp-admin-connections.php:702
-#: admin/class-mcp-admin-connections.php:811
-#: admin/class-mcp-admin-connections.php:822
-#: admin/class-mcp-admin-connections.php:878
-#: admin/class-mcp-admin-connections.php:949
-#: admin/class-mcp-admin-connections.php:1133
+#: admin/class-mcp-admin-connections.php:706
+#: admin/class-mcp-admin-connections.php:815
+#: admin/class-mcp-admin-connections.php:826
+#: admin/class-mcp-admin-connections.php:882
+#: admin/class-mcp-admin-connections.php:953
+#: admin/class-mcp-admin-connections.php:1137
 msgid "terminal"
 msgstr "टर्मिनल"
 
-#: admin/class-mcp-admin-connections.php:682
-#: admin/class-mcp-admin-connections.php:977
+#: admin/class-mcp-admin-connections.php:686
+#: admin/class-mcp-admin-connections.php:981
 msgid "Edit the config file instead"
 msgstr "इसके बजाय कॉन्फ़िग फ़ाइल संपादित करें"
 
-#: admin/class-mcp-admin-connections.php:684
+#: admin/class-mcp-admin-connections.php:688
 msgid ""
 "Add this to <code>claude_desktop_config.json</code>, then fully quit and "
 "reopen the Claude app."
@@ -814,7 +850,7 @@ msgstr ""
 "इसे <code>claude_desktop_config.json</code> में जोड़ें, फिर Claude ऐप को पूरी तरह "
 "बंद करके दोबारा खोलें।"
 
-#: admin/class-mcp-admin-connections.php:687
+#: admin/class-mcp-admin-connections.php:691
 msgid ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
@@ -822,26 +858,26 @@ msgstr ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:688
+#: admin/class-mcp-admin-connections.php:692
 msgid "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 msgstr "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:693
-#: admin/class-mcp-admin-connections.php:1011
-#: admin/class-mcp-admin-connections.php:1056
+#: admin/class-mcp-admin-connections.php:697
+#: admin/class-mcp-admin-connections.php:1015
+#: admin/class-mcp-admin-connections.php:1060
 msgid "Use an API key instead"
 msgstr "इसके बजाय API कुंजी इस्तेमाल करें"
 
-#: admin/class-mcp-admin-connections.php:695
-#: admin/class-mcp-admin-connections.php:1058
+#: admin/class-mcp-admin-connections.php:699
+#: admin/class-mcp-admin-connections.php:1062
 msgid "For headless setups, CI, or a tool that cannot open a browser."
 msgstr "हेडलेस सेटअप, CI, या ऐसे टूल के लिए जो ब्राउज़र नहीं खोल सकता।"
 
-#: admin/class-mcp-admin-connections.php:697
+#: admin/class-mcp-admin-connections.php:701
 msgid "Then run this instead, with the key in a header:"
 msgstr "फिर इसके बजाय यह चलाएँ, जिसमें कुंजी हेडर में है:"
 
-#: admin/class-mcp-admin-connections.php:699
+#: admin/class-mcp-admin-connections.php:703
 msgid ""
 "The key is stored in plain text in that file, so prefer a <strong>read-only</"
 "strong> key unless this connection needs to make changes, and revoke it here "
@@ -851,14 +887,14 @@ msgstr ""
 "हों, <strong>केवल-पढ़ने</strong> वाली कुंजी चुनें, और जब इसका इस्तेमाल न रहे तो इसे यहाँ "
 "रद्द कर दें।"
 
-#: admin/class-mcp-admin-connections.php:710
-#: admin/class-mcp-admin-connections.php:1020
-#: admin/class-mcp-admin-connections.php:1334
+#: admin/class-mcp-admin-connections.php:714
+#: admin/class-mcp-admin-connections.php:1024
+#: admin/class-mcp-admin-connections.php:1338
 msgid "Check it worked"
 msgstr "जाँचें कि यह काम कर गया"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:713
+#: admin/class-mcp-admin-connections.php:717
 #, php-format
 msgid ""
 "Open a new chat in Claude Desktop, click <strong>+</strong> and open "
@@ -869,16 +905,16 @@ msgstr ""
 "<strong>Connectors</strong> खोलें — सूची में <code>%s</code> दिखना चाहिए। पहली "
 "बार शुरू होने में थोड़ा समय लगता है क्योंकि ब्रिज डाउनलोड होता है।"
 
-#: admin/class-mcp-admin-connections.php:714
-#: admin/class-mcp-admin-connections.php:1335
+#: admin/class-mcp-admin-connections.php:718
+#: admin/class-mcp-admin-connections.php:1339
 msgid "Then try:"
 msgstr "फिर यह आज़माएँ:"
 
-#: admin/class-mcp-admin-connections.php:754
+#: admin/class-mcp-admin-connections.php:758
 msgid "Getting a certificate error?"
 msgstr "प्रमाणपत्र त्रुटि आ रही है?"
 
-#: admin/class-mcp-admin-connections.php:756
+#: admin/class-mcp-admin-connections.php:760
 msgid ""
 "Local sites usually use a self-signed certificate that AI tools reject. "
 "Since this site runs on this computer, use the plain <code>http://</code> "
@@ -892,19 +928,19 @@ msgstr ""
 "<code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> वाले तरीक़े से बचें: यह उस टूल के हर "
 "कनेक्शन के लिए प्रमाणपत्र जाँच बंद कर देता है।"
 
-#: admin/class-mcp-admin-connections.php:786
 #: admin/class-mcp-admin-connections.php:790
+#: admin/class-mcp-admin-connections.php:794
 msgid ""
 "Run these in your terminal. The second line opens your browser to sign in."
 msgstr ""
 "इन्हें अपने टर्मिनल में चलाएँ। दूसरी पंक्ति साइन इन करने के लिए आपका ब्राउज़र खोलती है।"
 
-#: admin/class-mcp-admin-connections.php:787
+#: admin/class-mcp-admin-connections.php:791
 msgid "Run this in your terminal. Codex opens your browser to sign in."
 msgstr "इसे अपने टर्मिनल में चलाएँ। Codex साइन इन करने के लिए आपका ब्राउज़र खोलता है।"
 
 #. translators: %s: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:789
+#: admin/class-mcp-admin-connections.php:793
 #, php-format
 msgid ""
 "Run this in your terminal, then start <code>gemini</code>: it opens your "
@@ -913,7 +949,7 @@ msgstr ""
 "इसे अपने टर्मिनल में चलाएँ, फिर <code>gemini</code> शुरू करें: यह साइन इन के लिए आपका "
 "ब्राउज़र खोलता है (न खुले तो <code>/mcp auth %s</code> चलाएँ)।"
 
-#: admin/class-mcp-admin-connections.php:791
+#: admin/class-mcp-admin-connections.php:795
 msgid ""
 "Start <code>muse</code> and paste this message. Muse adds the server to its "
 "settings; approve the change when it asks."
@@ -921,7 +957,7 @@ msgstr ""
 "<code>muse</code> शुरू करें और यह संदेश चिपकाएँ। Muse सर्वर को अपनी सेटिंग्स में जोड़ता है; "
 "पूछे जाने पर बदलाव को मंज़ूरी दें।"
 
-#: admin/class-mcp-admin-connections.php:794
+#: admin/class-mcp-admin-connections.php:798
 msgid ""
 "Paste this message into your OpenClaw chat. OpenClaw asks you to approve the "
 "config change, then sends you the sign-in link."
@@ -929,7 +965,7 @@ msgstr ""
 "यह संदेश अपनी OpenClaw चैट में पेस्ट करें। OpenClaw आपसे कॉन्फ़िग बदलाव की मंज़ूरी माँगता है, "
 "फिर साइन-इन लिंक भेजता है।"
 
-#: admin/class-mcp-admin-connections.php:795
+#: admin/class-mcp-admin-connections.php:799
 msgid ""
 "Paste this message into your Hermes chat. Hermes adds the server and sends "
 "you a sign-in link; open it in your browser."
@@ -937,15 +973,15 @@ msgstr ""
 "यह संदेश अपनी Hermes चैट में पेस्ट करें। Hermes सर्वर जोड़कर आपको साइन-इन लिंक भेजेगा; उसे "
 "ब्राउज़र में खोलें।"
 
-#: admin/class-mcp-admin-connections.php:799
+#: admin/class-mcp-admin-connections.php:803
 msgid "Add the server"
 msgstr "सर्वर जोड़ें"
 
-#: admin/class-mcp-admin-connections.php:810
+#: admin/class-mcp-admin-connections.php:814
 msgid "Then quit Muse and run this. It opens your browser to sign in:"
 msgstr "फिर Muse बंद करें और यह चलाएँ। साइन इन के लिए आपका ब्राउज़र खुलेगा:"
 
-#: admin/class-mcp-admin-connections.php:825
+#: admin/class-mcp-admin-connections.php:829
 msgid ""
 "Over SSH? Add <code>--no-browser</code> to the second line and open the "
 "printed URL in a local browser."
@@ -953,19 +989,19 @@ msgstr ""
 "SSH से काम कर रहे हैं? दूसरी पंक्ति में <code>--no-browser</code> जोड़ें और दिखाया गया "
 "URL किसी लोकल ब्राउज़र में खोलें।"
 
-#: admin/class-mcp-admin-connections.php:827
-#: admin/class-mcp-admin-connections.php:1065
+#: admin/class-mcp-admin-connections.php:831
+#: admin/class-mcp-admin-connections.php:1069
 msgid "Opencode 1.x: leave out <code>--global</code>."
 msgstr "Opencode 1.x: <code>--global</code> हटा दें।"
 
-#: admin/class-mcp-admin-connections.php:829
+#: admin/class-mcp-admin-connections.php:833
 msgid ""
 "Over SSH? Add <code>--headless</code> and paste back the address your "
 "browser ends on."
 msgstr ""
 "SSH पर हैं? <code>--headless</code> जोड़ें और ब्राउज़र जिस पते पर रुके, उसे वापस चिपकाएँ।"
 
-#: admin/class-mcp-admin-connections.php:831
+#: admin/class-mcp-admin-connections.php:835
 msgid ""
 "OpenClaw on another machine? If the sign-in cannot reach it, send OpenClaw "
 "the <code>code</code> from the address your browser ends on."
@@ -973,7 +1009,7 @@ msgstr ""
 "OpenClaw किसी दूसरी मशीन पर चल रहा है? अगर साइन-इन उस तक नहीं पहुँच पाता, तो "
 "ब्राउज़र जिस पते पर रुके उसका <code>code</code> OpenClaw को भेज दें।"
 
-#: admin/class-mcp-admin-connections.php:833
+#: admin/class-mcp-admin-connections.php:837
 msgid ""
 "If your browser ends on a <code>127.0.0.1</code> address that will not load, "
 "paste that address back into the chat; Hermes completes the sign-in from "
@@ -982,7 +1018,7 @@ msgstr ""
 "अगर ब्राउज़र ऐसे <code>127.0.0.1</code> पते पर रुक जाए जो खुलता नहीं, तो वह पता "
 "वापस चैट में पेस्ट करें; Hermes वहीं से साइन-इन पूरा कर देगा।"
 
-#: admin/class-mcp-admin-connections.php:836
+#: admin/class-mcp-admin-connections.php:840
 msgid ""
 "Local https sites usually use a self-signed certificate that these tools "
 "reject: trust it in your tool, or set the WordPress Site Address to the "
@@ -993,7 +1029,7 @@ msgstr ""
 "</code> URL पर सेट करें।"
 
 #. translators: 1: config file path, 2: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:845
+#: admin/class-mcp-admin-connections.php:849
 #, php-format
 msgid ""
 "Add this to <code>%1$s</code> (merge it if the file exists), then run "
@@ -1003,7 +1039,7 @@ msgstr ""
 "login %2$s</code> चलाएँ।"
 
 #. translators: 1: config file path, 2: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:847
+#: admin/class-mcp-admin-connections.php:851
 #, php-format
 msgid ""
 "Add this to <code>%1$s</code> (merge it if the file exists), then run "
@@ -1013,18 +1049,18 @@ msgstr ""
 "login %2$s</code> चलाएँ।"
 
 #. translators: 1: config file path, 2: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:849
+#: admin/class-mcp-admin-connections.php:853
 #, php-format
 msgid ""
 "Add this to <code>%1$s</code>, then run <code>hermes mcp login %2$s</code>."
 msgstr ""
 "इसे <code>%1$s</code> में जोड़ें, फिर <code>hermes mcp login %2$s</code> चलाएँ।"
 
-#: admin/class-mcp-admin-connections.php:869
+#: admin/class-mcp-admin-connections.php:873
 msgid "Use the terminal instead"
 msgstr "इसके बजाय टर्मिनल इस्तेमाल करें"
 
-#: admin/class-mcp-admin-connections.php:872
+#: admin/class-mcp-admin-connections.php:876
 msgid ""
 "Run these in your terminal where OpenClaw is installed. The second line "
 "prints a sign-in link; open it in your browser."
@@ -1032,7 +1068,7 @@ msgstr ""
 "जिस मशीन पर OpenClaw इंस्टॉल है, उसके टर्मिनल में ये कमांड चलाएँ। दूसरी पंक्ति साइन-इन "
 "लिंक दिखाती है; उसे अपने ब्राउज़र में खोलें।"
 
-#: admin/class-mcp-admin-connections.php:876
+#: admin/class-mcp-admin-connections.php:880
 msgid ""
 "Run this in your terminal. Hermes opens your browser to sign in, then asks "
 "which tools to enable — answer <code>Y</code> (press Enter again if nothing "
@@ -1042,7 +1078,7 @@ msgstr ""
 "से टूल चालू करें — <code>Y</code> उत्तर दें। (कुछ न हो तो Enter फिर दबाएँ)"
 
 #. translators: %s: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:882
+#: admin/class-mcp-admin-connections.php:886
 #, php-format
 msgid ""
 "OpenClaw running on another machine? Open the printed link in a local "
@@ -1053,7 +1089,7 @@ msgstr ""
 "ब्राउज़र जिस पते पर रुके उसमें से <code>code</code> कॉपी करें और <code>openclaw mcp "
 "login %s --code &lt;code&gt;</code> चलाएँ।"
 
-#: admin/class-mcp-admin-connections.php:885
+#: admin/class-mcp-admin-connections.php:889
 msgid ""
 "Over SSH? Open the printed link in a local browser and paste the address "
 "your browser ends on back into the terminal."
@@ -1061,29 +1097,29 @@ msgstr ""
 "SSH से? प्रिंट हुआ लिंक लोकल ब्राउज़र में खोलें और ब्राउज़र जिस पते पर रुके उसे वापस टर्मिनल में "
 "पेस्ट करें।"
 
-#: admin/class-mcp-admin-connections.php:932
+#: admin/class-mcp-admin-connections.php:936
 msgid "Add to Cursor"
 msgstr "Cursor में जोड़ें"
 
-#: admin/class-mcp-admin-connections.php:932
+#: admin/class-mcp-admin-connections.php:936
 msgid "Install in VS Code"
 msgstr "VS Code में इंस्टॉल करें"
 
-#: admin/class-mcp-admin-connections.php:934
+#: admin/class-mcp-admin-connections.php:938
 msgid "Accept in Cursor. It opens your browser to sign in."
 msgstr "Cursor में स्वीकार करें। यह साइन इन के लिए आपका ब्राउज़र खोलता है।"
 
-#: admin/class-mcp-admin-connections.php:935
+#: admin/class-mcp-admin-connections.php:939
 msgid ""
 "Confirm in VS Code and trust the server. It opens your browser to sign in."
 msgstr ""
 "VS Code में पुष्टि करें और सर्वर पर भरोसा करें। यह साइन इन के लिए आपका ब्राउज़र खोलता है।"
 
-#: admin/class-mcp-admin-connections.php:946
+#: admin/class-mcp-admin-connections.php:950
 msgid "Use a command instead"
 msgstr "इसके बजाय कमांड इस्तेमाल करें"
 
-#: admin/class-mcp-admin-connections.php:948
+#: admin/class-mcp-admin-connections.php:952
 msgid ""
 "Run this in your terminal (the <code>code</code> command ships with VS "
 "Code), then open Copilot Chat. It signs in on first use."
@@ -1092,7 +1128,7 @@ msgstr ""
 "Copilot Chat खोलें। पहली बार उपयोग पर यह साइन इन करता है।"
 
 #. translators: %s: path of the client's config file.
-#: admin/class-mcp-admin-connections.php:955
+#: admin/class-mcp-admin-connections.php:959
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart Cursor. It signs in on first use."
@@ -1101,7 +1137,7 @@ msgstr ""
 "साइन इन करता है।"
 
 #. translators: %s: config file path
-#: admin/class-mcp-admin-connections.php:973
+#: admin/class-mcp-admin-connections.php:977
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart the app. It signs in on first use."
@@ -1109,7 +1145,7 @@ msgstr ""
 "इसे <code>%s</code> में जोड़ें, फिर ऐप दोबारा शुरू करें। पहली बार इस्तेमाल पर यह साइन इन "
 "करता है।"
 
-#: admin/class-mcp-admin-connections.php:996
+#: admin/class-mcp-admin-connections.php:1000
 msgid ""
 "n8n cloud connects from n8n's servers and cannot reach a local site; a self-"
 "hosted n8n on this machine works."
@@ -1117,41 +1153,44 @@ msgstr ""
 "n8n cloud, n8n के सर्वरों से कनेक्ट होता है और लोकल साइट तक नहीं पहुँच सकता; इसी मशीन "
 "पर सेल्फ-होस्टेड n8n काम करता है।"
 
-#: admin/class-mcp-admin-connections.php:998
+#: admin/class-mcp-admin-connections.php:1002
 msgid "Add an MCP Client Tool node"
 msgstr "MCP Client Tool नोड जोड़ें"
 
-#: admin/class-mcp-admin-connections.php:999
+#: admin/class-mcp-admin-connections.php:1003
 msgid ""
 "In your workflow, add the <strong>MCP Client Tool</strong> node to your "
 "agent and fill in:"
 msgstr "अपने वर्कफ़्लो में अपने एजेंट में <strong>MCP Client Tool</strong> नोड जोड़ें और भरें:"
 
-#: admin/class-mcp-admin-connections.php:1001
+#: admin/class-mcp-admin-connections.php:1005
 msgid "Copy endpoint URL"
 msgstr "एंडपॉइंट URL कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:1001
+#: admin/class-mcp-admin-connections.php:1005
 msgid "Endpoint"
 msgstr "Endpoint"
 
-#: admin/class-mcp-admin-connections.php:1002
+#: admin/class-mcp-admin-connections.php:1006
 msgid "Server Transport"
 msgstr "Server Transport"
 
-#: admin/class-mcp-admin-connections.php:1003
+#: admin/class-mcp-admin-connections.php:1007
 msgid ""
 "<strong>MCP OAuth2</strong> — create a new MCP OAuth2 API credential, keep "
 "<strong>Use Dynamic Client Registration</strong> on and click Connect. n8n "
 "registers itself with this site and opens the sign-in."
-msgstr "<strong>MCP OAuth2</strong> — एक नया MCP OAuth2 API क्रेडेंशियल बनाएँ, <strong>Use Dynamic Client Registration</strong> चालू रहने दें और Connect पर क्लिक करें। n8n खुद इस साइट पर रजिस्टर होकर साइन-इन खोल देता है।"
+msgstr ""
+"<strong>MCP OAuth2</strong> — एक नया MCP OAuth2 API क्रेडेंशियल बनाएँ, "
+"<strong>Use Dynamic Client Registration</strong> चालू रहने दें और Connect पर "
+"क्लिक करें। n8n खुद इस साइट पर रजिस्टर होकर साइन-इन खोल देता है।"
 
-#: admin/class-mcp-admin-connections.php:1003
+#: admin/class-mcp-admin-connections.php:1007
 msgid "Authentication"
 msgstr "Authentication"
 
 #. translators: %s: URL of the Settings tab
-#: admin/class-mcp-admin-connections.php:1007
+#: admin/class-mcp-admin-connections.php:1011
 #, php-format
 msgid ""
 "Self-hosted n8n: add your n8n host under <a href=\"%s\">Settings → "
@@ -1160,7 +1199,7 @@ msgstr ""
 "सेल्फ-होस्टेड n8n: पहले अपना n8n होस्ट <a href=\"%s\">सेटिंग्स → अतिरिक्त अनुमत होस्ट</"
 "a> में जोड़ें। n8n cloud पहले से अनुमत है।"
 
-#: admin/class-mcp-admin-connections.php:1013
+#: admin/class-mcp-admin-connections.php:1017
 msgid ""
 "Set Authentication to <strong>Bearer Auth</strong> instead and paste the key "
 "into a new Bearer Auth credential."
@@ -1168,7 +1207,7 @@ msgstr ""
 "इसके बजाय Authentication को <strong>Bearer Auth</strong> पर सेट करें और कुंजी को "
 "एक नए Bearer Auth क्रेडेंशियल में पेस्ट करें।"
 
-#: admin/class-mcp-admin-connections.php:1021
+#: admin/class-mcp-admin-connections.php:1025
 msgid ""
 "Execute the node once — its Tools output lists <code>cowboy_discover</code> "
 "and <code>cowboy_run</code>."
@@ -1176,11 +1215,11 @@ msgstr ""
 "नोड को एक बार चलाएँ — इसके Tools आउटपुट में <code>cowboy_discover</code> और "
 "<code>cowboy_run</code> दिखते हैं।"
 
-#: admin/class-mcp-admin-connections.php:1021
+#: admin/class-mcp-admin-connections.php:1025
 msgid "Then ask your agent:"
 msgstr "फिर अपने एजेंट से पूछें:"
 
-#: admin/class-mcp-admin-connections.php:1034
+#: admin/class-mcp-admin-connections.php:1038
 msgid ""
 "A sign-in page opens on <strong>your site</strong>. Pick the access level "
 "and click <strong>Approve</strong>."
@@ -1188,11 +1227,11 @@ msgstr ""
 "<strong>आपकी साइट</strong> पर एक साइन-इन पेज खुलता है। एक्सेस स्तर चुनें और "
 "<strong>Approve</strong> क्लिक करें।"
 
-#: admin/class-mcp-admin-connections.php:1060
+#: admin/class-mcp-admin-connections.php:1064
 msgid "Then add the server with the key in a header:"
 msgstr "फिर हेडर में कुंजी के साथ सर्वर जोड़ें:"
 
-#: admin/class-mcp-admin-connections.php:1063
+#: admin/class-mcp-admin-connections.php:1067
 msgid ""
 "Codex reads the key each time it starts, so also add the <code>export</code> "
 "line to your shell profile (e.g. <code>~/.zshrc</code>)."
@@ -1200,7 +1239,7 @@ msgstr ""
 "Codex हर बार शुरू होने पर कुंजी पढ़ता है, इसलिए <code>export</code> वाली पंक्ति अपनी "
 "शेल प्रोफ़ाइल (जैसे <code>~/.zshrc</code>) में भी जोड़ें।"
 
-#: admin/class-mcp-admin-connections.php:1067
+#: admin/class-mcp-admin-connections.php:1071
 msgid ""
 "Hermes asks for the key when you run this and stores it in "
 "<code>~/.hermes/.env</code>; the config file only references it."
@@ -1208,53 +1247,53 @@ msgstr ""
 "इसे चलाने पर Hermes कुंजी माँगता है और उसे <code>~/.hermes/.env</code> में सहेजता है; "
 "कॉन्फ़िग फ़ाइल में केवल उसका संदर्भ रहता है।"
 
-#: admin/class-mcp-admin-connections.php:1081
+#: admin/class-mcp-admin-connections.php:1085
 msgid "Create an API key"
 msgstr "एक API कुंजी बनाएँ"
 
-#: admin/class-mcp-admin-connections.php:1084
+#: admin/class-mcp-admin-connections.php:1088
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr ""
 "<strong>अपनी कुंजी अभी कॉपी करें</strong> — सुरक्षा कारणों से यह दोबारा नहीं दिखाई "
 "जाएगी।"
 
-#: admin/class-mcp-admin-connections.php:1085
-#: admin/class-mcp-admin-connections.php:1718
+#: admin/class-mcp-admin-connections.php:1089
+#: admin/class-mcp-admin-connections.php:1722
 msgid "API key"
 msgstr "API कुंजी"
 
-#: admin/class-mcp-admin-connections.php:1085
+#: admin/class-mcp-admin-connections.php:1089
 msgid "Copy API key"
 msgstr "API कुंजी कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:1086
+#: admin/class-mcp-admin-connections.php:1090
 msgid "I've saved my key"
 msgstr "मैंने अपनी कुंजी सहेज ली है"
 
-#: admin/class-mcp-admin-connections.php:1089
+#: admin/class-mcp-admin-connections.php:1093
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "इसे एक नाम दें ताकि आप इसे बाद में पहचान सकें, फिर जेनरेट करें।"
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1094
+#: admin/class-mcp-admin-connections.php:1098
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "उदा. मेरे लैपटॉप पर %s"
 
-#: admin/class-mcp-admin-connections.php:1097
+#: admin/class-mcp-admin-connections.php:1101
 msgid "Generate API key"
 msgstr "API कुंजी जेनरेट करें"
 
-#: admin/class-mcp-admin-connections.php:1097
+#: admin/class-mcp-admin-connections.php:1101
 msgid "Generate another key"
 msgstr "एक और कुंजी जेनरेट करें"
 
-#: admin/class-mcp-admin-connections.php:1110
+#: admin/class-mcp-admin-connections.php:1114
 msgid "Run this in your terminal:"
 msgstr "इसे अपने टर्मिनल में चलाएँ:"
 
-#: admin/class-mcp-admin-connections.php:1111
+#: admin/class-mcp-admin-connections.php:1115
 msgid ""
 "Run these in your terminal. Codex reads the key each time it starts, so also "
 "add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
@@ -1264,7 +1303,7 @@ msgstr ""
 "<code>export</code> वाली पंक्ति अपनी शेल प्रोफ़ाइल (जैसे <code>~/.zshrc</code>) में "
 "भी जोड़ें:"
 
-#: admin/class-mcp-admin-connections.php:1112
+#: admin/class-mcp-admin-connections.php:1116
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then restart Cursor:"
@@ -1272,12 +1311,12 @@ msgstr ""
 "इसे <code>~/.cursor/mcp.json</code> में जोड़ें (यदि फ़ाइल मौजूद नहीं है तो उसे बनाएँ), "
 "फिर Cursor को पुनः आरंभ करें:"
 
-#: admin/class-mcp-admin-connections.php:1116
+#: admin/class-mcp-admin-connections.php:1120
 msgid "Add the server to your tool"
 msgstr "सर्वर को अपने टूल में जोड़ें"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1314
+#: admin/class-mcp-admin-connections.php:1318
 #, php-format
 msgid ""
 "Run <code>/mcp</code> in a new Claude Code session — <code>%s</code> should "
@@ -1287,7 +1326,7 @@ msgstr ""
 "दिखना चाहिए।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1316
+#: admin/class-mcp-admin-connections.php:1320
 #, php-format
 msgid ""
 "Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
@@ -1297,7 +1336,7 @@ msgstr ""
 "होना चाहिए।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1318
+#: admin/class-mcp-admin-connections.php:1322
 #, php-format
 msgid ""
 "Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
@@ -1307,7 +1346,7 @@ msgstr ""
 "चाहिए।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1320
+#: admin/class-mcp-admin-connections.php:1324
 #, php-format
 msgid ""
 "Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
@@ -1317,7 +1356,7 @@ msgstr ""
 "होना चाहिए। त्रुटियाँ <code>Output → MCP Logs</code> में दिखती हैं।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1322
+#: admin/class-mcp-admin-connections.php:1326
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
@@ -1325,16 +1364,19 @@ msgstr ""
 "<code>gemini mcp list</code> चलाएँ — <code>%s</code> कनेक्टेड के रूप में दिखना चाहिए।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1324
+#: admin/class-mcp-admin-connections.php:1328
 #, php-format
 msgid ""
 "Run <code>Chat: Open Customizations</code> from the Command Palette and open "
 "<code>Tools</code> — <code>%s</code> should be listed. Errors show under "
 "<code>MCP: List Servers → Show Output</code>."
-msgstr "कमांड पैलेट से <code>Chat: Open Customizations</code> चलाएँ और <code>Tools</code> खोलें — <code>%s</code> सूची में होना चाहिए। त्रुटियाँ <code>MCP: List Servers → Show Output</code> में दिखती हैं।"
+msgstr ""
+"कमांड पैलेट से <code>Chat: Open Customizations</code> चलाएँ और <code>Tools</code> "
+"खोलें — <code>%s</code> सूची में होना चाहिए। त्रुटियाँ <code>MCP: List Servers → "
+"Show Output</code> में दिखती हैं।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1326
+#: admin/class-mcp-admin-connections.php:1330
 #, php-format
 msgid ""
 "Start <code>muse</code> and run <code>/mcp</code> — <code>%s</code> should "
@@ -1344,7 +1386,7 @@ msgstr ""
 "के साथ दिखना चाहिए।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1328
+#: admin/class-mcp-admin-connections.php:1332
 #, php-format
 msgid ""
 "Ask OpenClaw what the server can do, or run <code>openclaw mcp probe %s</"
@@ -1354,7 +1396,7 @@ msgstr ""
 "चलाएँ — इसे 2 टूल दिखाने चाहिए।"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1330
+#: admin/class-mcp-admin-connections.php:1334
 #, php-format
 msgid ""
 "Hermes replies with the tools it found; to check later, run <code>hermes mcp "
@@ -1364,7 +1406,7 @@ msgstr ""
 "चलाएँ।"
 
 #. translators: %s: the MCP server name or the site's address.
-#: admin/class-mcp-admin-connections.php:1348
+#: admin/class-mcp-admin-connections.php:1352
 #, php-format
 msgid ""
 "Using %s, tell me this site's name and WordPress version. Don't change "
@@ -1372,38 +1414,38 @@ msgid ""
 msgstr ""
 "%s का उपयोग करके मुझे इस साइट का नाम और WordPress संस्करण बताओ। कुछ भी मत बदलो।"
 
-#: admin/class-mcp-admin-connections.php:1349
+#: admin/class-mcp-admin-connections.php:1353
 msgid "Copy prompt"
 msgstr "प्रॉम्प्ट कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:1354
+#: admin/class-mcp-admin-connections.php:1358
 msgid "Try it"
 msgstr "आज़माएँ"
 
-#: admin/class-mcp-admin-connections.php:1356
+#: admin/class-mcp-admin-connections.php:1360
 msgid "In a new chat, ask:"
 msgstr "नई चैट में पूछें:"
 
-#: admin/class-mcp-admin-connections.php:1377
-#: admin/class-mcp-admin-connections.php:1676
+#: admin/class-mcp-admin-connections.php:1381
+#: admin/class-mcp-admin-connections.php:1680
 msgid "Copy"
 msgstr "कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:1398
+#: admin/class-mcp-admin-connections.php:1402
 msgid "Select all"
 msgstr "सभी चुनें"
 
-#: admin/class-mcp-admin-connections.php:1400
+#: admin/class-mcp-admin-connections.php:1404
 msgid "Deselect all"
 msgstr "सभी अचयनित करें"
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin-connections.php:1408
+#: admin/class-mcp-admin-connections.php:1412
 #, php-format
 msgid "Select all %s tools"
 msgstr "%s के सभी टूल चुनें"
 
-#: admin/class-mcp-admin-connections.php:1422
+#: admin/class-mcp-admin-connections.php:1426
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -1411,47 +1453,47 @@ msgstr ""
 "नोट: केवल-पठन MCP संसाधन (साइट जानकारी, उपयोगकर्ता सूची, हाल की पोस्ट आदि) टूल "
 "स्कोप की परवाह किए बिना हर कुंजी और कनेक्शन के लिए हमेशा उपलब्ध होते हैं।"
 
-#: admin/class-mcp-admin-connections.php:1433
+#: admin/class-mcp-admin-connections.php:1437
 msgid "Custom…"
 msgstr "कस्टम…"
 
-#: admin/class-mcp-admin-connections.php:1433
-#: admin/class-mcp-admin-connections.php:1449
-#: admin/class-mcp-admin-connections.php:1460
+#: admin/class-mcp-admin-connections.php:1437
+#: admin/class-mcp-admin-connections.php:1453
+#: admin/class-mcp-admin-connections.php:1464
 msgid "Full access"
 msgstr "पूर्ण एक्सेस"
 
-#: admin/class-mcp-admin-connections.php:1433
-#: admin/class-mcp-admin-connections.php:1453
+#: admin/class-mcp-admin-connections.php:1437
+#: admin/class-mcp-admin-connections.php:1457
 msgid "Read-only"
 msgstr "केवल पठन"
 
-#: admin/class-mcp-admin-connections.php:1436 includes/class-mcp-oauth.php:1872
+#: admin/class-mcp-admin-connections.php:1440 includes/class-mcp-oauth.php:1947
 msgid "Access level"
 msgstr "एक्सेस स्तर"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin-connections.php:1457
+#: admin/class-mcp-admin-connections.php:1461
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "कस्टम (%d टूल)"
 
-#: admin/class-mcp-admin-connections.php:1464
+#: admin/class-mcp-admin-connections.php:1468
 msgid "Unknown (blocked)"
 msgstr "अज्ञात (अवरुद्ध)"
 
-#: admin/class-mcp-admin-connections.php:1480
+#: admin/class-mcp-admin-connections.php:1484
 msgid "Dismiss"
 msgstr "बंद करें"
 
 #. translators: 1: app name such as ChatGPT, 2: relative time such as "4 minutes"
-#: admin/class-mcp-admin-connections.php:1484
+#: admin/class-mcp-admin-connections.php:1488
 #, php-format
 msgid "%1$s tried to connect %2$s ago, but new connections were off."
 msgstr "%1$s ने %2$s पहले कनेक्ट करने की कोशिश की, लेकिन नए कनेक्शन बंद थे।"
 
 #. translators: %d: number of attempts
-#: admin/class-mcp-admin-connections.php:1487
+#: admin/class-mcp-admin-connections.php:1491
 #, php-format
 msgid "(%d attempt)"
 msgid_plural "(%d attempts)"
@@ -1459,7 +1501,7 @@ msgstr[0] "(%d प्रयास)"
 msgstr[1] "(%d प्रयास)"
 
 #. translators: %s: host name
-#: admin/class-mcp-admin-connections.php:1492
+#: admin/class-mcp-admin-connections.php:1496
 #, php-format
 msgid ""
 "Its sign-in address (%s) is not on the allowed list either — add it to the "
@@ -1469,28 +1511,28 @@ msgstr ""
 "होस्ट में जोड़ें।"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1499
+#: admin/class-mcp-admin-connections.php:1503
 #, php-format
 msgid "New connections are on — try again in %s now."
 msgstr "नए कनेक्शन चालू हैं — अभी %s में फिर से कोशिश करें।"
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:1503
+#: admin/class-mcp-admin-connections.php:1507
 #, php-format
 msgid "%s left"
 msgstr "%s शेष"
 
-#: admin/class-mcp-admin-connections.php:1510
+#: admin/class-mcp-admin-connections.php:1514
 msgid "Enable for 30 minutes"
 msgstr "30 मिनट के लिए सक्षम करें"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1513
+#: admin/class-mcp-admin-connections.php:1517
 #, php-format
 msgid "Then add the app again in %s."
 msgstr "फिर %s में ऐप को दोबारा जोड़ें।"
 
-#: admin/class-mcp-admin-connections.php:1538
+#: admin/class-mcp-admin-connections.php:1542
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1499,155 +1541,155 @@ msgstr ""
 "<strong>Claude</strong>, <strong>ChatGPT</strong>, या <strong>Codex</strong> "
 "जैसे AI एजेंट्स को Model Context Protocol के माध्यम से इस WordPress साइट से कनेक्ट करें।"
 
-#: admin/class-mcp-admin-connections.php:1565
-#: admin/class-mcp-admin-connections.php:1694
+#: admin/class-mcp-admin-connections.php:1569
+#: admin/class-mcp-admin-connections.php:1698
 msgid "Connect another app"
 msgstr "एक और ऐप कनेक्ट करें"
 
-#: admin/class-mcp-admin-connections.php:1565
+#: admin/class-mcp-admin-connections.php:1569
 msgid "Connect your first app"
 msgstr "अपना पहला ऐप कनेक्ट करें"
 
-#: admin/class-mcp-admin-connections.php:1566
+#: admin/class-mcp-admin-connections.php:1570
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr "अपना AI ऐप या कोडिंग टूल चुनें — सेटअप में लगभग एक मिनट लगता है।"
 
-#: admin/class-mcp-admin-connections.php:1568
+#: admin/class-mcp-admin-connections.php:1572
 msgid "Close"
 msgstr "बंद करें"
 
-#: admin/class-mcp-admin-connections.php:1576
+#: admin/class-mcp-admin-connections.php:1580
 msgid "Which app do you want to connect?"
 msgstr "आप कौन सा ऐप कनेक्ट करना चाहते हैं?"
 
-#: admin/class-mcp-admin-connections.php:1577
+#: admin/class-mcp-admin-connections.php:1581
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
 msgstr "चरण-दर-चरण सेटअप निर्देश देखने के लिए सूची से अपना AI ऐप या कोडिंग टूल चुनें।"
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1588
+#: admin/class-mcp-admin-connections.php:1592
 #, php-format
 msgid "Connect %s"
 msgstr "%s कनेक्ट करें"
 
-#: admin/class-mcp-admin-connections.php:1611
+#: admin/class-mcp-admin-connections.php:1615
 msgid "No terminal needed"
 msgstr "किसी टर्मिनल की आवश्यकता नहीं"
 
-#: admin/class-mcp-admin-connections.php:1612
+#: admin/class-mcp-admin-connections.php:1616
 msgid "Terminal & IDE tools"
 msgstr "टर्मिनल और IDE टूल"
 
-#: admin/class-mcp-admin-connections.php:1613
+#: admin/class-mcp-admin-connections.php:1617
 msgid "Automation & developers"
 msgstr "ऑटोमेशन और डेवलपर"
 
-#: admin/class-mcp-admin-connections.php:1618
+#: admin/class-mcp-admin-connections.php:1622
 msgid "AI clients"
 msgstr "AI क्लाइंट"
 
-#: admin/class-mcp-admin-connections.php:1638
+#: admin/class-mcp-admin-connections.php:1642
 msgid "Needs public URL"
 msgstr "सार्वजनिक URL आवश्यक"
 
-#: admin/class-mcp-admin-connections.php:1640
+#: admin/class-mcp-admin-connections.php:1644
 msgid "Works locally"
 msgstr "लोकल पर काम करता है"
 
-#: admin/class-mcp-admin-connections.php:1689
+#: admin/class-mcp-admin-connections.php:1693
 msgid "Connected apps"
 msgstr "कनेक्टेड ऐप्स"
 
-#: admin/class-mcp-admin-connections.php:1702
+#: admin/class-mcp-admin-connections.php:1706
 msgid "Name"
 msgstr "नाम"
 
-#: admin/class-mcp-admin-connections.php:1703
+#: admin/class-mcp-admin-connections.php:1707
 msgid "Type"
 msgstr "प्रकार"
 
-#: admin/class-mcp-admin-connections.php:1704
+#: admin/class-mcp-admin-connections.php:1708
 msgid "Access"
 msgstr "एक्सेस"
 
-#: admin/class-mcp-admin-connections.php:1706
+#: admin/class-mcp-admin-connections.php:1710
 msgid "Last used"
 msgstr "अंतिम उपयोग"
 
-#: admin/class-mcp-admin-connections.php:1726
+#: admin/class-mcp-admin-connections.php:1730
 msgid "Revoke this key? Any client using it will lose access."
 msgstr "इस कुंजी को रद्द करें? इसका उपयोग करने वाला कोई भी क्लाइंट एक्सेस खो देगा।"
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1736
+#: admin/class-mcp-admin-connections.php:1740
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · %2$s द्वारा स्वीकृत"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1739
+#: admin/class-mcp-admin-connections.php:1743
 #, php-format
 msgid "approved by %s"
 msgstr "%s द्वारा स्वीकृत"
 
-#: admin/class-mcp-admin-connections.php:1745
+#: admin/class-mcp-admin-connections.php:1749
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1753
+#: admin/class-mcp-admin-connections.php:1757
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "इस कनेक्शन को रद्द करें? ऐप तुरंत एक्सेस खो देगा।"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1779
+#: admin/class-mcp-admin-connections.php:1783
 #, php-format
 msgid "%s ago"
 msgstr "%s पहले"
 
-#: admin/class-mcp-admin-connections.php:1781
+#: admin/class-mcp-admin-connections.php:1785
 msgid "Never"
 msgstr "कभी नहीं"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1788
+#: admin/class-mcp-admin-connections.php:1792
 #, php-format
 msgid "Actions for %s"
 msgstr "%s के लिए कार्रवाइयाँ"
 
-#: admin/class-mcp-admin-connections.php:1791
+#: admin/class-mcp-admin-connections.php:1795
 msgid "Edit access…"
 msgstr "एक्सेस बदलें…"
 
-#: admin/class-mcp-admin-connections.php:1792
+#: admin/class-mcp-admin-connections.php:1796
 msgid "Revoke"
 msgstr "रद्द करें"
 
-#: admin/class-mcp-admin-connections.php:1795
+#: admin/class-mcp-admin-connections.php:1799
 msgid "Revoke…"
 msgstr "रद्द करें…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1808
+#: admin/class-mcp-admin-connections.php:1812
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "<strong>%s</strong> के लिए एक्सेस"
 
-#: admin/class-mcp-admin-connections.php:1812
+#: admin/class-mcp-admin-connections.php:1816
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:221
 msgid "Cancel"
 msgstr "वापस"
 
-#: admin/class-mcp-admin-connections.php:1813
+#: admin/class-mcp-admin-connections.php:1817
 msgid "Save access"
 msgstr "एक्सेस सहेजें"
 
-#: admin/class-mcp-admin-connections.php:1826
+#: admin/class-mcp-admin-connections.php:1830
 msgid "Connection Doctor"
 msgstr "कनेक्शन डायग्नोस्टिक"
 
-#: admin/class-mcp-admin-connections.php:1828
+#: admin/class-mcp-admin-connections.php:1832
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -1655,7 +1697,7 @@ msgstr ""
 "परीक्षण करें कि क्या AI क्लाइंट इस साइट तक पहुँच सकते हैं और किसी भी समस्या के लिए कॉपी-"
 "पेस्ट करने योग्य डायग्नोसिस प्राप्त करें।"
 
-#: admin/class-mcp-admin-connections.php:1831
+#: admin/class-mcp-admin-connections.php:1835
 msgid ""
 "<strong>This site is behind Cloudflare.</strong> Some Cloudflare security "
 "settings, such as Browser Integrity Check and Bot Fight Mode, can block AI "
@@ -1665,19 +1707,19 @@ msgstr ""
 "जैसे Browser Integrity Check और Bot Fight Mode, AI ऐप्स को WordPress तक पहुँचने से "
 "पहले ही रोक सकती हैं। जाँचने के लिए चेक चलाएँ।"
 
-#: admin/class-mcp-admin-connections.php:1832
+#: admin/class-mcp-admin-connections.php:1836
 msgid "How to let AI apps through Cloudflare"
 msgstr "Cloudflare से AI ऐप्स को कैसे आने दें"
 
-#: admin/class-mcp-admin-connections.php:1835
+#: admin/class-mcp-admin-connections.php:1839
 msgid "Run checks"
 msgstr "जांच चलाएं"
 
-#: admin/class-mcp-admin-connections.php:1836
+#: admin/class-mcp-admin-connections.php:1840
 msgid "Copy report"
 msgstr "रिपोर्ट कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:1837
+#: admin/class-mcp-admin-connections.php:1841
 msgid "Get help on WordPress.org"
 msgstr "WordPress.org पर सहायता प्राप्त करें"
 
@@ -2113,7 +2155,7 @@ msgid "Save Settings"
 msgstr "सेटिंग्स सहेजें"
 
 #: admin/class-mcp-admin.php:33 admin/class-mcp-admin.php:34
-#: admin/class-mcp-admin.php:624
+#: admin/class-mcp-admin.php:625
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2272,72 +2314,72 @@ msgstr ""
 "आपका ब्राउज़र साइट तक बिल्कुल नहीं पहुँच सका (DNS, TLS, या कनेक्शन अस्वीकृत)। रिमोट AI "
 "क्लाइंट भी इसी रुकावट से टकराएँगे।"
 
-#: admin/class-mcp-admin.php:319 admin/class-mcp-admin.php:339
-#: admin/class-mcp-admin.php:361
+#: admin/class-mcp-admin.php:319 admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:362
 msgid "Select an access level before saving."
 msgstr "सेव करने से पहले एक एक्सेस स्तर चुनें।"
 
-#: admin/class-mcp-admin.php:323
+#: admin/class-mcp-admin.php:324
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API कुंजी बनाई गई। इसे अभी कॉपी करें — यह केवल एक बार दिखाई जाएगी।"
 
-#: admin/class-mcp-admin.php:331
+#: admin/class-mcp-admin.php:332
 msgid "API key revoked."
 msgstr "API कुंजी रद्द की गई।"
 
-#: admin/class-mcp-admin.php:341
+#: admin/class-mcp-admin.php:342
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "कुंजी का स्कोप अपडेट किया गया। यह इस कुंजी के अगले अनुरोध पर प्रभावी होगा।"
 
-#: admin/class-mcp-admin.php:343
+#: admin/class-mcp-admin.php:344
 msgid "Could not update key scope."
 msgstr "कुंजी का स्कोप अपडेट नहीं किया जा सका।"
 
-#: admin/class-mcp-admin.php:352
+#: admin/class-mcp-admin.php:353
 msgid "Connection revoked."
 msgstr "कनेक्शन रद्द किया गया।"
 
-#: admin/class-mcp-admin.php:363
+#: admin/class-mcp-admin.php:364
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "कनेक्शन का स्कोप अपडेट किया गया। यह इस कनेक्शन के अगले अनुरोध पर प्रभावी होगा।"
 
-#: admin/class-mcp-admin.php:365
+#: admin/class-mcp-admin.php:366
 msgid "Could not update connection scope."
 msgstr "कनेक्शन का स्कोप अपडेट नहीं किया जा सका।"
 
-#: admin/class-mcp-admin.php:421
+#: admin/class-mcp-admin.php:422
 msgid "Browser sign-in enabled."
 msgstr "ब्राउज़र साइन-इन चालू हो गया।"
 
-#: admin/class-mcp-admin.php:455
+#: admin/class-mcp-admin.php:456
 msgid "Settings saved."
 msgstr "सेटिंग्स सहेजी गईं।"
 
-#: admin/class-mcp-admin.php:462
+#: admin/class-mcp-admin.php:463
 msgid "Audit log cleared."
 msgstr "ऑडिट लॉग साफ़ किया गया।"
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:480
+#: admin/class-mcp-admin.php:481
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "परिवर्तन #%1$d पूर्ववत किया गया।%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:495
+#: admin/class-mcp-admin.php:496
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%2$d में से %1$d बैच प्रविष्टियाँ पूर्ववत की गईं।"
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:511
+#: admin/class-mcp-admin.php:512
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "चेकपॉइंट #%1$d बनाया गया (%2$s)।"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:524
+#: admin/class-mcp-admin.php:525
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2347,7 +2389,7 @@ msgstr ""
 "पुनर्स्थापना से पहले का सुरक्षा चेकपॉइंट: #%4$d।"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:528
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2356,101 +2398,101 @@ msgstr ""
 "चेकपॉइंट #%1$d से डेटाबेस पुनर्स्थापित हुआ — %2$d टेबल, %3$s पंक्तियाँ जाँची गईं। पुनर्स्थापना "
 "से पहले का सुरक्षा चेकपॉइंट: #%4$d।"
 
-#: admin/class-mcp-admin.php:540
+#: admin/class-mcp-admin.php:541
 msgid "Checkpoint deleted."
 msgstr "चेकपॉइंट हटाया गया।"
 
-#: admin/class-mcp-admin.php:613
+#: admin/class-mcp-admin.php:614
 msgid "Connections"
 msgstr "कनेक्शन"
 
-#: admin/class-mcp-admin.php:614
+#: admin/class-mcp-admin.php:615
 msgid "Activity"
 msgstr "गतिविधि"
 
-#: admin/class-mcp-admin.php:615
+#: admin/class-mcp-admin.php:616
 msgid "Logs"
 msgstr "लॉग"
 
-#: admin/class-mcp-admin.php:616
+#: admin/class-mcp-admin.php:617
 msgid "Settings"
 msgstr "सेटिंग्स"
 
-#: admin/class-mcp-admin.php:617
+#: admin/class-mcp-admin.php:618
 msgid "About"
 msgstr "परिचय"
 
-#: admin/class-mcp-admin.php:629
+#: admin/class-mcp-admin.php:630
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP के अनुभाग"
 
-#: admin/class-mcp-admin.php:663
+#: admin/class-mcp-admin.php:669
 msgid "Power mode is on. Open Power mode settings."
 msgstr "Power mode चालू है। Power mode सेटिंग्स खोलें।"
 
-#: admin/class-mcp-admin.php:663
+#: admin/class-mcp-admin.php:669
 msgid "Power mode on"
 msgstr "Power mode चालू"
 
-#: admin/class-mcp-admin.php:665
+#: admin/class-mcp-admin.php:671
 msgid "Power mode is off. Open Power mode settings."
 msgstr "Power mode बंद है। Power mode सेटिंग्स खोलें।"
 
-#: admin/class-mcp-admin.php:665
+#: admin/class-mcp-admin.php:671
 msgid "Power mode off"
 msgstr "Power mode बंद"
 
-#: admin/class-mcp-admin.php:668
+#: admin/class-mcp-admin.php:674
 msgid "Safe mode off"
 msgstr "Safe mode बंद"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:697
 msgid "Every request from AI apps is rejected."
 msgstr "AI ऐप्स के सभी अनुरोध अस्वीकार किए जाते हैं।"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:697
 msgid "MCP server is off."
 msgstr "MCP सर्वर बंद है।"
 
-#: admin/class-mcp-admin.php:692
+#: admin/class-mcp-admin.php:698
 msgid "Turn on in Settings"
 msgstr "सेटिंग्स में चालू करें"
 
-#: admin/class-mcp-admin.php:720
+#: admin/class-mcp-admin.php:726
 msgid "Pagination"
 msgstr "पृष्ठ-संख्या"
 
-#: admin/class-mcp-admin.php:721
+#: admin/class-mcp-admin.php:727
 msgid "Previous"
 msgstr "पिछला"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:724
+#: admin/class-mcp-admin.php:730
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "पृष्ठ %2$d में से %1$d"
 
-#: admin/class-mcp-admin.php:726
+#: admin/class-mcp-admin.php:732
 msgid "Next"
 msgstr "अगला"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:741
 msgid "Project home, guides, and news."
 msgstr "प्रोजेक्ट होम, गाइड और समाचार।"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:741
 msgid "Website"
 msgstr "वेबसाइट"
 
-#: admin/class-mcp-admin.php:736
+#: admin/class-mcp-admin.php:742
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:736
+#: admin/class-mcp-admin.php:742
 msgid "Source, issues & releases."
 msgstr "स्रोत, इश्यू और रिलीज़।"
 
-#: admin/class-mcp-admin.php:737
+#: admin/class-mcp-admin.php:743
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2458,11 +2500,11 @@ msgstr ""
 "WordPress.org सपोर्ट फ़ोरम में पूछें। तेज़ जवाब के लिए अपनी कनेक्शन डायग्नोस्टिक रिपोर्ट "
 "पेस्ट करें।"
 
-#: admin/class-mcp-admin.php:737
+#: admin/class-mcp-admin.php:743
 msgid "Get help"
 msgstr "सहायता प्राप्त करें"
 
-#: admin/class-mcp-admin.php:738
+#: admin/class-mcp-admin.php:744
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2470,12 +2512,12 @@ msgstr ""
 "Cowboy MCP पसंद आ रहा है? WordPress.org पर एक समीक्षा अन्य साइट मालिकों को इसे "
 "खोजने में मदद करती है।"
 
-#: admin/class-mcp-admin.php:738 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:744 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "समीक्षा लिखें"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:752
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -2661,15 +2703,15 @@ msgstr ""
 msgid "Sorry, you are not allowed to do that."
 msgstr "क्षमा करें, आपको ऐसा करने की अनुमति नहीं है।"
 
-#: includes/class-mcp-oauth.php:1129
+#: includes/class-mcp-oauth.php:1186
 msgid "Unknown client"
 msgstr "अज्ञात क्लाइंट"
 
-#: includes/class-mcp-oauth.php:1539
+#: includes/class-mcp-oauth.php:1607
 msgid "The OAuth connector is not enabled on this site."
 msgstr "इस साइट पर OAuth कनेक्टर सक्षम नहीं है।"
 
-#: includes/class-mcp-oauth.php:1585
+#: includes/class-mcp-oauth.php:1656
 msgid ""
 "This site has no record of this app — it was revoked here, or the site's "
 "database was restored or copied from another site. To let it connect again: "
@@ -2683,15 +2725,15 @@ msgstr ""
 "\"30 मिनट के लिए सक्षम करें\" पर क्लिक करें, फिर ऐप में दोबारा कनेक्ट करें और यहाँ स्वीकृत "
 "करें।"
 
-#: includes/class-mcp-oauth.php:1605 includes/class-mcp-oauth.php:1630
+#: includes/class-mcp-oauth.php:1676 includes/class-mcp-oauth.php:1701
 msgid "Invalid redirect_uri for this client."
 msgstr "इस क्लाइंट के लिए अमान्य redirect_uri।"
 
-#: includes/class-mcp-oauth.php:1614
+#: includes/class-mcp-oauth.php:1685
 msgid "You must be an administrator to authorize this connection."
 msgstr "इस कनेक्शन को अधिकृत करने के लिए आपका व्यवस्थापक होना आवश्यक है।"
 
-#: includes/class-mcp-oauth.php:1642
+#: includes/class-mcp-oauth.php:1714
 msgid ""
 "This connection request is missing a required security parameter (PKCE "
 "S256). Start the connection again from your AI app."
@@ -2699,7 +2741,7 @@ msgstr ""
 "इस कनेक्शन अनुरोध में एक आवश्यक सुरक्षा पैरामीटर (PKCE S256) नहीं है। अपने AI ऐप से कनेक्शन "
 "फिर से शुरू करें।"
 
-#: includes/class-mcp-oauth.php:1646
+#: includes/class-mcp-oauth.php:1718
 msgid ""
 "This connection request is for a different address than this site's MCP "
 "endpoint. Check the server URL in your AI app."
@@ -2708,7 +2750,7 @@ msgstr ""
 "जाँचें।"
 
 #. translators: %s: host name the app asked to be sent back to
-#: includes/class-mcp-oauth.php:1655
+#: includes/class-mcp-oauth.php:1727
 #, php-format
 msgid ""
 "This connection would send you to %s, which is not an allowed destination on "
@@ -2719,12 +2761,12 @@ msgstr ""
 "भरोसा करते हैं, तो कोई व्यवस्थापक सेटिंग्स > Cowboy MCP > सेटिंग्स > ब्राउज़र साइन-इन में "
 "इसका होस्ट जोड़ सकता है।"
 
-#: includes/class-mcp-oauth.php:1668
+#: includes/class-mcp-oauth.php:1740
 msgid "Security check failed. Please try again."
 msgstr "सुरक्षा जाँच विफल रही। कृपया पुनः प्रयास करें।"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1760
+#: includes/class-mcp-oauth.php:1835
 #, php-format
 msgid ""
 "This app identifies itself with a document hosted on %s, which is not a "
@@ -2736,7 +2778,7 @@ msgstr ""
 "Cowboy MCP > सेटिंग्स > ब्राउज़र साइन-इन में इसका होस्ट जोड़ सकता है।"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1763
+#: includes/class-mcp-oauth.php:1838
 #, php-format
 msgid ""
 "This app's identity document on %s points to a private or unreachable "
@@ -2746,7 +2788,7 @@ msgstr ""
 "इसे प्राप्त नहीं किया गया।"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1767
+#: includes/class-mcp-oauth.php:1842
 #, php-format
 msgid ""
 "This site could not download the app's identity document from %s. Check that "
@@ -2757,7 +2799,7 @@ msgstr ""
 "अनुरोध भेज सकती है, फिर अपने AI ऐप से कनेक्शन फिर से शुरू करें।"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1770
+#: includes/class-mcp-oauth.php:1845
 #, php-format
 msgid ""
 "The app's identity document on %s is invalid, so this connection was "
@@ -2768,26 +2810,26 @@ msgstr ""
 "AI ऐप से कनेक्शन फिर से शुरू करें; यदि यह बार-बार विफल हो, तो ऐप प्रदाता को दस्तावेज़ "
 "ठीक करना होगा।"
 
-#: includes/class-mcp-oauth.php:1778
+#: includes/class-mcp-oauth.php:1853
 msgid "Connection error"
 msgstr "कनेक्शन त्रुटि"
 
-#: includes/class-mcp-oauth.php:1785
+#: includes/class-mcp-oauth.php:1860
 msgid "An application"
 msgstr "एक एप्लिकेशन"
 
-#: includes/class-mcp-oauth.php:1817
+#: includes/class-mcp-oauth.php:1892
 msgid "Authorize connection"
 msgstr "कनेक्शन अधिकृत करें"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:1828
+#: includes/class-mcp-oauth.php:1903
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s कनेक्ट करना चाहता है"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:1832
+#: includes/class-mcp-oauth.php:1907
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -2797,19 +2839,19 @@ msgstr ""
 "साथ कार्य करेगा।"
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:1837
+#: includes/class-mcp-oauth.php:1912
 #, php-format
 msgid "Authorizing as %s"
 msgstr "%s के रूप में अधिकृत किया जा रहा है"
 
 #. translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com
-#: includes/class-mcp-oauth.php:1842
+#: includes/class-mcp-oauth.php:1917
 #, php-format
 msgid "After you approve, you will be sent to %s"
 msgstr "स्वीकृत करने के बाद आपको %s पर भेजा जाएगा"
 
 #. translators: %s: host name the identity document was fetched from, e.g. claude.ai
-#: includes/class-mcp-oauth.php:1847
+#: includes/class-mcp-oauth.php:1922
 #, php-format
 msgid ""
 "Identity published by %s. Approve only if you just started this connection "
@@ -2818,7 +2860,7 @@ msgstr ""
 "पहचान %s द्वारा प्रकाशित। केवल तभी स्वीकृति दें जब आपने अभी स्वयं यह कनेक्शन शुरू किया हो।"
 
 #. translators: %s: the app's sign-in host, e.g. oauth-redirect.googleusercontent.com
-#: includes/class-mcp-oauth.php:1852
+#: includes/class-mcp-oauth.php:1927
 #, php-format
 msgid ""
 "The app is named after its sign-in address (%s). Approve only if you just "
@@ -2827,7 +2869,7 @@ msgstr ""
 "ऐप का नाम उसके साइन-इन पते (%s) के आधार पर रखा गया है। केवल तभी स्वीकृत करें जब आपने "
 "अभी-अभी यह कनेक्शन स्वयं शुरू किया हो।"
 
-#: includes/class-mcp-oauth.php:1855
+#: includes/class-mcp-oauth.php:1930
 msgid ""
 "The app name above is supplied by the app and is not verified. Approve only "
 "if you just started this connection yourself."
@@ -2835,7 +2877,7 @@ msgstr ""
 "ऊपर दिया गया ऐप का नाम ऐप ने स्वयं दिया है और सत्यापित नहीं है। केवल तभी स्वीकृत करें जब "
 "आपने अभी-अभी यह कनेक्शन स्वयं शुरू किया हो।"
 
-#: includes/class-mcp-oauth.php:1858
+#: includes/class-mcp-oauth.php:1933
 msgid ""
 "This site has no stored record of this connection. That is normal after a "
 "database restore or a staging sync. If you did not just start this from your "
@@ -2845,7 +2887,7 @@ msgstr ""
 "बाद यह सामान्य है। अगर आपने अभी-अभी अपने AI ऐप से यह शुरू नहीं किया है, तो अस्वीकार करें "
 "चुनें।"
 
-#: includes/class-mcp-oauth.php:1860
+#: includes/class-mcp-oauth.php:1935
 msgid ""
 "This site has no record of this app. Approving registers it here and sends "
 "you to the address above. That is expected after you revoked the app on this "
@@ -2858,29 +2900,29 @@ msgstr ""
 "से शुरू नहीं किया है, तो अस्वीकार करें चुनें।"
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:1878
+#: includes/class-mcp-oauth.php:1953
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr "मौजूदा कस्टम स्कोप बनाए रखें (%d टूल)"
 
-#: includes/class-mcp-oauth.php:1884
+#: includes/class-mcp-oauth.php:1959
 msgid "Full access — read and manage the site"
 msgstr "पूर्ण एक्सेस — साइट पढ़ें और प्रबंधित करें"
 
-#: includes/class-mcp-oauth.php:1888
+#: includes/class-mcp-oauth.php:1963
 msgid "Read-only — inspect the site, make no changes"
 msgstr "केवल पठन — साइट की जांच करें, कोई बदलाव न करें"
 
-#: includes/class-mcp-oauth.php:1892
+#: includes/class-mcp-oauth.php:1967
 msgid "Deny"
 msgstr "अस्वीकार करें"
 
-#: includes/class-mcp-oauth.php:1893
+#: includes/class-mcp-oauth.php:1968
 msgid "Approve"
 msgstr "स्वीकृत करें"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:1898
+#: includes/class-mcp-oauth.php:1973
 #, php-format
 msgid "Redirects to: %s"
 msgstr "यहाँ पुनर्निर्देशित करता है: %s"

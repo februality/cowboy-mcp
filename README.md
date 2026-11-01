@@ -2,7 +2,7 @@
 
 Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Gemini, Grok, Perplexity, Muse, Cursor, VS Code, Claude Code, Codex, n8n, OpenClaw, Hermes Agent** and any other MCP client can manage the site in plain English through **203 tools** — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
 
-![Version](https://img.shields.io/badge/version-1.7.5-34ff7a) ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4) ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b) ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue) [![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
+![Version](https://img.shields.io/badge/version-1.7.6-34ff7a) ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4) ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b) ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue) [![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
 
 **Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/)\
 **Website & guides:** [cowboymcp.com](https://cowboymcp.com)

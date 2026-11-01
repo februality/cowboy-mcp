@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.5
+Stable tag: 1.7.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -182,7 +182,7 @@ Integrations that light up automatically: WooCommerce, Gutenberg and the Site Ed
 
 = External services =
 
-Cowboy MCP sends no telemetry and makes no calls home. The only outbound connections are to WordPress.org, when your agent installs or updates plugins or themes, and any HTTP requests you explicitly ask your agent to make with the HTTP-request tool.
+Cowboy MCP sends no telemetry. It connects out only to WordPress.org for plugin and theme installs and updates, to addresses you ask your agent to reach, and, while an administrator approves a browser sign-in, to that AI app's own site for its public description file.
 
 = Support and reviews =
 
@@ -269,7 +269,9 @@ Yes - that is what it is built for. Your agent can write and edit theme and plug
 
 = Does it send my data anywhere? =
 
-No telemetry and no phone-home - your data stays on your server. The only outbound connections are to WordPress.org, when your agent installs or updates plugins and themes, plus any HTTP requests you explicitly ask your agent to make. There is no hosted relay and no account with us; your AI client connects to your site directly.
+No telemetry and no phone-home - your data stays on your server. It connects out only to WordPress.org, when your agent installs or updates plugins and themes, and to any address you ask your agent to reach. There is no hosted relay and no account with us; your AI client connects to your site directly.
+
+When you approve a browser sign-in from an AI app, your site also fetches that app's public description file from the app's own site. This happens only while a logged-in administrator has the approval screen open, and the request includes your site's address and the plugin version. The sites it may fetch from are claude.ai, claude.com, anthropic.com, chatgpt.com, openai.com, perplexity.ai, perplexity.com and nousresearch.github.io, plus any host an administrator has added.
 
 = Does it work with the WordPress Abilities API? =
 
@@ -305,6 +307,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * Changed: Editors count as a privileged role on single sites, like Administrators. Creating or promoting an Editor, or changing an Editor's email, needs Power mode.
 * Changed: `wp_search_replace`, uploads of SVG, HTML, XML, JS or CSS files from a link or base64 data, and ACF field values refuse script content unless the call passes `allow_unfiltered_html: true`. Content already on the site can be sent back unchanged.
 * Changed: without Power mode, `wp_cli db query` cannot read option or user-meta values, and `wp_cli db search` must name the tables it searches.
+* Changed: with Power mode on, `wp_cli db query` can change your site's options table only with one UPDATE or DELETE that names its rows, such as `WHERE option_name = 'name'`. Anything else on that table is refused, so use `wp option` instead. Prepared statements are refused on every table.
 * Improved: every approval of Claude Code, Codex, ChatGPT, Claude or Perplexity is now its own entry under Connected apps, with its own access level, Edit access and Revoke. Reconnecting an app adds a new entry with the access you choose on the approval screen; the earlier one stays listed until it expires.
 * Improved: read-only and custom-access connections list and read only the resources their access covers.
 * Improved: API keys are recognised faster, and a valid key keeps working while failed attempts from the same IP address are being rate limited. Existing keys are upgraded automatically on their first use.

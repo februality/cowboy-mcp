@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-10-26 09:57-0700\n"
+"POT-Creation-Date: 2026-10-28 23:19-0700\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -188,7 +188,7 @@ msgid "Create checkpoint now"
 msgstr "立即创建检查点"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1705
+#: admin/class-mcp-admin-connections.php:1709
 msgid "Created"
 msgstr "创建时间"
 
@@ -205,7 +205,7 @@ msgid "Size"
 msgstr "大小"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1707
+#: admin/class-mcp-admin-connections.php:1711
 msgid "Actions"
 msgstr "操作"
 
@@ -348,7 +348,11 @@ msgid ""
 "Team and Enterprise, an organization owner adds the connector first under "
 "<strong>Organization settings → Connectors</strong> (<strong>Add → Custom → "
 "Web</strong>); members then click <strong>Connect</strong>."
-msgstr "所有 Claude 方案均可使用自定义连接器（Free 方案限一个）。在 Team 和 Enterprise 中，需由组织所有者先在 <strong>Organization settings → Connectors</strong>（<strong>Add → Custom → Web</strong>）中添加连接器，成员随后点击 <strong>Connect</strong>。"
+msgstr ""
+"所有 Claude 方案均可使用自定义连接器（Free 方案限一个）。在 Team 和 "
+"Enterprise 中，需由组织所有者先在 <strong>Organization settings → "
+"Connectors</strong>（<strong>Add → Custom → Web</strong>）中添加连接器，成员"
+"随后点击 <strong>Connect</strong>。"
 
 #: admin/class-mcp-admin-connections.php:265
 msgid "Organization owner on Team or Enterprise?"
@@ -369,7 +373,10 @@ msgid ""
 "<strong>Approve</strong>. Back in ChatGPT, review the tools it found and "
 "install the plugin, then start a new chat and type <strong>@</strong> and "
 "its name."
-msgstr "ChatGPT 会打开<strong>您网站</strong>上的登录页面。点击 <strong>Approve</strong>。回到 ChatGPT 后，查看发现的工具并安装该插件，然后开始新的聊天，输入 <strong>@</strong> 和它的名称。"
+msgstr ""
+"ChatGPT 会打开<strong>您网站</strong>上的登录页面。点击 <strong>Approve</"
+"strong>。回到 ChatGPT 后，查看发现的工具并安装该插件，然后开始新的聊天，输入 "
+"<strong>@</strong> 和它的名称。"
 
 #: admin/class-mcp-admin-connections.php:312
 msgid ""
@@ -412,7 +419,7 @@ msgstr "改为手动添加"
 #: admin/class-mcp-admin-connections.php:344
 #: admin/class-mcp-admin-connections.php:400
 #: admin/class-mcp-admin-connections.php:518
-#: admin/class-mcp-admin-connections.php:1033
+#: admin/class-mcp-admin-connections.php:1037
 msgid "Approve access"
 msgstr "批准访问"
 
@@ -444,7 +451,9 @@ msgstr "粘贴链接"
 msgid ""
 "Go to <code>Plugins</code>, click <strong>Add</strong> (or <strong>+</"
 "strong>) and choose <strong>Add custom MCP server</strong>."
-msgstr "前往 <code>Plugins</code>，点击 <strong>Add</strong>（或 <strong>+</strong>），然后选择 <strong>Add custom MCP server</strong>。"
+msgstr ""
+"前往 <code>Plugins</code>，点击 <strong>Add</strong>（或 <strong>+</"
+"strong>），然后选择 <strong>Add custom MCP server</strong>。"
 
 #: admin/class-mcp-admin-connections.php:378
 msgid ""
@@ -481,7 +490,9 @@ msgid ""
 "Sign in, then open <strong>Plugins</strong> in the sidebar "
 "(<strong>Customize → Connectors</strong> on accounts that do not have it "
 "yet)."
-msgstr "登录，然后打开侧边栏中的 <strong>Plugins</strong>（尚未提供该入口的账户请打开 <strong>Customize → Connectors</strong>）。"
+msgstr ""
+"登录，然后打开侧边栏中的 <strong>Plugins</strong>（尚未提供该入口的账户请打"
+"开 <strong>Customize → Connectors</strong>）。"
 
 #: admin/class-mcp-admin-connections.php:428
 msgid ""
@@ -490,13 +501,20 @@ msgid ""
 "<strong>Remote</strong>. Give it a name, paste the link as the <strong>MCP "
 "server URL</strong> (keep OAuth and Streamable HTTP), tick the "
 "acknowledgement and click <strong>Add</strong>."
-msgstr "点击 <strong>Add custom</strong>（旧页面上为 <strong>+ Custom connector</strong>），选择 <strong>Add MCP connector</strong>，如有询问再选择 <strong>Remote</strong>。输入名称，将链接粘贴为 <strong>MCP server URL</strong>（保留 OAuth 和 Streamable HTTP），勾选确认项，然后点击 <strong>Add</strong>。"
+msgstr ""
+"点击 <strong>Add custom</strong>（旧页面上为 <strong>+ Custom connector</"
+"strong>），选择 <strong>Add MCP connector</strong>，如有询问再选择 "
+"<strong>Remote</strong>。输入名称，将链接粘贴为 <strong>MCP server URL</"
+"strong>（保留 OAuth 和 Streamable HTTP），勾选确认项，然后点击 <strong>Add</"
+"strong>。"
 
 #: admin/class-mcp-admin-connections.php:429
 msgid ""
 "Click the new connector’s card (then <strong>Add connector</strong> if it "
 "asks) — Perplexity opens the sign-in in a popup."
-msgstr "点击新连接器的卡片（如有提示再点击 <strong>Add connector</strong>），Perplexity 会在弹出窗口中打开登录页。"
+msgstr ""
+"点击新连接器的卡片（如有提示再点击 <strong>Add connector</strong>），"
+"Perplexity 会在弹出窗口中打开登录页。"
 
 #: admin/class-mcp-admin-connections.php:430
 msgid ""
@@ -541,7 +559,9 @@ msgid ""
 "Connectors are available on every Grok plan, the free plan included "
 "(verified 2026-10-12). On Business and Enterprise workspaces an admin "
 "provisions the connector first."
-msgstr "所有 Grok 方案均可使用连接器，包括免费方案（2026-10-12 已验证）。在 Business 和 Enterprise 工作区中，需由管理员先配置连接器。"
+msgstr ""
+"所有 Grok 方案均可使用连接器，包括免费方案（2026-10-12 已验证）。在 Business "
+"和 Enterprise 工作区中，需由管理员先配置连接器。"
 
 #: admin/class-mcp-admin-connections.php:440
 msgid ""
@@ -564,13 +584,18 @@ msgid ""
 "Open <strong>Customize → Connectors</strong>, click <strong>+ Custom</"
 "strong>, paste the link as the <strong>MCP Server URL</strong> and click "
 "<strong>Next</strong>."
-msgstr "打开 <strong>Customize → Connectors</strong>，点击 <strong>+ Custom</strong>，将链接粘贴为 <strong>MCP Server URL</strong>，然后点击 <strong>Next</strong>。"
+msgstr ""
+"打开 <strong>Customize → Connectors</strong>，点击 <strong>+ Custom</"
+"strong>，将链接粘贴为 <strong>MCP Server URL</strong>，然后点击 "
+"<strong>Next</strong>。"
 
 #: admin/class-mcp-admin-connections.php:446
 msgid ""
 "Follow Gemini’s prompts (tick the acknowledgement, <strong>Connect</strong>, "
 "<strong>Agree and continue</strong>) — Gemini opens the sign-in page."
-msgstr "按照 Gemini 的提示操作（勾选确认框、<strong>Connect</strong>、<strong>Agree and continue</strong>）——Gemini 会打开登录页面。"
+msgstr ""
+"按照 Gemini 的提示操作（勾选确认框、<strong>Connect</strong>、<strong>Agree "
+"and continue</strong>）——Gemini 会打开登录页面。"
 
 #: admin/class-mcp-admin-connections.php:447
 msgid ""
@@ -614,14 +639,18 @@ msgstr ""
 msgid ""
 "Meta offers Muse in the United States and Canada. Meta does not review "
 "custom connectors, so add only sites you manage."
-msgstr "Meta 在美国和加拿大提供 Muse。Meta 不审核自定义连接器，因此只添加由你管理的网站。"
+msgstr ""
+"Meta 在美国和加拿大提供 Muse。Meta 不审核自定义连接器，因此只添加由你管理的网"
+"站。"
 
 #: admin/class-mcp-admin-connections.php:464
 msgid ""
 "Muse asks you to approve the requests it sends to your site: <strong>Allow "
 "once</strong>, <strong>Allow for this site</strong> or <strong>Always allow</"
 "strong>."
-msgstr "Muse 会请你批准它发送到你网站的请求：<strong>Allow once</strong>、<strong>Allow for this site</strong> 或 <strong>Always allow</strong>。"
+msgstr ""
+"Muse 会请你批准它发送到你网站的请求：<strong>Allow once</strong>、"
+"<strong>Allow for this site</strong> 或 <strong>Always allow</strong>。"
 
 #: admin/class-mcp-admin-connections.php:466
 msgid ""
@@ -662,79 +691,84 @@ msgid "Which %s plans work?"
 msgstr "哪些 %s 套餐可用？"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:556
-#: admin/class-mcp-admin-connections.php:805
-#: admin/class-mcp-admin-connections.php:816
+#: admin/class-mcp-admin-connections.php:560
+#: admin/class-mcp-admin-connections.php:809
+#: admin/class-mcp-admin-connections.php:820
 #, php-format
 msgid "Message for %s"
 msgstr "发给 %s 的消息"
 
-#: admin/class-mcp-admin-connections.php:559
-#: admin/class-mcp-admin-connections.php:808
-#: admin/class-mcp-admin-connections.php:819
+#: admin/class-mcp-admin-connections.php:563
+#: admin/class-mcp-admin-connections.php:812
+#: admin/class-mcp-admin-connections.php:823
 msgid "Copy message"
 msgstr "复制消息"
 
-#: admin/class-mcp-admin-connections.php:564
+#: admin/class-mcp-admin-connections.php:568
 msgid "Connection link"
 msgstr "连接链接"
 
-#: admin/class-mcp-admin-connections.php:564
+#: admin/class-mcp-admin-connections.php:568
 msgid "Copy connector URL"
 msgstr "复制连接器 URL"
 
 #. translators: %s: AI app name
-#: admin/class-mcp-admin-connections.php:577
+#: admin/class-mcp-admin-connections.php:581
 #, php-format
 msgid "Open %s"
 msgstr "打开 %s"
 
-#: admin/class-mcp-admin-connections.php:579
-#: admin/class-mcp-admin-connections.php:632
-#: admin/class-mcp-admin-connections.php:1832
+#: admin/class-mcp-admin-connections.php:583
+#: admin/class-mcp-admin-connections.php:636
+#: admin/class-mcp-admin-connections.php:1836
 msgid "(opens in a new tab)"
 msgstr "（在新标签页中打开）"
 
-#: admin/class-mcp-admin-connections.php:589
+#: admin/class-mcp-admin-connections.php:593
 msgid "Turn on sign-in first:"
 msgstr "请先开启登录："
 
-#: admin/class-mcp-admin-connections.php:590
+#: admin/class-mcp-admin-connections.php:594
 msgid "Turn on browser sign-in"
 msgstr "开启浏览器登录"
 
-#: admin/class-mcp-admin-connections.php:604
+#: admin/class-mcp-admin-connections.php:608
 msgid ""
 "In the <strong>Claude</strong> desktop app, go to <code>Customize → "
 "Connectors</code>."
 msgstr ""
 "在 <strong>Claude</strong> 桌面应用中，前往 <code>自定义 → 连接器</code>。"
 
-#: admin/class-mcp-admin-connections.php:605
+#: admin/class-mcp-admin-connections.php:609
 msgid "On <code>claude.ai</code>, go to <code>Customize → Connectors</code>."
 msgstr "在 <code>claude.ai</code> 上，前往 <code>自定义 → 连接器</code>。"
 
-#: admin/class-mcp-admin-connections.php:608
+#: admin/class-mcp-admin-connections.php:612
 msgid ""
 "Click <strong>+ Add</strong>, then <strong>Add custom connector</strong>."
 msgstr ""
 "点击 <strong>+ Add</strong>，然后点击 <strong>Add custom connector</strong>。"
 
-#: admin/class-mcp-admin-connections.php:614
+#: admin/class-mcp-admin-connections.php:618
 msgid ""
 "Name it, paste the link above and click <strong>Continue</strong>. Keep the "
 "sign-in settings Claude detects (either OAuth client option works) and "
 "finish with <strong>Add</strong>."
-msgstr "填写名称，粘贴上方链接，然后点击<strong>继续</strong>。保留 Claude 检测到的登录设置（两种 OAuth 客户端选项都可以），最后点击<strong>添加</strong>。"
+msgstr ""
+"填写名称，粘贴上方链接，然后点击<strong>继续</strong>。保留 Claude 检测到的登"
+"录设置（两种 OAuth 客户端选项都可以），最后点击<strong>添加</strong>。"
 
-#: admin/class-mcp-admin-connections.php:615
+#: admin/class-mcp-admin-connections.php:619
 msgid ""
 "Name it, paste the link from step 1 and click <strong>Continue</strong>. "
 "Keep the sign-in settings Claude detects (either OAuth client option works) "
 "and finish with <strong>Add</strong>."
-msgstr "填写名称，粘贴第 1 步中的链接，然后点击<strong>继续</strong>。保留 Claude 检测到的登录设置（两种 OAuth 客户端选项都可以），最后点击<strong>添加</strong>。"
+msgstr ""
+"填写名称，粘贴第 1 步中的链接，然后点击<strong>继续</strong>。保留 Claude 检"
+"测到的登录设置（两种 OAuth 客户端选项都可以），最后点击<strong>添加</"
+"strong>。"
 
-#: admin/class-mcp-admin-connections.php:670
+#: admin/class-mcp-admin-connections.php:674
 msgid ""
 "This site runs on your computer, so the cloud connector cannot reach it. "
 "Claude Desktop connects through a <strong>local bridge</strong> instead: the "
@@ -746,11 +780,11 @@ msgstr ""
 "本地桥接</strong>连接：开源的 <code>mcp-remote</code> 包，通过 <code>npx</"
 "code> 启动（需要 Node.js）。它在您的浏览器中登录，不会向互联网暴露任何内容。"
 
-#: admin/class-mcp-admin-connections.php:672
+#: admin/class-mcp-admin-connections.php:676
 msgid "Add the bridge to Claude Desktop"
 msgstr "将桥接添加到 Claude Desktop"
 
-#: admin/class-mcp-admin-connections.php:673
+#: admin/class-mcp-admin-connections.php:677
 msgid ""
 "Run this in Terminal (macOS) or PowerShell (Windows), then fully quit and "
 "reopen the Claude app."
@@ -758,38 +792,38 @@ msgstr ""
 "在终端（macOS）或 PowerShell（Windows）中运行此命令，然后完全退出并重新打开 "
 "Claude 应用。"
 
-#: admin/class-mcp-admin-connections.php:674
-#: admin/class-mcp-admin-connections.php:685
-#: admin/class-mcp-admin-connections.php:698
-#: admin/class-mcp-admin-connections.php:757
-#: admin/class-mcp-admin-connections.php:811
-#: admin/class-mcp-admin-connections.php:822
-#: admin/class-mcp-admin-connections.php:878
-#: admin/class-mcp-admin-connections.php:949
-#: admin/class-mcp-admin-connections.php:980
-#: admin/class-mcp-admin-connections.php:1061
-#: admin/class-mcp-admin-connections.php:1118
+#: admin/class-mcp-admin-connections.php:678
+#: admin/class-mcp-admin-connections.php:689
+#: admin/class-mcp-admin-connections.php:702
+#: admin/class-mcp-admin-connections.php:761
+#: admin/class-mcp-admin-connections.php:815
+#: admin/class-mcp-admin-connections.php:826
+#: admin/class-mcp-admin-connections.php:882
+#: admin/class-mcp-admin-connections.php:953
+#: admin/class-mcp-admin-connections.php:984
+#: admin/class-mcp-admin-connections.php:1065
+#: admin/class-mcp-admin-connections.php:1122
 msgid "Copy setup command"
 msgstr "复制设置命令"
 
-#: admin/class-mcp-admin-connections.php:674
-#: admin/class-mcp-admin-connections.php:677
-#: admin/class-mcp-admin-connections.php:698
+#: admin/class-mcp-admin-connections.php:678
+#: admin/class-mcp-admin-connections.php:681
 #: admin/class-mcp-admin-connections.php:702
-#: admin/class-mcp-admin-connections.php:811
-#: admin/class-mcp-admin-connections.php:822
-#: admin/class-mcp-admin-connections.php:878
-#: admin/class-mcp-admin-connections.php:949
-#: admin/class-mcp-admin-connections.php:1133
+#: admin/class-mcp-admin-connections.php:706
+#: admin/class-mcp-admin-connections.php:815
+#: admin/class-mcp-admin-connections.php:826
+#: admin/class-mcp-admin-connections.php:882
+#: admin/class-mcp-admin-connections.php:953
+#: admin/class-mcp-admin-connections.php:1137
 msgid "terminal"
 msgstr "终端"
 
-#: admin/class-mcp-admin-connections.php:682
-#: admin/class-mcp-admin-connections.php:977
+#: admin/class-mcp-admin-connections.php:686
+#: admin/class-mcp-admin-connections.php:981
 msgid "Edit the config file instead"
 msgstr "改为编辑配置文件"
 
-#: admin/class-mcp-admin-connections.php:684
+#: admin/class-mcp-admin-connections.php:688
 msgid ""
 "Add this to <code>claude_desktop_config.json</code>, then fully quit and "
 "reopen the Claude app."
@@ -797,7 +831,7 @@ msgstr ""
 "将此内容添加到 <code>claude_desktop_config.json</code>，然后完全退出并重新打"
 "开 Claude 应用。"
 
-#: admin/class-mcp-admin-connections.php:687
+#: admin/class-mcp-admin-connections.php:691
 msgid ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
@@ -805,26 +839,26 @@ msgstr ""
 "macOS: <code>~/Library/Application Support/Claude/"
 "claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:688
+#: admin/class-mcp-admin-connections.php:692
 msgid "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 msgstr "Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code>"
 
-#: admin/class-mcp-admin-connections.php:693
-#: admin/class-mcp-admin-connections.php:1011
-#: admin/class-mcp-admin-connections.php:1056
+#: admin/class-mcp-admin-connections.php:697
+#: admin/class-mcp-admin-connections.php:1015
+#: admin/class-mcp-admin-connections.php:1060
 msgid "Use an API key instead"
 msgstr "改用 API 密钥"
 
-#: admin/class-mcp-admin-connections.php:695
-#: admin/class-mcp-admin-connections.php:1058
+#: admin/class-mcp-admin-connections.php:699
+#: admin/class-mcp-admin-connections.php:1062
 msgid "For headless setups, CI, or a tool that cannot open a browser."
 msgstr "适用于无头环境、CI 或无法打开浏览器的工具。"
 
-#: admin/class-mcp-admin-connections.php:697
+#: admin/class-mcp-admin-connections.php:701
 msgid "Then run this instead, with the key in a header:"
 msgstr "然后改为运行此命令，并在请求头中携带密钥："
 
-#: admin/class-mcp-admin-connections.php:699
+#: admin/class-mcp-admin-connections.php:703
 msgid ""
 "The key is stored in plain text in that file, so prefer a <strong>read-only</"
 "strong> key unless this connection needs to make changes, and revoke it here "
@@ -833,14 +867,14 @@ msgstr ""
 "密钥以明文保存在该文件中，除非此连接需要进行更改，否则请优先使用<strong>只读"
 "</strong>密钥，并在不再使用时在此处撤销。"
 
-#: admin/class-mcp-admin-connections.php:710
-#: admin/class-mcp-admin-connections.php:1020
-#: admin/class-mcp-admin-connections.php:1334
+#: admin/class-mcp-admin-connections.php:714
+#: admin/class-mcp-admin-connections.php:1024
+#: admin/class-mcp-admin-connections.php:1338
 msgid "Check it worked"
 msgstr "确认是否成功"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:713
+#: admin/class-mcp-admin-connections.php:717
 #, php-format
 msgid ""
 "Open a new chat in Claude Desktop, click <strong>+</strong> and open "
@@ -851,16 +885,16 @@ msgstr ""
 "<strong>Connectors</strong>——列表中应出现 <code>%s</code>。首次启动需要片刻，"
 "以便下载桥接程序。"
 
-#: admin/class-mcp-admin-connections.php:714
-#: admin/class-mcp-admin-connections.php:1335
+#: admin/class-mcp-admin-connections.php:718
+#: admin/class-mcp-admin-connections.php:1339
 msgid "Then try:"
 msgstr "然后试试："
 
-#: admin/class-mcp-admin-connections.php:754
+#: admin/class-mcp-admin-connections.php:758
 msgid "Getting a certificate error?"
 msgstr "遇到证书错误？"
 
-#: admin/class-mcp-admin-connections.php:756
+#: admin/class-mcp-admin-connections.php:760
 msgid ""
 "Local sites usually use a self-signed certificate that AI tools reject. "
 "Since this site runs on this computer, use the plain <code>http://</code> "
@@ -873,18 +907,18 @@ msgstr ""
 "<code>NODE_TLS_REJECT_UNAUTHORIZED=0</code> 这种变通方法：它会为该工具连接的"
 "所有对象关闭证书检查。"
 
-#: admin/class-mcp-admin-connections.php:786
 #: admin/class-mcp-admin-connections.php:790
+#: admin/class-mcp-admin-connections.php:794
 msgid ""
 "Run these in your terminal. The second line opens your browser to sign in."
 msgstr "在终端中运行以下命令。第二行会打开浏览器进行登录。"
 
-#: admin/class-mcp-admin-connections.php:787
+#: admin/class-mcp-admin-connections.php:791
 msgid "Run this in your terminal. Codex opens your browser to sign in."
 msgstr "在终端中运行此命令。Codex 会打开浏览器进行登录。"
 
 #. translators: %s: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:789
+#: admin/class-mcp-admin-connections.php:793
 #, php-format
 msgid ""
 "Run this in your terminal, then start <code>gemini</code>: it opens your "
@@ -893,7 +927,7 @@ msgstr ""
 "在终端中运行此命令，然后启动 <code>gemini</code>：它会打开浏览器进行登录（如"
 "果没有，请运行 <code>/mcp auth %s</code>）。"
 
-#: admin/class-mcp-admin-connections.php:791
+#: admin/class-mcp-admin-connections.php:795
 msgid ""
 "Start <code>muse</code> and paste this message. Muse adds the server to its "
 "settings; approve the change when it asks."
@@ -901,7 +935,7 @@ msgstr ""
 "启动 <code>muse</code> 并粘贴这条消息。Muse 会把服务器添加到其设置中；在它请"
 "求时批准该更改。"
 
-#: admin/class-mcp-admin-connections.php:794
+#: admin/class-mcp-admin-connections.php:798
 msgid ""
 "Paste this message into your OpenClaw chat. OpenClaw asks you to approve the "
 "config change, then sends you the sign-in link."
@@ -909,7 +943,7 @@ msgstr ""
 "将此消息粘贴到 OpenClaw 聊天中。OpenClaw 会请你批准配置更改，然后发送登录链"
 "接。"
 
-#: admin/class-mcp-admin-connections.php:795
+#: admin/class-mcp-admin-connections.php:799
 msgid ""
 "Paste this message into your Hermes chat. Hermes adds the server and sends "
 "you a sign-in link; open it in your browser."
@@ -917,15 +951,15 @@ msgstr ""
 "把这条消息粘贴到 Hermes 聊天中。Hermes 会添加服务器并发给你登录链接，在浏览器"
 "中打开即可。"
 
-#: admin/class-mcp-admin-connections.php:799
+#: admin/class-mcp-admin-connections.php:803
 msgid "Add the server"
 msgstr "添加服务器"
 
-#: admin/class-mcp-admin-connections.php:810
+#: admin/class-mcp-admin-connections.php:814
 msgid "Then quit Muse and run this. It opens your browser to sign in:"
 msgstr "然后退出 Muse 并运行以下命令。它会打开浏览器进行登录："
 
-#: admin/class-mcp-admin-connections.php:825
+#: admin/class-mcp-admin-connections.php:829
 msgid ""
 "Over SSH? Add <code>--no-browser</code> to the second line and open the "
 "printed URL in a local browser."
@@ -933,19 +967,19 @@ msgstr ""
 "通过 SSH 使用？在第二行加上 <code>--no-browser</code>，然后在本地浏览器中打开"
 "输出的 URL。"
 
-#: admin/class-mcp-admin-connections.php:827
-#: admin/class-mcp-admin-connections.php:1065
+#: admin/class-mcp-admin-connections.php:831
+#: admin/class-mcp-admin-connections.php:1069
 msgid "Opencode 1.x: leave out <code>--global</code>."
 msgstr "Opencode 1.x：去掉 <code>--global</code>。"
 
-#: admin/class-mcp-admin-connections.php:829
+#: admin/class-mcp-admin-connections.php:833
 msgid ""
 "Over SSH? Add <code>--headless</code> and paste back the address your "
 "browser ends on."
 msgstr ""
 "通过 SSH 连接？加上 <code>--headless</code>，然后粘贴浏览器最终停留的地址。"
 
-#: admin/class-mcp-admin-connections.php:831
+#: admin/class-mcp-admin-connections.php:835
 msgid ""
 "OpenClaw on another machine? If the sign-in cannot reach it, send OpenClaw "
 "the <code>code</code> from the address your browser ends on."
@@ -953,7 +987,7 @@ msgstr ""
 "OpenClaw 在另一台机器上？如果登录无法连回它，把浏览器最终地址中的 "
 "<code>code</code> 发给 OpenClaw。"
 
-#: admin/class-mcp-admin-connections.php:833
+#: admin/class-mcp-admin-connections.php:837
 msgid ""
 "If your browser ends on a <code>127.0.0.1</code> address that will not load, "
 "paste that address back into the chat; Hermes completes the sign-in from "
@@ -962,7 +996,7 @@ msgstr ""
 "如果浏览器最终停在无法打开的 <code>127.0.0.1</code> 地址，把该地址粘贴回聊"
 "天，Hermes 会从那里完成登录。"
 
-#: admin/class-mcp-admin-connections.php:836
+#: admin/class-mcp-admin-connections.php:840
 msgid ""
 "Local https sites usually use a self-signed certificate that these tools "
 "reject: trust it in your tool, or set the WordPress Site Address to the "
@@ -972,7 +1006,7 @@ msgstr ""
 "WordPress 站点地址设为 <code>http://</code> URL。"
 
 #. translators: 1: config file path, 2: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:845
+#: admin/class-mcp-admin-connections.php:849
 #, php-format
 msgid ""
 "Add this to <code>%1$s</code> (merge it if the file exists), then run "
@@ -982,7 +1016,7 @@ msgstr ""
 "mcp login %2$s</code>。"
 
 #. translators: 1: config file path, 2: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:847
+#: admin/class-mcp-admin-connections.php:851
 #, php-format
 msgid ""
 "Add this to <code>%1$s</code> (merge it if the file exists), then run "
@@ -992,18 +1026,18 @@ msgstr ""
 "<code>openclaw mcp login %2$s</code>。"
 
 #. translators: 1: config file path, 2: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:849
+#: admin/class-mcp-admin-connections.php:853
 #, php-format
 msgid ""
 "Add this to <code>%1$s</code>, then run <code>hermes mcp login %2$s</code>."
 msgstr ""
 "将其添加到 <code>%1$s</code>，然后运行 <code>hermes mcp login %2$s</code>。"
 
-#: admin/class-mcp-admin-connections.php:869
+#: admin/class-mcp-admin-connections.php:873
 msgid "Use the terminal instead"
 msgstr "改用终端"
 
-#: admin/class-mcp-admin-connections.php:872
+#: admin/class-mcp-admin-connections.php:876
 msgid ""
 "Run these in your terminal where OpenClaw is installed. The second line "
 "prints a sign-in link; open it in your browser."
@@ -1011,7 +1045,7 @@ msgstr ""
 "在安装了 OpenClaw 的机器上运行这些命令。第二行会打印登录链接，请在浏览器中打"
 "开。"
 
-#: admin/class-mcp-admin-connections.php:876
+#: admin/class-mcp-admin-connections.php:880
 msgid ""
 "Run this in your terminal. Hermes opens your browser to sign in, then asks "
 "which tools to enable — answer <code>Y</code> (press Enter again if nothing "
@@ -1021,7 +1055,7 @@ msgstr ""
 "<code>Y</code>（如果没有反应，再按一次 Enter）。"
 
 #. translators: %s: the MCP server name used in the command
-#: admin/class-mcp-admin-connections.php:882
+#: admin/class-mcp-admin-connections.php:886
 #, php-format
 msgid ""
 "OpenClaw running on another machine? Open the printed link in a local "
@@ -1032,7 +1066,7 @@ msgstr ""
 "的地址中复制 <code>code</code>，然后运行 <code>openclaw mcp login %s --code "
 "&lt;code&gt;</code>。"
 
-#: admin/class-mcp-admin-connections.php:885
+#: admin/class-mcp-admin-connections.php:889
 msgid ""
 "Over SSH? Open the printed link in a local browser and paste the address "
 "your browser ends on back into the terminal."
@@ -1040,28 +1074,28 @@ msgstr ""
 "通过 SSH？在本地浏览器中打开打印出的链接，然后把浏览器最终停留的地址粘贴回终"
 "端。"
 
-#: admin/class-mcp-admin-connections.php:932
+#: admin/class-mcp-admin-connections.php:936
 msgid "Add to Cursor"
 msgstr "添加到 Cursor"
 
-#: admin/class-mcp-admin-connections.php:932
+#: admin/class-mcp-admin-connections.php:936
 msgid "Install in VS Code"
 msgstr "在 VS Code 中安装"
 
-#: admin/class-mcp-admin-connections.php:934
+#: admin/class-mcp-admin-connections.php:938
 msgid "Accept in Cursor. It opens your browser to sign in."
 msgstr "在 Cursor 中接受。它会打开浏览器进行登录。"
 
-#: admin/class-mcp-admin-connections.php:935
+#: admin/class-mcp-admin-connections.php:939
 msgid ""
 "Confirm in VS Code and trust the server. It opens your browser to sign in."
 msgstr "在 VS Code 中确认并信任该服务器。它会打开浏览器进行登录。"
 
-#: admin/class-mcp-admin-connections.php:946
+#: admin/class-mcp-admin-connections.php:950
 msgid "Use a command instead"
 msgstr "改用命令"
 
-#: admin/class-mcp-admin-connections.php:948
+#: admin/class-mcp-admin-connections.php:952
 msgid ""
 "Run this in your terminal (the <code>code</code> command ships with VS "
 "Code), then open Copilot Chat. It signs in on first use."
@@ -1070,20 +1104,20 @@ msgstr ""
 "Copilot Chat。首次使用时会登录。"
 
 #. translators: %s: path of the client's config file.
-#: admin/class-mcp-admin-connections.php:955
+#: admin/class-mcp-admin-connections.php:959
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart Cursor. It signs in on first use."
 msgstr "将此内容添加到 <code>%s</code>，然后重启 Cursor。首次使用时会登录。"
 
 #. translators: %s: config file path
-#: admin/class-mcp-admin-connections.php:973
+#: admin/class-mcp-admin-connections.php:977
 #, php-format
 msgid ""
 "Add this to <code>%s</code>, then restart the app. It signs in on first use."
 msgstr "将此内容添加到 <code>%s</code>，然后重启应用。首次使用时会登录。"
 
-#: admin/class-mcp-admin-connections.php:996
+#: admin/class-mcp-admin-connections.php:1000
 msgid ""
 "n8n cloud connects from n8n's servers and cannot reach a local site; a self-"
 "hosted n8n on this machine works."
@@ -1091,11 +1125,11 @@ msgstr ""
 "n8n cloud 从 n8n 的服务器发起连接，无法访问本地站点；本机上自托管的 n8n 可"
 "以。"
 
-#: admin/class-mcp-admin-connections.php:998
+#: admin/class-mcp-admin-connections.php:1002
 msgid "Add an MCP Client Tool node"
 msgstr "添加 MCP Client Tool 节点"
 
-#: admin/class-mcp-admin-connections.php:999
+#: admin/class-mcp-admin-connections.php:1003
 msgid ""
 "In your workflow, add the <strong>MCP Client Tool</strong> node to your "
 "agent and fill in:"
@@ -1103,31 +1137,34 @@ msgstr ""
 "在您的工作流中，将 <strong>MCP Client Tool</strong> 节点添加到您的智能体，并"
 "填写："
 
-#: admin/class-mcp-admin-connections.php:1001
+#: admin/class-mcp-admin-connections.php:1005
 msgid "Copy endpoint URL"
 msgstr "复制端点 URL"
 
-#: admin/class-mcp-admin-connections.php:1001
+#: admin/class-mcp-admin-connections.php:1005
 msgid "Endpoint"
 msgstr "Endpoint"
 
-#: admin/class-mcp-admin-connections.php:1002
+#: admin/class-mcp-admin-connections.php:1006
 msgid "Server Transport"
 msgstr "Server Transport"
 
-#: admin/class-mcp-admin-connections.php:1003
+#: admin/class-mcp-admin-connections.php:1007
 msgid ""
 "<strong>MCP OAuth2</strong> — create a new MCP OAuth2 API credential, keep "
 "<strong>Use Dynamic Client Registration</strong> on and click Connect. n8n "
 "registers itself with this site and opens the sign-in."
-msgstr "<strong>MCP OAuth2</strong>——新建一个 MCP OAuth2 API 凭据，保持 <strong>Use Dynamic Client Registration</strong> 开启并点击 Connect。n8n 会自行在本站注册并打开登录页。"
+msgstr ""
+"<strong>MCP OAuth2</strong>——新建一个 MCP OAuth2 API 凭据，保持 <strong>Use "
+"Dynamic Client Registration</strong> 开启并点击 Connect。n8n 会自行在本站注册"
+"并打开登录页。"
 
-#: admin/class-mcp-admin-connections.php:1003
+#: admin/class-mcp-admin-connections.php:1007
 msgid "Authentication"
 msgstr "Authentication"
 
 #. translators: %s: URL of the Settings tab
-#: admin/class-mcp-admin-connections.php:1007
+#: admin/class-mcp-admin-connections.php:1011
 #, php-format
 msgid ""
 "Self-hosted n8n: add your n8n host under <a href=\"%s\">Settings → "
@@ -1136,7 +1173,7 @@ msgstr ""
 "自托管 n8n：请先在<a href=\"%s\">设置 → 其他允许的主机</a>中添加您的 n8n 主"
 "机。n8n cloud 已被允许。"
 
-#: admin/class-mcp-admin-connections.php:1013
+#: admin/class-mcp-admin-connections.php:1017
 msgid ""
 "Set Authentication to <strong>Bearer Auth</strong> instead and paste the key "
 "into a new Bearer Auth credential."
@@ -1144,7 +1181,7 @@ msgstr ""
 "改为将 Authentication 设为 <strong>Bearer Auth</strong>，并把密钥粘贴到新建"
 "的 Bearer Auth 凭据中。"
 
-#: admin/class-mcp-admin-connections.php:1021
+#: admin/class-mcp-admin-connections.php:1025
 msgid ""
 "Execute the node once — its Tools output lists <code>cowboy_discover</code> "
 "and <code>cowboy_run</code>."
@@ -1152,11 +1189,11 @@ msgstr ""
 "执行该节点一次——其 Tools 输出会列出 <code>cowboy_discover</code> 和 "
 "<code>cowboy_run</code>。"
 
-#: admin/class-mcp-admin-connections.php:1021
+#: admin/class-mcp-admin-connections.php:1025
 msgid "Then ask your agent:"
 msgstr "然后询问你的智能体："
 
-#: admin/class-mcp-admin-connections.php:1034
+#: admin/class-mcp-admin-connections.php:1038
 msgid ""
 "A sign-in page opens on <strong>your site</strong>. Pick the access level "
 "and click <strong>Approve</strong>."
@@ -1164,11 +1201,11 @@ msgstr ""
 "<strong>您的站点</strong>上会打开登录页面。选择访问级别并点击<strong>批准</"
 "strong>。"
 
-#: admin/class-mcp-admin-connections.php:1060
+#: admin/class-mcp-admin-connections.php:1064
 msgid "Then add the server with the key in a header:"
 msgstr "然后在请求头中带上密钥添加服务器："
 
-#: admin/class-mcp-admin-connections.php:1063
+#: admin/class-mcp-admin-connections.php:1067
 msgid ""
 "Codex reads the key each time it starts, so also add the <code>export</code> "
 "line to your shell profile (e.g. <code>~/.zshrc</code>)."
@@ -1176,7 +1213,7 @@ msgstr ""
 "Codex 每次启动时都会读取密钥，因此还需将 <code>export</code> 这一行添加到 "
 "shell 配置文件中（例如 <code>~/.zshrc</code>）。"
 
-#: admin/class-mcp-admin-connections.php:1067
+#: admin/class-mcp-admin-connections.php:1071
 msgid ""
 "Hermes asks for the key when you run this and stores it in "
 "<code>~/.hermes/.env</code>; the config file only references it."
@@ -1184,51 +1221,51 @@ msgstr ""
 "运行时 Hermes 会询问密钥并将其保存到 <code>~/.hermes/.env</code>；配置文件中"
 "只保留引用。"
 
-#: admin/class-mcp-admin-connections.php:1081
+#: admin/class-mcp-admin-connections.php:1085
 msgid "Create an API key"
 msgstr "创建 API 密钥"
 
-#: admin/class-mcp-admin-connections.php:1084
+#: admin/class-mcp-admin-connections.php:1088
 msgid ""
 "<strong>Copy your key now</strong> — for security it will not be shown again."
 msgstr "<strong>请立即复制您的密钥</strong>——出于安全考虑，它不会再次显示。"
 
-#: admin/class-mcp-admin-connections.php:1085
-#: admin/class-mcp-admin-connections.php:1718
+#: admin/class-mcp-admin-connections.php:1089
+#: admin/class-mcp-admin-connections.php:1722
 msgid "API key"
 msgstr "API 密钥"
 
-#: admin/class-mcp-admin-connections.php:1085
+#: admin/class-mcp-admin-connections.php:1089
 msgid "Copy API key"
 msgstr "复制 API 密钥"
 
-#: admin/class-mcp-admin-connections.php:1086
+#: admin/class-mcp-admin-connections.php:1090
 msgid "I've saved my key"
 msgstr "我已保存密钥"
 
-#: admin/class-mcp-admin-connections.php:1089
+#: admin/class-mcp-admin-connections.php:1093
 msgid "Give it a name so you can recognize it later, then generate."
 msgstr "为它起一个名称以便日后识别，然后生成。"
 
 #. translators: %s: client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1094
+#: admin/class-mcp-admin-connections.php:1098
 #, php-format
 msgid "e.g. %s on my laptop"
 msgstr "例如：我笔记本电脑上的 %s"
 
-#: admin/class-mcp-admin-connections.php:1097
+#: admin/class-mcp-admin-connections.php:1101
 msgid "Generate API key"
 msgstr "生成 API 密钥"
 
-#: admin/class-mcp-admin-connections.php:1097
+#: admin/class-mcp-admin-connections.php:1101
 msgid "Generate another key"
 msgstr "生成另一个密钥"
 
-#: admin/class-mcp-admin-connections.php:1110
+#: admin/class-mcp-admin-connections.php:1114
 msgid "Run this in your terminal:"
 msgstr "在终端中运行此命令："
 
-#: admin/class-mcp-admin-connections.php:1111
+#: admin/class-mcp-admin-connections.php:1115
 msgid ""
 "Run these in your terminal. Codex reads the key each time it starts, so also "
 "add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</"
@@ -1237,7 +1274,7 @@ msgstr ""
 "在终端中运行以下命令。Codex 每次启动时都会读取密钥，因此还需将 <code>export</"
 "code> 这一行添加到 shell 配置文件中（例如 <code>~/.zshrc</code>）："
 
-#: admin/class-mcp-admin-connections.php:1112
+#: admin/class-mcp-admin-connections.php:1116
 msgid ""
 "Add this to <code>~/.cursor/mcp.json</code> (create the file if it does not "
 "exist), then restart Cursor:"
@@ -1245,12 +1282,12 @@ msgstr ""
 "将此添加到 <code>~/.cursor/mcp.json</code>（如果文件不存在则创建），然后重启 "
 "Cursor："
 
-#: admin/class-mcp-admin-connections.php:1116
+#: admin/class-mcp-admin-connections.php:1120
 msgid "Add the server to your tool"
 msgstr "将服务器添加到您的工具"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1314
+#: admin/class-mcp-admin-connections.php:1318
 #, php-format
 msgid ""
 "Run <code>/mcp</code> in a new Claude Code session — <code>%s</code> should "
@@ -1260,7 +1297,7 @@ msgstr ""
 "接。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1316
+#: admin/class-mcp-admin-connections.php:1320
 #, php-format
 msgid ""
 "Start Codex and run <code>/mcp</code> — <code>%s</code> should be listed "
@@ -1269,7 +1306,7 @@ msgstr ""
 "启动 Codex 并运行 <code>/mcp</code>——<code>%s</code> 应连同其工具一起列出。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1318
+#: admin/class-mcp-admin-connections.php:1322
 #, php-format
 msgid ""
 "Run <code>opencode mcp list</code> — <code>%s</code> should be listed as "
@@ -1277,7 +1314,7 @@ msgid ""
 msgstr "运行 <code>opencode mcp list</code>——<code>%s</code> 应显示为已连接。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1320
+#: admin/class-mcp-admin-connections.php:1324
 #, php-format
 msgid ""
 "Open <code>Customize</code> in the Cursor sidebar — <code>%s</code> should "
@@ -1287,23 +1324,26 @@ msgstr ""
 "用。错误信息显示在 <code>Output → MCP Logs</code> 中。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1322
+#: admin/class-mcp-admin-connections.php:1326
 #, php-format
 msgid ""
 "Run <code>gemini mcp list</code> — <code>%s</code> should show as connected."
 msgstr "运行 <code>gemini mcp list</code>——<code>%s</code> 应显示为已连接。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1324
+#: admin/class-mcp-admin-connections.php:1328
 #, php-format
 msgid ""
 "Run <code>Chat: Open Customizations</code> from the Command Palette and open "
 "<code>Tools</code> — <code>%s</code> should be listed. Errors show under "
 "<code>MCP: List Servers → Show Output</code>."
-msgstr "从命令面板运行 <code>Chat: Open Customizations</code> 并打开 <code>Tools</code> — 列表中应显示 <code>%s</code>。错误会显示在 <code>MCP: List Servers → Show Output</code> 中。"
+msgstr ""
+"从命令面板运行 <code>Chat: Open Customizations</code> 并打开 <code>Tools</"
+"code> — 列表中应显示 <code>%s</code>。错误会显示在 <code>MCP: List Servers → "
+"Show Output</code> 中。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1326
+#: admin/class-mcp-admin-connections.php:1330
 #, php-format
 msgid ""
 "Start <code>muse</code> and run <code>/mcp</code> — <code>%s</code> should "
@@ -1313,7 +1353,7 @@ msgstr ""
 "一起列出。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1328
+#: admin/class-mcp-admin-connections.php:1332
 #, php-format
 msgid ""
 "Ask OpenClaw what the server can do, or run <code>openclaw mcp probe %s</"
@@ -1323,7 +1363,7 @@ msgstr ""
 "应报告 2 个工具。"
 
 #. translators: %s: the MCP server name shown in the client.
-#: admin/class-mcp-admin-connections.php:1330
+#: admin/class-mcp-admin-connections.php:1334
 #, php-format
 msgid ""
 "Hermes replies with the tools it found; to check later, run <code>hermes mcp "
@@ -1332,45 +1372,45 @@ msgstr ""
 "Hermes 会回复它找到的工具；之后可用 <code>hermes mcp test %s</code> 检查。"
 
 #. translators: %s: the MCP server name or the site's address.
-#: admin/class-mcp-admin-connections.php:1348
+#: admin/class-mcp-admin-connections.php:1352
 #, php-format
 msgid ""
 "Using %s, tell me this site's name and WordPress version. Don't change "
 "anything."
 msgstr "使用 %s，告诉我这个站点的名称和 WordPress 版本。不要做任何更改。"
 
-#: admin/class-mcp-admin-connections.php:1349
+#: admin/class-mcp-admin-connections.php:1353
 msgid "Copy prompt"
 msgstr "复制提示词"
 
-#: admin/class-mcp-admin-connections.php:1354
+#: admin/class-mcp-admin-connections.php:1358
 msgid "Try it"
 msgstr "试一试"
 
-#: admin/class-mcp-admin-connections.php:1356
+#: admin/class-mcp-admin-connections.php:1360
 msgid "In a new chat, ask:"
 msgstr "在新对话中提问："
 
-#: admin/class-mcp-admin-connections.php:1377
-#: admin/class-mcp-admin-connections.php:1676
+#: admin/class-mcp-admin-connections.php:1381
+#: admin/class-mcp-admin-connections.php:1680
 msgid "Copy"
 msgstr "复制"
 
-#: admin/class-mcp-admin-connections.php:1398
+#: admin/class-mcp-admin-connections.php:1402
 msgid "Select all"
 msgstr "全选"
 
-#: admin/class-mcp-admin-connections.php:1400
+#: admin/class-mcp-admin-connections.php:1404
 msgid "Deselect all"
 msgstr "取消全选"
 
 #. translators: %s: tool category name
-#: admin/class-mcp-admin-connections.php:1408
+#: admin/class-mcp-admin-connections.php:1412
 #, php-format
 msgid "Select all %s tools"
 msgstr "选择所有 %s 工具"
 
-#: admin/class-mcp-admin-connections.php:1422
+#: admin/class-mcp-admin-connections.php:1426
 msgid ""
 "Note: read-only MCP resources (site info, user list, recent posts, etc.) are "
 "always available to every credential regardless of tool scope."
@@ -1378,54 +1418,54 @@ msgstr ""
 "注意：只读 MCP 资源(站点信息、用户列表、最近的文章等)始终可供每个密钥和连接使"
 "用,与工具范围无关。"
 
-#: admin/class-mcp-admin-connections.php:1433
+#: admin/class-mcp-admin-connections.php:1437
 msgid "Custom…"
 msgstr "自定义…"
 
-#: admin/class-mcp-admin-connections.php:1433
-#: admin/class-mcp-admin-connections.php:1449
-#: admin/class-mcp-admin-connections.php:1460
+#: admin/class-mcp-admin-connections.php:1437
+#: admin/class-mcp-admin-connections.php:1453
+#: admin/class-mcp-admin-connections.php:1464
 msgid "Full access"
 msgstr "完全访问权限"
 
-#: admin/class-mcp-admin-connections.php:1433
-#: admin/class-mcp-admin-connections.php:1453
+#: admin/class-mcp-admin-connections.php:1437
+#: admin/class-mcp-admin-connections.php:1457
 msgid "Read-only"
 msgstr "只读"
 
-#: admin/class-mcp-admin-connections.php:1436 includes/class-mcp-oauth.php:1872
+#: admin/class-mcp-admin-connections.php:1440 includes/class-mcp-oauth.php:1947
 msgid "Access level"
 msgstr "访问级别"
 
 #. translators: %d: number of tools this credential may call
-#: admin/class-mcp-admin-connections.php:1457
+#: admin/class-mcp-admin-connections.php:1461
 #, php-format
 msgid "Custom (%d tools)"
 msgstr "自定义（%d 个工具）"
 
-#: admin/class-mcp-admin-connections.php:1464
+#: admin/class-mcp-admin-connections.php:1468
 msgid "Unknown (blocked)"
 msgstr "未知(已阻止)"
 
-#: admin/class-mcp-admin-connections.php:1480
+#: admin/class-mcp-admin-connections.php:1484
 msgid "Dismiss"
 msgstr "关闭"
 
 #. translators: 1: app name such as ChatGPT, 2: relative time such as "4 minutes"
-#: admin/class-mcp-admin-connections.php:1484
+#: admin/class-mcp-admin-connections.php:1488
 #, php-format
 msgid "%1$s tried to connect %2$s ago, but new connections were off."
 msgstr "%1$s 在 %2$s前尝试连接，但新连接当时处于关闭状态。"
 
 #. translators: %d: number of attempts
-#: admin/class-mcp-admin-connections.php:1487
+#: admin/class-mcp-admin-connections.php:1491
 #, php-format
 msgid "(%d attempt)"
 msgid_plural "(%d attempts)"
 msgstr[0] "（%d 次尝试）"
 
 #. translators: %s: host name
-#: admin/class-mcp-admin-connections.php:1492
+#: admin/class-mcp-admin-connections.php:1496
 #, php-format
 msgid ""
 "Its sign-in address (%s) is not on the allowed list either — add it to the "
@@ -1434,28 +1474,28 @@ msgstr ""
 "其登录地址（%s）也不在允许列表中 — 请在“设置”选项卡的额外登录主机中添加它。"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1499
+#: admin/class-mcp-admin-connections.php:1503
 #, php-format
 msgid "New connections are on — try again in %s now."
 msgstr "新连接已开启 — 请立即在 %s 中重试。"
 
 #. translators: %s: countdown such as 29:59
-#: admin/class-mcp-admin-connections.php:1503
+#: admin/class-mcp-admin-connections.php:1507
 #, php-format
 msgid "%s left"
 msgstr "剩余 %s"
 
-#: admin/class-mcp-admin-connections.php:1510
+#: admin/class-mcp-admin-connections.php:1514
 msgid "Enable for 30 minutes"
 msgstr "启用 30 分钟"
 
 #. translators: %s: app name such as ChatGPT
-#: admin/class-mcp-admin-connections.php:1513
+#: admin/class-mcp-admin-connections.php:1517
 #, php-format
 msgid "Then add the app again in %s."
 msgstr "然后在 %s 中重新添加该应用。"
 
-#: admin/class-mcp-admin-connections.php:1538
+#: admin/class-mcp-admin-connections.php:1542
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1464,161 +1504,161 @@ msgstr ""
 "通过 Model Context Protocol 将 <strong>Claude</strong>、<strong>ChatGPT</"
 "strong> 或 <strong>Codex</strong> 等 AI 代理连接到此 WordPress 站点。"
 
-#: admin/class-mcp-admin-connections.php:1565
-#: admin/class-mcp-admin-connections.php:1694
+#: admin/class-mcp-admin-connections.php:1569
+#: admin/class-mcp-admin-connections.php:1698
 msgid "Connect another app"
 msgstr "连接其他应用"
 
-#: admin/class-mcp-admin-connections.php:1565
+#: admin/class-mcp-admin-connections.php:1569
 msgid "Connect your first app"
 msgstr "连接您的第一个应用"
 
-#: admin/class-mcp-admin-connections.php:1566
+#: admin/class-mcp-admin-connections.php:1570
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr "选择您的 AI 应用或编程工具——设置大约只需一分钟。"
 
-#: admin/class-mcp-admin-connections.php:1568
+#: admin/class-mcp-admin-connections.php:1572
 msgid "Close"
 msgstr "关闭"
 
-#: admin/class-mcp-admin-connections.php:1576
+#: admin/class-mcp-admin-connections.php:1580
 msgid "Which app do you want to connect?"
 msgstr "您想连接哪个应用？"
 
-#: admin/class-mcp-admin-connections.php:1577
+#: admin/class-mcp-admin-connections.php:1581
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
 msgstr "从列表中选择您的 AI 应用或编码工具，查看分步设置说明。"
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1588
+#: admin/class-mcp-admin-connections.php:1592
 #, php-format
 msgid "Connect %s"
 msgstr "连接 %s"
 
-#: admin/class-mcp-admin-connections.php:1611
+#: admin/class-mcp-admin-connections.php:1615
 msgid "No terminal needed"
 msgstr "无需终端"
 
-#: admin/class-mcp-admin-connections.php:1612
+#: admin/class-mcp-admin-connections.php:1616
 msgid "Terminal & IDE tools"
 msgstr "终端和 IDE 工具"
 
-#: admin/class-mcp-admin-connections.php:1613
+#: admin/class-mcp-admin-connections.php:1617
 msgid "Automation & developers"
 msgstr "自动化与开发者"
 
-#: admin/class-mcp-admin-connections.php:1618
+#: admin/class-mcp-admin-connections.php:1622
 msgid "AI clients"
 msgstr "AI 客户端"
 
-#: admin/class-mcp-admin-connections.php:1638
+#: admin/class-mcp-admin-connections.php:1642
 msgid "Needs public URL"
 msgstr "需要公网 URL"
 
-#: admin/class-mcp-admin-connections.php:1640
+#: admin/class-mcp-admin-connections.php:1644
 msgid "Works locally"
 msgstr "本地可用"
 
-#: admin/class-mcp-admin-connections.php:1689
+#: admin/class-mcp-admin-connections.php:1693
 msgid "Connected apps"
 msgstr "已连接的应用"
 
-#: admin/class-mcp-admin-connections.php:1702
+#: admin/class-mcp-admin-connections.php:1706
 msgid "Name"
 msgstr "名称"
 
-#: admin/class-mcp-admin-connections.php:1703
+#: admin/class-mcp-admin-connections.php:1707
 msgid "Type"
 msgstr "类型"
 
-#: admin/class-mcp-admin-connections.php:1704
+#: admin/class-mcp-admin-connections.php:1708
 msgid "Access"
 msgstr "访问权限"
 
-#: admin/class-mcp-admin-connections.php:1706
+#: admin/class-mcp-admin-connections.php:1710
 msgid "Last used"
 msgstr "上次使用"
 
-#: admin/class-mcp-admin-connections.php:1726
+#: admin/class-mcp-admin-connections.php:1730
 msgid "Revoke this key? Any client using it will lose access."
 msgstr "吊销此密钥？任何使用它的客户端都将失去访问权限。"
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1736
+#: admin/class-mcp-admin-connections.php:1740
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · 由 %2$s 批准"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1739
+#: admin/class-mcp-admin-connections.php:1743
 #, php-format
 msgid "approved by %s"
 msgstr "由 %s 批准"
 
-#: admin/class-mcp-admin-connections.php:1745
+#: admin/class-mcp-admin-connections.php:1749
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1753
+#: admin/class-mcp-admin-connections.php:1757
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "吊销此连接？该应用将立即失去访问权限。"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1779
+#: admin/class-mcp-admin-connections.php:1783
 #, php-format
 msgid "%s ago"
 msgstr "%s前"
 
-#: admin/class-mcp-admin-connections.php:1781
+#: admin/class-mcp-admin-connections.php:1785
 msgid "Never"
 msgstr "从未"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1788
+#: admin/class-mcp-admin-connections.php:1792
 #, php-format
 msgid "Actions for %s"
 msgstr "%s 的操作"
 
-#: admin/class-mcp-admin-connections.php:1791
+#: admin/class-mcp-admin-connections.php:1795
 msgid "Edit access…"
 msgstr "编辑访问权限…"
 
-#: admin/class-mcp-admin-connections.php:1792
+#: admin/class-mcp-admin-connections.php:1796
 msgid "Revoke"
 msgstr "吊销"
 
-#: admin/class-mcp-admin-connections.php:1795
+#: admin/class-mcp-admin-connections.php:1799
 msgid "Revoke…"
 msgstr "吊销…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1808
+#: admin/class-mcp-admin-connections.php:1812
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "<strong>%s</strong> 的访问权限"
 
-#: admin/class-mcp-admin-connections.php:1812
+#: admin/class-mcp-admin-connections.php:1816
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:221
 msgid "Cancel"
 msgstr "取消"
 
-#: admin/class-mcp-admin-connections.php:1813
+#: admin/class-mcp-admin-connections.php:1817
 msgid "Save access"
 msgstr "保存访问权限"
 
-#: admin/class-mcp-admin-connections.php:1826
+#: admin/class-mcp-admin-connections.php:1830
 msgid "Connection Doctor"
 msgstr "连接诊断"
 
-#: admin/class-mcp-admin-connections.php:1828
+#: admin/class-mcp-admin-connections.php:1832
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
 msgstr "测试 AI 客户端能否访问此站点，并获取可直接复制粘贴的故障诊断报告。"
 
-#: admin/class-mcp-admin-connections.php:1831
+#: admin/class-mcp-admin-connections.php:1835
 msgid ""
 "<strong>This site is behind Cloudflare.</strong> Some Cloudflare security "
 "settings, such as Browser Integrity Check and Bot Fight Mode, can block AI "
@@ -1628,19 +1668,19 @@ msgstr ""
 "Browser Integrity Check 和 Bot Fight Mode）可能会在请求到达 WordPress 之前拦"
 "截 AI 应用。运行检查即可测试。"
 
-#: admin/class-mcp-admin-connections.php:1832
+#: admin/class-mcp-admin-connections.php:1836
 msgid "How to let AI apps through Cloudflare"
 msgstr "如何让 AI 应用通过 Cloudflare"
 
-#: admin/class-mcp-admin-connections.php:1835
+#: admin/class-mcp-admin-connections.php:1839
 msgid "Run checks"
 msgstr "运行检查"
 
-#: admin/class-mcp-admin-connections.php:1836
+#: admin/class-mcp-admin-connections.php:1840
 msgid "Copy report"
 msgstr "复制报告"
 
-#: admin/class-mcp-admin-connections.php:1837
+#: admin/class-mcp-admin-connections.php:1841
 msgid "Get help on WordPress.org"
 msgstr "在 WordPress.org 获取帮助"
 
@@ -2066,7 +2106,7 @@ msgid "Save Settings"
 msgstr "保存设置"
 
 #: admin/class-mcp-admin.php:33 admin/class-mcp-admin.php:34
-#: admin/class-mcp-admin.php:624
+#: admin/class-mcp-admin.php:625
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2225,72 +2265,72 @@ msgstr ""
 "您的浏览器完全无法访问该网站（DNS、TLS 或连接被拒绝）。远程 AI 客户端也会遇到"
 "同样的问题。"
 
-#: admin/class-mcp-admin.php:319 admin/class-mcp-admin.php:339
-#: admin/class-mcp-admin.php:361
+#: admin/class-mcp-admin.php:319 admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:362
 msgid "Select an access level before saving."
 msgstr "保存前请选择访问级别。"
 
-#: admin/class-mcp-admin.php:323
+#: admin/class-mcp-admin.php:324
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API 密钥已创建。请立即复制——它只会显示一次。"
 
-#: admin/class-mcp-admin.php:331
+#: admin/class-mcp-admin.php:332
 msgid "API key revoked."
 msgstr "API 密钥已吊销。"
 
-#: admin/class-mcp-admin.php:341
+#: admin/class-mcp-admin.php:342
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "密钥范围已更新，将在该密钥的下一次请求时生效。"
 
-#: admin/class-mcp-admin.php:343
+#: admin/class-mcp-admin.php:344
 msgid "Could not update key scope."
 msgstr "无法更新密钥范围。"
 
-#: admin/class-mcp-admin.php:352
+#: admin/class-mcp-admin.php:353
 msgid "Connection revoked."
 msgstr "连接已吊销。"
 
-#: admin/class-mcp-admin.php:363
+#: admin/class-mcp-admin.php:364
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "连接范围已更新，将在该连接的下一次请求时生效。"
 
-#: admin/class-mcp-admin.php:365
+#: admin/class-mcp-admin.php:366
 msgid "Could not update connection scope."
 msgstr "无法更新连接范围。"
 
-#: admin/class-mcp-admin.php:421
+#: admin/class-mcp-admin.php:422
 msgid "Browser sign-in enabled."
 msgstr "浏览器登录已启用。"
 
-#: admin/class-mcp-admin.php:455
+#: admin/class-mcp-admin.php:456
 msgid "Settings saved."
 msgstr "设置已保存。"
 
-#: admin/class-mcp-admin.php:462
+#: admin/class-mcp-admin.php:463
 msgid "Audit log cleared."
 msgstr "审计日志已清除。"
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:480
+#: admin/class-mcp-admin.php:481
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "已撤销变更 #%1$d。%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:495
+#: admin/class-mcp-admin.php:496
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "已撤销 %2$d 个批处理条目中的 %1$d 个。"
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:511
+#: admin/class-mcp-admin.php:512
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "已创建检查点 #%1$d（%2$s）。"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:524
+#: admin/class-mcp-admin.php:525
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2300,7 +2340,7 @@ msgstr ""
 "点：#%4$d。"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:528
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2309,123 +2349,123 @@ msgstr ""
 "已从检查点 #%1$d 恢复数据库 — %2$d 个表，%3$s 行已检查。恢复前的安全检查点："
 "#%4$d。"
 
-#: admin/class-mcp-admin.php:540
+#: admin/class-mcp-admin.php:541
 msgid "Checkpoint deleted."
 msgstr "检查点已删除。"
 
-#: admin/class-mcp-admin.php:613
+#: admin/class-mcp-admin.php:614
 msgid "Connections"
 msgstr "连接"
 
-#: admin/class-mcp-admin.php:614
+#: admin/class-mcp-admin.php:615
 msgid "Activity"
 msgstr "活动"
 
-#: admin/class-mcp-admin.php:615
+#: admin/class-mcp-admin.php:616
 msgid "Logs"
 msgstr "日志"
 
-#: admin/class-mcp-admin.php:616
+#: admin/class-mcp-admin.php:617
 msgid "Settings"
 msgstr "设置"
 
-#: admin/class-mcp-admin.php:617
+#: admin/class-mcp-admin.php:618
 msgid "About"
 msgstr "关于"
 
-#: admin/class-mcp-admin.php:629
+#: admin/class-mcp-admin.php:630
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP 分区"
 
-#: admin/class-mcp-admin.php:663
+#: admin/class-mcp-admin.php:669
 msgid "Power mode is on. Open Power mode settings."
 msgstr "强力模式已开启。打开强力模式设置。"
 
-#: admin/class-mcp-admin.php:663
+#: admin/class-mcp-admin.php:669
 msgid "Power mode on"
 msgstr "强力模式已开启"
 
-#: admin/class-mcp-admin.php:665
+#: admin/class-mcp-admin.php:671
 msgid "Power mode is off. Open Power mode settings."
 msgstr "强力模式已关闭。打开强力模式设置。"
 
-#: admin/class-mcp-admin.php:665
+#: admin/class-mcp-admin.php:671
 msgid "Power mode off"
 msgstr "强力模式已关闭"
 
-#: admin/class-mcp-admin.php:668
+#: admin/class-mcp-admin.php:674
 msgid "Safe mode off"
 msgstr "安全模式已关闭"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:697
 msgid "Every request from AI apps is rejected."
 msgstr "来自 AI 应用的所有请求都会被拒绝。"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:697
 msgid "MCP server is off."
 msgstr "MCP 服务器已关闭。"
 
-#: admin/class-mcp-admin.php:692
+#: admin/class-mcp-admin.php:698
 msgid "Turn on in Settings"
 msgstr "在设置中开启"
 
-#: admin/class-mcp-admin.php:720
+#: admin/class-mcp-admin.php:726
 msgid "Pagination"
 msgstr "分页"
 
-#: admin/class-mcp-admin.php:721
+#: admin/class-mcp-admin.php:727
 msgid "Previous"
 msgstr "上一页"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:724
+#: admin/class-mcp-admin.php:730
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "第 %1$d 页，共 %2$d 页"
 
-#: admin/class-mcp-admin.php:726
+#: admin/class-mcp-admin.php:732
 msgid "Next"
 msgstr "下一页"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:741
 msgid "Project home, guides, and news."
 msgstr "项目主页、指南和新闻。"
 
-#: admin/class-mcp-admin.php:735
+#: admin/class-mcp-admin.php:741
 msgid "Website"
 msgstr "网站"
 
-#: admin/class-mcp-admin.php:736
+#: admin/class-mcp-admin.php:742
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:736
+#: admin/class-mcp-admin.php:742
 msgid "Source, issues & releases."
 msgstr "源代码、问题与发布。"
 
-#: admin/class-mcp-admin.php:737
+#: admin/class-mcp-admin.php:743
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
 msgstr "在 WordPress.org 支持论坛提问。粘贴您的连接诊断报告，可更快获得解答。"
 
-#: admin/class-mcp-admin.php:737
+#: admin/class-mcp-admin.php:743
 msgid "Get help"
 msgstr "获取帮助"
 
-#: admin/class-mcp-admin.php:738
+#: admin/class-mcp-admin.php:744
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
 msgstr ""
 "喜欢 Cowboy MCP？在 WordPress.org 上留下评价，可以帮助更多站点所有者发现它。"
 
-#: admin/class-mcp-admin.php:738 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:744 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "留下评价"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:752
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
@@ -2605,15 +2645,15 @@ msgstr ""
 msgid "Sorry, you are not allowed to do that."
 msgstr "抱歉，你无权执行此操作。"
 
-#: includes/class-mcp-oauth.php:1129
+#: includes/class-mcp-oauth.php:1186
 msgid "Unknown client"
 msgstr "未知客户端"
 
-#: includes/class-mcp-oauth.php:1539
+#: includes/class-mcp-oauth.php:1607
 msgid "The OAuth connector is not enabled on this site."
 msgstr "此站点未启用 OAuth 连接器。"
 
-#: includes/class-mcp-oauth.php:1585
+#: includes/class-mcp-oauth.php:1656
 msgid ""
 "This site has no record of this app — it was revoked here, or the site's "
 "database was restored or copied from another site. To let it connect again: "
@@ -2625,22 +2665,22 @@ msgstr ""
 "制。要让它重新连接：在 WordPress 中打开设置 > Cowboy MCP > 连接，在关于该应用"
 "的提示中点击“启用 30 分钟”，然后在应用中重新连接并在此处批准。"
 
-#: includes/class-mcp-oauth.php:1605 includes/class-mcp-oauth.php:1630
+#: includes/class-mcp-oauth.php:1676 includes/class-mcp-oauth.php:1701
 msgid "Invalid redirect_uri for this client."
 msgstr "此客户端的 redirect_uri 无效。"
 
-#: includes/class-mcp-oauth.php:1614
+#: includes/class-mcp-oauth.php:1685
 msgid "You must be an administrator to authorize this connection."
 msgstr "您必须是管理员才能授权此连接。"
 
-#: includes/class-mcp-oauth.php:1642
+#: includes/class-mcp-oauth.php:1714
 msgid ""
 "This connection request is missing a required security parameter (PKCE "
 "S256). Start the connection again from your AI app."
 msgstr ""
 "此连接请求缺少必需的安全参数（PKCE S256）。请在您的 AI 应用中重新发起连接。"
 
-#: includes/class-mcp-oauth.php:1646
+#: includes/class-mcp-oauth.php:1718
 msgid ""
 "This connection request is for a different address than this site's MCP "
 "endpoint. Check the server URL in your AI app."
@@ -2648,7 +2688,7 @@ msgstr ""
 "此连接请求指向的地址不是本站的 MCP 端点。请检查 AI 应用中的服务器 URL。"
 
 #. translators: %s: host name the app asked to be sent back to
-#: includes/class-mcp-oauth.php:1655
+#: includes/class-mcp-oauth.php:1727
 #, php-format
 msgid ""
 "This connection would send you to %s, which is not an allowed destination on "
@@ -2658,12 +2698,12 @@ msgstr ""
 "此连接会将您发送到 %s，而该地址不在本站允许的目标之列。如果您信任该应用，管理"
 "员可以在“设置 > Cowboy MCP > 设置 > 浏览器登录”中添加其主机。"
 
-#: includes/class-mcp-oauth.php:1668
+#: includes/class-mcp-oauth.php:1740
 msgid "Security check failed. Please try again."
 msgstr "安全检查失败。请重试。"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1760
+#: includes/class-mcp-oauth.php:1835
 #, php-format
 msgid ""
 "This app identifies itself with a document hosted on %s, which is not a "
@@ -2675,7 +2715,7 @@ msgstr ""
 "机。"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1763
+#: includes/class-mcp-oauth.php:1838
 #, php-format
 msgid ""
 "This app's identity document on %s points to a private or unreachable "
@@ -2683,7 +2723,7 @@ msgid ""
 msgstr "该应用在 %s 上的身份文档指向私有或无法访问的地址，因此未被获取。"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1767
+#: includes/class-mcp-oauth.php:1842
 #, php-format
 msgid ""
 "This site could not download the app's identity document from %s. Check that "
@@ -2694,7 +2734,7 @@ msgstr ""
 "您的 AI 应用重新发起连接。"
 
 #. translators: %s: host name
-#: includes/class-mcp-oauth.php:1770
+#: includes/class-mcp-oauth.php:1845
 #, php-format
 msgid ""
 "The app's identity document on %s is invalid, so this connection was "
@@ -2704,26 +2744,26 @@ msgstr ""
 "该应用在 %s 上的身份文档无效，因此此连接已被拒绝。请从您的 AI 应用重新发起连"
 "接；如果持续失败，需要由应用供应商修复该文档。"
 
-#: includes/class-mcp-oauth.php:1778
+#: includes/class-mcp-oauth.php:1853
 msgid "Connection error"
 msgstr "连接错误"
 
-#: includes/class-mcp-oauth.php:1785
+#: includes/class-mcp-oauth.php:1860
 msgid "An application"
 msgstr "某个应用程序"
 
-#: includes/class-mcp-oauth.php:1817
+#: includes/class-mcp-oauth.php:1892
 msgid "Authorize connection"
 msgstr "授权连接"
 
 #. translators: %s: application/client name
-#: includes/class-mcp-oauth.php:1828
+#: includes/class-mcp-oauth.php:1903
 #, php-format
 msgid "%s wants to connect"
 msgstr "%s 想要连接"
 
 #. translators: %s: site name
-#: includes/class-mcp-oauth.php:1832
+#: includes/class-mcp-oauth.php:1907
 #, php-format
 msgid ""
 "It will be able to read and manage %s through the MCP server, acting with "
@@ -2731,19 +2771,19 @@ msgid ""
 msgstr "它将能够通过 MCP 服务器读取和管理 %s，并以您的管理员权限执行操作。"
 
 #. translators: %s: WordPress username
-#: includes/class-mcp-oauth.php:1837
+#: includes/class-mcp-oauth.php:1912
 #, php-format
 msgid "Authorizing as %s"
 msgstr "以 %s 身份授权"
 
 #. translators: %s: host name of the address the browser is sent to after approval, e.g. chatgpt.com
-#: includes/class-mcp-oauth.php:1842
+#: includes/class-mcp-oauth.php:1917
 #, php-format
 msgid "After you approve, you will be sent to %s"
 msgstr "批准后，您将被转到 %s"
 
 #. translators: %s: host name the identity document was fetched from, e.g. claude.ai
-#: includes/class-mcp-oauth.php:1847
+#: includes/class-mcp-oauth.php:1922
 #, php-format
 msgid ""
 "Identity published by %s. Approve only if you just started this connection "
@@ -2751,21 +2791,21 @@ msgid ""
 msgstr "身份由 %s 发布。只有当您刚刚亲自发起此连接时才批准。"
 
 #. translators: %s: the app's sign-in host, e.g. oauth-redirect.googleusercontent.com
-#: includes/class-mcp-oauth.php:1852
+#: includes/class-mcp-oauth.php:1927
 #, php-format
 msgid ""
 "The app is named after its sign-in address (%s). Approve only if you just "
 "started this connection yourself."
 msgstr "该应用以其登录地址（%s）命名。仅当您刚刚亲自发起此连接时才批准。"
 
-#: includes/class-mcp-oauth.php:1855
+#: includes/class-mcp-oauth.php:1930
 msgid ""
 "The app name above is supplied by the app and is not verified. Approve only "
 "if you just started this connection yourself."
 msgstr ""
 "上方的应用名称由应用自行提供，未经验证。仅当您刚刚亲自发起此连接时才批准。"
 
-#: includes/class-mcp-oauth.php:1858
+#: includes/class-mcp-oauth.php:1933
 msgid ""
 "This site has no stored record of this connection. That is normal after a "
 "database restore or a staging sync. If you did not just start this from your "
@@ -2774,7 +2814,7 @@ msgstr ""
 "本站没有此连接的存储记录。在数据库恢复或测试站同步之后，这是正常现象。如果您"
 "刚才没有在 AI 应用中发起此连接，请选择「拒绝」。"
 
-#: includes/class-mcp-oauth.php:1860
+#: includes/class-mcp-oauth.php:1935
 msgid ""
 "This site has no record of this app. Approving registers it here and sends "
 "you to the address above. That is expected after you revoked the app on this "
@@ -2786,29 +2826,29 @@ msgstr ""
 "从您的 AI 应用发起此操作，请选择拒绝。"
 
 #. translators: %d: number of tools allowed in the connection's current custom scope
-#: includes/class-mcp-oauth.php:1878
+#: includes/class-mcp-oauth.php:1953
 #, php-format
 msgid "Keep current custom scope (%d tools)"
 msgstr "保留当前的自定义范围(%d 个工具)"
 
-#: includes/class-mcp-oauth.php:1884
+#: includes/class-mcp-oauth.php:1959
 msgid "Full access — read and manage the site"
 msgstr "完全访问权限——可读取并管理站点"
 
-#: includes/class-mcp-oauth.php:1888
+#: includes/class-mcp-oauth.php:1963
 msgid "Read-only — inspect the site, make no changes"
 msgstr "只读——仅查看站点，不做任何更改"
 
-#: includes/class-mcp-oauth.php:1892
+#: includes/class-mcp-oauth.php:1967
 msgid "Deny"
 msgstr "拒绝"
 
-#: includes/class-mcp-oauth.php:1893
+#: includes/class-mcp-oauth.php:1968
 msgid "Approve"
 msgstr "批准"
 
 #. translators: %s: redirect URI
-#: includes/class-mcp-oauth.php:1898
+#: includes/class-mcp-oauth.php:1973
 #, php-format
 msgid "Redirects to: %s"
 msgstr "重定向到：%s"
