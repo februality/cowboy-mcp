@@ -204,7 +204,9 @@ return [
             $range = cowboy_mcp_woo_validate_date_range( $a );
             if ( is_wp_error( $range ) ) return $range;
 
+            // type: a refund is an order row too, with status wc-completed.
             $orders = wc_get_orders( [
+                'type'         => 'shop_order',
                 'status'       => $range['wc_statuses'],
                 'date_after'   => $range['date_after'],
                 'date_before'  => $range['date_before'],
@@ -372,7 +374,9 @@ return [
             $range = cowboy_mcp_woo_validate_date_range( $a );
             if ( is_wp_error( $range ) ) return $range;
 
+            // type: a refund is an order row too, with status wc-completed.
             $orders = wc_get_orders( [
+                'type'         => 'shop_order',
                 'status'       => $range['wc_statuses'],
                 'date_after'   => $range['date_after'],
                 'date_before'  => $range['date_before'],

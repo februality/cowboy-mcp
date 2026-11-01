@@ -320,6 +320,7 @@ return [
             $page     = max( (int) ( $a['page'] ?? 1 ), 1 );
 
             $args = [
+                'type'     => 'shop_order', // A refund is an order row too, and cowboy_mcp_woo_format_order() takes WC_Order.
                 'limit'    => $per_page,
                 'page'     => $page,
                 'orderby'  => $a['orderby'] ?? 'date',

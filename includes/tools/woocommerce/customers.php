@@ -358,6 +358,7 @@ return [
             $page     = max( (int) ( $a['page'] ?? 1 ), 1 );
 
             $args = [
+                'type'        => 'shop_order',
                 'customer_id' => $id,
                 'limit'       => $per_page,
                 'page'        => $page,
