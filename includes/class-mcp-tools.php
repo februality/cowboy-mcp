@@ -90,6 +90,10 @@ class Cowboy_MCP_Tools {
         'wp_acf_add_row'      => 'cowboy_mcp_acf_check_args',
         'wp_acf_update_row'   => 'cowboy_mcp_acf_check_args',
         'wp_acf_delete_row'   => 'cowboy_mcp_acf_check_args',
+        'wp_woo_update_order'   => 'cowboy_mcp_woo_check_order_args',
+        'wp_woo_delete_order'   => 'cowboy_mcp_woo_check_order_args',
+        'wp_woo_create_refund'  => 'cowboy_mcp_woo_check_order_args',
+        'wp_woo_add_order_note' => 'cowboy_mcp_woo_check_order_args',
     ];
 
     /** Map from domain file path to category name. */

@@ -12,7 +12,7 @@ release; older entries are kept here.
 * Improved: read-only and custom-access connections list and read only the resources their access covers.
 * Improved: API keys are recognised faster, and a valid key keeps working while failed attempts from the same IP address are being rate limited. Existing keys are upgraded automatically on their first use.
 * Fix: WooCommerce reports filtered by order status count completed and cancelled orders.
-* Fix: listing WooCommerce orders no longer fails on a store that has refunds.
+* Fix: listing WooCommerce orders no longer fails on a store that has refunds. The order tools now answer a refund's ID with a clear error. Before, reading or editing one failed, and deleting one removed the refund.
 * Fix: malformed requests get a JSON-RPC error instead of a server error.
 * Security: hardening from an internal review across WP-CLI, file, theme, media and download handling, redirects, undo and secret redaction. No action is needed after updating.
 
