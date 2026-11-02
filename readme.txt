@@ -307,6 +307,7 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 * Changed: Editors count as a privileged role on single sites, like Administrators. Creating or promoting an Editor, or changing an Editor's email, needs Power mode.
 * Changed: more tools refuse script content unless the call passes `allow_unfiltered_html: true`.
 * Changed: `wp_cli` database commands are stricter, with and without Power mode. To change options, use `wp option`.
+* Changed: custom-access keys and connections list and read only the resources their access covers.
 * Improved: every approval of Claude Code, Codex, ChatGPT, Claude or Perplexity is now its own entry under Connected apps, with its own access level, Edit access and Revoke. Reconnecting an app adds a new entry with the access you choose on the approval screen; the earlier one stays listed until it expires.
 * Improved: API keys are recognised faster, and a valid key keeps working while failed attempts from the same IP address are being rate limited. Existing keys are upgraded automatically on their first use.
 * Fix: WooCommerce reports filtered by order status count completed and cancelled orders.
