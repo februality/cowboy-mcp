@@ -2,8 +2,9 @@
 /**
  * Cowboy MCP – Streamable HTTP Transport
  *
- * Implements the MCP 2025-06-18 Streamable HTTP transport specification
- * as a WordPress REST API endpoint at /wp-json/cowboy-mcp/v1/endpoint.
+ * Implements the MCP Streamable HTTP transport (protocol versions 2025-11-25
+ * and 2025-06-18, negotiated on initialize) as a WordPress REST API endpoint
+ * at /wp-json/cowboy-mcp/v1/endpoint.
  *
  * Protocol flow:
  *   1. Client POSTs  { method: "initialize", ... }
@@ -21,6 +22,22 @@ class Cowboy_MCP_Transport {
 
     /** @var string Session storage option prefix */
     const SESSION_PREFIX = 'cowboy_mcp_sess_';
+
+    /**
+     * Protocol versions this server speaks, newest first. Neither allows JSON-RPC batches.
+     * 2025-03-26 is left out on purpose: it required batch support.
+     */
+    const PROTOCOL_VERSIONS = [ '2025-11-25', '2025-06-18' ];
+
+    /** @var string The version answered to clients that ask for an older, unsupported one. */
+    const PROTOCOL_FALLBACK = '2025-06-18';
+
+    /**
+     * tools/call refusals that are about the call's arguments or the site's rules, not about the
+     * request's shape. From 2025-11-25 on these are tool execution errors (SEP-1303), so the model
+     * can read them and retry.
+     */
+    const TOOL_RESULT_ERROR_CODES = [ 'invalid_params', 'unknown_tool', 'tool_blocked', 'tool_disabled', 'tool_scope_denied', 'ability_policy_denied' ];
 
     /** @var array Queued MCP log notifications to deliver with the response. */
     private static array $notification_queue = [];
@@ -66,12 +83,12 @@ class Cowboy_MCP_Transport {
         }
 
         // Streamable HTTP: input the server cannot accept gets HTTP 400 with a
-        // JSON-RPC error object that has no id (MCP 2025-06-18 transports §2.1).
+        // JSON-RPC error object that has no id (MCP transports, 2025-06-18 and later).
         if ( ! is_array( $body ) ) {
             return self::jsonrpc_error( null, -32700, 'Parse error: the request body is not valid JSON.', 400 );
         }
         if ( isset( $body[0] ) ) {
-            return self::jsonrpc_error( null, -32600, 'Invalid Request: JSON-RPC batches are not supported (MCP 2025-06-18).', 400 );
+            return self::jsonrpc_error( null, -32600, 'Invalid Request: JSON-RPC batches are not supported (MCP 2025-06-18 and later).', 400 );
         }
         if ( ! isset( $body['jsonrpc'] ) ) {
             $bad_id = isset( $body['id'] ) && ( is_int( $body['id'] ) || is_string( $body['id'] ) ) ? $body['id'] : null;
@@ -103,6 +120,10 @@ class Cowboy_MCP_Transport {
 
         // ── Requests (with id) → JSON response ──
         $result = self::dispatch( $method, $params, $request );
+
+        if ( 'tools/call' === $method && is_wp_error( $result ) && self::tool_errors_as_results( $request ) ) {
+            $result = self::refusal_as_tool_result( $params, $result );
+        }
 
         if ( is_wp_error( $result ) ) {
             $response = new WP_REST_Response( [
@@ -201,7 +222,7 @@ class Cowboy_MCP_Transport {
         }
 
         return [
-            'protocolVersion' => '2025-06-18',
+            'protocolVersion' => self::negotiate_protocol_version( $params['protocolVersion'] ?? null ),
             'capabilities'    => [
                 'tools'       => [ 'listChanged' => false ],
                 'resources'   => [ 'subscribe' => false, 'listChanged' => false ],
@@ -214,6 +235,57 @@ class Cowboy_MCP_Transport {
                 'version' => COWBOY_MCP_VERSION,
             ],
             'instructions' => self::build_instructions(),
+        ];
+    }
+
+    /**
+     * The version to answer on initialize. A supported version is echoed back. A newer one gets our
+     * newest. Anything older, or not a version at all, gets 2025-06-18: it is what every client got
+     * before negotiation existed, and older SDKs reject a version they do not know.
+     */
+    public static function negotiate_protocol_version( $requested ): string {
+        if ( ! is_string( $requested ) ) {
+            return self::PROTOCOL_FALLBACK;
+        }
+        if ( in_array( $requested, self::PROTOCOL_VERSIONS, true ) ) {
+            return $requested;
+        }
+        if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $requested ) && strcmp( $requested, self::PROTOCOL_VERSIONS[0] ) > 0 ) {
+            return self::PROTOCOL_VERSIONS[0];
+        }
+        return self::PROTOCOL_FALLBACK;
+    }
+
+    /**
+     * Whether this request's client negotiated 2025-11-25 or later. Clients repeat the negotiated
+     * version in the MCP-Protocol-Version header on every request after initialize.
+     */
+    private static function tool_errors_as_results( WP_REST_Request $request ): bool {
+        $version = (string) $request->get_header( 'MCP-Protocol-Version' );
+        return 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $version ) && strcmp( $version, '2025-11-25' ) >= 0;
+    }
+
+    /**
+     * Turn a tools/call refusal into a tool execution error. Malformed requests stay protocol errors:
+     * a name that is not a string, arguments that are not an object, and an unknown tool name
+     * called directly. An unknown tool reached through cowboy_run is a bad argument of cowboy_run.
+     */
+    private static function refusal_as_tool_result( array $params, WP_Error $error ): array|WP_Error {
+        $name = $params['name'] ?? '';
+        $args = $params['arguments'] ?? [];
+        if ( ! is_string( $name ) || ! is_array( $args ) ) {
+            return $error;
+        }
+        $code = $error->get_error_code();
+        if ( ! in_array( $code, self::TOOL_RESULT_ERROR_CODES, true ) ) {
+            return $error;
+        }
+        if ( 'unknown_tool' === $code && ! in_array( $name, [ 'cowboy_run', 'cowboy_discover' ], true ) ) {
+            return $error;
+        }
+        return [
+            'content' => [ [ 'type' => 'text', 'text' => 'Error: ' . $error->get_error_message() ] ],
+            'isError' => true,
         ];
     }
 
