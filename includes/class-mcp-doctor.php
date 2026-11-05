@@ -274,7 +274,7 @@ class Cowboy_MCP_Doctor {
 			'id'      => 1,
 			'method'  => 'initialize',
 			'params'  => [
-				'protocolVersion' => '2025-06-18',
+				'protocolVersion' => Cowboy_MCP_Transport::PROTOCOL_VERSIONS[0],
 				'capabilities'    => (object) [],
 				'clientInfo'      => [ 'name' => 'cowboy-doctor', 'version' => COWBOY_MCP_VERSION ],
 			],
@@ -351,9 +351,17 @@ class Cowboy_MCP_Doctor {
 					$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', 'POST failed: ' . $r->get_error_message() );
 				} else {
 					$code = (int) wp_remote_retrieve_response_code( $r );
-					$json = json_decode( (string) wp_remote_retrieve_body( $r ), true );
+					$body = (string) wp_remote_retrieve_body( $r );
+					$json = json_decode( $body, true );
 					$ok   = 200 === $code && isset( $json['result']['serverInfo'] );
-					$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', $ok ? 'pass' : 'fail', $ok ? 'Full initialize handshake succeeded with a self-test key.' : "Handshake failed (HTTP {$code}).", [ 'HTTP ' . $code ], null, $ok ? null : 'Auth or dispatch layer problem - check the Logs tab for the matching error.' );
+					if ( $ok ) {
+						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'pass', 'Full initialize handshake succeeded with a self-test key.', [ 'HTTP ' . $code ] );
+					} elseif ( self::auth_header_was_stripped( $code, $json ) ) {
+						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', 'The self-test sent an Authorization header, but WordPress received none: the web server removed it. Every API key and sign-in token will be refused until it is passed through.', [ 'HTTP ' . $code ], 'auth_header_stripped', self::AUTH_HEADER_FIX );
+					} else {
+						[ $fp, $fp_fix ] = self::classify( $code, (array) wp_remote_retrieve_headers( $r )->getAll(), $body );
+						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', "Handshake failed (HTTP {$code}).", [ 'HTTP ' . $code ], $fp, $fp_fix ?? 'Auth or dispatch layer problem - check the Logs tab for the matching error.' );
+					}
 				}
 			} finally {
 				Cowboy_MCP_Auth::revoke_key( $minted['id'] );
@@ -540,6 +548,20 @@ class Cowboy_MCP_Doctor {
 			[ 'id' => 'dirty_json', 'status' => null, 'header' => null, 'body_regex' => '/^(\xEF\xBB\xBF|\s+)[\{\[]/', 'fix' => 'The JSON response has junk before it (BOM, whitespace, or a PHP notice). Set WP_DEBUG_DISPLAY to false and deactivate plugins one by one to find the one printing output.' ],
 			[ 'id' => 'html_error_page', 'status' => null, 'header' => null, 'body_regex' => '/^\s*<(!doctype|html)/i', 'fix' => 'An HTML page came back where JSON was expected - commonly a maintenance page, a login redirect, or a cache plugin. Exclude /wp-json/cowboy-mcp/ from page caching.' ],
 		];
+	}
+
+	/** How to pass a stripped Authorization header through to PHP. English on purpose, like the fingerprint fixes. */
+	const AUTH_HEADER_FIX = 'Apache: put WordPress\'s own rule back at the top of .htaccess - RewriteEngine On, then RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] - or add CGIPassAuth On (Apache 2.4.13 or later). Regenerating the WordPress block (Settings > Permalinks > Save) restores the rule if another plugin replaced it. Nginx with PHP-FPM: add fastcgi_param HTTP_AUTHORIZATION $http_authorization; to the PHP location. On managed hosting, ask the host to pass the Authorization header to PHP.';
+
+	/**
+	 * Whether a 401 to a request that carried a Bearer header is the endpoint's "no header"
+	 * answer. Only a server that dropped the header on the way in can produce it.
+	 */
+	private static function auth_header_was_stripped( int $code, $json ): bool {
+		return 401 === $code
+			&& is_array( $json )
+			&& 'mcp_unauthorized' === ( $json['code'] ?? '' )
+			&& str_starts_with( (string) ( $json['message'] ?? '' ), 'Missing or invalid Authorization header' );
 	}
 
 	/** Match a response against the table. Returns [fingerprint_id|null, fix|null]. */
