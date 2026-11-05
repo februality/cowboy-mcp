@@ -61,16 +61,13 @@ class Cowboy_MCP_Rollback {
 	private const PING_META = [ '_encloseme', '_pingme' ];
 
 	/**
-	 * Draft-copy links: Cowboy MCP's own (drafts-only connections) and Yoast
-	 * Duplicate Post's Rewrite & Republish markers. Written onto a live original
-	 * when a copy is made, so they are not post data: snapshots leave them out (a
-	 * new copy is never a conflict for an earlier edit's undo) and restore_post()
-	 * leaves the live rows alone (an undo never unlinks or orphans a copy).
+	 * The draft-copy links a drafts-only connection writes onto a live ORIGINAL when it
+	 * makes a copy: Cowboy MCP's own, and Yoast Duplicate Post's "has a copy" marker.
+	 * Not the original's data: snapshots leave them out (a new copy is never a conflict
+	 * for an earlier edit's undo) and restore_post() leaves the live rows alone (an undo
+	 * never unlinks or orphans a copy). The keys on a copy itself are its own state.
 	 */
-	private const LINK_META = [
-		'_cowboy_mcp_draft_copy', '_cowboy_mcp_draft_copy_of', '_cowboy_mcp_draft_copy_by', '_cowboy_mcp_draft_copy_at',
-		'_dp_original', '_dp_is_rewrite_republish_copy', '_dp_creation_date_gmt', '_dp_has_rewrite_republish_copy',
-	];
+	private const LINK_META = [ '_cowboy_mcp_draft_copy', '_dp_has_rewrite_republish_copy' ];
 
 	/** Real columns of {$wpdb->comments}; get_comment( …, ARRAY_A ) adds children, populated_children, post_fields. */
 	private const COMMENT_COLUMNS = [
@@ -1850,8 +1847,8 @@ class Cowboy_MCP_Rollback {
 			$pre_undo = [ 'rows' => $swapped ];
 		}
 		if ( $copy_of > 0 && is_array( $pre_undo ) ) {
-			// The link is not post state (LINK_META), so a redo would re-create the copy
-			// unlinked; mark it for undo_policy(). `_volatile` is never hashed or compared.
+			// The original's link to the copy is not post state (LINK_META), so a redo would
+			// re-create the copy with nothing pointing at it; mark it for undo_policy(). `_volatile` is never hashed or compared.
 			$pre_undo['_volatile'] = [ 'draft_copy_of' => $copy_of ];
 		}
 		$after_undo      = $type === 'db_rows'

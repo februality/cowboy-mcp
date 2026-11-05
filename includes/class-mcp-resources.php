@@ -92,8 +92,9 @@ class Cowboy_MCP_Resources {
             return true;
         }
         if ( null === $tool ) {
+            // Unscoped, or a mode whose reads include options; an unknown mode fails closed.
             $scope = Cowboy_MCP_Security::current_scope();
-            return null === $scope || 'custom' !== ( $scope['mode'] ?? 'custom' );
+            return null === $scope || in_array( $scope['mode'] ?? '', [ 'full', 'read_only', 'drafts' ], true );
         }
         return Cowboy_MCP_Tools::tool_permitted( $tool );
     }
