@@ -13,6 +13,9 @@ class Cowboy_MCP_Drafts {
     /** Statuses that count as unpublished. */
     const UNPUBLISHED = [ 'draft', 'pending', 'auto-draft' ];
 
+    /** Statuses that count as live. */
+    const LIVE = [ 'publish', 'future', 'private' ];
+
     /** Statuses a drafts credential may set. */
     const SETTABLE = [ 'draft', 'pending' ];
 
@@ -175,10 +178,15 @@ class Cowboy_MCP_Drafts {
         $arg = self::WRITE_TARGETS[ $name ];
         $raw = $args[ $arg ] ?? null;
 
-        if ( 'wp_acf_update_field' === $name || 'wp_acf_add_row' === $name || 'wp_acf_update_row' === $name ) {
-            if ( ! is_int( $raw ) && ! ( is_string( $raw ) && ctype_digit( trim( $raw ) ) ) ) {
-                return new WP_Error( 'drafts_acf_target', 'This credential is drafts-only: ACF writes to options, terms, users and comments change the live site. Pass the numeric ID of a draft post as object_id.' );
+        if ( str_starts_with( $name, 'wp_acf_' ) ) {
+            // Judge the id exactly as the handler normalizes it.
+            $norm = is_string( $raw ) && function_exists( 'cowboy_mcp_acf_normalize_object_id' )
+                ? cowboy_mcp_acf_normalize_object_id( $raw )
+                : ( is_string( $raw ) && ctype_digit( $raw ) ? (int) $raw : $raw );
+            if ( ! is_int( $norm ) || $norm < 1 ) {
+                return new WP_Error( 'drafts_acf_target', 'This credential is drafts-only: ACF writes to options, terms, users and comments change the live site. Pass the numeric ID of a draft post as object_id (digits only, no spaces).' );
             }
+            $raw = $norm;
         }
         if ( 'wp_edit_blocks' === $name && ( ! empty( $args['template'] ) || ! empty( $args['template_type'] ) ) ) {
             return new WP_Error( 'drafts_template', 'This credential is drafts-only: block templates are site-wide. Edit a post by post_id instead.' );
@@ -198,7 +206,7 @@ class Cowboy_MCP_Drafts {
             if ( ! $parent ) {
                 return $args;
             }
-            if ( ! in_array( $parent->post_status, self::UNPUBLISHED, true ) ) {
+            if ( in_array( $parent->post_status, self::LIVE, true ) ) {
                 return new WP_Error( 'drafts_live_revision', 'Restoring a revision of a live post is not possible on a drafts-only connection. Read it with wp_get_revision_diff and apply the change with wp_update_post; it will be saved to a draft copy.' );
             }
             $post = $parent;
@@ -208,8 +216,23 @@ class Cowboy_MCP_Drafts {
         if ( $err ) {
             return $err;
         }
-        if ( ! in_array( $post->post_status, self::UNPUBLISHED, true ) ) {
+        if ( in_array( $post->post_status, self::LIVE, true ) ) {
             return new WP_Error( 'drafts_live_target_unsupported', "Post {$post->ID} is live. Draft copies of live posts are not yet supported on this connection." );
+        }
+        if ( ! in_array( $post->post_status, self::UNPUBLISHED, true ) ) {
+            $label = 'trash' === $post->post_status ? 'in the trash' : 'not a draft';
+            return new WP_Error( 'drafts_status_target', "Post {$post->ID} is {$label} (status: {$post->post_status}); a drafts-only connection can only edit drafts and propose changes to live posts." );
+        }
+        if ( array_key_exists( 'post_type', $args ) && null !== $args['post_type'] ) {
+            $type = is_scalar( $args['post_type'] ) ? sanitize_key( (string) $args['post_type'] ) : '';
+            $obj  = post_type_exists( $type ) ? get_post_type_object( $type ) : null;
+            if ( ! $obj || empty( $obj->show_ui ) ) {
+                return new WP_Error( 'drafts_post_type', "This credential is drafts-only: post type {$type} does not exist or is not editable content." );
+            }
+            $err = self::type_error( $type );
+            if ( $err ) {
+                return $err;
+            }
         }
 
         $args = self::gate_status( $args );
