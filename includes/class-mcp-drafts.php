@@ -164,6 +164,17 @@ class Cowboy_MCP_Drafts {
             return $out;
         }
 
+        // Judged as the handlers read it (! empty()). A script in a draft runs as the
+        // owner who previews it, and an uploaded HTML/SVG file is public at once.
+        if ( ! empty( $args['allow_unfiltered_html'] ) ) {
+            return new WP_Error( 'drafts_unfiltered_html', 'This credential is drafts-only: it cannot store unfiltered HTML (scripts, inline event handlers, active file types). Leave allow_unfiltered_html out; the owner can add such markup in wp-admin.' );
+        }
+
+        if ( 'wp_upload_media' === $name ) {
+            $err = self::gate_media( $args );
+            return $err ? $err : $out;
+        }
+
         if ( in_array( $name, self::CREATE_TOOLS, true ) ) {
             $checked = self::gate_create( $args );
             if ( is_wp_error( $checked ) ) {
@@ -249,6 +260,69 @@ class Cowboy_MCP_Drafts {
         return $args;
     }
 
+    /**
+     * WordPress lets a draft keep a slug a published post uses (wp_unique_post_slug()
+     * returns early for drafts), and the front end then picks the draft and answers 404.
+     * Drafts need no slug: WordPress makes one when the owner publishes. Judged as the
+     * handler reads it: isset(), then sanitize_title().
+     */
+    private static function slug_error( array $args ): ?WP_Error {
+        if ( ! isset( $args['slug'] ) ) {
+            return null;
+        }
+        $slug = is_scalar( $args['slug'] ) ? sanitize_title( (string) $args['slug'] ) : 'x';
+        if ( '' === $slug ) {
+            return null; // sets no slug
+        }
+        return new WP_Error( 'drafts_slug', 'A drafts-only connection cannot set a slug; WordPress assigns one when the owner publishes. Leave slug out.' );
+    }
+
+    /**
+     * An unpublished target that already has a slug (a person set it) must keep a slug
+     * no live post uses after a parent or post_type change, or the live URL can 404.
+     */
+    private static function slug_move_error( array $args, WP_Post $post ): ?WP_Error {
+        if ( '' === (string) $post->post_name ) {
+            return null;
+        }
+        $type   = isset( $args['post_type'] ) && is_scalar( $args['post_type'] ) ? sanitize_key( (string) $args['post_type'] ) : $post->post_type;
+        $parent = isset( $args['parent'] ) && is_scalar( $args['parent'] ) ? (int) $args['parent'] : (int) $post->post_parent;
+        if ( $type === $post->post_type && $parent === (int) $post->post_parent ) {
+            return null;
+        }
+        if ( wp_unique_post_slug( $post->post_name, (int) $post->ID, 'publish', $type, $parent ) !== $post->post_name ) {
+            return new WP_Error( 'drafts_slug', "Post {$post->ID} has the slug \"{$post->post_name}\", which another post already uses at the new parent or post type. Moving it there could make the live post's URL stop working, so a drafts-only connection cannot do it. Leave parent and post_type out, or ask the owner to change the slug first." );
+        }
+        return null;
+    }
+
+    /**
+     * An upload's post_id becomes the attachment's parent, and core's [gallery] without
+     * ids lists every attached image: it may name only an unpublished post (a draft copy
+     * included). Judged as the handler reads it: (int).
+     */
+    private static function gate_media( array $args ): ?WP_Error {
+        $id = isset( $args['post_id'] ) && is_scalar( $args['post_id'] ) ? (int) $args['post_id'] : 0;
+        if ( 0 === $id ) {
+            return null;
+        }
+        $post = $id > 0 ? get_post( $id ) : null;
+        if ( ! $post ) {
+            return new WP_Error( 'drafts_media_parent', "Post {$id} does not exist. Upload without post_id, or attach the file to a draft." );
+        }
+        if ( in_array( $post->post_status, self::LIVE, true ) ) {
+            $copy = self::find_copy( $id );
+            $hint = $copy
+                ? "Attach it to draft copy {$copy->ID} (post_id: {$copy->ID}) instead"
+                : "Upload it without post_id, then use it in an edit of post {$id} (that edit goes to a draft copy), or attach it to the draft copy once one exists";
+            return new WP_Error( 'drafts_media_parent', "Post {$id} is live, and a file attached to it can show on the live page at once (a gallery lists every attached image). {$hint}." );
+        }
+        if ( ! in_array( $post->post_status, self::UNPUBLISHED, true ) || self::type_error( $post->post_type ) ) {
+            return new WP_Error( 'drafts_media_parent', "Post {$id} is not a draft (type: {$post->post_type}, status: {$post->post_status}). A drafts-only connection can attach uploads only to drafts; leave post_id out." );
+        }
+        return null;
+    }
+
     /** Every tag must already exist: creating terms changes the live taxonomy. */
     private static function gate_tags( array $args ): ?WP_Error {
         if ( ! isset( $args['tags'] ) || ! is_array( $args['tags'] ) ) {
@@ -271,6 +345,55 @@ class Cowboy_MCP_Drafts {
         return function_exists( 'cowboy_mcp_acf_normalize_object_id' )
             ? cowboy_mcp_acf_normalize_object_id( $raw )
             : ( ctype_digit( $raw ) ? (int) $raw : $raw );
+    }
+
+    /**
+     * ACF value writes name a field. A bidirectional one (Relationship, Post Object, User,
+     * Taxonomy; ACF 6.2+) also rewrites the other side's value, on posts that may be live,
+     * so it is refused; so is a name ACF cannot resolve for the target (it could be any
+     * meta key). Resolved as update_field() resolves it.
+     */
+    private static function acf_field_error( array $args, int $object_id ): ?WP_Error {
+        if ( ! function_exists( 'acf_get_field' ) ) {
+            return null;
+        }
+        $name = $args['field_name'] ?? '';
+        if ( ! is_string( $name ) || '' === $name ) {
+            return null; // the handler reports the missing field_name
+        }
+        $field = function_exists( 'acf_maybe_get_field' ) ? acf_maybe_get_field( $name, $object_id, false ) : acf_get_field( $name );
+        if ( ! is_array( $field ) || empty( $field['key'] ) ) {
+            return new WP_Error( 'drafts_acf_field', "This credential is drafts-only: \"{$name}\" is not an ACF field registered for post {$object_id}. Use a field name or key from wp_acf_get_field_groups / wp_acf_get_field_group_fields." );
+        }
+        if ( self::acf_bidirectional( $field, 0 ) ) {
+            return new WP_Error( 'drafts_acf_bidirectional', "This credential is drafts-only: ACF field \"{$name}\" is bidirectional (or contains a bidirectional field), so saving it also changes the posts, users or terms it points to, which may be live. Ask the owner to make this change." );
+        }
+        return null;
+    }
+
+    /** Whether an ACF field or any field inside it (repeater, group, flexible content) is bidirectional. */
+    private static function acf_bidirectional( array $field, int $depth ): bool {
+        if ( ! empty( $field['bidirectional'] ) ) {
+            return true;
+        }
+        if ( $depth > 5 ) {
+            return false;
+        }
+        $children = isset( $field['sub_fields'] ) && is_array( $field['sub_fields'] ) ? $field['sub_fields'] : [];
+        if ( ! $children && function_exists( 'acf_get_fields' ) && in_array( $field['type'] ?? '', [ 'repeater', 'group', 'flexible_content' ], true ) ) {
+            $children = (array) acf_get_fields( $field );
+        }
+        foreach ( $field['layouts'] ?? [] as $layout ) {
+            if ( is_array( $layout ) && isset( $layout['sub_fields'] ) && is_array( $layout['sub_fields'] ) ) {
+                $children = array_merge( $children, $layout['sub_fields'] );
+            }
+        }
+        foreach ( $children as $child ) {
+            if ( is_array( $child ) && self::acf_bidirectional( $child, $depth + 1 ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function type_error( string $type ): ?WP_Error {
@@ -297,7 +420,7 @@ class Cowboy_MCP_Drafts {
         if ( $err ) {
             return $err;
         }
-        $err = self::gate_tags( $args );
+        $err = self::slug_error( $args ) ?? self::gate_tags( $args );
         return $err ? $err : $args;
     }
 
@@ -312,6 +435,10 @@ class Cowboy_MCP_Drafts {
                 return new WP_Error( 'drafts_acf_target', 'This credential is drafts-only: ACF writes to options, terms, users and comments change the live site. Pass the numeric ID of a draft post as object_id (digits only, no spaces).' );
             }
             $raw = $norm;
+            $err = self::acf_field_error( $args, $norm );
+            if ( $err ) {
+                return $err;
+            }
         }
         if ( 'wp_edit_blocks' === $name && ( ! empty( $args['template'] ) || ! empty( $args['template_type'] ) ) ) {
             return new WP_Error( 'drafts_template', 'This credential is drafts-only: block templates are site-wide. Edit a post by post_id instead.' );
@@ -368,6 +495,11 @@ class Cowboy_MCP_Drafts {
             if ( $err ) {
                 return $err;
             }
+        }
+
+        $err = self::slug_error( $args ) ?? self::slug_move_error( $args, $post );
+        if ( $err ) {
+            return $err;
         }
 
         $args = self::gate_status( $args );
