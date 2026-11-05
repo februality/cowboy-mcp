@@ -1788,11 +1788,13 @@ class Cowboy_MCP_OAuth {
             $current_mode = $clients[ $row_key ]['tool_scope']['mode'] ?? 'full';
             if ( 'read_only' === $scope_mode ) {
                 $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'read_only', 'allowed_tools' => [] ];
+            } elseif ( 'drafts' === $scope_mode ) {
+                $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'drafts', 'allowed_tools' => [] ];
             } elseif ( 'keep_custom' === $scope_mode && 'custom' === $current_mode ) {
                 // Re-consent without touching the existing custom scope.
             } else {
                 // Latest consent wins: an earlier read-only/custom grant is
-                // replaced by this full-access approval. A stale "keep_custom"
+                // replaced by this full-access approval (read-only and drafts have their own branches). A stale "keep_custom"
                 // posted against a scope that is no longer custom falls back to
                 // full, fail-safe, rather than silently discarding nothing.
                 unset( $clients[ $row_key ]['tool_scope'] );
@@ -1961,6 +1963,10 @@ wp_print_styles( 'cowboy-mcp-oauth-consent' );
         <label>
             <input type="radio" name="cowboy_mcp_oauth_scope_mode" value="read_only" <?php checked( ! $is_custom && 'read_only' === $stored_mode ); ?>>
             <?php esc_html_e( 'Read-only — inspect the site, make no changes', 'cowboy-mcp' ); ?>
+        </label>
+        <label>
+            <input type="radio" name="cowboy_mcp_oauth_scope_mode" value="drafts" <?php checked( ! $is_custom && 'drafts' === $stored_mode ); ?>>
+            <?php esc_html_e( 'Drafts only — write drafts and propose changes; you publish', 'cowboy-mcp' ); ?>
         </label>
     </fieldset>
     <div class="actions">

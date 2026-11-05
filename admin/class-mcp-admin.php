@@ -548,7 +548,7 @@ class Cowboy_MCP_Admin {
 
     /**
      * Map posted key_scope_mode/allowed_tools[] fields to a scope array.
-     * Returns null for full access, an array for read_only/custom, or false
+     * Returns null for full access, an array for read_only/drafts/custom, or false
      * (an "invalid" sentinel) when key_scope_mode is missing or unrecognized —
      * callers must treat false as "reject the submission", never as "full".
      */
@@ -564,6 +564,9 @@ class Cowboy_MCP_Admin {
         }
         if ( 'read_only' === $mode ) {
             return [ 'mode' => 'read_only' ];
+        }
+        if ( 'drafts' === $mode ) {
+            return [ 'mode' => 'drafts', 'allowed_tools' => [] ];
         }
         if ( 'custom' === $mode ) {
             // phpcs:ignore WordPress.Security.NonceVerification.Missing

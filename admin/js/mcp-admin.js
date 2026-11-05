@@ -402,6 +402,10 @@
 			var slot = wrap.querySelector('.mcp-scope-custom-slot');
 			var isCustom = wrap.querySelector('input[value="custom"]').checked;
 			slot.hidden = !isCustom;
+			var help = wrap.querySelector('.cmcp-scope-drafts-help');
+			if (help) {
+				help.hidden = !wrap.querySelector('input[value="drafts"]').checked;
+			}
 			if (isCustom) {
 				ensureChecklist(wrap, slot);
 			}
@@ -650,6 +654,10 @@
 			form.reset();
 			slot.textContent = '';
 			slot.hidden = ! sel.querySelector( 'input[value="custom"]' ).checked;
+			var dhelp = sel.querySelector( '.cmcp-scope-drafts-help' );
+			if ( dhelp ) {
+				dhelp.hidden = ! sel.querySelector( 'input[value="drafts"]' ).checked;
+			}
 			cancel.closest( 'tr' ).hidden = true;
 			var owner = cancel.closest( 'tr' ).previousElementSibling;
 			while ( owner && owner.classList.contains( 'cmcp-panel-row' ) ) {

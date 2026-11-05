@@ -68,6 +68,7 @@ require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-connections.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-activity.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-logs.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-settings.php';
+require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-drafts.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-feedback.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-hub-promo.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-repair-notice.php';
@@ -83,6 +84,7 @@ add_action( 'plugins_loaded', function () {
     Cowboy_MCP_Auth::init();
     Cowboy_MCP_Transport::init();
     Cowboy_MCP_Admin::init();
+    Cowboy_MCP_Admin_Drafts::init();
     Cowboy_MCP_Feedback::init();
     Cowboy_MCP_Hub_Promo::init();
     Cowboy_MCP_Repair_Notice::init();

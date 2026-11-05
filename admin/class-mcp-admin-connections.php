@@ -1434,7 +1434,7 @@ class Cowboy_MCP_Admin_Connections {
      * (JSON array of tool names, stored on the form as data-scope-tools).
      */
     private static function render_scope_radios( string $mode, string $tools_json = '[]' ): void {
-        $opts = [ 'full' => __( 'Full access', 'cowboy-mcp' ), 'read_only' => __( 'Read-only', 'cowboy-mcp' ), 'custom' => __( 'Custom…', 'cowboy-mcp' ) ];
+        $opts = [ 'full' => __( 'Full access', 'cowboy-mcp' ), 'read_only' => __( 'Read-only', 'cowboy-mcp' ), 'drafts' => __( 'Drafts only', 'cowboy-mcp' ), 'custom' => __( 'Custom…', 'cowboy-mcp' ) ];
         ?>
         <div class="mcp-scope-select cmcp-scope-select" data-scope-tools="<?php echo esc_attr( $tools_json ); ?>">
             <div class="cmcp-seg" role="radiogroup" aria-label="<?php esc_attr_e( 'Access level', 'cowboy-mcp' ); ?>">
@@ -1443,6 +1443,7 @@ class Cowboy_MCP_Admin_Connections {
                 <?php endforeach; ?>
             </div>
             <div class="mcp-scope-custom-slot cmcp-scope-slot" <?php echo 'custom' === $mode ? '' : 'hidden'; ?>></div>
+            <p class="description cmcp-scope-drafts-help" <?php echo 'drafts' === $mode ? '' : 'hidden'; ?>><?php esc_html_e( 'Can create drafts and propose changes to live posts as draft copies. Never publishes or changes the live site.', 'cowboy-mcp' ); ?></p>
         </div>
         <?php
     }
@@ -1455,6 +1456,9 @@ class Cowboy_MCP_Admin_Connections {
         $mode = $scope['mode'] ?? '';
         if ( 'read_only' === $mode ) {
             return __( 'Read-only', 'cowboy-mcp' );
+        }
+        if ( 'drafts' === $mode ) {
+            return __( 'Drafts only', 'cowboy-mcp' );
         }
         if ( 'custom' === $mode ) {
             /* translators: %d: number of tools this credential may call */
