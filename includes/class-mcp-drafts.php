@@ -195,10 +195,8 @@ class Cowboy_MCP_Drafts {
         if ( 'wp_list_blocks' === $name && ( ! empty( $args['template'] ) || ! empty( $args['template_type'] ) ) ) {
             return $out; // A template read, not a post.
         }
-        if ( str_starts_with( $name, 'wp_acf_' ) && is_string( $raw ) ) {
-            $raw = function_exists( 'cowboy_mcp_acf_normalize_object_id' )
-                ? cowboy_mcp_acf_normalize_object_id( $raw )
-                : ( ctype_digit( $raw ) ? (int) $raw : $raw );
+        if ( str_starts_with( $name, 'wp_acf_' ) ) {
+            $raw = self::acf_object_id( $raw );
         }
         if ( ! is_int( $raw ) && ! ( is_string( $raw ) && ctype_digit( $raw ) ) ) {
             return $out; // Options, terms, users, comments and the like.
@@ -265,6 +263,16 @@ class Cowboy_MCP_Drafts {
         return null;
     }
 
+    /** An ACF object_id judged exactly as the handler normalizes it (an int for a post ID). */
+    private static function acf_object_id( $raw ) {
+        if ( ! is_string( $raw ) ) {
+            return $raw;
+        }
+        return function_exists( 'cowboy_mcp_acf_normalize_object_id' )
+            ? cowboy_mcp_acf_normalize_object_id( $raw )
+            : ( ctype_digit( $raw ) ? (int) $raw : $raw );
+    }
+
     private static function type_error( string $type ): ?WP_Error {
         if ( in_array( $type, self::DENIED_TYPES, true ) ) {
             return new WP_Error( 'drafts_post_type', "This credential is drafts-only: post type {$type} is not available. It is site-wide configuration, not content." );
@@ -299,10 +307,7 @@ class Cowboy_MCP_Drafts {
         $raw = $args[ $arg ] ?? null;
 
         if ( str_starts_with( $name, 'wp_acf_' ) ) {
-            // Judge the id exactly as the handler normalizes it.
-            $norm = is_string( $raw ) && function_exists( 'cowboy_mcp_acf_normalize_object_id' )
-                ? cowboy_mcp_acf_normalize_object_id( $raw )
-                : ( is_string( $raw ) && ctype_digit( $raw ) ? (int) $raw : $raw );
+            $norm = self::acf_object_id( $raw );
             if ( ! is_int( $norm ) || $norm < 1 ) {
                 return new WP_Error( 'drafts_acf_target', 'This credential is drafts-only: ACF writes to options, terms, users and comments change the live site. Pass the numeric ID of a draft post as object_id (digits only, no spaces).' );
             }
@@ -748,10 +753,14 @@ class Cowboy_MCP_Drafts {
      * What a drafts-only connection may not undo (called from Rollback::undo_policy()).
      * Allowed only for this connection's own change (the row's key_id) to a post that
      * is still unpublished, or the creation of one that no longer exists, when the
-     * restore would not set a live status. A redo that would re-create a removed
-     * draft copy is refused: it would come back unlinked from its original.
+     * restore would not set a live status. Never forced: force skips the conflict
+     * check, the only thing that notices a person's later (unjournaled) edits. A redo
+     * that would re-create a removed draft copy is refused: it would come back unlinked.
      */
-    public static function undo_block( array $row ): ?WP_Error {
+    public static function undo_block( array $row, bool $force = false ): ?WP_Error {
+        if ( $force ) {
+            return new WP_Error( 'drafts_undo_force', 'A drafts-only connection cannot force an undo: forcing would overwrite or delete changes made since, possibly by a person. Undo the later change first, or pass both change ids in change_ids (they are undone newest first).' );
+        }
         $deny = new WP_Error( 'drafts_undo', 'A drafts-only connection can only undo its own changes to drafts.' );
         $ctx  = class_exists( 'Cowboy_MCP_Auth' ) ? Cowboy_MCP_Auth::$current_key_context : [];
         $mine = substr( (string) ( $ctx['key_id'] ?? '' ), 0, 64 ); // the journal column is 64 wide
@@ -769,11 +778,14 @@ class Cowboy_MCP_Drafts {
         $type   = (string) ( $row['object_type'] ?? '' );
         $object = (string) ( $row['object_id'] ?? '' );
         if ( 'acf_value' === $type ) {
-            $object = explode( '@', $object, 2 )[1] ?? ''; // field@object, split as restore() does
-        } elseif ( 'post' !== $type && 'seo_row' !== $type ) {
+            // field@object, split as restore() does; the object judged as the gate judges it.
+            $object  = self::acf_object_id( explode( '@', $object, 2 )[1] ?? '' );
+            $post_id = is_int( $object ) ? $object : 0;
+        } elseif ( 'post' === $type || 'seo_row' === $type ) {
+            $post_id = ctype_digit( $object ) ? (int) $object : 0;
+        } else {
             return $deny;
         }
-        $post_id = ctype_digit( $object ) ? (int) $object : 0;
         if ( $post_id < 1 ) {
             return $deny;
         }

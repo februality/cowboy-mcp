@@ -1824,7 +1824,9 @@ class Cowboy_MCP_Rollback {
 				'undo_conflict',
 				"Conflict: '{$row['object_label']}' ({$type} {$id}) has been modified since change #{$change_id} was made. "
 					. 'Undoing now would clobber the later change.',
-				[ 'suggestion' => 'Inspect the object, then resend with force: true to undo anyway.' ]
+				[ 'suggestion' => ( class_exists( 'Cowboy_MCP_Drafts' ) && Cowboy_MCP_Drafts::active() )
+					? 'Undo the later change first, or pass both change ids in change_ids. A drafts-only connection cannot force an undo.'
+					: 'Inspect the object, then resend with force: true to undo anyway.' ]
 			);
 		}
 
@@ -1949,7 +1951,7 @@ class Cowboy_MCP_Rollback {
 			}
 		}
 		if ( class_exists( 'Cowboy_MCP_Drafts' ) && Cowboy_MCP_Drafts::active() ) {
-			$b = Cowboy_MCP_Drafts::undo_block( $row );
+			$b = Cowboy_MCP_Drafts::undo_block( $row, $force );
 			if ( $b ) {
 				return $b;
 			}
