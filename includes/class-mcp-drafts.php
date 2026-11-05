@@ -468,17 +468,19 @@ class Cowboy_MCP_Drafts {
         }
         $copy_id      = (int) $got['copy']->ID;
         $args[ $arg ] = is_string( $args[ $arg ] ?? null ) ? (string) $copy_id : $copy_id;
-        return [
-            'args'    => $args,
-            'ctx'     => [
-                'tool'            => $name,
-                'copy_id'         => $copy_id,
-                'original_id'     => $id,
-                'original_status' => $post->post_status,
-                'created'         => (bool) $got['created'],
-            ],
-            'preview' => null,
+        $ctx          = [
+            'tool'            => $name,
+            'copy_id'         => $copy_id,
+            'original_id'     => $id,
+            'original_status' => $post->post_status,
+            'created'         => (bool) $got['created'],
         ];
+        if ( $got['created'] ) {
+            // The CREATE row's hash is the copy as made, before this call's edit: undoing
+            // that edit and then the creation must not conflict.
+            $ctx['created_hash'] = Cowboy_MCP_Rollback::draft_copy_hash( Cowboy_MCP_Rollback::snapshot( 'post', (string) $copy_id ) );
+        }
+        return [ 'args' => $args, 'ctx' => $ctx, 'preview' => null ];
     }
 
     /** The draft_copy block of a result. */
@@ -699,7 +701,7 @@ class Cowboy_MCP_Drafts {
                     'object_id'    => (string) $copy_id,
                     'object_label' => $after['post']['post_title'] ?? "post #{$copy_id}",
                     'before_state' => null,
-                    'after_hash'   => Cowboy_MCP_Rollback::state_hash( $after ),
+                    'after_hash'   => (string) ( $ctx['created_hash'] ?? Cowboy_MCP_Rollback::draft_copy_hash( $after ) ),
                 ] );
             }
             if ( class_exists( 'Cowboy_MCP_Auth' ) ) {
@@ -742,7 +744,61 @@ class Cowboy_MCP_Drafts {
         return $result;
     }
 
-    /** The call failed: permanently delete a copy it created (the delete hook unlinks the original). */
+    /**
+     * What a drafts-only connection may not undo (called from Rollback::undo_policy()).
+     * Allowed only for this connection's own change (the row's key_id) to a post that
+     * is still unpublished, or the creation of one that no longer exists, when the
+     * restore would not set a live status. A redo that would re-create a removed
+     * draft copy is refused: it would come back unlinked from its original.
+     */
+    public static function undo_block( array $row ): ?WP_Error {
+        $deny = new WP_Error( 'drafts_undo', 'A drafts-only connection can only undo its own changes to drafts.' );
+        $ctx  = class_exists( 'Cowboy_MCP_Auth' ) ? Cowboy_MCP_Auth::$current_key_context : [];
+        $mine = substr( (string) ( $ctx['key_id'] ?? '' ), 0, 64 ); // the journal column is 64 wide
+        if ( '' === $mine || (string) ( $row['key_id'] ?? '' ) !== $mine ) {
+            return $deny;
+        }
+
+        $state   = is_array( $row['before_state'] ?? null ) ? $row['before_state'] : null;
+        $copy_of = (int) ( $state['_volatile']['draft_copy_of'] ?? 0 );
+        if ( 'wp_undo_change' === ( $row['tool'] ?? '' ) && $copy_of > 0 ) {
+            return new WP_Error( 'drafts_undo_copy_redo', "Change #{$row['id']} would re-create draft copy {$row['object_id']} of post {$copy_of}, which an undo removed. It would come back unlinked from post {$copy_of}, so a drafts-only connection cannot redo it. Edit post {$copy_of} again instead: the change goes to a new draft copy." );
+        }
+
+        // The post the row restores, as each strategy the drafts tools journal stores it.
+        $type   = (string) ( $row['object_type'] ?? '' );
+        $object = (string) ( $row['object_id'] ?? '' );
+        if ( 'acf_value' === $type ) {
+            $object = explode( '@', $object, 2 )[1] ?? ''; // field@object, split as restore() does
+        } elseif ( 'post' !== $type && 'seo_row' !== $type ) {
+            return $deny;
+        }
+        $post_id = ctype_digit( $object ) ? (int) $object : 0;
+        if ( $post_id < 1 ) {
+            return $deny;
+        }
+
+        $post = get_post( $post_id );
+        if ( $post ) {
+            if ( ! in_array( $post->post_status, self::UNPUBLISHED, true ) || self::type_error( $post->post_type ) ) {
+                return $deny;
+            }
+        } elseif ( 'create' !== ( $row['action'] ?? '' ) ) {
+            return $deny;
+        }
+        $before = $state['post'] ?? null;
+        if ( is_array( $before ) ) {
+            if ( isset( $before['post_status'] ) && ! in_array( (string) $before['post_status'], self::UNPUBLISHED, true ) ) {
+                return $deny;
+            }
+            if ( isset( $before['post_type'] ) && self::type_error( (string) $before['post_type'] ) ) {
+                return $deny;
+            }
+        }
+        return null;
+    }
+
+    /** The note a read adds: which post the result shows, and whether the original is live. */
     private static function read_note( array $ctx ): string {
         $copy_id     = (int) $ctx['copy_id'];
         $original_id = (int) $ctx['original_id'];
@@ -769,6 +825,7 @@ class Cowboy_MCP_Drafts {
         return [ 'draft_copy' => self::describe( $ctx ), 'note' => self::read_note( $ctx ) ];
     }
 
+    /** The call failed: permanently delete a copy it created (the delete hook unlinks the original). */
     public static function abandon( ?array $ctx ): void {
         if ( null === $ctx || empty( $ctx['created'] ) || empty( $ctx['copy_id'] ) ) {
             return;
