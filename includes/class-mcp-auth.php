@@ -75,7 +75,8 @@ class Cowboy_MCP_Auth {
             'prefix'   => substr( $raw_key, 0, 8 ),  // visible prefix for identification
             'lookup'   => self::key_lookup( $raw_key ),
         ];
-        // Who made it: on multisite a key only works while its creator is a super admin.
+        // Who made it: the key runs as this user, and only while they are an administrator
+        // (a super admin on multisite).
         if ( get_current_user_id() > 0 ) {
             $record['created_by'] = get_current_user_id();
         }
@@ -373,7 +374,20 @@ class Cowboy_MCP_Auth {
                 return true;
             }
 
-            // Set current user to admin so WP capabilities work.
+            // Single site: a key runs as the admin who created it (recorded since 1.7.5), so its
+            // calls are attributed to that person and stop working when they lose admin rights,
+            // as OAuth tokens do.
+            $creator = (int) ( $record['created_by'] ?? 0 );
+            if ( $creator > 0 ) {
+                if ( ! Cowboy_MCP_Security::user_is_plugin_admin( $creator ) ) {
+                    self::log( 'auth_key_creator_not_admin', self::$current_key_context );
+                    return new WP_Error( 'mcp_unauthorized', 'The administrator who created this API key no longer has administrator rights. Create a new key in Settings > Cowboy MCP.', [ 'status' => 401 ] );
+                }
+                wp_set_current_user( $creator );
+                return true;
+            }
+
+            // Keys without a recorded creator (made before 1.7.5, or with WP-CLI) run as the first administrator.
             $admins = get_users( [ 'role' => 'administrator', 'number' => 1 ] );
             if ( empty( $admins ) ) {
                 return new WP_Error( 'mcp_no_admin', 'No administrator account found. MCP requires at least one admin user.', [ 'status' => 500 ] );
