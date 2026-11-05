@@ -296,6 +296,16 @@ class Cowboy_MCP_Drafts {
             }
         }
 
+        // A copy addressed by its own ID is edited in place, but a Republish writes its
+        // author, date, parent and type onto the live original: same refusals as via the original.
+        $original = 'wp_restore_revision' === $name ? 0 : self::original_of( $post->ID );
+        if ( $original > 0 ) {
+            $err = self::live_field_error( $args, $post, true, "Post {$post->ID} is a draft copy of live post {$original}." );
+            if ( $err ) {
+                return $err;
+            }
+        }
+
         $args = self::gate_status( $args );
         if ( is_wp_error( $args ) ) {
             return $args;
@@ -306,8 +316,6 @@ class Cowboy_MCP_Drafts {
         }
         $out['args'] = $args;
 
-        // A copy addressed by its own ID: edited in place, but the result still says whose copy it is.
-        $original = 'wp_restore_revision' === $name ? 0 : self::original_of( $post->ID );
         if ( $original > 0 ) {
             $out['ctx'] = [
                 'tool'            => $name,
@@ -321,22 +329,37 @@ class Cowboy_MCP_Drafts {
     }
 
     /**
+     * Fields a Republish would carry onto the live post's URL, date, author or status.
+     * $post is the live original or its copy (Yoast's Republish clones the copy and
+     * keeps only the original's ID, post_name and status). On a copy, status may be
+     * draft or pending (gate_status() judges it); on a live post it is refused.
+     */
+    private static function live_field_error( array $args, WP_Post $post, bool $is_copy, string $what ): ?WP_Error {
+        $fixed = $is_copy ? array_diff( self::LIVE_FIXED_ARGS, [ 'status' ] ) : self::LIVE_FIXED_ARGS;
+        foreach ( $fixed as $key ) {
+            if ( array_key_exists( $key, $args ) && null !== $args[ $key ] ) {
+                return new WP_Error( 'drafts_live_field', "{$what} Setting {$key} would change the live post's URL, date, author or status, so a drafts-only connection cannot propose it. Leave {$key} out; the rest of the change goes to the draft copy." );
+            }
+        }
+        if ( array_key_exists( 'parent', $args ) && null !== $args['parent'] && (int) $args['parent'] !== (int) $post->post_parent ) {
+            return new WP_Error( 'drafts_live_field', "{$what} Changing parent would change the live post's URL once the copy is published, so a drafts-only connection cannot propose it. Leave parent out." );
+        }
+        if ( array_key_exists( 'post_type', $args ) && null !== $args['post_type']
+            && ( is_scalar( $args['post_type'] ) ? sanitize_key( (string) $args['post_type'] ) : '' ) !== $post->post_type ) {
+            return new WP_Error( 'drafts_live_field', "{$what} Changing post_type would change the live post's URL once the copy is published, so a drafts-only connection cannot propose it. Leave post_type out." );
+        }
+        return null;
+    }
+
+    /**
      * A live target: refuse what a copy cannot carry or would carry back wrongly,
      * then point the call at the post's draft copy (made on first use).
      */
     private static function gate_live( string $name, array $args, string $arg, WP_Post $post ): array|WP_Error {
-        $id = (int) $post->ID;
-        foreach ( self::LIVE_FIXED_ARGS as $key ) {
-            if ( array_key_exists( $key, $args ) && null !== $args[ $key ] ) {
-                return new WP_Error( 'drafts_live_field', "Post {$id} is live. Setting {$key} would change the live post's URL, date, author or status, so a drafts-only connection cannot propose it. Leave {$key} out; the rest of the change goes to a draft copy." );
-            }
-        }
-        if ( array_key_exists( 'parent', $args ) && null !== $args['parent'] && (int) $args['parent'] !== (int) $post->post_parent ) {
-            return new WP_Error( 'drafts_live_field', "Post {$id} is live. Changing parent would change the live post's URL once the copy is published, so a drafts-only connection cannot propose it. Leave parent out." );
-        }
-        if ( array_key_exists( 'post_type', $args ) && null !== $args['post_type']
-            && ( is_scalar( $args['post_type'] ) ? sanitize_key( (string) $args['post_type'] ) : '' ) !== $post->post_type ) {
-            return new WP_Error( 'drafts_live_field', "Post {$id} is live. Changing post_type would change the live post's URL once the copy is published, so a drafts-only connection cannot propose it. Leave post_type out." );
+        $id  = (int) $post->ID;
+        $err = self::live_field_error( $args, $post, false, "Post {$id} is live." );
+        if ( $err ) {
+            return $err;
         }
         if ( in_array( $post->post_type, self::LIVE_UNSAFE_TYPES, true ) ) {
             return new WP_Error( 'drafts_live_type', "Post {$id} is a live {$post->post_type}, whose data lives in custom tables a draft copy cannot carry. A drafts-only connection can only edit unpublished ones; ask the owner to make this change." );
@@ -536,6 +559,9 @@ class Cowboy_MCP_Drafts {
             'comment_status' => $o->comment_status,
             'ping_status'    => $o->ping_status,
             'post_password'  => $o->post_password,
+            // Republish writes these back too: a blank one would erase stored source (e.g. Markdown).
+            'post_content_filtered' => $o->post_content_filtered,
+            'post_mime_type' => $o->post_mime_type,
             // Republish writes these back onto the original: they must be the original's.
             'post_author'    => (int) $o->post_author,
             'post_date'      => $o->post_date,
@@ -582,7 +608,9 @@ class Cowboy_MCP_Drafts {
         update_post_meta( $copy_id, self::META_COPY_AT, gmdate( 'Y-m-d H:i:s' ) );
         update_post_meta( $o->ID, self::META_COPY, $copy_id );
 
-        if ( defined( 'DUPLICATE_POST_CURRENT_VERSION' ) && 'publish' === $o->post_status && ! self::has_person_yoast_copy( (int) $o->ID ) ) {
+        // 4.6 added duplicate_post_after_republish, which on_republish() needs to strip our links again.
+        if ( defined( 'DUPLICATE_POST_CURRENT_VERSION' ) && version_compare( (string) DUPLICATE_POST_CURRENT_VERSION, '4.6', '>=' )
+            && 'publish' === $o->post_status && ! self::has_person_yoast_copy( (int) $o->ID ) ) {
             update_post_meta( $copy_id, '_dp_original', (int) $o->ID );
             update_post_meta( $copy_id, '_dp_is_rewrite_republish_copy', 1 );
             update_post_meta( $copy_id, '_dp_creation_date_gmt', current_time( 'mysql', 1 ) );

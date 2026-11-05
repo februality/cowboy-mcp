@@ -60,6 +60,18 @@ class Cowboy_MCP_Rollback {
 	 */
 	private const PING_META = [ '_encloseme', '_pingme' ];
 
+	/**
+	 * Draft-copy links: Cowboy MCP's own (drafts-only connections) and Yoast
+	 * Duplicate Post's Rewrite & Republish markers. Written onto a live original
+	 * when a copy is made, so they are not post data: snapshots leave them out (a
+	 * new copy is never a conflict for an earlier edit's undo) and restore_post()
+	 * leaves the live rows alone (an undo never unlinks or orphans a copy).
+	 */
+	private const LINK_META = [
+		'_cowboy_mcp_draft_copy', '_cowboy_mcp_draft_copy_of', '_cowboy_mcp_draft_copy_by', '_cowboy_mcp_draft_copy_at',
+		'_dp_original', '_dp_is_rewrite_republish_copy', '_dp_creation_date_gmt', '_dp_has_rewrite_republish_copy',
+	];
+
 	/** Real columns of {$wpdb->comments}; get_comment( …, ARRAY_A ) adds children, populated_children, post_fields. */
 	private const COMMENT_COLUMNS = [
 		'comment_ID', 'comment_post_ID', 'comment_author', 'comment_author_email', 'comment_author_url',
@@ -604,7 +616,7 @@ class Cowboy_MCP_Rollback {
 				}
 				$meta = get_post_meta( (int) $id );
 				unset( $meta['_edit_lock'], $meta['_edit_last'] ); // volatile; false conflicts
-				$meta = array_diff_key( $meta, array_flip( self::PING_META ) );
+				$meta = array_diff_key( $meta, array_flip( self::PING_META ), array_flip( self::LINK_META ) );
 				$terms = [];
 				foreach ( get_object_taxonomies( $post['post_type'] ) as $tax ) {
 					$t = wp_get_object_terms( (int) $id, $tax, [ 'fields' => 'ids' ] );
@@ -1123,10 +1135,11 @@ class Cowboy_MCP_Rollback {
 		$live_id = (int) $result;
 
 		// Meta: clear current, re-add captured (values are stored serialized-raw arrays).
-		// The ping queue stays as core left it; journal rows from before 1.7.5 still carry it.
-		$meta = array_diff_key( (array) $state['meta'], array_flip( self::PING_META ) );
+		// The ping queue stays as core left it (journal rows from before 1.7.5 still carry
+		// it), and so do the draft-copy links (LINK_META).
+		$meta = array_diff_key( (array) $state['meta'], array_flip( self::PING_META ), array_flip( self::LINK_META ) );
 		foreach ( array_keys( get_post_meta( $live_id ) ) as $k ) {
-			if ( ! in_array( $k, self::PING_META, true ) ) {
+			if ( ! in_array( $k, self::PING_META, true ) && ! in_array( $k, self::LINK_META, true ) ) {
 				delete_post_meta( $live_id, $k );
 			}
 		}
@@ -2227,7 +2240,7 @@ class Cowboy_MCP_Rollback {
 			unset( $state['post']['post_modified'], $state['post']['post_modified_gmt'] );
 			// Before-states journaled by 1.7.4 and earlier still include the ping queue.
 			if ( isset( $state['meta'] ) && is_array( $state['meta'] ) ) {
-				$state['meta'] = array_diff_key( $state['meta'], array_flip( self::PING_META ) );
+				$state['meta'] = array_diff_key( $state['meta'], array_flip( self::PING_META ), array_flip( self::LINK_META ) );
 			}
 			// A draft with no fixed date (zero post_date_gmt) gets post_date = now on every save.
 			if ( ( $state['post']['post_date_gmt'] ?? '' ) === '0000-00-00 00:00:00' ) {
