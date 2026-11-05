@@ -35,7 +35,7 @@ class Cowboy_MCP_Admin_Drafts {
             $original = get_post( $original_id );
             if ( $original && current_user_can( 'read_post', $original->ID ) ) {
                 /* translators: %s: title of the live post this draft copy was made from */
-                $states['cowboy_mcp_draft_copy'] = sprintf( __( 'Draft copy of: %s', 'cowboy-mcp' ), get_the_title( $original ) );
+                $states['cowboy_mcp_draft_copy'] = sprintf( __( 'Draft copy of: %s', 'cowboy-mcp' ), esc_html( get_the_title( $original ) ) );
             } else {
                 $states['cowboy_mcp_draft_copy'] = __( 'Draft copy', 'cowboy-mcp' );
             }
