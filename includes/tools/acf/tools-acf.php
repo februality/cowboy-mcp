@@ -181,7 +181,11 @@ function cowboy_mcp_acf_stored_rows( string $type, int $id, string $key ): array
  */
 function cowboy_mcp_acf_check_args( array $a ): array|WP_Error {
     $field_name = $a['field_name'] ?? '';
-    if ( ! is_string( $field_name ) || '' === $field_name ) {
+    if ( ! is_string( $field_name ) ) {
+        // update_field() would resolve an integer as a field's post ID, past the gate below.
+        return new WP_Error( 'invalid_field_name', 'field_name must be a string: an ACF field name or field key.' );
+    }
+    if ( '' === $field_name ) {
         return $a; // the handler reports the missing field_name
     }
     $gate = cowboy_mcp_acf_write_gate( $field_name, cowboy_mcp_acf_normalize_object_id( (string) ( $a['object_id'] ?? '' ) ) );

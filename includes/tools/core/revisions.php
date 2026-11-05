@@ -85,7 +85,7 @@ function cowboy_mcp_revision_resolve( int $revision_id ): array|WP_Error {
 	if ( ! $revision instanceof WP_Post ) {
 		return new WP_Error( 'revision_not_found', "Revision {$revision_id} not found." );
 	}
-	$parent = get_post( (int) $revision->post_parent );
+	$parent = (int) $revision->post_parent > 0 ? get_post( (int) $revision->post_parent ) : null; // get_post( 0 ) is the global post
 	if ( ! $parent instanceof WP_Post ) {
 		return new WP_Error( 'revision_not_found', "Revision {$revision_id} has no parent post." );
 	}

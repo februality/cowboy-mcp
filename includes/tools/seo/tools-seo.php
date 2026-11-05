@@ -389,7 +389,7 @@ return [
                 return new WP_Error( 'forbidden', 'The authenticated user cannot read post SEO meta.' );
             }
             $post_id = (int) $a['post_id'];
-            if ( ! get_post( $post_id ) ) {
+            if ( $post_id < 1 || ! get_post( $post_id ) ) { // get_post( 0 ) is the global post
                 return new WP_Error( 'not_found', "Post {$post_id} not found." );
             }
             $adapter = cowboy_mcp_seo_adapter();
@@ -405,7 +405,7 @@ return [
         },
         'wp_seo_update_meta' => function ( array $a ) {
             $post_id = (int) $a['post_id'];
-            if ( ! get_post( $post_id ) ) {
+            if ( $post_id < 1 || ! get_post( $post_id ) ) { // get_post( 0 ) is the global post
                 return new WP_Error( 'not_found', "Post {$post_id} not found." );
             }
             if ( ! current_user_can( 'edit_post', $post_id ) ) {

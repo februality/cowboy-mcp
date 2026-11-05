@@ -90,6 +90,13 @@ class Cowboy_MCP_Drafts {
     /** Arguments that would change a live post's URL, date, author or status once the copy is republished. */
     const LIVE_FIXED_ARGS = [ 'status', 'slug', 'date', 'author' ];
 
+    /**
+     * Arguments the gate judges by value on write paths. Each must be one value: the
+     * handlers cast without type checks ((int) [5] is 1, sanitize_key( [] ) is ''), so a
+     * list or object would be read one way here and another way there.
+     */
+    const SINGLE_VALUE_ARGS = [ 'post_id', 'revision_id', 'object_id', 'parent', 'post_type', 'status', 'slug', 'date', 'author' ];
+
     /** Bootstrap: keep the copy link consistent when a copy is deleted or republished. */
     public static function init(): void {
         add_action( 'before_delete_post', [ __CLASS__, 'on_delete_post' ] );
@@ -168,6 +175,13 @@ class Cowboy_MCP_Drafts {
         // owner who previews it, and an uploaded HTML/SVG file is public at once.
         if ( ! empty( $args['allow_unfiltered_html'] ) ) {
             return new WP_Error( 'drafts_unfiltered_html', 'This credential is drafts-only: it cannot store unfiltered HTML (scripts, inline event handlers, active file types). Leave allow_unfiltered_html out; the owner can add such markup in wp-admin.' );
+        }
+
+        if ( 'wp_upload_media' === $name || in_array( $name, self::CREATE_TOOLS, true ) || isset( self::WRITE_TARGETS[ $name ] ) ) {
+            $err = self::arg_type_error( $name, $args );
+            if ( $err ) {
+                return $err;
+            }
         }
 
         if ( 'wp_upload_media' === $name ) {
@@ -302,7 +316,7 @@ class Cowboy_MCP_Drafts {
      * included). Judged as the handler reads it: (int).
      */
     private static function gate_media( array $args ): ?WP_Error {
-        $id = isset( $args['post_id'] ) && is_scalar( $args['post_id'] ) ? (int) $args['post_id'] : 0;
+        $id = (int) ( $args['post_id'] ?? 0 ); // arg_type_error() already refused a non-scalar
         if ( 0 === $id ) {
             return null;
         }
@@ -319,6 +333,22 @@ class Cowboy_MCP_Drafts {
         }
         if ( ! in_array( $post->post_status, self::UNPUBLISHED, true ) || self::type_error( $post->post_type ) ) {
             return new WP_Error( 'drafts_media_parent', "Post {$id} is not a draft (type: {$post->post_type}, status: {$post->post_status}). A drafts-only connection can attach uploads only to drafts; leave post_id out." );
+        }
+        return null;
+    }
+
+    /**
+     * Refuse a list or object where the gate expects one value, and a non-string ACF
+     * field_name (update_field() resolves an integer as a field's post ID).
+     */
+    private static function arg_type_error( string $name, array $args ): ?WP_Error {
+        foreach ( self::SINGLE_VALUE_ARGS as $key ) {
+            if ( isset( $args[ $key ] ) && ! is_scalar( $args[ $key ] ) ) {
+                return new WP_Error( 'drafts_arg_type', "This credential is drafts-only: {$key} must be a single value (a number or a string), not a list or object." );
+            }
+        }
+        if ( str_starts_with( $name, 'wp_acf_' ) && isset( $args['field_name'] ) && ! is_string( $args['field_name'] ) ) {
+            return new WP_Error( 'drafts_arg_type', 'This credential is drafts-only: field_name must be a string (an ACF field name or field key).' );
         }
         return null;
     }
@@ -444,19 +474,27 @@ class Cowboy_MCP_Drafts {
             return new WP_Error( 'drafts_template', 'This credential is drafts-only: block templates are site-wide. Edit a post by post_id instead.' );
         }
 
-        $id   = (int) $raw;
-        $post = $id > 0 ? get_post( $id ) : null;
+        // Fail closed: core's get_post( 0 ) returns the global post, which a loop earlier
+        // in the request (a rendered Query Loop block, a batch step) can leave on a live post.
+        $id = (int) $raw;
+        if ( $id < 1 ) {
+            return new WP_Error( 'drafts_target', "This credential is drafts-only: {$arg} must be the numeric ID of a post (digits only)." );
+        }
+        $post = get_post( $id );
         if ( ! $post ) {
             return $out; // The handler reports not-found.
         }
+        // The handler reads exactly the id judged here (gate_live() swaps in the copy's).
+        $args[ $arg ] = is_string( $args[ $arg ] ) ? (string) $id : $id;
 
         if ( 'wp_restore_revision' === $name ) {
             if ( 'revision' !== $post->post_type ) {
                 return $out; // The handler refuses a non-revision.
             }
-            $parent = $post->post_parent ? get_post( (int) $post->post_parent ) : null;
+            $parent = $post->post_parent > 0 ? get_post( (int) $post->post_parent ) : null;
             if ( ! $parent ) {
-                return $out;
+                // Fail closed: an orphan revision would resolve to the global post.
+                return new WP_Error( 'drafts_target', 'This credential is drafts-only: that revision has no parent post to restore into.' );
             }
             if ( in_array( $parent->post_status, self::LIVE, true ) ) {
                 return new WP_Error( 'drafts_live_revision', 'Restoring a revision of a live post is not possible on a drafts-only connection. Read it with wp_get_revision_diff and apply the change with wp_update_post; it will be saved to a draft copy.' );

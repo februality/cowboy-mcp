@@ -82,7 +82,7 @@ function cowboy_mcp_gutenberg_resolve_target( array $a, bool $materialize = fals
     }
 
     if ( $has_post ) {
-        $post = get_post( (int) $a['post_id'] );
+        $post = (int) $a['post_id'] > 0 ? get_post( (int) $a['post_id'] ) : null; // get_post( 0 ) is the global post
         if ( ! $post ) {
             return new WP_Error( 'not_found', "Post #{$a['post_id']} not found." );
         }

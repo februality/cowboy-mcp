@@ -491,7 +491,7 @@ function cowboy_mcp_beaver_check_update( int $post_id, array $a ): array {
 
 /** The post a layout write targets, or why it cannot be written. */
 function cowboy_mcp_beaver_target_post( int $post_id ): WP_Post|WP_Error {
-    $post = get_post( $post_id );
+    $post = $post_id > 0 ? get_post( $post_id ) : null; // get_post( 0 ) is the global post
     if ( ! $post || in_array( $post->post_type, [ 'revision', 'attachment', 'nav_menu_item' ], true ) ) {
         return new WP_Error( 'not_found', "Post #{$post_id} not found." );
     }

@@ -588,7 +588,7 @@ class Cowboy_MCP_Rollback {
 				return [ 'value' => $v ];
 
 			case 'seo_row': {
-				if ( ! get_post( (int) $id ) ) {
+				if ( (int) $id < 1 || ! get_post( (int) $id ) ) { // get_post( 0 ) is the global post
 					return null;
 				}
 				global $wpdb;
@@ -607,7 +607,7 @@ class Cowboy_MCP_Rollback {
 
 			case 'post':
 			case 'media':
-				$post = get_post( (int) $id, ARRAY_A );
+				$post = (int) $id > 0 ? get_post( (int) $id, ARRAY_A ) : null; // get_post( 0 ) is the global post
 				if ( ! $post ) {
 					return null;
 				}

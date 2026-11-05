@@ -260,7 +260,7 @@ return [
         },
 
         'wp_get_post' => function ( array $a ): array|WP_Error {
-            $post = get_post( (int) $a['post_id'] );
+            $post = (int) $a['post_id'] > 0 ? get_post( (int) $a['post_id'] ) : null; // get_post( 0 ) is the global post
             if ( ! $post ) {
                 return new WP_Error( 'not_found', "Post {$a['post_id']} not found." );
             }
@@ -326,7 +326,7 @@ return [
 
         'wp_update_post' => function ( array $a ): array|WP_Error {
             $post_id = (int) $a['post_id'];
-            $post    = get_post( $post_id );
+            $post    = $post_id > 0 ? get_post( $post_id ) : null; // get_post( 0 ) is the global post
             if ( ! $post ) {
                 return new WP_Error( 'not_found', "Post {$post_id} not found." );
             }
@@ -390,7 +390,7 @@ return [
 
         'wp_delete_post' => function ( array $a ): array|WP_Error {
             $post_id = (int) $a['post_id'];
-            $post    = get_post( $post_id );
+            $post    = $post_id > 0 ? get_post( $post_id ) : null; // get_post( 0 ) is the global post
             if ( ! $post ) {
                 return new WP_Error( 'not_found', "Post {$post_id} not found." );
             }
