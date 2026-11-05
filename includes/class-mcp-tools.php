@@ -393,6 +393,19 @@ class Cowboy_MCP_Tools {
             $args = $checked;
         }
 
+        // Drafts-only credentials: judge creates and edit targets before any preview.
+        if ( class_exists( 'Cowboy_MCP_Drafts' ) && Cowboy_MCP_Drafts::active() ) {
+            $drafts = Cowboy_MCP_Drafts::gate( $name, $args );
+            if ( is_wp_error( $drafts ) ) {
+                $log_id = self::mcp_log( 'tool_call', [ 'tool' => $name, 'args' => $args, 'power_mode' => Cowboy_MCP_Security::power_mode_enabled() ] );
+                return self::tool_error_result( $name, $drafts, $log_id );
+            }
+            if ( null !== $drafts['preview'] ) {
+                return $drafts['preview'];
+            }
+            $args = $drafts['args'];
+        }
+
         // Dry-run intercept: preview what the tool would do without executing.
         if ( ! empty( $args['dry_run'] ) ) {
             $annotations = self::$tool_map[ $name ]['annotations'] ?? [];
