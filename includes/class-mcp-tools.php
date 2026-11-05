@@ -394,6 +394,9 @@ class Cowboy_MCP_Tools {
         }
 
         // Drafts-only credentials: judge creates and edit targets before any preview.
+        // A live target is pointed at its draft copy (made here on first use); $drafts_ctx
+        // carries that through to after_success() / abandon().
+        $drafts_ctx = null;
         if ( class_exists( 'Cowboy_MCP_Drafts' ) && Cowboy_MCP_Drafts::active() ) {
             $drafts = Cowboy_MCP_Drafts::gate( $name, $args );
             if ( is_wp_error( $drafts ) ) {
@@ -403,7 +406,8 @@ class Cowboy_MCP_Tools {
             if ( null !== $drafts['preview'] ) {
                 return $drafts['preview'];
             }
-            $args = $drafts['args'];
+            $args       = $drafts['args'];
+            $drafts_ctx = $drafts['ctx'];
         }
 
         // Dry-run intercept: preview what the tool would do without executing.
@@ -419,6 +423,9 @@ class Cowboy_MCP_Tools {
         if ( ! empty( $settings['safe_mode'] ) ) {
             $annotations = self::$tool_map[ $name ]['annotations'] ?? [];
             if ( ! empty( $annotations['destructiveHint'] ) && empty( $args['confirm'] ) ) {
+                if ( null !== $drafts_ctx ) {
+                    Cowboy_MCP_Drafts::abandon( $drafts_ctx );
+                }
                 $preview = self::generate_dry_run_preview( $name, $args );
                 $preview_text = $preview['content'][0]['text'] ?? '';
                 return [
@@ -452,7 +459,15 @@ class Cowboy_MCP_Tools {
                 if ( $capture !== null ) {
                     Cowboy_MCP_Rollback::discard( $capture );
                 }
+                if ( null !== $drafts_ctx ) {
+                    Cowboy_MCP_Drafts::abandon( $drafts_ctx );
+                }
                 return self::tool_error_result( $name, $result, $log_id );
+            }
+
+            // Before commit(): a copy made in this call is journaled ahead of the edit to it.
+            if ( null !== $drafts_ctx ) {
+                $result = Cowboy_MCP_Drafts::after_success( $drafts_ctx, $result );
             }
 
             if ( $capture !== null ) {
@@ -485,6 +500,9 @@ class Cowboy_MCP_Tools {
         } catch ( \Throwable $e ) {
             if ( $capture !== null ) {
                 Cowboy_MCP_Rollback::discard( $capture );
+            }
+            if ( null !== $drafts_ctx ) {
+                Cowboy_MCP_Drafts::abandon( $drafts_ctx );
             }
             self::mcp_log( 'tool_exception', [ 'tool' => $name, 'exception' => $e->getMessage() ] );
             Cowboy_MCP_Audit_Log::set_result( $log_id, 'exception' );

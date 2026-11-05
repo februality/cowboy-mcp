@@ -1063,7 +1063,7 @@ class Cowboy_MCP_Rollback {
 	 * through objects (map_deep), but wp_slash() leaves objects untouched, so
 	 * stdClass meta (e.g. Beaver Builder layouts) would lose every backslash.
 	 */
-	private static function slash_deep( $value ) {
+	public static function slash_deep( $value ) {
 		if ( is_object( $value ) ) {
 			$value = clone $value;
 			foreach ( get_object_vars( $value ) as $k => $v ) {
