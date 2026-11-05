@@ -47,6 +47,7 @@ define( 'COWBOY_MCP_URL',     plugin_dir_url( __FILE__ ) );
 
 /* ── Autoload ─────────────────────────────────────────────── */
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-security.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-drafts.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-compat.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-audit-log.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-rollback.php';
@@ -73,6 +74,7 @@ require_once COWBOY_MCP_PATH . 'admin/class-mcp-repair-notice.php';
 
 /* ── Boot ─────────────────────────────────────────────────── */
 add_action( 'plugins_loaded', function () {
+    Cowboy_MCP_Drafts::init();
     Cowboy_MCP_Audit_Log::init();
     Cowboy_MCP_Rollback::init();
     Cowboy_MCP_Checkpoint::init();

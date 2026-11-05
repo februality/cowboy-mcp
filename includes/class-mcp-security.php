@@ -275,6 +275,7 @@ class Cowboy_MCP_Security {
         }
         return match ( $scope['mode'] ) {
             'read_only' => ! empty( $annotations['readOnlyHint'] ),
+            'drafts'    => Cowboy_MCP_Drafts::tool_allowed( $name, $annotations ),
             'custom'    => in_array( $name, (array) ( $scope['allowed_tools'] ?? [] ), true ),
             default     => false,
         };
@@ -305,6 +306,9 @@ class Cowboy_MCP_Security {
         }
         if ( 'read_only' === $scope['mode'] ) {
             return 'This credential is READ-ONLY: only read-only tools are available. Write tools are not listed and will be refused.';
+        }
+        if ( 'drafts' === $scope['mode'] ) {
+            return 'This credential is DRAFTS-ONLY: it may read everything, create posts and pages only as draft or pending, edit unpublished content, and upload media. Edits to live (published, scheduled or private) posts are saved to a linked draft copy for the owner to review and publish; results say so in draft_copy. It cannot publish, delete, or change anything else on the site.';
         }
         $count = count( (array) ( $scope['allowed_tools'] ?? [] ) );
         return "This credential is scoped to {$count} of the site's tools; the tool catalog reflects only what it may call.";

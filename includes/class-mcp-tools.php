@@ -345,9 +345,13 @@ class Cowboy_MCP_Tools {
         if ( ! Cowboy_MCP_Security::tool_in_scope( $name, $scope_annotations ) ) {
             $scope_mode = Cowboy_MCP_Security::current_scope()['mode'] ?? 'custom';
             self::mcp_log( 'tool_scope_denied', [ 'tool' => $name, 'scope_mode' => $scope_mode ] );
-            $message = ( 'read_only' === $scope_mode )
-                ? "This credential is read-only; {$name} is not a read-only tool."
-                : "This credential's scope does not include {$name}.";
+            if ( 'read_only' === $scope_mode ) {
+                $message = "This credential is read-only; {$name} is not a read-only tool.";
+            } elseif ( 'drafts' === $scope_mode ) {
+                $message = "This credential is drafts-only: it can create drafts and propose changes to live posts as draft copies, but {$name} changes the live site.";
+            } else {
+                $message = "This credential's scope does not include {$name}.";
+            }
             return new WP_Error(
                 'tool_scope_denied',
                 $message . ' Use cowboy_discover to see the tools this credential may call.',

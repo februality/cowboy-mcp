@@ -155,6 +155,9 @@ class Cowboy_MCP_Auth {
         if ( 'read_only' === $mode ) {
             return [ 'mode' => 'read_only', 'allowed_tools' => [] ];
         }
+        if ( 'drafts' === $mode ) {
+            return [ 'mode' => 'drafts', 'allowed_tools' => [] ];
+        }
         if ( 'custom' === $mode ) {
             $tools = array_values( array_unique( array_filter( array_map(
                 // Cowboy tool names (underscores, no slash) or Abilities API names
