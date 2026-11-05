@@ -176,6 +176,65 @@ class Cowboy_MCP_Drafts {
         if ( isset( self::WRITE_TARGETS[ $name ] ) ) {
             return self::gate_target( $name, $args );
         }
+        if ( isset( self::READ_TARGETS[ $name ] ) ) {
+            return self::gate_read( $name, $args );
+        }
+        return $out;
+    }
+
+    /**
+     * A read of a live post that has a draft copy returns the copy, so the AI reads the
+     * version it edits (block and node paths line up). Never creates a copy; anything
+     * that is not a post with a copy passes through untouched.
+     */
+    private static function gate_read( string $name, array $args ): array {
+        $out = [ 'args' => $args, 'ctx' => null, 'preview' => null ];
+        $arg = self::READ_TARGETS[ $name ];
+        $raw = $args[ $arg ] ?? null;
+
+        if ( 'wp_list_blocks' === $name && ( ! empty( $args['template'] ) || ! empty( $args['template_type'] ) ) ) {
+            return $out; // A template read, not a post.
+        }
+        if ( str_starts_with( $name, 'wp_acf_' ) && is_string( $raw ) ) {
+            $raw = function_exists( 'cowboy_mcp_acf_normalize_object_id' )
+                ? cowboy_mcp_acf_normalize_object_id( $raw )
+                : ( ctype_digit( $raw ) ? (int) $raw : $raw );
+        }
+        if ( ! is_int( $raw ) && ! ( is_string( $raw ) && ctype_digit( $raw ) ) ) {
+            return $out; // Options, terms, users, comments and the like.
+        }
+        $id = (int) $raw;
+        if ( $id < 1 || ! get_post( $id ) ) {
+            return $out;
+        }
+
+        $copy = self::find_copy( $id );
+        if ( $copy ) {
+            $args[ $arg ] = is_string( $args[ $arg ] ?? null ) ? (string) $copy->ID : (int) $copy->ID;
+            $out['args']  = $args;
+            $out['ctx']   = [
+                'tool'            => $name,
+                'copy_id'         => (int) $copy->ID,
+                'original_id'     => $id,
+                'original_status' => (string) ( get_post_status( $id ) ?: 'missing' ),
+                'created'         => false,
+                'read'            => true,
+                'redirected'      => true,
+            ];
+            return $out;
+        }
+        $original = self::original_of( $id );
+        if ( $original > 0 ) {
+            $out['ctx'] = [
+                'tool'            => $name,
+                'copy_id'         => $id,
+                'original_id'     => $original,
+                'original_status' => (string) ( get_post_status( $original ) ?: 'missing' ),
+                'created'         => false,
+                'read'            => true,
+                'redirected'      => false,
+            ];
+        }
         return $out;
     }
 
@@ -652,6 +711,21 @@ class Cowboy_MCP_Drafts {
             }
         }
 
+        if ( ! empty( $ctx['read'] ) ) {
+            $note = self::read_note( $ctx );
+            if ( is_string( $result ) ) {
+                return $result . "\n" . $note;
+            }
+            if ( ! is_array( $result ) ) {
+                return $result;
+            }
+            $result['draft_copy'] = self::describe( $ctx );
+            $result['note']       = isset( $result['note'] ) && is_string( $result['note'] ) && '' !== $result['note']
+                ? $note . ' ' . $result['note']
+                : $note;
+            return $result;
+        }
+
         $note = in_array( (string) $ctx['original_status'], self::LIVE, true )
             ? "Post {$original_id} is live, so this change was saved to draft copy {$copy_id} for the owner to review and publish. The live post is unchanged."
             : "Post {$copy_id} is a draft copy of post {$original_id}, which is no longer live (status: {$ctx['original_status']}). The change was saved to the copy.";
@@ -669,6 +743,32 @@ class Cowboy_MCP_Drafts {
     }
 
     /** The call failed: permanently delete a copy it created (the delete hook unlinks the original). */
+    private static function read_note( array $ctx ): string {
+        $copy_id     = (int) $ctx['copy_id'];
+        $original_id = (int) $ctx['original_id'];
+        $status      = (string) $ctx['original_status'];
+        $live        = in_array( $status, self::LIVE, true );
+        if ( ! empty( $ctx['redirected'] ) ) {
+            return $live
+                ? "Post {$original_id} is live and has a draft copy; this shows draft copy {$copy_id}. The live post is unchanged."
+                : "Post {$original_id} is no longer live (status: {$status}) and has a draft copy; this shows draft copy {$copy_id}.";
+        }
+        return "Post {$copy_id} is a draft copy of post {$original_id}"
+            . ( $live ? ', which is live. The live post is unchanged.' : ", which is no longer live (status: {$status})." );
+    }
+
+    /** The draft_copy block and note a read adds, for readers that do not go through call_tool(). */
+    public static function read_flag( int $original_id, int $copy_id, bool $redirected = true ): array {
+        $ctx = [
+            'copy_id'         => $copy_id,
+            'original_id'     => $original_id,
+            'original_status' => (string) ( get_post_status( $original_id ) ?: 'missing' ),
+            'created'         => false,
+            'redirected'      => $redirected,
+        ];
+        return [ 'draft_copy' => self::describe( $ctx ), 'note' => self::read_note( $ctx ) ];
+    }
+
     public static function abandon( ?array $ctx ): void {
         if ( null === $ctx || empty( $ctx['created'] ) || empty( $ctx['copy_id'] ) ) {
             return;
