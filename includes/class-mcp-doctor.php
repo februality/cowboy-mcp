@@ -338,13 +338,15 @@ class Cowboy_MCP_Doctor {
 			Cowboy_MCP_Audit_Log::log( 'doctor_key_minted', [ 'key_id' => $minted['id'] ] );
 			try {
 				$auth_args = [ 'redirection' => 0, 'headers' => [ 'Content-Type' => 'application/json', 'Accept' => 'application/json, text/event-stream', 'Authorization' => 'Bearer ' . $minted['key'] ], 'body' => self::initialize_body() ];
-				$r         = self::loopback( 'POST', $endpoint, $auth_args );
+				$target    = $endpoint;
+				$r         = self::loopback( 'POST', $target, $auth_args );
 				// One same-host redirect (http -> https, trailing slash) is followed by hand.
 				$location = is_wp_error( $r ) ? '' : (string) wp_remote_retrieve_header( $r, 'location' );
 				if ( '' !== $location && in_array( (int) wp_remote_retrieve_response_code( $r ), [ 301, 302, 307, 308 ], true ) ) {
 					$next = WP_Http::make_absolute_url( $location, $endpoint );
 					if ( strtolower( (string) wp_parse_url( $next, PHP_URL_HOST ) ) === strtolower( (string) wp_parse_url( $endpoint, PHP_URL_HOST ) ) ) {
-						$r = self::loopback( 'POST', $next, $auth_args );
+						$target = $next;
+						$r      = self::loopback( 'POST', $target, $auth_args );
 					}
 				}
 				if ( is_wp_error( $r ) ) {
@@ -357,7 +359,18 @@ class Cowboy_MCP_Doctor {
 					if ( $ok ) {
 						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'pass', 'Full initialize handshake succeeded with a self-test key.', [ 'HTTP ' . $code ] );
 					} elseif ( self::auth_header_was_stripped( $code, $json ) ) {
-						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', 'The self-test sent an Authorization header, but WordPress received none: the web server removed it. Every API key and sign-in token will be refused until it is passed through.', [ 'HTTP ' . $code ], 'auth_header_stripped', self::AUTH_HEADER_FIX );
+						// Same key in the fallback header: tells the admin whether API-key connections can work today.
+						$alt_args = $auth_args;
+						unset( $alt_args['headers']['Authorization'] );
+						$alt_args['headers'][ Cowboy_MCP_Auth::KEY_HEADER ] = $minted['key'];
+						$alt      = self::loopback( 'POST', $target, $alt_args );
+						$alt_json = is_wp_error( $alt ) ? null : json_decode( (string) wp_remote_retrieve_body( $alt ), true );
+						$alt_ok   = ! is_wp_error( $alt ) && 200 === (int) wp_remote_retrieve_response_code( $alt ) && isset( $alt_json['result']['serverInfo'] );
+						$message  = 'The self-test sent an Authorization header, but WordPress received none: the web server removed it. '
+							. ( $alt_ok
+								? 'The same key did get through in the ' . Cowboy_MCP_Auth::KEY_HEADER . ' header, so API-key connections work if they send it there instead. Browser sign-in connections need the Authorization header passed through.'
+								: 'Every API key and sign-in token will be refused until it is passed through.' );
+						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', $message, [ 'HTTP ' . $code, Cowboy_MCP_Auth::KEY_HEADER . ': ' . ( $alt_ok ? 'works' : 'refused too' ) ], 'auth_header_stripped', self::AUTH_HEADER_FIX );
 					} else {
 						[ $fp, $fp_fix ] = self::classify( $code, (array) wp_remote_retrieve_headers( $r )->getAll(), $body );
 						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'fail', "Handshake failed (HTTP {$code}).", [ 'HTTP ' . $code ], $fp, $fp_fix ?? 'Auth or dispatch layer problem - check the Logs tab for the matching error.' );
@@ -551,7 +564,7 @@ class Cowboy_MCP_Doctor {
 	}
 
 	/** How to pass a stripped Authorization header through to PHP. English on purpose, like the fingerprint fixes. */
-	const AUTH_HEADER_FIX = 'Apache: put WordPress\'s own rule back at the top of .htaccess - RewriteEngine On, then RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] - or add CGIPassAuth On (Apache 2.4.13 or later). Regenerating the WordPress block (Settings > Permalinks > Save) restores the rule if another plugin replaced it. Nginx with PHP-FPM: add fastcgi_param HTTP_AUTHORIZATION $http_authorization; to the PHP location. On managed hosting, ask the host to pass the Authorization header to PHP.';
+	const AUTH_HEADER_FIX = 'Apache: put WordPress\'s own rule back at the top of .htaccess - RewriteEngine On, then RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] - or add CGIPassAuth On (Apache 2.4.13 or later). Regenerating the WordPress block (Settings > Permalinks > Save) restores the rule if another plugin replaced it. Nginx with PHP-FPM: add fastcgi_param HTTP_AUTHORIZATION $http_authorization; to the PHP location. On managed hosting, ask the host to pass the Authorization header to PHP. Until then, an API-key connection can send its key in an X-Cowboy-MCP-Key header instead of Authorization (for example --header "X-Cowboy-MCP-Key: mcp_...").';
 
 	/**
 	 * Whether a 401 to a request that carried a Bearer header is the endpoint's "no header"

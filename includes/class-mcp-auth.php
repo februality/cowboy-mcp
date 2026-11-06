@@ -13,6 +13,14 @@ class Cowboy_MCP_Auth {
     const OPTION_KEY = 'cowboy_mcp_api_keys';
 
     /**
+     * Second header that carries the same credential as `Authorization: Bearer …`, for hosts
+     * that strip Authorization before PHP and for sites behind an HTTP Basic login (whose
+     * Authorization header is the site password). Read only when no Bearer Authorization
+     * header arrived, so existing connections behave exactly as before.
+     */
+    const KEY_HEADER = 'X-Cowboy-MCP-Key';
+
+    /**
      * Side store for the MCP clientInfo each credential last presented (autoload no):
      * `key:<key id>` / `oauth:<client_id>` => {name, title?, version?, at}. Kept apart from the
      * credential records so the endpoint never rewrites `cowboy_mcp_api_keys` / `cowboy_mcp_oauth_clients`.
@@ -272,8 +280,8 @@ class Cowboy_MCP_Auth {
             return new WP_Error( 'mcp_forbidden', 'Origin not allowed.', [ 'status' => 403 ] );
         }
 
-        $auth_header = $request->get_header( 'Authorization' );
-        if ( ! $auth_header || ! str_starts_with( $auth_header, 'Bearer ' ) ) {
+        $token = self::request_token( $request );
+        if ( null === $token ) {
             if ( $preflight ) {
                 return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
             }
@@ -289,7 +297,6 @@ class Cowboy_MCP_Auth {
             return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
         }
 
-        $token = substr( $auth_header, 7 );
 
         // ── OAuth access token branch ──
         // OAuth tokens carry a distinct prefix and are validated against the OAuth
@@ -473,6 +480,48 @@ class Cowboy_MCP_Auth {
         }
         unset( $all[ $kind . ':' . $id ] );
         update_option( self::CLIENT_INFO_OPTION, $all, false );
+    }
+
+    /**
+     * The credential a request carries, or null.
+     *
+     * Order: a Bearer `Authorization` header as WordPress parsed it; the same header from
+     * the server's own list when WordPress saw none (Apache keeps it out of $_SERVER on
+     * some setups); then KEY_HEADER, as `<key>` or `Bearer <key>`. A Bearer Authorization
+     * header always wins, so KEY_HEADER can never override a credential that arrived there.
+     */
+    public static function request_token( WP_REST_Request $request ): ?string {
+        $auth = trim( (string) $request->get_header( 'Authorization' ) );
+        if ( '' === $auth ) {
+            $auth = self::server_authorization_header();
+        }
+        if ( preg_match( '/^Bearer\s+(\S+)$/i', $auth, $m ) ) {
+            return $m[1];
+        }
+        $alt = trim( (string) $request->get_header( self::KEY_HEADER ) );
+        if ( preg_match( '/^(?:Bearer\s+)?(\S+)$/i', $alt, $m ) ) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    /** Authorization as the web server reports it (getallheaders / apache_request_headers), or ''. */
+    private static function server_authorization_header(): string {
+        foreach ( [ 'getallheaders', 'apache_request_headers' ] as $fn ) {
+            if ( ! function_exists( $fn ) ) {
+                continue;
+            }
+            $all = $fn();
+            if ( ! is_array( $all ) ) {
+                continue;
+            }
+            foreach ( $all as $name => $value ) {
+                if ( is_string( $name ) && 0 === strcasecmp( $name, 'Authorization' ) && is_string( $value ) ) {
+                    return trim( $value );
+                }
+            }
+        }
+        return '';
     }
 
     /**

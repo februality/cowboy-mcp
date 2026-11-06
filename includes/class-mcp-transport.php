@@ -46,6 +46,19 @@ class Cowboy_MCP_Transport {
         add_action( 'rest_api_init', [ __CLASS__, 'register_routes' ] );
         add_filter( 'rest_pre_serve_request', [ __CLASS__, 'maybe_serve_sse' ], 10, 4 );
         add_filter( 'rest_request_before_callbacks', [ __CLASS__, 'let_handler_parse' ], 10, 3 );
+        add_filter( 'rest_post_dispatch', [ __CLASS__, 'no_store' ], 10, 3 );
+    }
+
+    /**
+     * Every answer from this plugin's routes (results, 401s, token responses) is private to
+     * the caller. Page caches and CDNs that cache /wp-json/ must never keep or replay one.
+     */
+    public static function no_store( $response, $server, $request ) {
+        if ( $response instanceof WP_HTTP_Response && $request instanceof WP_REST_Request
+            && str_starts_with( (string) $request->get_route(), '/' . self::NS . '/' ) ) {
+            $response->header( 'Cache-Control', 'no-store, private' );
+        }
+        return $response;
     }
 
     /* ── REST Routes ──────────────────────────────────────── */
@@ -366,7 +379,7 @@ class Cowboy_MCP_Transport {
         $response_data = $result->get_data();
 
         header( 'Content-Type: text/event-stream' );
-        header( 'Cache-Control: no-cache' );
+        header( 'Cache-Control: no-store, no-cache' );
 
         foreach ( $notifications as $n ) {
             $encoded = wp_json_encode( $n );
