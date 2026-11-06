@@ -185,6 +185,7 @@
 		var copyBtn   = document.getElementById( 'cowboy-doctor-copy' );
 		var t         = cowboyMcpDoctor.i18n;
 		var reportText = '';
+		var signin     = null; // the override buttons' data, from the Doctor's answer
 
 		run.addEventListener( 'click', function() {
 			run.disabled = true;
@@ -197,6 +198,7 @@
 				.then( function( json ) {
 					if ( ! json.success ) { throw new Error( 'AJAX error' ); }
 					reportText = json.data.report;
+					signin = json.data.signin || null;
 					renderChecks( json.data.results.checks, t.serverChecks );
 					return browserProbes( json.data.probes, json.data.fingerprints, t );
 				} )
@@ -245,7 +247,8 @@
 			checks.forEach( function( raw ) {
 				var c = raw.ui ? Object.assign( {}, raw, raw.ui ) : raw;
 				var li = document.createElement( 'li' ), dot = document.createElement( 'span' ), label = document.createElement( 'span' ), res = document.createElement( 'span' );
-				var tone = { pass: '', warn: ' cmcp-dot--warn', fail: ' cmcp-dot--bad', error: ' cmcp-dot--bad', skip: ' cmcp-dot--off' }[ c.status ] || ' cmcp-dot--off';
+				var tone = { pass: '', warn: ' cmcp-dot--warn', fail: ' cmcp-dot--bad', error: ' cmcp-dot--bad', skip: ' cmcp-dot--off', info: ' cmcp-dot--info' }[ c.status ] || ' cmcp-dot--off';
+				if ( c.id ) { li.setAttribute( 'data-check', c.id ); }
 				dot.className = 'cmcp-dot' + tone;
 				dot.setAttribute( 'aria-hidden', 'true' );
 				label.className = 'cmcp-check-label';
@@ -265,9 +268,38 @@
 					fix.textContent = fmt( t.fix, c.fix );
 					li.appendChild( fix );
 				}
+				if ( c.id === 'signin_address' && signin ) {
+					li.appendChild( signinButtons() );
+				}
 				ul.appendChild( li );
 			} );
 			resultsEl.append( h, ul );
+		}
+		/* "Use the other sign-in address" / "Back to automatic" next to the sign-in line. */
+		function signinButtons() {
+			var row = document.createElement( 'span' );
+			row.className = 'cmcp-signin-ctl';
+			[ [ signin.other, t.signinOther ], [ 'auto', t.signinAuto ] ].forEach( function( b ) {
+				var btn = document.createElement( 'button' );
+				btn.type = 'button';
+				btn.className = 'cmcp-btn cmcp-btn--sm';
+				btn.setAttribute( 'data-cmcp-signin', b[ 0 ] );
+				btn.textContent = b[ 1 ];
+				btn.disabled = b[ 0 ] === 'auto' && signin.override === 'auto';
+				btn.addEventListener( 'click', function() {
+					row.querySelectorAll( 'button' ).forEach( function( x ) { x.disabled = true; } );
+					var body = new URLSearchParams( { action: 'cowboy_mcp_signin_override', _ajax_nonce: signin.nonce, value: b[ 0 ] } );
+					fetch( cowboyMcpDoctor.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } )
+						.then( function( r ) { return r.json(); } )
+						.then( function( r ) {
+							if ( ! r || r.success !== true ) { throw new Error( 'save' ); }
+							row.textContent = t.signinSaved;
+						} )
+						.catch( function() { row.textContent = t.signinFailed; } );
+				} );
+				row.appendChild( btn );
+			} );
+			return row;
 		}
 	}
 
@@ -280,11 +312,11 @@
 	/** Probe the public endpoint from the admin's browser. Same-origin, no CORS needed. */
 	function browserProbes( probes, fingerprints, t ) {
 		var jobs = [];
-		jobs.push( probeOne( 'GET', probes.endpoint, null, [ 'GET MCP endpoint', t.probeGet ], fingerprints, t ) );
-		jobs.push( probeOne( 'POST', probes.endpoint, JSON.stringify( { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'cowboy-doctor-browser', version: '0' } } } ), [ 'POST MCP endpoint', t.probePost ], fingerprints, t ) );
+		jobs.push( probeOne( 'GET', probes.endpoint, null, [ 'GET MCP endpoint', t.probeGet ], fingerprints, t, probes ) );
+		jobs.push( probeOne( 'POST', probes.endpoint, JSON.stringify( { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'cowboy-doctor-browser', version: '0' } } } ), [ 'POST MCP endpoint', t.probePost ], fingerprints, t, probes ) );
 		probes.well_known.forEach( function( url ) {
 			var path = url.split( '/.well-known' )[ 1 ];
-			jobs.push( probeOne( 'GET', url, null, [ 'OAuth discovery ' + path, fmt( t.probeOauth, path ) ], fingerprints, t ) );
+			jobs.push( probeOne( 'GET', url, null, [ 'OAuth discovery ' + path, fmt( t.probeOauth, path ) ], fingerprints, t, probes ) );
 		} );
 		return Promise.all( jobs );
 	}
@@ -293,9 +325,14 @@
 	 * One browser probe. The top-level label/detail/fix are English (they go into the
 	 * copied report); `ui` holds the localized text shown on screen. labels = [ en, localized ].
 	 */
-	function probeOne( method, url, body, labels, fingerprints, t ) {
+	function probeOne( method, url, body, labels, fingerprints, t, probes ) {
 		var label = labels[ 0 ];
 		var opts = { method: method, credentials: 'omit', headers: { Accept: 'application/json, text/event-stream' } };
+		// The self-check marker keeps these probes out of the sign-in signals (an app's discovery fetch,
+		// an abandoned sign-in). Same origin only: a custom header would make a cross-origin probe preflight.
+		if ( probes.header && probes.marker && new URL( url, window.location.href ).origin === window.location.origin ) {
+			opts.headers[ probes.header ] = probes.marker;
+		}
 		if ( body ) {
 			opts.headers[ 'Content-Type' ] = 'application/json';
 			opts.body = body;
@@ -830,6 +867,11 @@ document.addEventListener( 'click', function( e ) {
 					strip.setAttribute( 'data-stage', d.stage );
 					strip.className = 'cmcp-connect-status cmcp-connect-status--' + d.stage;
 					strip.querySelector( '.cmcp-connect-status-text' ).textContent = d.text;
+					var head = strip.querySelector( '.cmcp-connect-status-heading' );
+					if ( head ) {
+						head.textContent = d.heading || '';
+						head.hidden = ! d.heading;
+					}
 					if ( d.done ) {
 						strip.querySelector( '.cmcp-connect-status-refresh' ).hidden = false;
 						markDone();

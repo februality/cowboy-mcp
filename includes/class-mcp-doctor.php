@@ -17,37 +17,53 @@ class Cowboy_MCP_Doctor {
 		}
 	}
 
+	/** Self-check marker on every loopback of the current run (see run_checks()). */
+	private static ?string $marker = null;
+
 	/**
 	 * Run the full check suite.
 	 *
-	 * @param array $opts { skip_auth_roundtrip?: bool }  The MCP tool sets
-	 *              skip_auth_roundtrip (reaching the tool proves the authed path).
+	 * @param array $opts { skip_auth_roundtrip?: bool, store?: bool }  The MCP tool sets
+	 *              skip_auth_roundtrip (reaching the tool proves the authed path). `store`
+	 *              (admin AJAX and WP-CLI only) lets the sign-in self-check save its result
+	 *              and switch the sign-in address; without it the run never writes that decision.
 	 */
 	public static function run_checks( array $opts = [] ): array {
 		$checks      = [];
 		$env_headers = [];
 
-		// Group 1: config checks
+		// The loopbacks below POST the endpoint without credentials and fetch the root discovery
+		// documents: marked, they count neither as real app traffic nor as an abandoned sign-in.
+		$marker       = class_exists( 'Cowboy_MCP_OAuth_Address' ) ? Cowboy_MCP_OAuth_Address::mint_marker( 10 * MINUTE_IN_SECONDS ) : null;
+		self::$marker = $marker;
 		try {
-			foreach ( self::config_checks() as $c ) {
-				$checks[] = $c;
+			// Group 1: config checks
+			try {
+				foreach ( self::config_checks() as $c ) {
+					$checks[] = $c;
+				}
+			} catch ( Throwable $e ) {
+				$checks[] = self::result( 'engine_error', 'Doctor internal error', 'error', $e->getMessage() );
 			}
-		} catch ( Throwable $e ) {
-			$checks[] = self::result( 'engine_error', 'Doctor internal error', 'error', $e->getMessage() );
+
+			// Group 2: loopback checks
+			try {
+				$lb          = self::loopback_checks( $opts );
+				$env_headers = $lb['env_headers'];
+				foreach ( $lb['checks'] as $c ) {
+					$checks[] = $c;
+				}
+			} catch ( Throwable $e ) {
+				$checks[] = self::result( 'engine_error', 'Doctor internal error', 'error', $e->getMessage() );
+			}
+		} finally {
+			self::$marker = null;
+			if ( null !== $marker ) {
+				Cowboy_MCP_OAuth_Address::drop_marker( $marker );
+			}
 		}
 
-		// Group 2: loopback checks
-		try {
-			$lb          = self::loopback_checks( $opts );
-			$env_headers = $lb['env_headers'];
-			foreach ( $lb['checks'] as $c ) {
-				$checks[] = $c;
-			}
-		} catch ( Throwable $e ) {
-			$checks[] = self::result( 'engine_error', 'Doctor internal error', 'error', $e->getMessage() );
-		}
-
-		$counts = [ 'pass' => 0, 'warn' => 0, 'fail' => 0, 'skip' => 0, 'error' => 0 ];
+		$counts = [ 'pass' => 0, 'warn' => 0, 'fail' => 0, 'skip' => 0, 'error' => 0, 'info' => 0 ];
 		foreach ( $checks as $c ) {
 			++$counts[ $c['status'] ];
 		}
@@ -260,12 +276,17 @@ class Cowboy_MCP_Doctor {
 	private const SELFTEST_LABEL = 'Connection Doctor self-test (auto-revoked)';
 
 	private static function loopback( string $method, string $url, array $args = [] ): array|WP_Error {
-		return wp_remote_request( $url, array_merge( [
+		$args = array_merge( [
 			'method'      => $method,
 			'timeout'     => 10,
 			'redirection' => 2,
 			'headers'     => [ 'Accept' => 'application/json, text/event-stream' ],
-		], $args ) );
+		], $args );
+		if ( null !== self::$marker ) {
+			$args['headers'] = (array) $args['headers'];
+			$args['headers'][ Cowboy_MCP_OAuth_Address::SELF_CHECK_HEADER ] = self::$marker;
+		}
+		return wp_remote_request( $url, $args );
 	}
 
 	private static function initialize_body(): string {
@@ -382,10 +403,23 @@ class Cowboy_MCP_Doctor {
 			}
 		}
 
+		// signin_address - the fresh sign-in self-check, before the root documents are judged
+		$site_mode = false;
+		if ( ! $oauth_on || ! class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+			$checks[] = self::result( 'signin_address', 'Sign-in address', 'skip', 'Browser sign-in off - skipped.' );
+		} else {
+			$checks[]  = self::signin_address_check( ! empty( $opts['store'] ) );
+			$site_mode = 'site' === Cowboy_MCP_OAuth_Address::advertised();
+		}
+
 		// well_known_* (OAuth discovery at site root)
 		foreach ( [ 'well_known_pr' => '/.well-known/oauth-protected-resource', 'well_known_as' => '/.well-known/oauth-authorization-server' ] as $id => $path ) {
 			if ( ! $oauth_on ) {
 				$checks[] = self::result( $id, 'OAuth discovery: ' . $path, 'skip', 'Browser sign-in off - skipped.' );
+				continue;
+			}
+			if ( $site_mode ) {
+				$checks[] = self::result( $id, 'OAuth discovery: ' . $path, 'info', 'Not used: this site signs in under /wp-json' );
 				continue;
 			}
 			$r = self::loopback( 'GET', home_url( $path ) );
@@ -398,7 +432,10 @@ class Cowboy_MCP_Doctor {
 			$want = 'well_known_pr' === $id ? 'resource' : 'issuer';
 			$ok   = 200 === $code && isset( $json[ $want ] );
 			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), (string) wp_remote_retrieve_body( $r ) );
-			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? 'A cache plugin or server rule is likely intercepting root .well-known paths - exclude them from caching/rewrites.' ) );
+			if ( 'html_error_page' === $fp ) {
+				$fix = null; // its fix names /wp-json/ caching; a refused /.well-known/ path needs the rule below
+			}
+			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? self::WELL_KNOWN_FIX ) );
 		}
 
 		$checks[] = self::cloudflare_check( $env_headers, $endpoint );
@@ -581,6 +618,54 @@ class Cowboy_MCP_Doctor {
 	/** How to pass a stripped Authorization header through to PHP. English on purpose, like the fingerprint fixes. */
 	const AUTH_HEADER_FIX = 'Apache: put WordPress\'s own rule back at the top of .htaccess - RewriteEngine On, then RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] - or add CGIPassAuth On (Apache 2.4.13 or later). Regenerating the WordPress block (Settings > Permalinks > Save) restores the rule if another plugin replaced it. Nginx with PHP-FPM: add fastcgi_param HTTP_AUTHORIZATION $http_authorization; to the PHP location. On managed hosting, ask the host to pass the Authorization header to PHP. Until then, an API-key connection can send its key in an X-Cowboy-MCP-Key header instead of Authorization (for example --header "X-Cowboy-MCP-Key: mcp_...").';
 
+	/** How to let the sign-in discovery documents through a server or CDN rule. English on purpose, like AUTH_HEADER_FIX. */
+	const WELL_KNOWN_FIX = 'Let requests for /.well-known/oauth-protected-resource, /.well-known/oauth-authorization-server and /wp-json/cowboy-mcp/v1/.well-known/openid-configuration reach WordPress. Nginx: a rule such as location ~ /\\. { deny all; } refuses them - put location ^~ /.well-known/ { try_files $uri /index.php?$args; } and location ^~ /wp-json/ { try_files $uri /index.php?$args; } above it. Apache: a rule such as RewriteRule (^|/)\\. - [F] or RedirectMatch 403 /\\. refuses them - add RewriteCond %{REQUEST_URI} !/\\.well-known/ before it. Cloudflare: find the rule that blocked the request under Security > Analytics > Events and exempt these paths. On managed hosting, ask the host to allow these paths.';
+
+	/**
+	 * The sign-in address line: runs the sign-in self-check fresh (storing and switching only
+	 * when $store), then names the advertised address and why. English (report + agents).
+	 */
+	private static function signin_address_check( bool $store ): array {
+		$checkable = Cowboy_MCP_OAuth_Address::check_allowed();
+		$sc        = Cowboy_MCP_OAuth_Address::run_self_check( $store );
+		$state     = Cowboy_MCP_OAuth_Address::state();
+		$where     = 'site' === Cowboy_MCP_OAuth_Address::advertised() ? 'under /wp-json' : 'root';
+		$read      = static fn( string $r ): string => 'unknown' === $r ? "can't tell" : $r;
+		$evidence  = $checkable
+			? [
+				'root /.well-known/oauth-protected-resource: ' . $read( (string) $sc['root_pr'] ),
+				'root /.well-known/oauth-authorization-server: ' . $read( (string) $sc['root_as'] ),
+				'/wp-json sign-in server: ' . $read( (string) $sc['site'] ),
+			]
+			: [ 'Not checked: a local site, a subfolder site, or browser sign-in off.' ];
+		if ( ! empty( $sc['switched'] ) ) {
+			$evidence[] = 'Switched during this run.';
+		}
+		if ( ! $store ) {
+			$evidence[] = 'Read-only run: the stored choice is not changed here.';
+		}
+		$root_blocked = in_array( 'blocked', [ $sc['root_pr'], $sc['root_as'] ], true );
+		$unreachable  = ! empty( $state['unreachable'] ) || ( $checkable && $root_blocked && 'blocked' === $sc['site'] );
+		$detail       = 'Sign-in address: ' . $where . ', because ' . self::signin_reason( Cowboy_MCP_OAuth_Address::reason() ) . '.';
+		if ( $unreachable ) {
+			$detail .= ' Neither sign-in address can be reached from outside, so browser sign-in fails here; API-key connections still work.';
+		}
+		return self::result( 'signin_address', 'Sign-in address', $unreachable ? 'warn' : 'info', $detail, $evidence, $unreachable ? 'signin_unreachable' : null, $unreachable ? self::WELL_KNOWN_FIX : null );
+	}
+
+	/** Why the sign-in address is what it is, for the Doctor line. */
+	private static function signin_reason( string $reason ): string {
+		return match ( $reason ) {
+			'plain_permalinks' => 'plain permalinks are on (the /wp-json sign-in server needs pretty permalinks)',
+			'subfolder'        => 'WordPress runs in a subfolder, where /.well-known/ at the domain root is not this site\'s',
+			'filter'           => 'the cowboy_mcp_oauth_address filter sets it',
+			'override'         => 'it was chosen by hand in the Connection Doctor',
+			'blocked'          => 'this host blocks /.well-known/',
+			'unblocked'        => '/.well-known/ can be reached again',
+			default            => 'it is the default',
+		};
+	}
+
 	/**
 	 * Whether a 401 to a request that carried a Bearer header is the endpoint's "no header"
 	 * answer. Only a server that dropped the header on the way in can produce it.
@@ -709,22 +794,46 @@ class Cowboy_MCP_Doctor {
 		if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ], 403 );
 		}
+		$results  = self::run_checks( [ 'store' => true ] );
 		$settings = Cowboy_MCP_Tools::get_settings();
-		$results  = self::run_checks();
+		$oauth_on = ! empty( $settings['oauth_enabled'] ) && class_exists( 'Cowboy_MCP_OAuth_Address' );
 		wp_send_json_success( [
 			'results'      => $results,
 			'report'       => self::render_report( $results ),
 			'fingerprints' => self::fingerprints_for_js(),
 			'probes'       => [
 				'endpoint'   => rest_url( 'cowboy-mcp/v1/endpoint' ),
-				'well_known' => ! empty( $settings['oauth_enabled'] )
+				'well_known' => $oauth_on
 					? [ home_url( '/.well-known/oauth-protected-resource' ), home_url( '/.well-known/oauth-authorization-server' ) ]
 					: [],
+				// The probes' credential-less POST and root fetches must not look like an app's.
+				'header'     => $oauth_on ? Cowboy_MCP_OAuth_Address::SELF_CHECK_HEADER : '',
+				'marker'     => $oauth_on ? Cowboy_MCP_OAuth_Address::browser_marker() : '',
 			],
+			'signin'       => $oauth_on ? self::signin_controls() : null,
 		] );
 	}
+
+	/**
+	 * The override buttons next to the sign-in line: the advertised address, the other one, the
+	 * stored override and a nonce. Null when the address is fixed before the override applies
+	 * (plain permalinks, a subfolder site, the filter).
+	 */
+	private static function signin_controls(): ?array {
+		if ( in_array( Cowboy_MCP_OAuth_Address::reason(), [ 'plain_permalinks', 'subfolder', 'filter' ], true ) ) {
+			return null;
+		}
+		$mode = Cowboy_MCP_OAuth_Address::advertised();
+		return [
+			'mode'     => $mode,
+			'other'    => 'site' === $mode ? 'root' : 'site',
+			'override' => (string) Cowboy_MCP_OAuth_Address::state()['override'],
+			'nonce'    => wp_create_nonce( 'cowboy_mcp_signin_override' ),
+		];
+	}
+
 	public static function cli_run( array $args, array $assoc_args ): void {
-		$results = self::run_checks();
+		$results = self::run_checks( [ 'store' => true ] );
 		if ( 'json' === ( $assoc_args['format'] ?? 'table' ) ) {
 			\WP_CLI::print_value( $results, [ 'format' => 'json' ] );
 		} else {

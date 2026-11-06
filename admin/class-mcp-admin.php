@@ -27,6 +27,7 @@ class Cowboy_MCP_Admin {
         add_action( 'wp_ajax_cowboy_mcp_start_connect', [ __CLASS__, 'ajax_start_connect' ] );
         add_action( 'wp_ajax_cowboy_mcp_set_conn_client', [ __CLASS__, 'ajax_set_conn_client' ] );
         add_action( 'wp_ajax_cowboy_mcp_signin_browser_check', [ __CLASS__, 'ajax_signin_browser_check' ] );
+        add_action( 'wp_ajax_cowboy_mcp_signin_override', [ __CLASS__, 'ajax_signin_override' ] );
     }
 
     public static function add_menu(): void {
@@ -127,7 +128,7 @@ class Cowboy_MCP_Admin {
         if ( 'connected' === $st['stage'] ) {
             delete_transient( 'cowboy_mcp_connect_watch_' . get_current_user_id() );
         }
-        wp_send_json_success( [ 'stage' => $st['stage'], 'reused' => $st['reused'], 'text' => Cowboy_MCP_Admin_Connections::connect_status_text( $st ), 'done' => 'connected' === $st['stage'] ] );
+        wp_send_json_success( [ 'stage' => $st['stage'], 'reused' => $st['reused'], 'heading' => Cowboy_MCP_Admin_Connections::connect_status_heading( $st ), 'text' => Cowboy_MCP_Admin_Connections::connect_status_text( $st ), 'done' => 'connected' === $st['stage'] ] );
     }
 
     /**
@@ -179,6 +180,23 @@ class Cowboy_MCP_Admin {
         $result = Cowboy_MCP_OAuth_Address::browser_report( is_array( $report ) ? $report : [] );
         Cowboy_MCP_OAuth_Address::maybe_check();
         wp_send_json_success( [ 'mode' => Cowboy_MCP_OAuth_Address::advertised(), 'switched' => $result['switched'] ] );
+    }
+
+    /**
+     * The Connection Doctor's "Use the other sign-in address" / "Back to automatic" buttons:
+     * stores the override (auto|root|site). Admins only; never reachable by an agent.
+     */
+    public static function ajax_signin_override(): void {
+        if ( ! check_ajax_referer( 'cowboy_mcp_signin_override', false, false ) || ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
+            wp_send_json_error( null, 403 );
+        }
+        $value = sanitize_key( wp_unslash( $_POST['value'] ?? '' ) );
+        $from  = (string) Cowboy_MCP_OAuth_Address::state()['override'];
+        if ( ! Cowboy_MCP_OAuth_Address::set_override( $value ) ) {
+            wp_send_json_error( null, 400 );
+        }
+        Cowboy_MCP_Auth::log( 'oauth_address_override', [ 'args' => [ 'from' => $from, 'to' => $value ] ] );
+        wp_send_json_success( [ 'override' => $value, 'mode' => Cowboy_MCP_OAuth_Address::advertised() ] );
     }
 
     /**
@@ -275,6 +293,7 @@ class Cowboy_MCP_Admin {
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'cowboy_mcp_doctor' ),
+            'signinNonce' => wp_create_nonce( 'cowboy_mcp_signin_override' ),
             // On-screen text only; the copied report stays English for support threads.
             'i18n'    => [
                 'running'      => __( 'Running checks…', 'cowboy-mcp' ),
@@ -290,7 +309,12 @@ class Cowboy_MCP_Admin {
                     'fail'  => _x( 'fail', 'connection check result', 'cowboy-mcp' ),
                     'error' => _x( 'error', 'connection check result', 'cowboy-mcp' ),
                     'skip'  => _x( 'skipped', 'connection check result', 'cowboy-mcp' ),
+                    'info'  => _x( 'info', 'connection check result', 'cowboy-mcp' ),
                 ],
+                'signinOther'  => __( 'Use the other sign-in address', 'cowboy-mcp' ),
+                'signinAuto'   => __( 'Back to automatic', 'cowboy-mcp' ),
+                'signinSaved'  => __( 'Saved. Run the checks again to see the result.', 'cowboy-mcp' ),
+                'signinFailed' => __( 'Could not save the change. Reload the page and try again.', 'cowboy-mcp' ),
                 'summary'      => [
                     /* translators: %d: number of checks */
                     'fail'  => __( 'Failed: %d', 'cowboy-mcp' ),

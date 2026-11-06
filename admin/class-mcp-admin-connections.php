@@ -40,6 +40,9 @@ class Cowboy_MCP_Admin_Connections {
      * OAuth mode: only client rows whose derived slug matches the watch count, so unrelated
      * connections can never report "connected". Key mode: only keys created at most 30 min before the click
      * (and used after it) count.
+     * Stage 'retry': still waiting, but this app's sign-in was abandoned since the click and the
+     * sign-in address changed because of it (Cowboy_MCP_OAuth_Address state 'retry', 24 h). Any
+     * connected stage clears that state.
      *
      * @param array{app:string,since:int,mode?:string} $watch
      * @return array{stage:string,reused:bool,app:string,label:string,mode:string}
@@ -62,6 +65,9 @@ class Cowboy_MCP_Admin_Connections {
                     $out['label'] = $who ?? $out['label'];
                     break;
                 }
+            }
+            if ( 'connected' === $out['stage'] ) {
+                self::settle_retry( 'connected', $app, $since ); // clears a retry; a key watch never shows one
             }
             return $out;
         }
@@ -103,7 +109,7 @@ class Cowboy_MCP_Admin_Connections {
                 }
             }
         }
-        $out['stage']  = $stage;
+        $out['stage']  = self::settle_retry( $stage, $app, $since );
         $out['reused'] = $reused;
         if ( $named ) {
             $out['label'] = $named;
@@ -111,10 +117,54 @@ class Cowboy_MCP_Admin_Connections {
         return $out;
     }
 
+    /** A live retry state for this app turns 'waiting' into 'retry'; reaching 'connected' clears it. */
+    private static function settle_retry( string $stage, string $app, int $since ): string {
+        if ( ! class_exists( 'Cowboy_MCP_OAuth_Address' ) || ! in_array( $stage, [ 'waiting', 'connected' ], true ) ) {
+            return $stage;
+        }
+        $retry = Cowboy_MCP_OAuth_Address::state()['retry'];
+        if ( ! is_array( $retry ) ) {
+            return $stage;
+        }
+        if ( 'connected' === $stage ) {
+            Cowboy_MCP_OAuth_Address::save( [ 'retry' => null ] ); // a connection went through: nothing left to retry
+            return $stage;
+        }
+        $at = (int) ( $retry['at'] ?? 0 );
+        return ( (string) ( $retry['app'] ?? '' ) === $app && $at > time() - DAY_IN_SECONDS && $at >= $since ) ? 'retry' : $stage;
+    }
+
+    /** The retry notice's heading ('' for every other stage). Plain words: never "address", "issuer", "discovery" or ".well-known". */
+    public static function connect_status_heading( array $st ): string {
+        if ( 'retry' !== ( $st['stage'] ?? '' ) ) {
+            return '';
+        }
+        /* translators: %s: AI app name, e.g. Claude */
+        return sprintf( __( 'Having trouble connecting %s?', 'cowboy-mcp' ), (string) ( $st['label'] ?? self::watch_label( (string) ( $st['app'] ?? '' ) ) ) );
+    }
+
+    /** What to do in the app to try again: the first registry entry with this watch slug, else the generic step. */
+    public static function retry_step( string $watch, string $label ): string {
+        foreach ( self::client_registry() as $c ) {
+            if ( ( $c['watch'] ?? null ) === $watch && ! empty( $c['retry_step'] ) ) {
+                return (string) $c['retry_step'];
+            }
+        }
+        /* translators: %s: AI app name, e.g. ChatGPT */
+        return sprintf( __( 'in %s, remove the connection to your site and add it again', 'cowboy-mcp' ), $label );
+    }
+
     /** One sentence per stage; the app name is a proper noun injected as %s. */
     public static function connect_status_text( array $st ): string {
         $n = (string) ( $st['label'] ?? self::watch_label( (string) ( $st['app'] ?? '' ) ) );
         switch ( $st['stage'] ) {
+            case 'retry':
+                return sprintf(
+                    /* translators: 1: AI app name, e.g. Claude, 2: how to try again in that app, e.g. "in Claude, open Settings → Connectors and click Connect next to your site" */
+                    __( '%1$s couldn\'t reach your site to sign in. We\'ve changed how your site handles sign-in so it works with your hosting. Please try again: %2$s.', 'cowboy-mcp' ),
+                    $n,
+                    self::retry_step( (string) ( $st['app'] ?? '' ), $n )
+                );
             case 'registered':
                 /* translators: %s: AI app name, e.g. Claude Code */
                 return sprintf( __( '%s found your site — approve access on the sign-in page.', 'cowboy-mcp' ), $n );
@@ -148,10 +198,12 @@ class Cowboy_MCP_Admin_Connections {
         if ( ! $w ) {
             return;
         }
-        $st   = self::connect_status( $w );
-        $left = class_exists( 'Cowboy_MCP_OAuth' ) ? Cowboy_MCP_OAuth::registration_seconds_left() : 0;
+        $st      = self::connect_status( $w );
+        $left    = class_exists( 'Cowboy_MCP_OAuth' ) ? Cowboy_MCP_OAuth::registration_seconds_left() : 0;
+        $heading = self::connect_status_heading( $st );
         ?>
         <div class="cmcp-connect-status cmcp-connect-status--<?php echo esc_attr( $st['stage'] ); ?>" aria-live="polite" data-cmcp-connect-watch data-stage="<?php echo esc_attr( $st['stage'] ); ?>">
+            <strong class="cmcp-connect-status-heading"<?php echo '' === $heading ? ' hidden' : ''; ?>><?php echo esc_html( $heading ); ?></strong>
             <span class="cmcp-connect-status-text"><?php echo esc_html( self::connect_status_text( $st ) ); ?></span>
             <a class="cmcp-connect-status-refresh" href="<?php echo esc_url( Cowboy_MCP_Admin::url( [ 'tab' => 'connection' ] ) ); ?>" <?php echo 'connected' === $st['stage'] ? '' : 'hidden'; ?>><?php esc_html_e( 'Refresh list', 'cowboy-mcp' ); ?></a>
             <?php if ( $left > 0 ) : // The New-connections window this click opened: visible only while it is open. ?>
@@ -175,9 +227,13 @@ class Cowboy_MCP_Admin_Connections {
         // works as-is ('works'), works through the on-machine mcp-remote bridge
         // ('bridge'), or is cloud-initiated and needs a public URL ('tunnel').
         // Display metadata only — never used for gating.
-        return [
-            'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'tunnel' ],
-            'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'bridge' ],
+        // 'retry_step': how to try again in the app after a failed first sign-in (the retry notice).
+        // Apps without one get the generic step below until their own is verified live.
+        /* translators: Claude's own menu names (Settings, Connectors), as Claude shows them in your language. */
+        $claude_step = __( 'in Claude, open Settings → Connectors and click Connect next to your site', 'cowboy-mcp' );
+        $registry    = [
+            'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'tunnel', 'retry_step' => $claude_step ],
+            'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'bridge', 'retry_step' => $claude_step ],
             'chatgpt'        => [ 'label' => 'ChatGPT',        'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'chatgpt',     'local' => 'tunnel' ],
             // open_url: Grok verified from docs.x.ai 2026-10-07; the other two are candidates until Task 4 verifies them live (record URL + date here).
             'gemini-app'     => [ 'label' => 'Gemini',         'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'gemini-app',  'local' => 'tunnel', 'open_url' => 'https://gemini.google.com/customize/connectors', 'open_host' => 'gemini.google.com' ], // Customize → Connectors with the + Custom button (/apps redirects here; verified 2026-10-26)
@@ -203,6 +259,13 @@ class Cowboy_MCP_Admin_Connections {
             // no 'cimd' flag: the Copy still opens the window for the DCR case (verified 2026-10-16).
             'hermes'         => [ 'label' => 'Hermes Agent',   'group' => 'automation',  'type' => 'oauth-cli',  'watch' => 'hermes',      'local' => 'works' ],
         ];
+        foreach ( $registry as $slug => $c ) {
+            if ( empty( $c['retry_step'] ) ) {
+                /* translators: %s: AI app name, e.g. ChatGPT */
+                $registry[ $slug ]['retry_step'] = sprintf( __( 'in %s, remove the connection to your site and add it again', 'cowboy-mcp' ), $c['label'] );
+            }
+        }
+        return $registry;
     }
 
     /** Whether this site's host looks like a local development site (advisory, UI only). */
@@ -1535,6 +1598,50 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
+    /**
+     * The retry state as a connect_status() of its own (since = when the sign-in failed), or null
+     * when there is none, it is older than 24 h, or the app has since moved on (connected clears it).
+     */
+    private static function retry_status(): ?array {
+        if ( ! class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+            return null;
+        }
+        $retry = Cowboy_MCP_OAuth_Address::state()['retry'];
+        if ( ! is_array( $retry ) || '' === (string) ( $retry['app'] ?? '' ) ) {
+            return null;
+        }
+        $st = self::connect_status( [ 'app' => (string) $retry['app'], 'since' => (int) ( $retry['at'] ?? 0 ), 'mode' => 'oauth' ] );
+        return 'retry' === $st['stage'] ? $st : null;
+    }
+
+    private static function render_retry_notice(): void {
+        $st = self::retry_status();
+        if ( ! $st ) {
+            return;
+        }
+        ?>
+        <div class="cmcp-callout cmcp-callout--warn cmcp-retry-notice" role="status">
+            <p><strong><?php echo esc_html( self::connect_status_heading( $st ) ); ?></strong></p>
+            <p><?php echo esc_html( self::connect_status_text( $st ) ); ?></p>
+        </div>
+        <?php
+    }
+
+    /** Neither sign-in address answers from outside: say so, give the host rule, and point at API keys. */
+    private static function render_signin_unreachable(): void {
+        if ( ! class_exists( 'Cowboy_MCP_OAuth_Address' ) || ! Cowboy_MCP_OAuth::is_enabled() || empty( Cowboy_MCP_OAuth_Address::state()['unreachable'] ) ) {
+            return;
+        }
+        ?>
+        <div class="cmcp-callout cmcp-callout--warn cmcp-signin-unreachable" role="status">
+            <p><strong><?php esc_html_e( 'Browser sign-in can\'t be reached on this host.', 'cowboy-mcp' ); ?></strong> <?php esc_html_e( 'Something in front of WordPress (the web server, a firewall or a CDN) refuses the requests apps make to start signing in, so apps that sign in through the browser cannot connect.', 'cowboy-mcp' ); ?></p>
+            <p><?php esc_html_e( 'What to change on the server (or send this to your host):', 'cowboy-mcp' ); ?></p>
+            <p class="cmcp-signin-fix"><?php echo esc_html( Cowboy_MCP_Doctor::WELL_KNOWN_FIX ); ?></p>
+            <p><?php esc_html_e( 'Until then, apps that accept an API key can connect with a key instead.', 'cowboy-mcp' ); ?></p>
+        </div>
+        <?php
+    }
+
     public static function render_tab( string $endpoint, $new_key ): void {
         $registry    = self::client_registry();
         $is_local    = self::site_looks_local();
@@ -1554,6 +1661,10 @@ class Cowboy_MCP_Admin_Connections {
             Cowboy_MCP_OAuth_Address::evaluate_pending( false );
         }
         self::render_blocked_callout();
+        self::render_signin_unreachable();
+        if ( ! self::connect_watch() ) {
+            self::render_retry_notice(); // the tab was closed when the sign-in failed: same words as the strip
+        }
         self::render_connect_status();
         ?>
         <p class="cmcp-lede"><?php

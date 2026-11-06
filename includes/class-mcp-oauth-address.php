@@ -611,7 +611,8 @@ class Cowboy_MCP_OAuth_Address {
 	/* ── Internals ─────────────────────────────────────────── */
 
 	/** The check needs the documents (sign-in on), WordPress at the domain root, and a host apps can reach (not local; advisory). */
-	private static function check_allowed(): bool {
+	/** Whether this site runs the sign-in checks at all (sign-in on, not a subfolder site, not a local host). */
+	public static function check_allowed(): bool {
 		if ( ! Cowboy_MCP_OAuth::is_enabled() ) {
 			return false;
 		}
@@ -675,13 +676,17 @@ class Cowboy_MCP_OAuth_Address {
 		return array_change_key_case( $h, CASE_LOWER );
 	}
 
-	private static function mint_marker(): string {
+	/**
+	 * A one-off self-check marker: requests carrying it in SELF_CHECK_HEADER count neither as
+	 * real app traffic nor as an abandoned sign-in. The Doctor marks its loopbacks with one.
+	 */
+	public static function mint_marker( int $ttl = 2 * MINUTE_IN_SECONDS ): string {
 		$value = bin2hex( random_bytes( 16 ) );
-		set_transient( self::MARKER_PREFIX . $value, 1, 2 * MINUTE_IN_SECONDS );
+		set_transient( self::MARKER_PREFIX . $value, 1, $ttl );
 		return $value;
 	}
 
-	private static function drop_marker( string $value ): void {
+	public static function drop_marker( string $value ): void {
 		delete_transient( self::MARKER_PREFIX . $value );
 	}
 
@@ -691,7 +696,8 @@ class Cowboy_MCP_OAuth_Address {
 	 * MARKER_PREFIX (so deactivation/uninstall sweep it) but can never pass
 	 * is_self_check_request()'s 32-hex test.
 	 */
-	private static function browser_marker(): string {
+	/** The current admin's marker for browser-side fetches (the Connections check and the Doctor's probes). */
+	public static function browser_marker(): string {
 		$key   = self::MARKER_PREFIX . 'user_' . get_current_user_id();
 		$value = get_transient( $key );
 		if ( ! is_string( $value ) || 1 !== preg_match( '/^[a-f0-9]{32}$/', $value ) || false === get_transient( self::MARKER_PREFIX . $value ) ) {

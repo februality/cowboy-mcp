@@ -91,6 +91,7 @@
 .cmcp-dot--off { background: #b9bdb9; box-shadow: none; }
 .cmcp-dot--warn { background: #e0a21b; box-shadow: 0 0 0 3px rgba(224,162,27,.16); }
 .cmcp-dot--bad { background: #d93a2f; box-shadow: 0 0 0 3px rgba(217,58,47,.14); }
+.cmcp-dot--info { background: #5b7bb0; box-shadow: 0 0 0 3px rgba(91,123,176,.16); }
 .wrap.cmcp .cmcp-input { height: 34px; border: 1px solid var(--cmcp-border-strong); border-radius: var(--cmcp-radius-sm); padding: 0 10px; background-color: #fff; font-size: 14px; min-width: 0; box-shadow: none; margin: 0; box-sizing: border-box; min-height: 0; }
 /* WordPress 7 core forms set min-height: 40px (and a 38px select line-height) on fields; ours match the 34px buttons beside them.
    background-color, not background: the shorthand would wipe core's select arrow. */
@@ -266,6 +267,8 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-res--pass { background: var(--cmcp-ok-bg); color: var(--cmcp-ok); }
 .cmcp-res--warn { background: var(--cmcp-warn-bg); color: var(--cmcp-warn); }
 .cmcp-res--fail, .cmcp-res--error { background: var(--cmcp-danger-bg); color: var(--cmcp-danger); }
+.cmcp-res--info { background: var(--cmcp-info-bg); color: #2a3342; }
+.cmcp-signin-ctl { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--cmcp-muted); }
 .cmcp-doctor-summary { margin: 12px 0 0; font-weight: 600; }
 .wrap.cmcp .mcp-generate-form .cmcp-input { flex: 1 1 220px; max-width: 280px; }
 
@@ -401,6 +404,11 @@ tr.cmcp-detail pre.cmcp-term { font-size: 12.5px; max-height: 320px; overflow: a
 .wrap.cmcp .cmcp-connect-status--connected { border-color: var(--cmcp-ok-border); background: var(--cmcp-ok-bg, #edfaef); color: var(--cmcp-ok); }
 .wrap.cmcp .cmcp-connect-status--blocked { border-color: var(--cmcp-warn-border); background: var(--cmcp-warn-bg); }
 .wrap.cmcp .cmcp-connect-status--registered, .wrap.cmcp .cmcp-connect-status--approved { border-color: var(--cmcp-accent, #2271b1); background: var(--cmcp-info-bg); }
+/* Retry: a heading line, then the sentence (and the window countdown) on the next line. */
+.wrap.cmcp .cmcp-connect-status--retry { flex-wrap: wrap; row-gap: 4px; border-color: var(--cmcp-warn-border); background: var(--cmcp-warn-bg); color: #5c3a00; }
+.wrap.cmcp .cmcp-connect-status-heading { flex-basis: 100%; font-weight: 600; }
+.wrap.cmcp .cmcp-retry-notice p + p, .wrap.cmcp .cmcp-signin-unreachable p + p { margin-top: 6px; }
+.wrap.cmcp .cmcp-signin-fix { font-size: 12.5px; }
 /* "New connections open · mm:ss left · Turn off": shown on the strip only while the window is open. */
 .wrap.cmcp .cmcp-connect-status-window { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 10px; color: var(--cmcp-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wrap.cmcp .cmcp-connect-status-window form { display: inline; margin: 0; }

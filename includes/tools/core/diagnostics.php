@@ -923,7 +923,7 @@ return [
 		 * 10. wp_connection_doctor
 		 * ---------------------------------------------------------------- */
 		'wp_connection_doctor' => function ( array $a ): array {
-			$results           = Cowboy_MCP_Doctor::run_checks( [ 'skip_auth_roundtrip' => true ] );
+			$results           = Cowboy_MCP_Doctor::run_checks( [ 'skip_auth_roundtrip' => true, 'store' => false ] ); // read-only: an agent never moves the sign-in address
 			$results['report'] = Cowboy_MCP_Doctor::render_report( $results );
 			return $results;
 		},
