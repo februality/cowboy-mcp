@@ -433,7 +433,7 @@ class Cowboy_MCP_Doctor {
 		$id      = 'cloudflare';
 		$label   = 'Cloudflare lets AI apps through';
 		$via_cf  = self::is_cloudflare( $env_headers );
-		$cf_seen = $via_cf || self::request_via_cloudflare();
+		$cf_seen = self::cloudflare_seen( $env_headers );
 		if ( ! $cf_seen ) {
 			return self::result( $id, $label, 'skip', 'Cloudflare not detected in front of this site.' );
 		}
@@ -496,6 +496,21 @@ class Cowboy_MCP_Doctor {
 			return self::result( $id, $label, 'warn', 'A script-style request to ' . implode( ', ', $other ) . ' got an unexpected answer, while the same request from WordPress passed. Something filters by user agent (Cloudflare or a server firewall).', $evidence, null, 'Check Security > Analytics > Events in Cloudflare and your host\'s firewall (ModSecurity) for the blocked request, then exempt ' . self::CLOUDFLARE_RULE . '. Guide: ' . self::CLOUDFLARE_GUIDE );
 		}
 		return self::result( $id, $label, 'pass', 'Cloudflare is in front of this site and let a script-style request reach the MCP endpoint. Bot Fight Mode judges each app\'s own servers, so if one app still cannot connect, check Security > Analytics > Events in Cloudflare (guide: ' . self::CLOUDFLARE_GUIDE . ').', $evidence );
+	}
+
+	/**
+	 * The CDN expected in front of the public host: 'cloudflare' when cloudflare_check()'s
+	 * test finds it (in $headers of a response from this site, or on the current request), else
+	 * null. The sign-in self-check uses it to tell a loopback that bypassed the CDN from one
+	 * that crossed it. Advisory (headers are spoofable): it can only make a result "can't tell".
+	 */
+	public static function cdn_expected( array $headers = [] ): ?string {
+		return self::cloudflare_seen( $headers ) ? 'cloudflare' : null;
+	}
+
+	/** Cloudflare seen in front of the site: in response headers or on the current request. */
+	private static function cloudflare_seen( array $env_headers ): bool {
+		return self::is_cloudflare( $env_headers ) || self::request_via_cloudflare();
 	}
 
 	/**

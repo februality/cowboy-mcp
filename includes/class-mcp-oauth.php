@@ -1075,12 +1075,12 @@ class Cowboy_MCP_OAuth {
     }
 
     /**
-     * Exchange a refresh token for a new pair, rotating (single-use) the old one.
-     * Reuse of an already-used refresh token revokes the whole connection.
+     * Look a refresh token up: `cmcp_rt_<id>.<secret>`, the id in REFRESH_OPTION and the
+     * secret matching its hash. Shared by rotate_refresh_token() and the /token fallback marker.
      *
-     * @return array{access_token:string,refresh_token:string,expires_in:int,scope:?string}|WP_Error
+     * @return array{0:string,1:array,2:array}|WP_Error [ id, record, every refresh record ]
      */
-    public static function rotate_refresh_token( string $token, string $client_id ): array|WP_Error {
+    private static function refresh_record( string $token ): array|WP_Error {
         if ( ! str_starts_with( $token, 'cmcp_rt_' ) ) {
             return new WP_Error( 'invalid_grant', 'Not a refresh token.' );
         }
@@ -1091,14 +1091,29 @@ class Cowboy_MCP_OAuth {
         [ $id, $secret ] = $parts;
 
         $refresh = get_option( self::REFRESH_OPTION, [] );
-        if ( empty( $refresh[ $id ] ) ) {
+        if ( ! is_array( $refresh ) || empty( $refresh[ $id ] ) || ! is_array( $refresh[ $id ] ) ) {
             return new WP_Error( 'invalid_grant', 'Unknown refresh token.' );
         }
         $rec = $refresh[ $id ];
 
-        if ( ! hash_equals( (string) $rec['secret_hash'], hash( 'sha256', $secret ) ) ) {
+        if ( ! hash_equals( (string) ( $rec['secret_hash'] ?? '' ), hash( 'sha256', $secret ) ) ) {
             return new WP_Error( 'invalid_grant', 'Refresh token mismatch.' );
         }
+        return [ $id, $rec, $refresh ];
+    }
+
+    /**
+     * Exchange a refresh token for a new pair, rotating (single-use) the old one.
+     * Reuse of an already-used refresh token revokes the whole connection.
+     *
+     * @return array{access_token:string,refresh_token:string,expires_in:int,scope:?string}|WP_Error
+     */
+    public static function rotate_refresh_token( string $token, string $client_id ): array|WP_Error {
+        $found = self::refresh_record( $token );
+        if ( is_wp_error( $found ) ) {
+            return $found;
+        }
+        [ $id, $rec, $refresh ] = $found;
         if ( $client_id !== '' && ! self::row_belongs_to( (string) $rec['client_id'], $client_id ) ) {
             return new WP_Error( 'invalid_grant', 'Client mismatch.' );
         }
@@ -1363,8 +1378,10 @@ class Cowboy_MCP_OAuth {
         }
 
         if ( $path === '/.well-known/oauth-protected-resource' ) {
+            self::note_root_fetch( $home );
             self::render_protected_resource_metadata();
         } elseif ( $path === '/.well-known/oauth-authorization-server' ) {
+            self::note_root_fetch( $home );
             self::render_as_metadata();
         } elseif ( $path === '/cowboy-mcp-oauth/authorize' ) {
             self::$server = 'root';
@@ -1384,15 +1401,28 @@ class Cowboy_MCP_OAuth {
             if ( null !== $site ) {
                 $site_path = untrailingslashit( (string) wp_parse_url( $site, PHP_URL_PATH ) );
                 if ( $path === '/.well-known/oauth-authorization-server' . $site_path || $path === '/.well-known/openid-configuration' . $site_path ) {
+                    self::note_root_fetch( $home );
                     self::emit_json( self::as_metadata( 'site' ) );
                 }
             }
             $endpoint_path = untrailingslashit( (string) wp_parse_url( self::resource_url(), PHP_URL_PATH ) );
             if ( '' !== $endpoint_path && $path === '/.well-known/oauth-protected-resource' . $endpoint_path ) {
+                self::note_root_fetch( $home );
                 self::render_protected_resource_metadata();
             }
         } elseif ( $path === '/authorize' || $path === '/token' || $path === '/register' ) {
             self::handle_plain_fallback( $path );
+        }
+    }
+
+    /**
+     * Real-traffic signal: a document under the domain root's /.well-known/ is being served
+     * (proof that path reaches WordPress). Not recorded for subfolder sites and subsites,
+     * whose /.well-known/ is not the origin's.
+     */
+    private static function note_root_fetch( string $home ): void {
+        if ( '' === $home ) {
+            Cowboy_MCP_OAuth_Address::note_root_fetch();
         }
     }
 
@@ -1450,7 +1480,7 @@ class Cowboy_MCP_OAuth {
         }
     }
 
-    /** A GET authorization request (response_type=code + PKCE) naming a client Cowboy knows. */
+    /** A GET authorization request (response_type=code + PKCE) naming a client Cowboy knows, for Cowboy's resource. */
     private static function fallback_marker_authorize( array $q ): bool {
         foreach ( [ 'client_id', 'redirect_uri', 'code_challenge' ] as $k ) {
             if ( ! is_string( $q[ $k ] ?? null ) || '' === $q[ $k ] ) {
@@ -1460,8 +1490,14 @@ class Cowboy_MCP_OAuth {
         if ( 'code' !== ( $q['response_type'] ?? null ) ) {
             return false;
         }
+        // A client id can be shared by every MCP server (claude.ai's CIMD document is), so a
+        // request naming another server's resource is not Cowboy's even when the id resolves.
+        $resource = $q['resource'] ?? null;
+        if ( null !== $resource && ( ! is_string( $resource ) || ! self::resource_matches( esc_url_raw( $resource, [ 'https', 'http' ] ) ) ) ) {
+            return false;
+        }
         $client_id = sanitize_text_field( $q['client_id'] ); // as handle_authorize() reads it
-        if ( null !== self::resolve_client( $client_id ) || null !== self::verify_signed_client_id( $client_id ) ) {
+        if ( null !== self::resolve_client( $client_id ) ) { // a stored row or a valid signed id
             return true;
         }
         return self::is_cimd_client_id( $client_id ) && self::cimd_host_allowed( (string) wp_parse_url( $client_id, PHP_URL_HOST ) );
@@ -1476,18 +1512,9 @@ class Cowboy_MCP_OAuth {
                 && false !== get_transient( self::CODE_PREFIX . $code );
         }
         if ( 'refresh_token' === $grant ) {
-            // Same lookup token_refresh() / rotate_refresh_token() uses: id + secret hash.
+            // The lookup rotate_refresh_token() uses: id + secret hash.
             $token = $p['refresh_token'] ?? null;
-            if ( ! is_string( $token ) || ! str_starts_with( $token, 'cmcp_rt_' ) ) {
-                return false;
-            }
-            $parts = explode( '.', substr( $token, strlen( 'cmcp_rt_' ) ), 2 );
-            if ( count( $parts ) !== 2 ) {
-                return false;
-            }
-            $all = get_option( self::REFRESH_OPTION, [] );
-            $rec = is_array( $all ) ? ( $all[ $parts[0] ] ?? null ) : null;
-            return is_array( $rec ) && hash_equals( (string) ( $rec['secret_hash'] ?? '' ), hash( 'sha256', $parts[1] ) );
+            return is_string( $token ) && ! is_wp_error( self::refresh_record( $token ) );
         }
         return false;
     }

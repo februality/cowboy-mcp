@@ -119,6 +119,11 @@ add_action( 'init', function () {
     }
 });
 
+/* ── Sign-in address self-check: daily, and once after each update ── */
+add_action( 'init', [ 'Cowboy_MCP_OAuth_Address', 'maybe_schedule_upgrade_check' ] );
+add_action( Cowboy_MCP_OAuth_Address::UPGRADE_HOOK, [ 'Cowboy_MCP_OAuth_Address', 'run_upgrade_check' ] );
+add_action( Cowboy_MCP_Audit_Log::CRON_HOOK, [ 'Cowboy_MCP_OAuth_Address', 'maybe_check' ] );
+
 /* ── Translations ─────────────────────────────────────────── */
 // REQUIRED — do not remove. Plugin Check warns that load_plugin_textdomain()
 // is "discouraged since 4.6", but that advice assumes translations arrive as
@@ -180,6 +185,7 @@ register_activation_hook( __FILE__, function () {
 
 register_deactivation_hook( __FILE__, function () {
     wp_clear_scheduled_hook( Cowboy_MCP_Audit_Log::CRON_HOOK );
+    wp_clear_scheduled_hook( Cowboy_MCP_OAuth_Address::UPGRADE_HOOK );
     cowboy_mcp_cleanup_transients( false );
     flush_rewrite_rules();
 });
@@ -204,6 +210,16 @@ function cowboy_mcp_uninstall(): void {
     wp_clear_scheduled_hook( 'cowboy_mcp_placeholder_scan' );
     wp_clear_scheduled_hook( 'cowboy_mcp_placeholder_repair' );
     delete_transient( 'cowboy_mcp_feedback_gate' );
+
+    // Sign-in address: stored decision, version gate, lock row, signals, scheduled check.
+    delete_option( 'cowboy_mcp_oauth_address' );
+    delete_option( 'cowboy_mcp_oauth_address_ver' );
+    delete_option( 'cowboy_mcp_oauth_address_lock' );
+    delete_transient( 'cowboy_mcp_oauth_address_lock' );
+    delete_transient( 'cowboy_mcp_signin_root_fetch' );
+    delete_transient( 'cowboy_mcp_signin_watch' );
+    delete_transient( 'cowboy_mcp_signin_pending' );
+    wp_clear_scheduled_hook( 'cowboy_mcp_oauth_address_check' );
 
     // Remove per-user admin preferences (remembered connection method).
     delete_metadata( 'user', 0, 'cowboy_mcp_conn_method', '', true );
@@ -270,6 +286,8 @@ function cowboy_mcp_cleanup_transients( bool $include_new_key ): void {
     $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_sess_%', '_transient_timeout_cowboy_mcp_sess_%' ) );
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_oauth_code_%', '_transient_timeout_cowboy_mcp_oauth_code_%' ) );
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+    $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_signin_self_check_%', '_transient_timeout_cowboy_mcp_signin_self_check_%' ) );
     if ( $include_new_key ) {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->options, '_transient_cowboy_mcp_new_key_%', '_transient_timeout_cowboy_mcp_new_key_%' ) );
