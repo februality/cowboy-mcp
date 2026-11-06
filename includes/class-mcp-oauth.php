@@ -1375,7 +1375,9 @@ class Cowboy_MCP_OAuth {
             }
             self::$server = 'site';
             self::handle_authorize();
-        } elseif ( '' === $home ) {
+        } elseif ( '' !== $home ) {
+            return;
+        } elseif ( str_starts_with( $path, '/.well-known/' ) ) {
             // RFC 8414 / RFC 9728 path-insertion forms, answerable only where WordPress
             // owns the domain root.
             $site = Cowboy_MCP_OAuth_Address::site_issuer();
@@ -1389,7 +1391,126 @@ class Cowboy_MCP_OAuth {
             if ( '' !== $endpoint_path && $path === '/.well-known/oauth-protected-resource' . $endpoint_path ) {
                 self::render_protected_resource_metadata();
             }
+        } elseif ( $path === '/authorize' || $path === '/token' || $path === '/register' ) {
+            self::handle_plain_fallback( $path );
         }
+    }
+
+    /* ── Plain fallback addresses ──────────────────────────── */
+
+    /**
+     * When an app finds no authorization-server document it builds the endpoints from
+     * the domain root (/authorize, /token, /register; MCP TypeScript SDK). Those paths
+     * may belong to the site (a page) or to another OAuth server on it, so only a
+     * request that is unmistakably OAuth AND carries something Cowboy issued is
+     * answered; everything else returns here and WordPress carries on.
+     */
+    private static function handle_plain_fallback( string $path ): void {
+        $method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
+        if ( '/authorize' === $path ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- OAuth authorization request; each value is type-checked and sanitized by the marker and the handler.
+            if ( 'GET' === $method && self::fallback_marker_authorize( wp_unslash( $_GET ) ) ) {
+                self::$server = 'root';
+                self::handle_authorize();
+            }
+            return;
+        }
+        if ( 'POST' !== $method ) {
+            return;
+        }
+        $type = isset( $_SERVER['CONTENT_TYPE'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['CONTENT_TYPE'] ) ) ) : '';
+        $raw  = (string) WP_REST_Server::get_raw_data();
+        if ( '/token' === $path ) {
+            if ( ! str_starts_with( $type, 'application/x-www-form-urlencoded' ) ) {
+                return;
+            }
+            $params = [];
+            wp_parse_str( $raw, $params );
+            if ( ! self::fallback_marker_token( $params ) ) {
+                return;
+            }
+            $request = new WP_REST_Request( 'POST', '/cowboy-mcp/v1/oauth/token' );
+            $request->set_header( 'content-type', $type );
+            $request->set_body( $raw );
+            $request->set_body_params( $params );
+            self::emit_rest_response( self::handle_token( $request ) );
+        }
+        if ( '/register' === $path ) {
+            if ( ! str_starts_with( $type, 'application/json' ) ) {
+                return;
+            }
+            $body = json_decode( $raw, true );
+            if ( ! is_array( $body ) || ! array_key_exists( 'redirect_uris', $body ) || ! self::fallback_marker_register() ) {
+                return;
+            }
+            $request = new WP_REST_Request( 'POST', '/cowboy-mcp/v1/oauth/register' );
+            $request->set_header( 'content-type', $type );
+            $request->set_body( $raw );
+            self::emit_rest_response( self::handle_register( $request ) );
+        }
+    }
+
+    /** A GET authorization request (response_type=code + PKCE) naming a client Cowboy knows. */
+    private static function fallback_marker_authorize( array $q ): bool {
+        foreach ( [ 'client_id', 'redirect_uri', 'code_challenge' ] as $k ) {
+            if ( ! is_string( $q[ $k ] ?? null ) || '' === $q[ $k ] ) {
+                return false;
+            }
+        }
+        if ( 'code' !== ( $q['response_type'] ?? null ) ) {
+            return false;
+        }
+        $client_id = sanitize_text_field( $q['client_id'] ); // as handle_authorize() reads it
+        if ( null !== self::resolve_client( $client_id ) || null !== self::verify_signed_client_id( $client_id ) ) {
+            return true;
+        }
+        return self::is_cimd_client_id( $client_id ) && self::cimd_host_allowed( (string) wp_parse_url( $client_id, PHP_URL_HOST ) );
+    }
+
+    /** A token request whose code or refresh token Cowboy issued (no writes; the handler does the rest). */
+    private static function fallback_marker_token( array $p ): bool {
+        $grant = $p['grant_type'] ?? null;
+        if ( 'authorization_code' === $grant ) {
+            $code = $p['code'] ?? null;
+            return is_string( $code ) && preg_match( '/^[A-Za-z0-9]{1,128}$/', $code )
+                && false !== get_transient( self::CODE_PREFIX . $code );
+        }
+        if ( 'refresh_token' === $grant ) {
+            // Same lookup token_refresh() / rotate_refresh_token() uses: id + secret hash.
+            $token = $p['refresh_token'] ?? null;
+            if ( ! is_string( $token ) || ! str_starts_with( $token, 'cmcp_rt_' ) ) {
+                return false;
+            }
+            $parts = explode( '.', substr( $token, strlen( 'cmcp_rt_' ) ), 2 );
+            if ( count( $parts ) !== 2 ) {
+                return false;
+            }
+            $all = get_option( self::REFRESH_OPTION, [] );
+            $rec = is_array( $all ) ? ( $all[ $parts[0] ] ?? null ) : null;
+            return is_array( $rec ) && hash_equals( (string) ( $rec['secret_hash'] ?? '' ), hash( 'sha256', $parts[1] ) );
+        }
+        return false;
+    }
+
+    /** Registration is Cowboy's only while its window is open (an administrator just clicked Add/Connect). */
+    private static function fallback_marker_register(): bool {
+        return self::registration_open();
+    }
+
+    /** Send a handler's REST response as a standalone JSON document and exit. */
+    private static function emit_rest_response( $response ): void {
+        $response = rest_ensure_response( $response );
+        if ( is_wp_error( $response ) ) {
+            $response = self::rest_error( 'server_error', $response->get_error_message(), 500 );
+        }
+        status_header( $response->get_status() );
+        header( 'Content-Type: application/json; charset=utf-8' );
+        foreach ( $response->get_headers() as $name => $value ) {
+            header( $name . ': ' . $value );
+        }
+        header( 'Cache-Control: no-store' );
+        echo wp_json_encode( $response->get_data() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        exit;
     }
 
     /** RFC 9728 document. It names one authorization server: the advertised one. */
