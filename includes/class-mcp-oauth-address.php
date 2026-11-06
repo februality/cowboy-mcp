@@ -24,6 +24,9 @@ class Cowboy_MCP_OAuth_Address {
 	const ROOT_FETCH_TRANSIENT = 'cowboy_mcp_signin_root_fetch';
 	/** Transient name prefix of a live self-check marker value. */
 	const MARKER_PREFIX = 'cowboy_mcp_signin_self_check_';
+	const WATCH_TRANSIENT   = 'cowboy_mcp_signin_watch';
+	const PENDING_TRANSIENT = 'cowboy_mcp_signin_pending';
+	const BROWSER_NONCE     = 'cowboy_mcp_signin_browser_check';
 
 	const LOCK_SECONDS      = 60;
 	/**
@@ -43,6 +46,8 @@ class Cowboy_MCP_OAuth_Address {
 	const SWITCH_BACK_SPAN  = DAY_IN_SECONDS;
 	/** How long a sighting of Cloudflare in front of the site is remembered (cron runs see no CF-Ray). */
 	const CDN_MEMORY = 30 * DAY_IN_SECONDS;
+	const WATCH_SECONDS   = 30 * MINUTE_IN_SECONDS;
+	const ABANDON_SECONDS = 15;
 	/** Self-check User-Agent: what the MCP TypeScript SDK sends (Node's fetch), so UA rules treat it like an app. */
 	const USER_AGENT = 'node';
 
@@ -324,15 +329,19 @@ class Cowboy_MCP_OAuth_Address {
 	 * permalinks, WordPress at the domain root, no override or filter) is ever switched;
 	 * the counters and `unreachable` are kept up to date either way. 'unknown' never
 	 * changes the mode or the streak. Returns true when the advertised server changed.
+	 * checked_at records server-side checks only: a browser report or an abandoned sign-in
+	 * leaves it alone, so maybe_check() still runs the self-check after them.
 	 */
 	public static function apply( string $root, string $site, string $source, array $detail = [] ): bool {
 		$now = time();
 		self::forget_cached(); // judge the 7-day rule and the streak on what is stored now
 		$state   = self::state();
 		$changes = [
-			'checked_at' => $now,
-			'last'       => array_merge( [ 'root' => $root, 'site' => $site, 'source' => $source, 'at' => $now ], $detail ),
+			'last' => array_merge( [ 'root' => $root, 'site' => $site, 'source' => $source, 'at' => $now ], $detail ),
 		];
+		if ( ! in_array( $source, [ 'browser', 'abandoned' ], true ) ) {
+			$changes['checked_at'] = $now;
+		}
 		if ( 'works' === $site ) {
 			$changes['site_ok_at'] = $now;
 		}
@@ -396,6 +405,146 @@ class Cowboy_MCP_OAuth_Address {
 			}
 			self::save( $changes );
 		}
+	}
+
+	/* ── Connection-time signals ───────────────────────────── */
+
+	/**
+	 * A browser sign-in connection was just started from the Connections tab (every OAuth
+	 * path passes Cowboy_MCP_Admin_Connections::set_connect_watch()). Site-wide, because
+	 * the app's request that follows carries no admin identity.
+	 */
+	public static function note_connect_started( string $app ): void {
+		set_transient( self::WATCH_TRANSIENT, [ 'app' => $app, 'since' => time() ], self::WATCH_SECONDS );
+	}
+
+	/**
+	 * Called inside the endpoint's credential-less 401 (the one carrying the WWW-Authenticate
+	 * breadcrumb). While a sign-in is being watched and the root server is advertised by the
+	 * automatic decision, remember when the first such 401 came; evaluate_pending() later
+	 * asks whether any root discovery fetch followed it. Transient reads/writes only.
+	 */
+	public static function note_unauthenticated_401( WP_REST_Request $request ): void {
+		if ( '' !== trim( (string) $request->get_header( 'Authorization' ) ) || '' !== trim( (string) $request->get_header( Cowboy_MCP_Auth::KEY_HEADER ) ) ) {
+			return; // carries some credential: not an app looking for sign-in
+		}
+		if ( ! Cowboy_MCP_OAuth::is_enabled() || ! is_array( get_transient( self::WATCH_TRANSIENT ) ) ) {
+			return;
+		}
+		[ $mode, $reason ] = self::decide();
+		if ( 'root' !== $mode || ! in_array( $reason, [ 'blocked', 'unblocked', 'default' ], true ) ) {
+			return; // nothing an abandoned sign-in could switch
+		}
+		if ( self::is_self_check_request() || false !== get_transient( self::PENDING_TRANSIENT ) ) {
+			return; // keep the earliest
+		}
+		set_transient( self::PENDING_TRANSIENT, time(), self::WATCH_SECONDS );
+	}
+
+	/**
+	 * Admin requests only (the Connections tab and its live-status poll). A pending 401 at
+	 * least ABANDON_SECONDS old with no root discovery fetch since counts as one blocked
+	 * root observation (apps fetch discovery within a second or two of the 401). The site
+	 * server must pass: the stored result when it worked within the hour, else a fresh
+	 * site-only fetch. Returns true when this switched the advertised server.
+	 */
+	public static function evaluate_pending(): bool {
+		$pending = get_transient( self::PENDING_TRANSIENT );
+		if ( false === $pending || (int) $pending > time() - self::ABANDON_SECONDS ) {
+			return false;
+		}
+		$lock = self::acquire_lock();
+		if ( null === $lock ) {
+			return false; // a check is running; it decides, and this pending is looked at next time
+		}
+		try {
+			delete_transient( self::PENDING_TRANSIENT );
+			$fetched = get_transient( self::ROOT_FETCH_TRANSIENT );
+			if ( ( false !== $fetched && (int) $fetched >= (int) $pending ) || ! self::check_allowed() ) {
+				return false;
+			}
+			$state = self::state();
+			$last  = is_array( $state['last'] ) ? $state['last'] : [];
+			$site  = ( (int) $state['site_ok_at'] > time() - self::STALE_SECONDS && 'works' === ( $last['site'] ?? null ) ) ? 'works' : self::check_site();
+			$switched = self::apply( 'blocked', $site, 'abandoned' );
+			if ( $switched ) {
+				$watch = get_transient( self::WATCH_TRANSIENT );
+				self::save( [ 'retry' => [ 'app' => is_array( $watch ) ? (string) ( $watch['app'] ?? '' ) : '', 'at' => time() ] ] );
+			}
+			return $switched;
+		} finally {
+			self::release_lock( $lock );
+		}
+	}
+
+	/**
+	 * The admin's browser fetched the three discovery documents (signinBrowserCheck() in
+	 * mcp-admin.js) from outside the host, through the same CDN and edge rules as an app.
+	 * $report = [ 'root_pr' => [ 'status' => int, 'ok' => bool ], 'root_as' => …, 'site' => … ].
+	 * Status 0 (network error) and 429/5xx (R8: flaky, no fingerprint from a browser) are
+	 * can't-tell; ok is works; anything else is blocked.
+	 *
+	 * @return array{mode:string,switched:bool}
+	 */
+	public static function browser_report( array $report ): array {
+		$read = static function ( $r ): string {
+			if ( ! is_array( $r ) ) {
+				return 'unknown';
+			}
+			$status = (int) ( $r['status'] ?? 0 );
+			if ( $status <= 0 || 429 === $status || $status >= 500 ) {
+				return 'unknown';
+			}
+			return true === ( $r['ok'] ?? null ) && $status >= 200 && $status < 300 ? 'works' : 'blocked';
+		};
+		$out = [ 'mode' => self::advertised(), 'switched' => false ];
+		if ( ! self::check_allowed() ) {
+			return $out;
+		}
+		$pr   = $read( $report['root_pr'] ?? null );
+		$as   = $read( $report['root_as'] ?? null );
+		$site = null === self::site_issuer() ? 'blocked' : $read( $report['site'] ?? null );
+		$root = self::worse( $pr, $as );
+		if ( 'unknown' === $root && 'unknown' === $site ) {
+			return $out; // nothing learnt
+		}
+		$lock = self::acquire_lock();
+		if ( null === $lock ) {
+			return $out; // a check is running; it decides
+		}
+		try {
+			$switched = self::apply( $root, $site, 'browser', [ 'root_pr' => $pr, 'root_as' => $as ] );
+		} finally {
+			self::release_lock( $lock );
+		}
+		return [ 'mode' => self::advertised(), 'switched' => $switched ];
+	}
+
+	/**
+	 * What the Connections tab's browser check fetches and expects, or null when it must not
+	 * run (sign-in off, plain permalinks, subfolder site, local host). The marker header
+	 * keeps the browser's own root fetches out of the real-traffic signal.
+	 */
+	public static function browser_check_targets(): ?array {
+		$site = self::site_issuer();
+		if ( null === $site || ! self::check_allowed() ) {
+			return null;
+		}
+		$issuer = Cowboy_MCP_OAuth::issuer();
+		return [
+			'urls'   => [
+				'root_pr' => $issuer . '/.well-known/oauth-protected-resource',
+				'root_as' => $issuer . '/.well-known/oauth-authorization-server',
+				'site'    => $site . '/.well-known/openid-configuration',
+			],
+			'expect' => [
+				'root_pr' => Cowboy_MCP_OAuth::resource_url(),
+				'root_as' => $issuer,
+				'site'    => $site,
+			],
+			'header' => self::SELF_CHECK_HEADER,
+			'marker' => self::browser_marker(),
+		];
 	}
 
 	/** Daily (audit-log cron): re-check when the last check is over an hour old. */
@@ -503,6 +652,23 @@ class Cowboy_MCP_OAuth_Address {
 
 	private static function drop_marker( string $value ): void {
 		delete_transient( self::MARKER_PREFIX . $value );
+	}
+
+	/**
+	 * A marker for the admin's browser check: one per admin, reused and kept alive for a
+	 * sign-in watch's lifetime from each Connections tab load. Its own key shares
+	 * MARKER_PREFIX (so deactivation/uninstall sweep it) but can never pass
+	 * is_self_check_request()'s 32-hex test.
+	 */
+	private static function browser_marker(): string {
+		$key   = self::MARKER_PREFIX . 'user_' . get_current_user_id();
+		$value = get_transient( $key );
+		if ( ! is_string( $value ) || 1 !== preg_match( '/^[a-f0-9]{32}$/', $value ) || false === get_transient( self::MARKER_PREFIX . $value ) ) {
+			$value = bin2hex( random_bytes( 16 ) );
+		}
+		set_transient( $key, $value, self::WATCH_SECONDS );
+		set_transient( self::MARKER_PREFIX . $value, 1, self::WATCH_SECONDS );
+		return $value;
 	}
 
 	/**

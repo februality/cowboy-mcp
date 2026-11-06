@@ -851,6 +851,9 @@ document.addEventListener( 'click', function( e ) {
 		fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', keepalive: true, body: body } )
 			.then( function( r ) { return r.json(); } )
 			.then( function( r ) {
+				if ( r && r.success === true && r.data ) {
+					document.dispatchEvent( new CustomEvent( 'cmcp:connect-started', { detail: { signin: r.data.signin || null } } ) );
+				}
 				if ( ! r || r.success !== true || ! r.data || ! r.data.html ) { return; }
 				var tpl = document.createElement( 'div' );
 				tpl.innerHTML = r.data.html; // server-rendered, escaped markup (esc_html/esc_attr)
@@ -868,6 +871,71 @@ document.addEventListener( 'click', function( e ) {
 				startWatch( strip );
 			} )
 			.catch( function() {} );
+	} );
+} )();
+
+/*
+ * Sign-in browser check: when a browser sign-in panel is open, fetch the root and site
+ * discovery documents from this browser (outside the host, through the same CDN/edge rules
+ * as an app) and report what came back. Once per page view.
+ */
+( function() {
+	'use strict';
+	var l10n = window.cowboyMcpAdmin || {};
+	var done = false;
+
+	function probe( url, key, want, cfg ) {
+		var headers = { Accept: 'application/json' };
+		headers[ cfg.header ] = cfg.marker; // keeps this fetch out of the real-traffic signal
+		return fetch( url, { credentials: 'omit', cache: 'no-store', headers: headers } ).then( function( r ) {
+			return r.text().then( function( text ) {
+				var json = null;
+				try { json = JSON.parse( text ); } catch ( e ) {}
+				return { status: r.status, ok: r.status >= 200 && r.status < 300 && !! json && json[ key ] === want };
+			} );
+		} ).catch( function() {
+			return { status: 0, ok: false };
+		} );
+	}
+
+	function signinBrowserCheck( cfg ) {
+		if ( done || ! cfg || ! cfg.urls || ! cfg.expect ) { return; }
+		done = true;
+		Promise.all( [
+			probe( cfg.urls.root_pr, 'resource', cfg.expect.root_pr, cfg ),
+			probe( cfg.urls.root_as, 'issuer', cfg.expect.root_as, cfg ),
+			probe( cfg.urls.site, 'issuer', cfg.expect.site, cfg )
+		] ).then( function( res ) {
+			var body = new URLSearchParams( {
+				action: 'cowboy_mcp_signin_browser_check',
+				_ajax_nonce: cfg.nonce,
+				report: JSON.stringify( { root_pr: res[ 0 ], root_as: res[ 1 ], site: res[ 2 ] } )
+			} );
+			return fetch( l10n.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } );
+		} ).catch( function() {} );
+	}
+
+	function onPanel( slug ) {
+		var cfg = l10n.signinCheck;
+		if ( cfg && cfg.panels && cfg.panels.indexOf( slug ) !== -1 ) {
+			signinBrowserCheck( cfg );
+		}
+	}
+
+	var active = document.querySelector( '.mcp-client-panel--active[data-client-panel]' );
+	if ( active ) {
+		onPanel( active.getAttribute( 'data-client-panel' ) );
+	}
+	document.addEventListener( 'click', function( e ) {
+		var item = e.target.closest ? e.target.closest( '.mcp-conn-item[data-client]' ) : null;
+		if ( item ) {
+			onPanel( item.getAttribute( 'data-client' ) );
+		}
+	} );
+	// Copy / Add / Install started a connection: run now if this page view has not yet
+	// (sign-in may have been turned on by that click, so its data can come with the answer).
+	document.addEventListener( 'cmcp:connect-started', function( e ) {
+		signinBrowserCheck( l10n.signinCheck || ( e.detail && e.detail.signin ) );
 	} );
 } )();
 

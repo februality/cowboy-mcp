@@ -293,6 +293,9 @@ class Cowboy_MCP_Auth {
                 'x_forwarded_for' => $request->get_header( 'X-Forwarded-For' ) ?: null,
             ] );
             self::note_auth_failure( $client_ip );
+            if ( class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+                Cowboy_MCP_OAuth_Address::note_unauthenticated_401( $request ); // cheap: reads + one transient write, no fetches
+            }
             self::send_www_authenticate();
             return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
         }

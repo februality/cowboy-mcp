@@ -203,6 +203,11 @@ class Cowboy_MCP_Tools {
         return self::$settings_cache;
     }
 
+    /** Drop the request cache after this request itself changed the settings row. */
+    public static function forget_settings(): void {
+        self::$settings_cache = null;
+    }
+
     /**
      * Write a structured JSON log line when log_requests is enabled.
      * Delegates to Cowboy_MCP_Auth::log() with key context merged in.

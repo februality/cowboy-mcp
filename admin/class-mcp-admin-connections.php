@@ -13,6 +13,10 @@ class Cowboy_MCP_Admin_Connections {
     /** Remember (30 min, per admin) which app the admin just started connecting, and how. */
     public static function set_connect_watch( string $app, string $mode = 'oauth' ): void {
         set_transient( 'cowboy_mcp_connect_watch_' . get_current_user_id(), [ 'app' => $app, 'mode' => $mode, 'since' => time() ], 30 * MINUTE_IN_SECONDS );
+        // Every browser sign-in path passes here (Add to Claude, Open-app POSTs, ajax_start_connect).
+        if ( 'oauth' === $mode && class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+            Cowboy_MCP_OAuth_Address::note_connect_started( $app );
+        }
     }
 
     /** @return array{app:string,since:int,mode?:string}|null  (1.7.1 transients carry no mode = oauth) */
@@ -30,7 +34,9 @@ class Cowboy_MCP_Admin_Connections {
     }
 
     /**
-     * Read-only: how far the watched app has got since the click. Never writes clients or tokens.
+     * How far the watched app has got since the click. Never writes clients or tokens; the
+     * only write is the sign-in address decision when an abandoned sign-in is due
+     * (Cowboy_MCP_OAuth_Address::evaluate_pending(), admin requests only).
      * OAuth mode: only client rows whose derived slug matches the watch count, so unrelated
      * connections can never report "connected". Key mode: only keys created at most 30 min before the click
      * (and used after it) count.
@@ -39,6 +45,9 @@ class Cowboy_MCP_Admin_Connections {
      * @return array{stage:string,reused:bool,app:string,label:string,mode:string}
      */
     public static function connect_status( array $watch ): array {
+        if ( class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+            Cowboy_MCP_OAuth_Address::evaluate_pending();
+        }
         $app   = (string) $watch['app'];
         $mode  = 'key' === ( $watch['mode'] ?? 'oauth' ) ? 'key' : 'oauth';
         $since = (int) $watch['since'];
@@ -1537,6 +1546,9 @@ class Cowboy_MCP_Admin_Connections {
         $active      = (string) get_user_meta( get_current_user_id(), 'cowboy_mcp_conn_client', true );
         if ( ! array_key_exists( $active, $registry ) ) {
             $active = '';
+        }
+        if ( class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+            Cowboy_MCP_OAuth_Address::evaluate_pending(); // a sign-in abandoned while this tab was closed
         }
         self::render_blocked_callout();
         self::render_connect_status();
