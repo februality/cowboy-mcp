@@ -532,7 +532,7 @@ class Cowboy_MCP_Auth {
         if ( ! class_exists( 'Cowboy_MCP_OAuth' ) || ! Cowboy_MCP_OAuth::is_enabled() || headers_sent() ) {
             return;
         }
-        $prm = Cowboy_MCP_OAuth::issuer() . '/.well-known/oauth-protected-resource';
+        $prm = Cowboy_MCP_OAuth::prm_url();
         header( 'WWW-Authenticate: Bearer resource_metadata="' . esc_url_raw( $prm ) . '"' );
     }
 
