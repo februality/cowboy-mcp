@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-11-06 01:27-0800\n"
+"POT-Creation-Date: 2026-11-06 01:43-0800\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Russian\n"
@@ -194,7 +194,7 @@ msgid "Create checkpoint now"
 msgstr "Создать контрольную точку сейчас"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1839
+#: admin/class-mcp-admin-connections.php:1840
 msgid "Created"
 msgstr "Создан"
 
@@ -211,7 +211,7 @@ msgid "Size"
 msgstr "Размер"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1841
+#: admin/class-mcp-admin-connections.php:1842
 msgid "Actions"
 msgstr "Действия"
 
@@ -785,7 +785,7 @@ msgstr "Открыть %s"
 
 #: admin/class-mcp-admin-connections.php:655
 #: admin/class-mcp-admin-connections.php:708
-#: admin/class-mcp-admin-connections.php:1966
+#: admin/class-mcp-admin-connections.php:1967
 msgid "(opens in a new tab)"
 msgstr "(открывается в новой вкладке)"
 
@@ -1320,7 +1320,7 @@ msgstr ""
 "больше не будет показан."
 
 #: admin/class-mcp-admin-connections.php:1161
-#: admin/class-mcp-admin-connections.php:1852
+#: admin/class-mcp-admin-connections.php:1853
 msgid "API key"
 msgstr "API-ключ"
 
@@ -1491,7 +1491,7 @@ msgid "In a new chat, ask:"
 msgstr "В новом чате спросите:"
 
 #: admin/class-mcp-admin-connections.php:1453
-#: admin/class-mcp-admin-connections.php:1810
+#: admin/class-mcp-admin-connections.php:1811
 msgid "Copy"
 msgstr "Копировать"
 
@@ -1635,7 +1635,7 @@ msgid "Until then, apps that accept an API key can connect with a key instead."
 msgstr ""
 "А пока приложения, которые принимают API-ключ, могут подключиться с ключом."
 
-#: admin/class-mcp-admin-connections.php:1672
+#: admin/class-mcp-admin-connections.php:1673
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1645,30 +1645,30 @@ msgstr ""
 "strong> или <strong>Codex</strong>, к этому сайту WordPress по протоколу "
 "Model Context Protocol."
 
-#: admin/class-mcp-admin-connections.php:1699
-#: admin/class-mcp-admin-connections.php:1828
+#: admin/class-mcp-admin-connections.php:1700
+#: admin/class-mcp-admin-connections.php:1829
 msgid "Connect another app"
 msgstr "Подключить ещё приложение"
 
-#: admin/class-mcp-admin-connections.php:1699
+#: admin/class-mcp-admin-connections.php:1700
 msgid "Connect your first app"
 msgstr "Подключите первое приложение"
 
-#: admin/class-mcp-admin-connections.php:1700
+#: admin/class-mcp-admin-connections.php:1701
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr ""
 "Выберите ИИ-приложение или инструмент для разработки — настройка займёт "
 "около минуты."
 
-#: admin/class-mcp-admin-connections.php:1702
+#: admin/class-mcp-admin-connections.php:1703
 msgid "Close"
 msgstr "Закрыть"
 
-#: admin/class-mcp-admin-connections.php:1710
+#: admin/class-mcp-admin-connections.php:1711
 msgid "Which app do you want to connect?"
 msgstr "Какое приложение вы хотите подключить?"
 
-#: admin/class-mcp-admin-connections.php:1711
+#: admin/class-mcp-admin-connections.php:1712
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
@@ -1677,127 +1677,127 @@ msgstr ""
 "увидеть пошаговые инструкции по настройке."
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1722
+#: admin/class-mcp-admin-connections.php:1723
 #, php-format
 msgid "Connect %s"
 msgstr "Подключить %s"
 
-#: admin/class-mcp-admin-connections.php:1745
+#: admin/class-mcp-admin-connections.php:1746
 msgid "No terminal needed"
 msgstr "Терминал не нужен"
 
-#: admin/class-mcp-admin-connections.php:1746
+#: admin/class-mcp-admin-connections.php:1747
 msgid "Terminal & IDE tools"
 msgstr "Инструменты терминала и IDE"
 
-#: admin/class-mcp-admin-connections.php:1747
+#: admin/class-mcp-admin-connections.php:1748
 msgid "Automation & developers"
 msgstr "Автоматизация и разработчики"
 
-#: admin/class-mcp-admin-connections.php:1752
+#: admin/class-mcp-admin-connections.php:1753
 msgid "AI clients"
 msgstr "ИИ-клиенты"
 
-#: admin/class-mcp-admin-connections.php:1772
+#: admin/class-mcp-admin-connections.php:1773
 msgid "Needs public URL"
 msgstr "Нужен публичный URL"
 
-#: admin/class-mcp-admin-connections.php:1774
+#: admin/class-mcp-admin-connections.php:1775
 msgid "Works locally"
 msgstr "Работает локально"
 
-#: admin/class-mcp-admin-connections.php:1823
+#: admin/class-mcp-admin-connections.php:1824
 msgid "Connected apps"
 msgstr "Подключённые приложения"
 
-#: admin/class-mcp-admin-connections.php:1836
+#: admin/class-mcp-admin-connections.php:1837
 msgid "Name"
 msgstr "Название"
 
-#: admin/class-mcp-admin-connections.php:1837
+#: admin/class-mcp-admin-connections.php:1838
 msgid "Type"
 msgstr "Тип"
 
-#: admin/class-mcp-admin-connections.php:1838
+#: admin/class-mcp-admin-connections.php:1839
 msgid "Access"
 msgstr "Доступ"
 
-#: admin/class-mcp-admin-connections.php:1840
+#: admin/class-mcp-admin-connections.php:1841
 msgid "Last used"
 msgstr "Последнее использование"
 
-#: admin/class-mcp-admin-connections.php:1860
+#: admin/class-mcp-admin-connections.php:1861
 msgid "Revoke this key? Any client using it will lose access."
 msgstr "Отозвать этот ключ? Все клиенты, использующие его, потеряют доступ."
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1870
+#: admin/class-mcp-admin-connections.php:1871
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · одобрил %2$s"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1873
+#: admin/class-mcp-admin-connections.php:1874
 #, php-format
 msgid "approved by %s"
 msgstr "одобрено пользователем %s"
 
-#: admin/class-mcp-admin-connections.php:1879
+#: admin/class-mcp-admin-connections.php:1880
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1887
+#: admin/class-mcp-admin-connections.php:1888
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "Отозвать это подключение? Приложение немедленно потеряет доступ."
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1913
+#: admin/class-mcp-admin-connections.php:1914
 #, php-format
 msgid "%s ago"
 msgstr "%s назад"
 
-#: admin/class-mcp-admin-connections.php:1915
+#: admin/class-mcp-admin-connections.php:1916
 msgid "Never"
 msgstr "Никогда"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1922
+#: admin/class-mcp-admin-connections.php:1923
 #, php-format
 msgid "Actions for %s"
 msgstr "Действия для %s"
 
-#: admin/class-mcp-admin-connections.php:1925
+#: admin/class-mcp-admin-connections.php:1926
 msgid "Edit access…"
 msgstr "Изменить доступ…"
 
-#: admin/class-mcp-admin-connections.php:1926
+#: admin/class-mcp-admin-connections.php:1927
 msgid "Revoke"
 msgstr "Отозвать"
 
-#: admin/class-mcp-admin-connections.php:1929
+#: admin/class-mcp-admin-connections.php:1930
 msgid "Revoke…"
 msgstr "Отозвать…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1942
+#: admin/class-mcp-admin-connections.php:1943
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "Доступ для <strong>%s</strong>"
 
-#: admin/class-mcp-admin-connections.php:1946
+#: admin/class-mcp-admin-connections.php:1947
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:282
 msgid "Cancel"
 msgstr "Отмена"
 
-#: admin/class-mcp-admin-connections.php:1947
+#: admin/class-mcp-admin-connections.php:1948
 msgid "Save access"
 msgstr "Сохранить доступ"
 
-#: admin/class-mcp-admin-connections.php:1960
+#: admin/class-mcp-admin-connections.php:1961
 msgid "Connection Doctor"
 msgstr "Диагностика подключения"
 
-#: admin/class-mcp-admin-connections.php:1962
+#: admin/class-mcp-admin-connections.php:1963
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -1805,7 +1805,7 @@ msgstr ""
 "Проверьте, могут ли ИИ-клиенты обращаться к этому сайту, и получите готовую "
 "для копирования диагностику любых неполадок."
 
-#: admin/class-mcp-admin-connections.php:1965
+#: admin/class-mcp-admin-connections.php:1966
 msgid ""
 "<strong>This site is behind Cloudflare.</strong> Some Cloudflare security "
 "settings, such as Browser Integrity Check and Bot Fight Mode, can block AI "
@@ -1816,19 +1816,19 @@ msgstr ""
 "могут блокировать ИИ-приложения ещё до WordPress. Запустите проверку, чтобы "
 "это выяснить."
 
-#: admin/class-mcp-admin-connections.php:1966
+#: admin/class-mcp-admin-connections.php:1967
 msgid "How to let AI apps through Cloudflare"
 msgstr "Как пропустить ИИ-приложения через Cloudflare"
 
-#: admin/class-mcp-admin-connections.php:1969
+#: admin/class-mcp-admin-connections.php:1970
 msgid "Run checks"
 msgstr "Запустить проверку"
 
-#: admin/class-mcp-admin-connections.php:1970
+#: admin/class-mcp-admin-connections.php:1971
 msgid "Copy report"
 msgstr "Скопировать отчёт"
 
-#: admin/class-mcp-admin-connections.php:1971
+#: admin/class-mcp-admin-connections.php:1972
 msgid "Get help on WordPress.org"
 msgstr "Получить помощь на WordPress.org"
 
@@ -2326,7 +2326,7 @@ msgid "Save Settings"
 msgstr "Сохранить настройки"
 
 #: admin/class-mcp-admin.php:35 admin/class-mcp-admin.php:36
-#: admin/class-mcp-admin.php:701
+#: admin/class-mcp-admin.php:700
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2359,140 +2359,140 @@ msgstr "Не удалось скопировать"
 msgid "Not currently available (kept in this scope until you untick them)"
 msgstr "Сейчас недоступны (остаются в доступе, пока вы не снимете отметку)"
 
-#: admin/class-mcp-admin.php:299
+#: admin/class-mcp-admin.php:298
 msgid "Running checks…"
 msgstr "Выполняем проверки…"
 
 #. translators: %s: error message
-#: admin/class-mcp-admin.php:301
+#: admin/class-mcp-admin.php:300
 #, php-format
 msgid "Doctor failed to run: %s"
 msgstr "Не удалось запустить диагностику: %s"
 
-#: admin/class-mcp-admin.php:302
+#: admin/class-mcp-admin.php:301
 msgid "Server-side checks"
 msgstr "Проверки на сервере"
 
-#: admin/class-mcp-admin.php:303
+#: admin/class-mcp-admin.php:302
 msgid "From your browser (outside the server)"
 msgstr "Из вашего браузера (вне сервера)"
 
 #. translators: %s: how to fix a failed check
-#: admin/class-mcp-admin.php:305
+#: admin/class-mcp-admin.php:304
 #, php-format
 msgid "Fix: %s"
 msgstr "Как исправить: %s"
 
-#: admin/class-mcp-admin.php:307
+#: admin/class-mcp-admin.php:306
 msgctxt "connection check result"
 msgid "pass"
 msgstr "пройдено"
 
-#: admin/class-mcp-admin.php:308
+#: admin/class-mcp-admin.php:307
 msgctxt "connection check result"
 msgid "warning"
 msgstr "предупреждение"
 
-#: admin/class-mcp-admin.php:309
+#: admin/class-mcp-admin.php:308
 msgctxt "connection check result"
 msgid "fail"
 msgstr "ошибка"
 
-#: admin/class-mcp-admin.php:310
+#: admin/class-mcp-admin.php:309
 msgctxt "connection check result"
 msgid "error"
 msgstr "сбой"
 
-#: admin/class-mcp-admin.php:311
+#: admin/class-mcp-admin.php:310
 msgctxt "connection check result"
 msgid "skipped"
 msgstr "пропущено"
 
-#: admin/class-mcp-admin.php:312
+#: admin/class-mcp-admin.php:311
 msgctxt "connection check result"
 msgid "info"
 msgstr "инфо"
 
-#: admin/class-mcp-admin.php:314
+#: admin/class-mcp-admin.php:313
 msgid "Use the other sign-in address"
 msgstr "Использовать другой адрес входа"
 
-#: admin/class-mcp-admin.php:315
+#: admin/class-mcp-admin.php:314
 msgid "Back to automatic"
 msgstr "Вернуть автоматический выбор"
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:315
 msgid "Saved. Run the checks again to see the result."
 msgstr "Сохранено. Запустите проверку снова, чтобы увидеть результат."
 
-#: admin/class-mcp-admin.php:317
+#: admin/class-mcp-admin.php:316
 msgid "Could not save the change. Reload the page and try again."
 msgstr ""
 "Не удалось сохранить изменение. Перезагрузите страницу и попробуйте снова."
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:320
+#: admin/class-mcp-admin.php:319
 #, php-format
 msgid "Failed: %d"
 msgstr "Не пройдено: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:322
+#: admin/class-mcp-admin.php:321
 #, php-format
 msgid "Errors: %d"
 msgstr "Сбоев: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:324
+#: admin/class-mcp-admin.php:323
 #, php-format
 msgid "Warnings: %d"
 msgstr "Предупреждений: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:326
+#: admin/class-mcp-admin.php:325
 #, php-format
 msgid "Passed: %d"
 msgstr "Пройдено: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:328
+#: admin/class-mcp-admin.php:327
 #, php-format
 msgid "Skipped: %d"
 msgstr "Пропущено: %d"
 
-#: admin/class-mcp-admin.php:330
+#: admin/class-mcp-admin.php:329
 msgid "GET MCP endpoint"
 msgstr "GET-запрос к MCP-эндпоинту"
 
-#: admin/class-mcp-admin.php:331
+#: admin/class-mcp-admin.php:330
 msgid "POST MCP endpoint"
 msgstr "POST-запрос к MCP-эндпоинту"
 
 #. translators: %s: discovery URL path, e.g. /oauth-authorization-server
-#: admin/class-mcp-admin.php:333
+#: admin/class-mcp-admin.php:332
 #, php-format
 msgid "OAuth discovery %s"
 msgstr "Обнаружение OAuth %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:335
+#: admin/class-mcp-admin.php:334
 #, php-format
 msgid "HTTP %s"
 msgstr "HTTP %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:337
+#: admin/class-mcp-admin.php:336
 #, php-format
 msgid "HTTP %s, non-JSON body"
 msgstr "HTTP %s, ответ не в формате JSON"
 
 #. translators: %s: browser error message
-#: admin/class-mcp-admin.php:339
+#: admin/class-mcp-admin.php:338
 #, php-format
 msgid "Network error: %s"
 msgstr "Сетевая ошибка: %s"
 
-#: admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:339
 msgid ""
 "See the server-side result for this URL; if that passed, the block is at "
 "your network edge (CDN/WAF)."
@@ -2500,7 +2500,7 @@ msgstr ""
 "Посмотрите результат серверной проверки для этого адреса; если она пройдена, "
 "запрос блокируется на границе сети (CDN/WAF)."
 
-#: admin/class-mcp-admin.php:341
+#: admin/class-mcp-admin.php:340
 msgid ""
 "Your browser could not reach the site at all (DNS, TLS, or connection "
 "refused). Remote AI clients will hit the same wall."
@@ -2508,77 +2508,77 @@ msgstr ""
 "Браузер вообще не смог связаться с сайтом (DNS, TLS или отказ в соединении). "
 "Удалённые ИИ-клиенты столкнутся с тем же."
 
-#: admin/class-mcp-admin.php:391 admin/class-mcp-admin.php:412
-#: admin/class-mcp-admin.php:434
+#: admin/class-mcp-admin.php:390 admin/class-mcp-admin.php:411
+#: admin/class-mcp-admin.php:433
 msgid "Select an access level before saving."
 msgstr "Выберите уровень доступа перед сохранением."
 
-#: admin/class-mcp-admin.php:396
+#: admin/class-mcp-admin.php:395
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr ""
 "API-ключ создан. Скопируйте его сейчас — он будет показан только один раз."
 
-#: admin/class-mcp-admin.php:404
+#: admin/class-mcp-admin.php:403
 msgid "API key revoked."
 msgstr "API-ключ отозван."
 
-#: admin/class-mcp-admin.php:414
+#: admin/class-mcp-admin.php:413
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr ""
 "Область ключа обновлена. Изменения вступят в силу при следующем запросе с "
 "этим ключом."
 
-#: admin/class-mcp-admin.php:416
+#: admin/class-mcp-admin.php:415
 msgid "Could not update key scope."
 msgstr "Не удалось обновить область ключа."
 
-#: admin/class-mcp-admin.php:425
+#: admin/class-mcp-admin.php:424
 msgid "Connection revoked."
 msgstr "Подключение отозвано."
 
-#: admin/class-mcp-admin.php:436
+#: admin/class-mcp-admin.php:435
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr ""
 "Область подключения обновлена. Изменения вступят в силу при следующем "
 "запросе через это подключение."
 
-#: admin/class-mcp-admin.php:438
+#: admin/class-mcp-admin.php:437
 msgid "Could not update connection scope."
 msgstr "Не удалось обновить область подключения."
 
-#: admin/class-mcp-admin.php:494
+#: admin/class-mcp-admin.php:493
 msgid "Browser sign-in enabled."
 msgstr "Вход через браузер включён."
 
-#: admin/class-mcp-admin.php:528
+#: admin/class-mcp-admin.php:527
 msgid "Settings saved."
 msgstr "Настройки сохранены."
 
-#: admin/class-mcp-admin.php:535
+#: admin/class-mcp-admin.php:534
 msgid "Audit log cleared."
 msgstr "Журнал аудита очищен."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:553
+#: admin/class-mcp-admin.php:552
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "Изменение №%1$d отменено.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:568
+#: admin/class-mcp-admin.php:567
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "Отменено записей пакета: %1$d из %2$d."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:584
+#: admin/class-mcp-admin.php:583
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "Контрольная точка №%1$d создана (%2$s)."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:596
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2588,7 +2588,7 @@ msgstr ""
 "%3$s, проверено. Контрольная точка безопасности перед восстановлением: №%4$d."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:600
+#: admin/class-mcp-admin.php:599
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2598,101 +2598,101 @@ msgstr ""
 "%3$s, проверка выполнена. Контрольная точка безопасности перед "
 "восстановлением: №%4$d."
 
-#: admin/class-mcp-admin.php:613
+#: admin/class-mcp-admin.php:612
 msgid "Checkpoint deleted."
 msgstr "Контрольная точка удалена."
 
-#: admin/class-mcp-admin.php:690
+#: admin/class-mcp-admin.php:689
 msgid "Connections"
 msgstr "Подключения"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:690
 msgid "Activity"
 msgstr "Активность"
 
-#: admin/class-mcp-admin.php:692
+#: admin/class-mcp-admin.php:691
 msgid "Logs"
 msgstr "Журналы"
 
-#: admin/class-mcp-admin.php:693
+#: admin/class-mcp-admin.php:692
 msgid "Settings"
 msgstr "Настройки"
 
-#: admin/class-mcp-admin.php:694
+#: admin/class-mcp-admin.php:693
 msgid "About"
 msgstr "О плагине"
 
-#: admin/class-mcp-admin.php:706
+#: admin/class-mcp-admin.php:705
 msgid "Cowboy MCP sections"
 msgstr "Разделы Cowboy MCP"
 
-#: admin/class-mcp-admin.php:745
+#: admin/class-mcp-admin.php:744
 msgid "Power mode is on. Open Power mode settings."
 msgstr "Усиленный режим включён. Открыть настройки усиленного режима."
 
-#: admin/class-mcp-admin.php:745
+#: admin/class-mcp-admin.php:744
 msgid "Power mode on"
 msgstr "Усиленный режим включён"
 
-#: admin/class-mcp-admin.php:747
+#: admin/class-mcp-admin.php:746
 msgid "Power mode is off. Open Power mode settings."
 msgstr "Усиленный режим выключен. Открыть настройки усиленного режима."
 
-#: admin/class-mcp-admin.php:747
+#: admin/class-mcp-admin.php:746
 msgid "Power mode off"
 msgstr "Усиленный режим выключен"
 
-#: admin/class-mcp-admin.php:750
+#: admin/class-mcp-admin.php:749
 msgid "Safe mode off"
 msgstr "Безопасный режим выключен"
 
-#: admin/class-mcp-admin.php:773
+#: admin/class-mcp-admin.php:772
 msgid "Every request from AI apps is rejected."
 msgstr "Все запросы от ИИ-приложений отклоняются."
 
-#: admin/class-mcp-admin.php:773
+#: admin/class-mcp-admin.php:772
 msgid "MCP server is off."
 msgstr "Сервер MCP выключен."
 
-#: admin/class-mcp-admin.php:774
+#: admin/class-mcp-admin.php:773
 msgid "Turn on in Settings"
 msgstr "Включить в настройках"
 
-#: admin/class-mcp-admin.php:802
+#: admin/class-mcp-admin.php:801
 msgid "Pagination"
 msgstr "Постраничная навигация"
 
-#: admin/class-mcp-admin.php:803
+#: admin/class-mcp-admin.php:802
 msgid "Previous"
 msgstr "Предыдущая"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:806
+#: admin/class-mcp-admin.php:805
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "Страница %1$d из %2$d"
 
-#: admin/class-mcp-admin.php:808
+#: admin/class-mcp-admin.php:807
 msgid "Next"
 msgstr "Следующая"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:816
 msgid "Project home, guides, and news."
 msgstr "Домашняя страница проекта, руководства и новости."
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:816
 msgid "Website"
 msgstr "Сайт"
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:817
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:817
 msgid "Source, issues & releases."
 msgstr "Исходный код, задачи и релизы."
 
-#: admin/class-mcp-admin.php:819
+#: admin/class-mcp-admin.php:818
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2700,11 +2700,11 @@ msgstr ""
 "Задайте вопрос на форуме поддержки WordPress.org. Вставьте отчёт "
 "«Диагностика подключения», чтобы быстрее получить ответ."
 
-#: admin/class-mcp-admin.php:819
+#: admin/class-mcp-admin.php:818
 msgid "Get help"
 msgstr "Получить помощь"
 
-#: admin/class-mcp-admin.php:820
+#: admin/class-mcp-admin.php:819
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2712,12 +2712,12 @@ msgstr ""
 "Нравится Cowboy MCP? Отзыв на WordPress.org поможет другим владельцам сайтов "
 "найти плагин."
 
-#: admin/class-mcp-admin.php:820 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:819 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "Оставить отзыв"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:828
+#: admin/class-mcp-admin.php:827
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "

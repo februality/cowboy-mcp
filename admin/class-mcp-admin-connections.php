@@ -1603,7 +1603,7 @@ class Cowboy_MCP_Admin_Connections {
      * when there is none, it is older than 24 h, or the app has since moved on (connected clears it).
      */
     private static function retry_status(): ?array {
-        if ( ! class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
+        if ( ! class_exists( 'Cowboy_MCP_OAuth_Address' ) || ! Cowboy_MCP_OAuth::is_enabled() ) {
             return null;
         }
         $retry = Cowboy_MCP_OAuth_Address::state()['retry'];
@@ -1636,7 +1636,7 @@ class Cowboy_MCP_Admin_Connections {
         <div class="cmcp-callout cmcp-callout--warn cmcp-signin-unreachable" role="status">
             <p><strong><?php esc_html_e( 'Browser sign-in can\'t be reached on this host.', 'cowboy-mcp' ); ?></strong> <?php esc_html_e( 'Something in front of WordPress (the web server, a firewall or a CDN) refuses the requests apps make to start signing in, so apps that sign in through the browser cannot connect.', 'cowboy-mcp' ); ?></p>
             <p><?php esc_html_e( 'What to change on the server (or send this to your host):', 'cowboy-mcp' ); ?></p>
-            <p class="cmcp-signin-fix"><?php echo esc_html( Cowboy_MCP_Doctor::WELL_KNOWN_FIX ); ?></p>
+            <p class="cmcp-signin-fix"><?php echo esc_html( Cowboy_MCP_Doctor::well_known_fix() ); ?></p>
             <p><?php esc_html_e( 'Until then, apps that accept an API key can connect with a key instead.', 'cowboy-mcp' ); ?></p>
         </div>
         <?php
@@ -1662,8 +1662,9 @@ class Cowboy_MCP_Admin_Connections {
         }
         self::render_blocked_callout();
         self::render_signin_unreachable();
-        if ( ! self::connect_watch() ) {
-            self::render_retry_notice(); // the tab was closed when the sign-in failed: same words as the strip
+        $strip = self::connect_watch();
+        if ( ! $strip || 'retry' !== self::connect_status( $strip )['stage'] ) {
+            self::render_retry_notice(); // unless the strip below already says it: same words
         }
         self::render_connect_status();
         ?>

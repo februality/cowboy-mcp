@@ -293,7 +293,6 @@ class Cowboy_MCP_Admin {
         wp_localize_script( 'cowboy-mcp-admin', 'cowboyMcpDoctor', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'cowboy_mcp_doctor' ),
-            'signinNonce' => wp_create_nonce( 'cowboy_mcp_signin_override' ),
             // On-screen text only; the copied report stays English for support threads.
             'i18n'    => [
                 'running'      => __( 'Running checks…', 'cowboy-mcp' ),

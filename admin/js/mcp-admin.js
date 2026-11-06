@@ -341,9 +341,10 @@
 			return r.text().then( function( text ) {
 				var isWellKnown = url.indexOf( '.well-known' ) !== -1;
 				var okStatus    = isWellKnown ? r.status === 200 : r.status === 401;
-				var isJson      = true;
-				try { JSON.parse( text ); } catch ( e ) { isJson = false; }
-				var ok = okStatus && isJson;
+				var isJson      = true, json = null;
+				try { json = JSON.parse( text ); } catch ( e ) { isJson = false; }
+				var want = probes && probes.expect && probes.expect[ url ]; // [ key, value ] the document must carry
+				var ok = okStatus && isJson && ( ! want || ( !! json && json[ want[ 0 ] ] === want[ 1 ] ) );
 				var fp = ok ? null : matchFingerprint( r, text, fingerprints );
 				var edgeFix = ok ? null : 'See the server-side result for this URL; if that passed, the block is at your network edge (CDN/WAF).';
 				return {

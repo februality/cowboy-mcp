@@ -435,7 +435,7 @@ class Cowboy_MCP_Doctor {
 			if ( 'html_error_page' === $fp ) {
 				$fix = null; // its fix names /wp-json/ caching; a refused /.well-known/ path needs the rule below
 			}
-			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? self::WELL_KNOWN_FIX ) );
+			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? self::well_known_fix() ) );
 		}
 
 		$checks[] = self::cloudflare_check( $env_headers, $endpoint );
@@ -618,8 +618,24 @@ class Cowboy_MCP_Doctor {
 	/** How to pass a stripped Authorization header through to PHP. English on purpose, like the fingerprint fixes. */
 	const AUTH_HEADER_FIX = 'Apache: put WordPress\'s own rule back at the top of .htaccess - RewriteEngine On, then RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}] - or add CGIPassAuth On (Apache 2.4.13 or later). Regenerating the WordPress block (Settings > Permalinks > Save) restores the rule if another plugin replaced it. Nginx with PHP-FPM: add fastcgi_param HTTP_AUTHORIZATION $http_authorization; to the PHP location. On managed hosting, ask the host to pass the Authorization header to PHP. Until then, an API-key connection can send its key in an X-Cowboy-MCP-Key header instead of Authorization (for example --header "X-Cowboy-MCP-Key: mcp_...").';
 
-	/** How to let the sign-in discovery documents through a server or CDN rule. English on purpose, like AUTH_HEADER_FIX. */
-	const WELL_KNOWN_FIX = 'Let requests for /.well-known/oauth-protected-resource, /.well-known/oauth-authorization-server and /wp-json/cowboy-mcp/v1/.well-known/openid-configuration reach WordPress. Nginx: a rule such as location ~ /\\. { deny all; } refuses them - put location ^~ /.well-known/ { try_files $uri /index.php?$args; } and location ^~ /wp-json/ { try_files $uri /index.php?$args; } above it. Apache: a rule such as RewriteRule (^|/)\\. - [F] or RedirectMatch 403 /\\. refuses them - add RewriteCond %{REQUEST_URI} !/\\.well-known/ before it. Cloudflare: find the rule that blocked the request under Security > Analytics > Events and exempt these paths. On managed hosting, ask the host to allow these paths.';
+	/**
+	 * How to let the sign-in discovery documents through a server or CDN rule. English on purpose,
+	 * like AUTH_HEADER_FIX. Paths come from this site's own REST address (custom prefixes, subfolders).
+	 */
+	public static function well_known_fix(): string {
+		$site  = class_exists( 'Cowboy_MCP_OAuth_Address' ) ? Cowboy_MCP_OAuth_Address::site_issuer() : null;
+		$paths = '/.well-known/oauth-protected-resource, /.well-known/oauth-authorization-server';
+		$nginx = 'location ^~ /.well-known/ { try_files $uri /index.php?$args; }';
+		if ( null !== $site ) {
+			$paths .= ' and ' . wp_parse_url( $site, PHP_URL_PATH ) . '/.well-known/openid-configuration';
+			$nginx .= ' and location ^~ ' . wp_parse_url( rest_url(), PHP_URL_PATH ) . ' { try_files $uri /index.php?$args; }';
+		}
+		return 'Let requests for ' . $paths . ' reach WordPress.'
+			. ' Nginx: a rule such as location ~ /\\. { deny all; } refuses them; add ' . $nginx . ' (a ^~ location is used before any regex location).'
+			. ' Apache: a rule such as RewriteRule (^|/)\\. - [F] refuses them - put RewriteCond %{REQUEST_URI} !/\\.well-known/ on the line before it; a RedirectMatch 403 /\\. rule becomes RedirectMatch 403 /\\.(?!well-known/).'
+			. ' Cloudflare: find the rule that blocked the request under Security > Analytics > Events and exempt these paths. On managed hosting, ask the host to allow them.'
+			. ( null === $site ? ' Also turn on pretty permalinks (Settings > Permalinks), which the /wp-json sign-in server needs.' : '' );
+	}
 
 	/**
 	 * The sign-in address line: runs the sign-in self-check fresh (storing and switching only
@@ -650,7 +666,7 @@ class Cowboy_MCP_Doctor {
 		if ( $unreachable ) {
 			$detail .= ' Neither sign-in address can be reached from outside, so browser sign-in fails here; API-key connections still work.';
 		}
-		return self::result( 'signin_address', 'Sign-in address', $unreachable ? 'warn' : 'info', $detail, $evidence, $unreachable ? 'signin_unreachable' : null, $unreachable ? self::WELL_KNOWN_FIX : null );
+		return self::result( 'signin_address', 'Sign-in address', $unreachable ? 'warn' : 'info', $detail, $evidence, $unreachable ? 'signin_unreachable' : null, $unreachable ? self::well_known_fix() : null );
 	}
 
 	/** Why the sign-in address is what it is, for the Doctor line. */
@@ -797,15 +813,20 @@ class Cowboy_MCP_Doctor {
 		$results  = self::run_checks( [ 'store' => true ] );
 		$settings = Cowboy_MCP_Tools::get_settings();
 		$oauth_on = ! empty( $settings['oauth_enabled'] ) && class_exists( 'Cowboy_MCP_OAuth_Address' );
+		$mode     = $oauth_on ? Cowboy_MCP_OAuth_Address::advertised() : 'root';
+		$site     = 'site' === $mode ? Cowboy_MCP_OAuth_Address::site_issuer() : null;
 		wp_send_json_success( [
 			'results'      => $results,
 			'report'       => self::render_report( $results ),
 			'fingerprints' => self::fingerprints_for_js(),
 			'probes'       => [
 				'endpoint'   => rest_url( 'cowboy-mcp/v1/endpoint' ),
-				'well_known' => $oauth_on
-					? [ home_url( '/.well-known/oauth-protected-resource' ), home_url( '/.well-known/oauth-authorization-server' ) ]
-					: [],
+				// In site mode apps never fetch the root documents: probe the site server's instead.
+				'mode'       => $oauth_on ? $mode : '',
+				'well_known' => ! $oauth_on ? [] : ( null !== $site
+					? [ $site . '/.well-known/openid-configuration' ]
+					: [ home_url( '/.well-known/oauth-protected-resource' ), home_url( '/.well-known/oauth-authorization-server' ) ] ),
+				'expect'     => null !== $site ? [ $site . '/.well-known/openid-configuration' => [ 'issuer', $site ] ] : (object) [],
 				// The probes' credential-less POST and root fetches must not look like an app's.
 				'header'     => $oauth_on ? Cowboy_MCP_OAuth_Address::SELF_CHECK_HEADER : '',
 				'marker'     => $oauth_on ? Cowboy_MCP_OAuth_Address::browser_marker() : '',

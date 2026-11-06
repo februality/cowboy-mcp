@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-11-06 01:27-0800\n"
+"POT-Creation-Date: 2026-11-06 01:43-0800\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Hindi\n"
@@ -191,7 +191,7 @@ msgid "Create checkpoint now"
 msgstr "अभी चेकपॉइंट बनाएँ"
 
 #: admin/class-mcp-admin-activity.php:335
-#: admin/class-mcp-admin-connections.php:1839
+#: admin/class-mcp-admin-connections.php:1840
 msgid "Created"
 msgstr "बनाया गया"
 
@@ -208,7 +208,7 @@ msgid "Size"
 msgstr "आकार"
 
 #: admin/class-mcp-admin-activity.php:339
-#: admin/class-mcp-admin-connections.php:1841
+#: admin/class-mcp-admin-connections.php:1842
 msgid "Actions"
 msgstr "कार्रवाइयाँ"
 
@@ -765,7 +765,7 @@ msgstr "%s खोलें"
 
 #: admin/class-mcp-admin-connections.php:655
 #: admin/class-mcp-admin-connections.php:708
-#: admin/class-mcp-admin-connections.php:1966
+#: admin/class-mcp-admin-connections.php:1967
 msgid "(opens in a new tab)"
 msgstr "(नए टैब में खुलता है)"
 
@@ -1289,7 +1289,7 @@ msgstr ""
 "जाएगी।"
 
 #: admin/class-mcp-admin-connections.php:1161
-#: admin/class-mcp-admin-connections.php:1852
+#: admin/class-mcp-admin-connections.php:1853
 msgid "API key"
 msgstr "API कुंजी"
 
@@ -1457,7 +1457,7 @@ msgid "In a new chat, ask:"
 msgstr "नई चैट में पूछें:"
 
 #: admin/class-mcp-admin-connections.php:1453
-#: admin/class-mcp-admin-connections.php:1810
+#: admin/class-mcp-admin-connections.php:1811
 msgid "Copy"
 msgstr "कॉपी करें"
 
@@ -1597,7 +1597,7 @@ msgstr "सर्वर पर क्या बदलना है (या इ�
 msgid "Until then, apps that accept an API key can connect with a key instead."
 msgstr "तब तक, जो ऐप API कुंजी स्वीकार करते हैं वे कुंजी से कनेक्ट हो सकते हैं।"
 
-#: admin/class-mcp-admin-connections.php:1672
+#: admin/class-mcp-admin-connections.php:1673
 msgid ""
 "Connect AI agents like <strong>Claude</strong>, <strong>ChatGPT</strong>, or "
 "<strong>Codex</strong> to this WordPress site over the Model Context "
@@ -1606,155 +1606,155 @@ msgstr ""
 "<strong>Claude</strong>, <strong>ChatGPT</strong>, या <strong>Codex</strong> "
 "जैसे AI एजेंट्स को Model Context Protocol के माध्यम से इस WordPress साइट से कनेक्ट करें।"
 
-#: admin/class-mcp-admin-connections.php:1699
-#: admin/class-mcp-admin-connections.php:1828
+#: admin/class-mcp-admin-connections.php:1700
+#: admin/class-mcp-admin-connections.php:1829
 msgid "Connect another app"
 msgstr "एक और ऐप कनेक्ट करें"
 
-#: admin/class-mcp-admin-connections.php:1699
+#: admin/class-mcp-admin-connections.php:1700
 msgid "Connect your first app"
 msgstr "अपना पहला ऐप कनेक्ट करें"
 
-#: admin/class-mcp-admin-connections.php:1700
+#: admin/class-mcp-admin-connections.php:1701
 msgid "Pick your AI app or coding tool — setup takes about a minute."
 msgstr "अपना AI ऐप या कोडिंग टूल चुनें — सेटअप में लगभग एक मिनट लगता है।"
 
-#: admin/class-mcp-admin-connections.php:1702
+#: admin/class-mcp-admin-connections.php:1703
 msgid "Close"
 msgstr "बंद करें"
 
-#: admin/class-mcp-admin-connections.php:1710
+#: admin/class-mcp-admin-connections.php:1711
 msgid "Which app do you want to connect?"
 msgstr "आप कौन सा ऐप कनेक्ट करना चाहते हैं?"
 
-#: admin/class-mcp-admin-connections.php:1711
+#: admin/class-mcp-admin-connections.php:1712
 msgid ""
 "Pick your AI app or coding tool from the list to see step-by-step setup "
 "instructions."
 msgstr "चरण-दर-चरण सेटअप निर्देश देखने के लिए सूची से अपना AI ऐप या कोडिंग टूल चुनें।"
 
 #. translators: %s: AI client name, e.g. "Claude Code"
-#: admin/class-mcp-admin-connections.php:1722
+#: admin/class-mcp-admin-connections.php:1723
 #, php-format
 msgid "Connect %s"
 msgstr "%s कनेक्ट करें"
 
-#: admin/class-mcp-admin-connections.php:1745
+#: admin/class-mcp-admin-connections.php:1746
 msgid "No terminal needed"
 msgstr "किसी टर्मिनल की आवश्यकता नहीं"
 
-#: admin/class-mcp-admin-connections.php:1746
+#: admin/class-mcp-admin-connections.php:1747
 msgid "Terminal & IDE tools"
 msgstr "टर्मिनल और IDE टूल"
 
-#: admin/class-mcp-admin-connections.php:1747
+#: admin/class-mcp-admin-connections.php:1748
 msgid "Automation & developers"
 msgstr "ऑटोमेशन और डेवलपर"
 
-#: admin/class-mcp-admin-connections.php:1752
+#: admin/class-mcp-admin-connections.php:1753
 msgid "AI clients"
 msgstr "AI क्लाइंट"
 
-#: admin/class-mcp-admin-connections.php:1772
+#: admin/class-mcp-admin-connections.php:1773
 msgid "Needs public URL"
 msgstr "सार्वजनिक URL आवश्यक"
 
-#: admin/class-mcp-admin-connections.php:1774
+#: admin/class-mcp-admin-connections.php:1775
 msgid "Works locally"
 msgstr "लोकल पर काम करता है"
 
-#: admin/class-mcp-admin-connections.php:1823
+#: admin/class-mcp-admin-connections.php:1824
 msgid "Connected apps"
 msgstr "कनेक्टेड ऐप्स"
 
-#: admin/class-mcp-admin-connections.php:1836
+#: admin/class-mcp-admin-connections.php:1837
 msgid "Name"
 msgstr "नाम"
 
-#: admin/class-mcp-admin-connections.php:1837
+#: admin/class-mcp-admin-connections.php:1838
 msgid "Type"
 msgstr "प्रकार"
 
-#: admin/class-mcp-admin-connections.php:1838
+#: admin/class-mcp-admin-connections.php:1839
 msgid "Access"
 msgstr "एक्सेस"
 
-#: admin/class-mcp-admin-connections.php:1840
+#: admin/class-mcp-admin-connections.php:1841
 msgid "Last used"
 msgstr "अंतिम उपयोग"
 
-#: admin/class-mcp-admin-connections.php:1860
+#: admin/class-mcp-admin-connections.php:1861
 msgid "Revoke this key? Any client using it will lose access."
 msgstr "इस कुंजी को रद्द करें? इसका उपयोग करने वाला कोई भी क्लाइंट एक्सेस खो देगा।"
 
 #. translators: 1: app name detected from its first request, 2: WordPress username of the approving admin
-#: admin/class-mcp-admin-connections.php:1870
+#: admin/class-mcp-admin-connections.php:1871
 #, php-format
 msgid "%1$s · approved by %2$s"
 msgstr "%1$s · %2$s द्वारा स्वीकृत"
 
 #. translators: %s: WordPress username of the admin who approved the connection
-#: admin/class-mcp-admin-connections.php:1873
+#: admin/class-mcp-admin-connections.php:1874
 #, php-format
 msgid "approved by %s"
 msgstr "%s द्वारा स्वीकृत"
 
-#: admin/class-mcp-admin-connections.php:1879
+#: admin/class-mcp-admin-connections.php:1880
 msgid "OAuth"
 msgstr "OAuth"
 
-#: admin/class-mcp-admin-connections.php:1887
+#: admin/class-mcp-admin-connections.php:1888
 msgid "Revoke this connection? The app will lose access immediately."
 msgstr "इस कनेक्शन को रद्द करें? ऐप तुरंत एक्सेस खो देगा।"
 
 #. translators: %s: human-readable time difference, e.g. "2 hours"
-#: admin/class-mcp-admin-connections.php:1913
+#: admin/class-mcp-admin-connections.php:1914
 #, php-format
 msgid "%s ago"
 msgstr "%s पहले"
 
-#: admin/class-mcp-admin-connections.php:1915
+#: admin/class-mcp-admin-connections.php:1916
 msgid "Never"
 msgstr "कभी नहीं"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1922
+#: admin/class-mcp-admin-connections.php:1923
 #, php-format
 msgid "Actions for %s"
 msgstr "%s के लिए कार्रवाइयाँ"
 
-#: admin/class-mcp-admin-connections.php:1925
+#: admin/class-mcp-admin-connections.php:1926
 msgid "Edit access…"
 msgstr "एक्सेस बदलें…"
 
-#: admin/class-mcp-admin-connections.php:1926
+#: admin/class-mcp-admin-connections.php:1927
 msgid "Revoke"
 msgstr "रद्द करें"
 
-#: admin/class-mcp-admin-connections.php:1929
+#: admin/class-mcp-admin-connections.php:1930
 msgid "Revoke…"
 msgstr "रद्द करें…"
 
 #. translators: %s: credential name
-#: admin/class-mcp-admin-connections.php:1942
+#: admin/class-mcp-admin-connections.php:1943
 #, php-format
 msgid "Access for <strong>%s</strong>"
 msgstr "<strong>%s</strong> के लिए एक्सेस"
 
-#: admin/class-mcp-admin-connections.php:1946
+#: admin/class-mcp-admin-connections.php:1947
 #: admin/class-mcp-admin-settings.php:152 admin/class-mcp-admin.php:282
 msgid "Cancel"
 msgstr "वापस"
 
-#: admin/class-mcp-admin-connections.php:1947
+#: admin/class-mcp-admin-connections.php:1948
 msgid "Save access"
 msgstr "एक्सेस सहेजें"
 
-#: admin/class-mcp-admin-connections.php:1960
+#: admin/class-mcp-admin-connections.php:1961
 msgid "Connection Doctor"
 msgstr "कनेक्शन डायग्नोस्टिक"
 
-#: admin/class-mcp-admin-connections.php:1962
+#: admin/class-mcp-admin-connections.php:1963
 msgid ""
 "Test whether AI clients can reach this site and get a copy-pasteable "
 "diagnosis for anything broken."
@@ -1762,7 +1762,7 @@ msgstr ""
 "परीक्षण करें कि क्या AI क्लाइंट इस साइट तक पहुँच सकते हैं और किसी भी समस्या के लिए कॉपी-"
 "पेस्ट करने योग्य डायग्नोसिस प्राप्त करें।"
 
-#: admin/class-mcp-admin-connections.php:1965
+#: admin/class-mcp-admin-connections.php:1966
 msgid ""
 "<strong>This site is behind Cloudflare.</strong> Some Cloudflare security "
 "settings, such as Browser Integrity Check and Bot Fight Mode, can block AI "
@@ -1772,19 +1772,19 @@ msgstr ""
 "जैसे Browser Integrity Check और Bot Fight Mode, AI ऐप्स को WordPress तक पहुँचने से "
 "पहले ही रोक सकती हैं। जाँचने के लिए चेक चलाएँ।"
 
-#: admin/class-mcp-admin-connections.php:1966
+#: admin/class-mcp-admin-connections.php:1967
 msgid "How to let AI apps through Cloudflare"
 msgstr "Cloudflare से AI ऐप्स को कैसे आने दें"
 
-#: admin/class-mcp-admin-connections.php:1969
+#: admin/class-mcp-admin-connections.php:1970
 msgid "Run checks"
 msgstr "जांच चलाएं"
 
-#: admin/class-mcp-admin-connections.php:1970
+#: admin/class-mcp-admin-connections.php:1971
 msgid "Copy report"
 msgstr "रिपोर्ट कॉपी करें"
 
-#: admin/class-mcp-admin-connections.php:1971
+#: admin/class-mcp-admin-connections.php:1972
 msgid "Get help on WordPress.org"
 msgstr "WordPress.org पर सहायता प्राप्त करें"
 
@@ -2270,7 +2270,7 @@ msgid "Save Settings"
 msgstr "सेटिंग्स सहेजें"
 
 #: admin/class-mcp-admin.php:35 admin/class-mcp-admin.php:36
-#: admin/class-mcp-admin.php:701
+#: admin/class-mcp-admin.php:700
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2302,139 +2302,139 @@ msgstr "कॉपी नहीं हो सका"
 msgid "Not currently available (kept in this scope until you untick them)"
 msgstr "अभी उपलब्ध नहीं (अनचेक करने तक इस एक्सेस में बने रहेंगे)"
 
-#: admin/class-mcp-admin.php:299
+#: admin/class-mcp-admin.php:298
 msgid "Running checks…"
 msgstr "जाँच चल रही है…"
 
 #. translators: %s: error message
-#: admin/class-mcp-admin.php:301
+#: admin/class-mcp-admin.php:300
 #, php-format
 msgid "Doctor failed to run: %s"
 msgstr "डायग्नोस्टिक नहीं चल सका: %s"
 
-#: admin/class-mcp-admin.php:302
+#: admin/class-mcp-admin.php:301
 msgid "Server-side checks"
 msgstr "सर्वर-साइड जाँच"
 
-#: admin/class-mcp-admin.php:303
+#: admin/class-mcp-admin.php:302
 msgid "From your browser (outside the server)"
 msgstr "आपके ब्राउज़र से (सर्वर के बाहर)"
 
 #. translators: %s: how to fix a failed check
-#: admin/class-mcp-admin.php:305
+#: admin/class-mcp-admin.php:304
 #, php-format
 msgid "Fix: %s"
 msgstr "समाधान: %s"
 
-#: admin/class-mcp-admin.php:307
+#: admin/class-mcp-admin.php:306
 msgctxt "connection check result"
 msgid "pass"
 msgstr "सफल"
 
-#: admin/class-mcp-admin.php:308
+#: admin/class-mcp-admin.php:307
 msgctxt "connection check result"
 msgid "warning"
 msgstr "चेतावनी"
 
-#: admin/class-mcp-admin.php:309
+#: admin/class-mcp-admin.php:308
 msgctxt "connection check result"
 msgid "fail"
 msgstr "विफल"
 
-#: admin/class-mcp-admin.php:310
+#: admin/class-mcp-admin.php:309
 msgctxt "connection check result"
 msgid "error"
 msgstr "त्रुटि"
 
-#: admin/class-mcp-admin.php:311
+#: admin/class-mcp-admin.php:310
 msgctxt "connection check result"
 msgid "skipped"
 msgstr "छोड़ा गया"
 
-#: admin/class-mcp-admin.php:312
+#: admin/class-mcp-admin.php:311
 msgctxt "connection check result"
 msgid "info"
 msgstr "जानकारी"
 
-#: admin/class-mcp-admin.php:314
+#: admin/class-mcp-admin.php:313
 msgid "Use the other sign-in address"
 msgstr "दूसरा साइन-इन पता उपयोग करें"
 
-#: admin/class-mcp-admin.php:315
+#: admin/class-mcp-admin.php:314
 msgid "Back to automatic"
 msgstr "स्वचालित पर वापस जाएं"
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:315
 msgid "Saved. Run the checks again to see the result."
 msgstr "सहेजा गया। परिणाम देखने के लिए जांच फिर से चलाएं।"
 
-#: admin/class-mcp-admin.php:317
+#: admin/class-mcp-admin.php:316
 msgid "Could not save the change. Reload the page and try again."
 msgstr "बदलाव सहेजा नहीं जा सका। पेज फिर से लोड करें और दोबारा कोशिश करें।"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:320
+#: admin/class-mcp-admin.php:319
 #, php-format
 msgid "Failed: %d"
 msgstr "विफल: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:322
+#: admin/class-mcp-admin.php:321
 #, php-format
 msgid "Errors: %d"
 msgstr "त्रुटियाँ: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:324
+#: admin/class-mcp-admin.php:323
 #, php-format
 msgid "Warnings: %d"
 msgstr "चेतावनियाँ: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:326
+#: admin/class-mcp-admin.php:325
 #, php-format
 msgid "Passed: %d"
 msgstr "सफल: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:328
+#: admin/class-mcp-admin.php:327
 #, php-format
 msgid "Skipped: %d"
 msgstr "छोड़े गए: %d"
 
-#: admin/class-mcp-admin.php:330
+#: admin/class-mcp-admin.php:329
 msgid "GET MCP endpoint"
 msgstr "MCP एंडपॉइंट पर GET"
 
-#: admin/class-mcp-admin.php:331
+#: admin/class-mcp-admin.php:330
 msgid "POST MCP endpoint"
 msgstr "MCP एंडपॉइंट पर POST"
 
 #. translators: %s: discovery URL path, e.g. /oauth-authorization-server
-#: admin/class-mcp-admin.php:333
+#: admin/class-mcp-admin.php:332
 #, php-format
 msgid "OAuth discovery %s"
 msgstr "OAuth डिस्कवरी %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:335
+#: admin/class-mcp-admin.php:334
 #, php-format
 msgid "HTTP %s"
 msgstr "HTTP %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:337
+#: admin/class-mcp-admin.php:336
 #, php-format
 msgid "HTTP %s, non-JSON body"
 msgstr "HTTP %s, जवाब JSON नहीं है"
 
 #. translators: %s: browser error message
-#: admin/class-mcp-admin.php:339
+#: admin/class-mcp-admin.php:338
 #, php-format
 msgid "Network error: %s"
 msgstr "नेटवर्क त्रुटि: %s"
 
-#: admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:339
 msgid ""
 "See the server-side result for this URL; if that passed, the block is at "
 "your network edge (CDN/WAF)."
@@ -2442,7 +2442,7 @@ msgstr ""
 "इस URL का सर्वर-साइड परिणाम देखें; अगर वह सफल रहा, तो रुकावट आपके नेटवर्क के किनारे "
 "(CDN/WAF) पर है।"
 
-#: admin/class-mcp-admin.php:341
+#: admin/class-mcp-admin.php:340
 msgid ""
 "Your browser could not reach the site at all (DNS, TLS, or connection "
 "refused). Remote AI clients will hit the same wall."
@@ -2450,72 +2450,72 @@ msgstr ""
 "आपका ब्राउज़र साइट तक बिल्कुल नहीं पहुँच सका (DNS, TLS, या कनेक्शन अस्वीकृत)। रिमोट AI "
 "क्लाइंट भी इसी रुकावट से टकराएँगे।"
 
-#: admin/class-mcp-admin.php:391 admin/class-mcp-admin.php:412
-#: admin/class-mcp-admin.php:434
+#: admin/class-mcp-admin.php:390 admin/class-mcp-admin.php:411
+#: admin/class-mcp-admin.php:433
 msgid "Select an access level before saving."
 msgstr "सेव करने से पहले एक एक्सेस स्तर चुनें।"
 
-#: admin/class-mcp-admin.php:396
+#: admin/class-mcp-admin.php:395
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API कुंजी बनाई गई। इसे अभी कॉपी करें — यह केवल एक बार दिखाई जाएगी।"
 
-#: admin/class-mcp-admin.php:404
+#: admin/class-mcp-admin.php:403
 msgid "API key revoked."
 msgstr "API कुंजी रद्द की गई।"
 
-#: admin/class-mcp-admin.php:414
+#: admin/class-mcp-admin.php:413
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "कुंजी का स्कोप अपडेट किया गया। यह इस कुंजी के अगले अनुरोध पर प्रभावी होगा।"
 
-#: admin/class-mcp-admin.php:416
+#: admin/class-mcp-admin.php:415
 msgid "Could not update key scope."
 msgstr "कुंजी का स्कोप अपडेट नहीं किया जा सका।"
 
-#: admin/class-mcp-admin.php:425
+#: admin/class-mcp-admin.php:424
 msgid "Connection revoked."
 msgstr "कनेक्शन रद्द किया गया।"
 
-#: admin/class-mcp-admin.php:436
+#: admin/class-mcp-admin.php:435
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "कनेक्शन का स्कोप अपडेट किया गया। यह इस कनेक्शन के अगले अनुरोध पर प्रभावी होगा।"
 
-#: admin/class-mcp-admin.php:438
+#: admin/class-mcp-admin.php:437
 msgid "Could not update connection scope."
 msgstr "कनेक्शन का स्कोप अपडेट नहीं किया जा सका।"
 
-#: admin/class-mcp-admin.php:494
+#: admin/class-mcp-admin.php:493
 msgid "Browser sign-in enabled."
 msgstr "ब्राउज़र साइन-इन चालू हो गया।"
 
-#: admin/class-mcp-admin.php:528
+#: admin/class-mcp-admin.php:527
 msgid "Settings saved."
 msgstr "सेटिंग्स सहेजी गईं।"
 
-#: admin/class-mcp-admin.php:535
+#: admin/class-mcp-admin.php:534
 msgid "Audit log cleared."
 msgstr "ऑडिट लॉग साफ़ किया गया।"
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:553
+#: admin/class-mcp-admin.php:552
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "परिवर्तन #%1$d पूर्ववत किया गया।%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:568
+#: admin/class-mcp-admin.php:567
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "%2$d में से %1$d बैच प्रविष्टियाँ पूर्ववत की गईं।"
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:584
+#: admin/class-mcp-admin.php:583
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "चेकपॉइंट #%1$d बनाया गया (%2$s)।"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:597
+#: admin/class-mcp-admin.php:596
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2525,7 +2525,7 @@ msgstr ""
 "पुनर्स्थापना से पहले का सुरक्षा चेकपॉइंट: #%4$d।"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:600
+#: admin/class-mcp-admin.php:599
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2534,101 +2534,101 @@ msgstr ""
 "चेकपॉइंट #%1$d से डेटाबेस पुनर्स्थापित हुआ — %2$d टेबल, %3$s पंक्तियाँ जाँची गईं। पुनर्स्थापना "
 "से पहले का सुरक्षा चेकपॉइंट: #%4$d।"
 
-#: admin/class-mcp-admin.php:613
+#: admin/class-mcp-admin.php:612
 msgid "Checkpoint deleted."
 msgstr "चेकपॉइंट हटाया गया।"
 
-#: admin/class-mcp-admin.php:690
+#: admin/class-mcp-admin.php:689
 msgid "Connections"
 msgstr "कनेक्शन"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:690
 msgid "Activity"
 msgstr "गतिविधि"
 
-#: admin/class-mcp-admin.php:692
+#: admin/class-mcp-admin.php:691
 msgid "Logs"
 msgstr "लॉग"
 
-#: admin/class-mcp-admin.php:693
+#: admin/class-mcp-admin.php:692
 msgid "Settings"
 msgstr "सेटिंग्स"
 
-#: admin/class-mcp-admin.php:694
+#: admin/class-mcp-admin.php:693
 msgid "About"
 msgstr "परिचय"
 
-#: admin/class-mcp-admin.php:706
+#: admin/class-mcp-admin.php:705
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP के अनुभाग"
 
-#: admin/class-mcp-admin.php:745
+#: admin/class-mcp-admin.php:744
 msgid "Power mode is on. Open Power mode settings."
 msgstr "Power mode चालू है। Power mode सेटिंग्स खोलें।"
 
-#: admin/class-mcp-admin.php:745
+#: admin/class-mcp-admin.php:744
 msgid "Power mode on"
 msgstr "Power mode चालू"
 
-#: admin/class-mcp-admin.php:747
+#: admin/class-mcp-admin.php:746
 msgid "Power mode is off. Open Power mode settings."
 msgstr "Power mode बंद है। Power mode सेटिंग्स खोलें।"
 
-#: admin/class-mcp-admin.php:747
+#: admin/class-mcp-admin.php:746
 msgid "Power mode off"
 msgstr "Power mode बंद"
 
-#: admin/class-mcp-admin.php:750
+#: admin/class-mcp-admin.php:749
 msgid "Safe mode off"
 msgstr "Safe mode बंद"
 
-#: admin/class-mcp-admin.php:773
+#: admin/class-mcp-admin.php:772
 msgid "Every request from AI apps is rejected."
 msgstr "AI ऐप्स के सभी अनुरोध अस्वीकार किए जाते हैं।"
 
-#: admin/class-mcp-admin.php:773
+#: admin/class-mcp-admin.php:772
 msgid "MCP server is off."
 msgstr "MCP सर्वर बंद है।"
 
-#: admin/class-mcp-admin.php:774
+#: admin/class-mcp-admin.php:773
 msgid "Turn on in Settings"
 msgstr "सेटिंग्स में चालू करें"
 
-#: admin/class-mcp-admin.php:802
+#: admin/class-mcp-admin.php:801
 msgid "Pagination"
 msgstr "पृष्ठ-संख्या"
 
-#: admin/class-mcp-admin.php:803
+#: admin/class-mcp-admin.php:802
 msgid "Previous"
 msgstr "पिछला"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:806
+#: admin/class-mcp-admin.php:805
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "पृष्ठ %2$d में से %1$d"
 
-#: admin/class-mcp-admin.php:808
+#: admin/class-mcp-admin.php:807
 msgid "Next"
 msgstr "अगला"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:816
 msgid "Project home, guides, and news."
 msgstr "प्रोजेक्ट होम, गाइड और समाचार।"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:816
 msgid "Website"
 msgstr "वेबसाइट"
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:817
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:817
 msgid "Source, issues & releases."
 msgstr "स्रोत, इश्यू और रिलीज़।"
 
-#: admin/class-mcp-admin.php:819
+#: admin/class-mcp-admin.php:818
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2636,11 +2636,11 @@ msgstr ""
 "WordPress.org सपोर्ट फ़ोरम में पूछें। तेज़ जवाब के लिए अपनी कनेक्शन डायग्नोस्टिक रिपोर्ट "
 "पेस्ट करें।"
 
-#: admin/class-mcp-admin.php:819
+#: admin/class-mcp-admin.php:818
 msgid "Get help"
 msgstr "सहायता प्राप्त करें"
 
-#: admin/class-mcp-admin.php:820
+#: admin/class-mcp-admin.php:819
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2648,12 +2648,12 @@ msgstr ""
 "Cowboy MCP पसंद आ रहा है? WordPress.org पर एक समीक्षा अन्य साइट मालिकों को इसे "
 "खोजने में मदद करती है।"
 
-#: admin/class-mcp-admin.php:820 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:819 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "समीक्षा लिखें"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:828
+#: admin/class-mcp-admin.php:827
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "
