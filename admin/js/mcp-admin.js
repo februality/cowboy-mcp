@@ -275,7 +275,8 @@
 			} );
 			resultsEl.append( h, ul );
 		}
-		/* "Use the other sign-in address" / "Back to automatic" next to the sign-in line. */
+		/* "Use the other sign-in address" / "Back to automatic" next to the sign-in line, with a
+		   warning when apps connected recently would have to sign in again (signin.warn). */
 		function signinButtons() {
 			var row = document.createElement( 'span' );
 			row.className = 'cmcp-signin-ctl';
@@ -299,6 +300,12 @@
 				} );
 				row.appendChild( btn );
 			} );
+			if ( signin.warn ) {
+				var warn = document.createElement( 'span' );
+				warn.className = 'cmcp-signin-warn';
+				warn.textContent = t.signinWarn;
+				row.appendChild( warn );
+			}
 			return row;
 		}
 	}

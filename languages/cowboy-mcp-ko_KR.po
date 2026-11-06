@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-11-06 01:43-0800\n"
+"POT-Creation-Date: 2026-11-06 02:29-0800\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Korean\n"
@@ -2285,7 +2285,7 @@ msgid "Save Settings"
 msgstr "설정 저장"
 
 #: admin/class-mcp-admin.php:35 admin/class-mcp-admin.php:36
-#: admin/class-mcp-admin.php:700
+#: admin/class-mcp-admin.php:701
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2381,77 +2381,81 @@ msgid "Back to automatic"
 msgstr "자동으로 되돌리기"
 
 #: admin/class-mcp-admin.php:315
+msgid "Some connected apps may need to sign in again after this change."
+msgstr "이 변경 후 연결된 일부 앱은 다시 로그인해야 할 수 있습니다."
+
+#: admin/class-mcp-admin.php:316
 msgid "Saved. Run the checks again to see the result."
 msgstr "저장했습니다. 결과를 보려면 검사를 다시 실행하세요."
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:317
 msgid "Could not save the change. Reload the page and try again."
 msgstr ""
 "변경 사항을 저장하지 못했습니다. 페이지를 새로 고친 후 다시 시도하세요."
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:319
+#: admin/class-mcp-admin.php:320
 #, php-format
 msgid "Failed: %d"
 msgstr "실패: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:321
+#: admin/class-mcp-admin.php:322
 #, php-format
 msgid "Errors: %d"
 msgstr "오류: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:323
+#: admin/class-mcp-admin.php:324
 #, php-format
 msgid "Warnings: %d"
 msgstr "경고: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:325
+#: admin/class-mcp-admin.php:326
 #, php-format
 msgid "Passed: %d"
 msgstr "통과: %d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:327
+#: admin/class-mcp-admin.php:328
 #, php-format
 msgid "Skipped: %d"
 msgstr "건너뜀: %d"
 
-#: admin/class-mcp-admin.php:329
+#: admin/class-mcp-admin.php:330
 msgid "GET MCP endpoint"
 msgstr "MCP 엔드포인트 GET"
 
-#: admin/class-mcp-admin.php:330
+#: admin/class-mcp-admin.php:331
 msgid "POST MCP endpoint"
 msgstr "MCP 엔드포인트 POST"
 
 #. translators: %s: discovery URL path, e.g. /oauth-authorization-server
-#: admin/class-mcp-admin.php:332
+#: admin/class-mcp-admin.php:333
 #, php-format
 msgid "OAuth discovery %s"
 msgstr "OAuth 검색 %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:334
+#: admin/class-mcp-admin.php:335
 #, php-format
 msgid "HTTP %s"
 msgstr "HTTP %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:336
+#: admin/class-mcp-admin.php:337
 #, php-format
 msgid "HTTP %s, non-JSON body"
 msgstr "HTTP %s, JSON이 아닌 응답"
 
 #. translators: %s: browser error message
-#: admin/class-mcp-admin.php:338
+#: admin/class-mcp-admin.php:339
 #, php-format
 msgid "Network error: %s"
 msgstr "네트워크 오류: %s"
 
-#: admin/class-mcp-admin.php:339
+#: admin/class-mcp-admin.php:340
 msgid ""
 "See the server-side result for this URL; if that passed, the block is at "
 "your network edge (CDN/WAF)."
@@ -2459,7 +2463,7 @@ msgstr ""
 "이 URL의 서버 측 결과를 확인하세요. 통과했다면 네트워크 경계(CDN/WAF)에서 차"
 "단되고 있습니다."
 
-#: admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:341
 msgid ""
 "Your browser could not reach the site at all (DNS, TLS, or connection "
 "refused). Remote AI clients will hit the same wall."
@@ -2467,72 +2471,72 @@ msgstr ""
 "브라우저가 사이트에 전혀 연결하지 못했습니다(DNS, TLS 또는 연결 거부). 원격 "
 "AI 클라이언트도 같은 문제를 겪게 됩니다."
 
-#: admin/class-mcp-admin.php:390 admin/class-mcp-admin.php:411
-#: admin/class-mcp-admin.php:433
+#: admin/class-mcp-admin.php:391 admin/class-mcp-admin.php:412
+#: admin/class-mcp-admin.php:434
 msgid "Select an access level before saving."
 msgstr "저장하기 전에 액세스 수준을 선택하세요."
 
-#: admin/class-mcp-admin.php:395
+#: admin/class-mcp-admin.php:396
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API 키가 생성되었습니다. 지금 복사하세요 — 한 번만 표시됩니다."
 
-#: admin/class-mcp-admin.php:403
+#: admin/class-mcp-admin.php:404
 msgid "API key revoked."
 msgstr "API 키가 취소되었습니다."
 
-#: admin/class-mcp-admin.php:413
+#: admin/class-mcp-admin.php:414
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "키 범위가 업데이트되었습니다. 해당 키의 다음 요청부터 적용됩니다."
 
-#: admin/class-mcp-admin.php:415
+#: admin/class-mcp-admin.php:416
 msgid "Could not update key scope."
 msgstr "키 범위를 업데이트할 수 없습니다."
 
-#: admin/class-mcp-admin.php:424
+#: admin/class-mcp-admin.php:425
 msgid "Connection revoked."
 msgstr "연결이 취소되었습니다."
 
-#: admin/class-mcp-admin.php:435
+#: admin/class-mcp-admin.php:436
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "연결 범위가 업데이트되었습니다. 해당 연결의 다음 요청부터 적용됩니다."
 
-#: admin/class-mcp-admin.php:437
+#: admin/class-mcp-admin.php:438
 msgid "Could not update connection scope."
 msgstr "연결 범위를 업데이트할 수 없습니다."
 
-#: admin/class-mcp-admin.php:493
+#: admin/class-mcp-admin.php:494
 msgid "Browser sign-in enabled."
 msgstr "브라우저 로그인이 켜졌습니다."
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:528
 msgid "Settings saved."
 msgstr "설정이 저장되었습니다."
 
-#: admin/class-mcp-admin.php:534
+#: admin/class-mcp-admin.php:535
 msgid "Audit log cleared."
 msgstr "감사 로그를 지웠습니다."
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:552
+#: admin/class-mcp-admin.php:553
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "변경 #%1$d을(를) 실행 취소했습니다.%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:567
+#: admin/class-mcp-admin.php:568
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "배치 항목 %2$d개 중 %1$d개를 실행 취소했습니다."
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:583
+#: admin/class-mcp-admin.php:584
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "체크포인트 #%1$d을(를) 생성했습니다(%2$s)."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:596
+#: admin/class-mcp-admin.php:597
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2542,7 +2546,7 @@ msgstr ""
 "검증됨. 복원 전 안전 체크포인트: #%4$d."
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:599
+#: admin/class-mcp-admin.php:600
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2551,101 +2555,101 @@ msgstr ""
 "체크포인트 #%1$d에서 데이터베이스를 복원했습니다 — 테이블 %2$d개, 행 %3$s개 "
 "확인됨. 복원 전 안전 체크포인트: #%4$d."
 
-#: admin/class-mcp-admin.php:612
+#: admin/class-mcp-admin.php:613
 msgid "Checkpoint deleted."
 msgstr "체크포인트를 삭제했습니다."
 
-#: admin/class-mcp-admin.php:689
+#: admin/class-mcp-admin.php:690
 msgid "Connections"
 msgstr "연결"
 
-#: admin/class-mcp-admin.php:690
+#: admin/class-mcp-admin.php:691
 msgid "Activity"
 msgstr "활동"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:692
 msgid "Logs"
 msgstr "로그"
 
-#: admin/class-mcp-admin.php:692
+#: admin/class-mcp-admin.php:693
 msgid "Settings"
 msgstr "설정"
 
-#: admin/class-mcp-admin.php:693
+#: admin/class-mcp-admin.php:694
 msgid "About"
 msgstr "정보"
 
-#: admin/class-mcp-admin.php:705
+#: admin/class-mcp-admin.php:706
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP 섹션"
 
-#: admin/class-mcp-admin.php:744
+#: admin/class-mcp-admin.php:745
 msgid "Power mode is on. Open Power mode settings."
 msgstr "파워 모드가 켜져 있습니다. 파워 모드 설정을 엽니다."
 
-#: admin/class-mcp-admin.php:744
+#: admin/class-mcp-admin.php:745
 msgid "Power mode on"
 msgstr "파워 모드 켜짐"
 
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:747
 msgid "Power mode is off. Open Power mode settings."
 msgstr "파워 모드가 꺼져 있습니다. 파워 모드 설정을 엽니다."
 
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:747
 msgid "Power mode off"
 msgstr "파워 모드 꺼짐"
 
-#: admin/class-mcp-admin.php:749
+#: admin/class-mcp-admin.php:750
 msgid "Safe mode off"
 msgstr "안전 모드 꺼짐"
 
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:773
 msgid "Every request from AI apps is rejected."
 msgstr "AI 앱의 모든 요청이 거부됩니다."
 
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:773
 msgid "MCP server is off."
 msgstr "MCP 서버가 꺼져 있습니다."
 
-#: admin/class-mcp-admin.php:773
+#: admin/class-mcp-admin.php:774
 msgid "Turn on in Settings"
 msgstr "설정에서 켜기"
 
-#: admin/class-mcp-admin.php:801
+#: admin/class-mcp-admin.php:802
 msgid "Pagination"
 msgstr "페이지 이동"
 
-#: admin/class-mcp-admin.php:802
+#: admin/class-mcp-admin.php:803
 msgid "Previous"
 msgstr "이전"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:805
+#: admin/class-mcp-admin.php:806
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "%2$d페이지 중 %1$d페이지"
 
-#: admin/class-mcp-admin.php:807
+#: admin/class-mcp-admin.php:808
 msgid "Next"
 msgstr "다음"
 
-#: admin/class-mcp-admin.php:816
+#: admin/class-mcp-admin.php:817
 msgid "Project home, guides, and news."
 msgstr "프로젝트 홈, 가이드 및 소식."
 
-#: admin/class-mcp-admin.php:816
+#: admin/class-mcp-admin.php:817
 msgid "Website"
 msgstr "웹사이트"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:818
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:818
 msgid "Source, issues & releases."
 msgstr "소스, 이슈 및 릴리스."
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:819
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
@@ -2653,11 +2657,11 @@ msgstr ""
 "WordPress.org 지원 포럼에 질문하세요. 연결 진단 보고서를 붙여넣으면 더 빠르"
 "게 답변을 받을 수 있습니다."
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:819
 msgid "Get help"
 msgstr "도움 받기"
 
-#: admin/class-mcp-admin.php:819
+#: admin/class-mcp-admin.php:820
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
@@ -2665,12 +2669,12 @@ msgstr ""
 "Cowboy MCP가 마음에 드시나요? WordPress.org에 리뷰를 남기면 다른 사이트 소유"
 "자가 이 플러그인을 찾는 데 도움이 됩니다."
 
-#: admin/class-mcp-admin.php:819 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:820 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "리뷰 남기기"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:827
+#: admin/class-mcp-admin.php:828
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "

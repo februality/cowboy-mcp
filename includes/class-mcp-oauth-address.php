@@ -42,8 +42,16 @@ class Cowboy_MCP_OAuth_Address {
 	const RETRY_PAUSE   = 2;
 	const STALE_SECONDS     = HOUR_IN_SECONDS;
 	const REAL_TRAFFIC_DAYS = 7;
-	const SWITCH_BACK_RUNS  = 3;
-	const SWITCH_BACK_SPAN  = DAY_IN_SECONDS;
+	/**
+	 * A browser sign-in connection used within this many days holds an automatic switch (R12):
+	 * apps on the MCP SDK from 1.31 stamp their stored client and tokens with the sign-in
+	 * server, so after a switch they must sign in again. Same length as a refresh token.
+	 */
+	const ACTIVE_DAYS = 30;
+	/** How long the Doctor explains a held switch after the last check that held it. */
+	const HELD_SHOWN_DAYS = 7;
+	/** At most one oauth_address_switch_held audit row per this many seconds. */
+	const HELD_LOG_SECONDS = DAY_IN_SECONDS;
 	/** How long a sighting of Cloudflare in front of the site is remembered (cron runs see no CF-Ray). */
 	const CDN_MEMORY = 30 * DAY_IN_SECONDS;
 	const WATCH_SECONDS   = 30 * MINUTE_IN_SECONDS;
@@ -59,8 +67,8 @@ class Cowboy_MCP_OAuth_Address {
 			'checked_at'    => 0,
 			'switched_at'   => 0,
 			'root_seen_at'  => 0,
-			'root_ok_since' => 0,
-			'root_ok_runs'  => 0,
+			'held_at'       => 0,
+			'held_logged_at' => 0,
 			'site_ok_at'    => 0,
 			'unreachable'   => false,
 			'last'          => [],
@@ -145,6 +153,7 @@ class Cowboy_MCP_OAuth_Address {
 			return [ $state['override'], 'override' ];
 		}
 		$mode   = 'site' === $state['mode'] ? 'site' : 'root';
+		// 'unblocked' is no longer written (R13: no automatic switch-back); earlier builds stored it.
 		$reason = in_array( $state['reason'], [ 'blocked', 'unblocked', 'default' ], true ) ? $state['reason'] : 'default';
 		return [ $mode, $reason ];
 	}
@@ -327,19 +336,22 @@ class Cowboy_MCP_OAuth_Address {
 	/**
 	 * Apply one observation. $root = the worse of the two root documents; $site = the site
 	 * server; $source = self|browser|abandoned. Only an automatic decision (step 4: pretty
-	 * permalinks, WordPress at the domain root, no override or filter) is ever switched;
-	 * the counters and `unreachable` are kept up to date either way. 'unknown' never
-	 * changes the mode or the streak. Returns true when the advertised server changed.
+	 * permalinks, WordPress at the domain root, no override or filter) is ever switched, and
+	 * only from root to site: once on the site server, only the owner (override) or the
+	 * deterministic rules move it (R13). `unreachable` is kept up to date either way; 'unknown'
+	 * never changes the mode. Returns true when the advertised server changed.
+	 * A switch that would happen while a browser sign-in connection was active in the last
+	 * ACTIVE_DAYS is held instead (R12): the mode stays root, held_at records it, and one
+	 * oauth_address_switch_held row is audited per HELD_LOG_SECONDS. A root 'works' clears held_at.
 	 * checked_at records server-side checks only: a browser report or an abandoned sign-in
 	 * leaves it alone, so maybe_check() still runs the self-check after them.
 	 * Only server-side sources stamp site_ok_at (browser/abandoned callers pass the
 	 * server's own site result in $detail['site'], which then becomes last.site), and
-	 * browser evidence only ever moves toward site mode (R9): a browser root 'works' may
-	 * clear `unreachable` but never grows the switch-back streak.
+	 * browser evidence only ever moves toward site mode (R9).
 	 */
 	public static function apply( string $root, string $site, string $source, array $detail = [] ): bool {
 		$now = time();
-		self::forget_cached(); // judge the 7-day rule and the streak on what is stored now
+		self::forget_cached(); // judge the 7-day rule and the hold on what is stored now
 		$state   = self::state();
 		$server  = ! in_array( $source, [ 'browser', 'abandoned' ], true );
 		$changes = [
@@ -356,40 +368,74 @@ class Cowboy_MCP_OAuth_Address {
 		} elseif ( 'works' === $root || 'works' === $site ) {
 			$changes['unreachable'] = false;
 		}
-
-		$mode = 'site' === $state['mode'] ? 'site' : 'root';
-		$to   = null;
-		if ( 'root' === $mode ) {
-			// Switch at once: the owner is usually mid-connection when the first check runs.
-			if ( 'blocked' === $root && 'works' === $site && (int) $state['root_seen_at'] < $now - self::REAL_TRAFFIC_DAYS * DAY_IN_SECONDS ) {
-				$to = 'site';
-			}
-		} elseif ( 'works' === $root && 'browser' !== $source ) {
-			$runs  = (int) $state['root_ok_runs'];
-			$since = $runs > 0 ? (int) $state['root_ok_since'] : $now;
-			$runs++;
-			$changes['root_ok_runs']  = $runs;
-			$changes['root_ok_since'] = $since;
-			if ( $runs >= self::SWITCH_BACK_RUNS && $now - $since >= self::SWITCH_BACK_SPAN ) {
-				$to = 'root';
-			}
-		} elseif ( 'blocked' === $root ) {
-			$changes['root_ok_runs']  = 0;
-			$changes['root_ok_since'] = 0;
+		if ( 'works' === $root ) {
+			$changes['held_at'] = 0; // nothing to hold: apps reach the root server again
 		}
 
-		$switched = null !== $to && self::is_automatic();
+		$mode = 'site' === $state['mode'] ? 'site' : 'root';
+		// Switch at once: the owner is usually mid-connection when the first check runs.
+		$wanted = 'root' === $mode && 'blocked' === $root && 'works' === $site
+			&& (int) $state['root_seen_at'] < $now - self::REAL_TRAFFIC_DAYS * DAY_IN_SECONDS
+			&& self::is_automatic();
+		$held     = $wanted && self::connections_active();
+		$switched = $wanted && ! $held;
+		$log_held = $held && (int) $state['held_logged_at'] <= $now - self::HELD_LOG_SECONDS;
 		if ( $switched ) {
-			$reason = 'site' === $to ? 'blocked' : 'unblocked';
-			$changes += [ 'mode' => $to, 'reason' => $reason, 'switched_at' => $now ];
-			$changes['root_ok_runs']  = 0;
-			$changes['root_ok_since'] = 0;
+			$changes += [ 'mode' => 'site', 'reason' => 'blocked', 'switched_at' => $now ];
+		} elseif ( $held ) {
+			$changes['held_at'] = $now;
+			if ( $log_held ) {
+				$changes['held_logged_at'] = $now;
+			}
 		}
 		self::save( $changes );
 		if ( $switched ) {
-			Cowboy_MCP_Auth::log( 'oauth_address_switched', [ 'args' => [ 'from' => $mode, 'to' => $to, 'reason' => $changes['reason'], 'source' => $source ] ] );
+			Cowboy_MCP_Auth::log( 'oauth_address_switched', [ 'args' => [ 'from' => 'root', 'to' => 'site', 'reason' => 'blocked', 'source' => $source ] ] );
+		} elseif ( $log_held ) {
+			Cowboy_MCP_Auth::log( 'oauth_address_switch_held', [ 'args' => [ 'source' => $source ] ] );
 		}
 		return $switched;
+	}
+
+	/**
+	 * Whether any browser sign-in connection was active in the last ACTIVE_DAYS: an access
+	 * token used, a refresh token issued by a rotation (or a `last_used` on one), or a client
+	 * row's `last_call` (carried over from expired access tokens by prune_expired()). The same
+	 * activity the Connections tab's "Last used" reads; an approved connection that never
+	 * called does not count. Option reads only.
+	 */
+	public static function connections_active(): bool {
+		$since = time() - self::ACTIVE_DAYS * DAY_IN_SECONDS;
+		foreach ( (array) get_option( Cowboy_MCP_OAuth::TOKENS_OPTION, [] ) as $t ) {
+			if ( is_array( $t ) && (int) ( $t['last_used'] ?? 0 ) > $since ) {
+				return true;
+			}
+		}
+		foreach ( (array) get_option( Cowboy_MCP_OAuth::REFRESH_OPTION, [] ) as $r ) {
+			if ( ! is_array( $r ) ) {
+				continue;
+			}
+			$at = array_key_exists( 'last_used', $r ) ? (int) $r['last_used'] : ( ( $r['rotated'] ?? true ) ? (int) ( $r['created'] ?? 0 ) : 0 );
+			if ( $at > $since ) {
+				return true;
+			}
+		}
+		foreach ( (array) get_option( Cowboy_MCP_OAuth::CLIENTS_OPTION, [] ) as $c ) {
+			if ( is_array( $c ) && (int) ( $c['last_call'] ?? 0 ) > $since ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether an automatic switch to the site server was held (R12) within HELD_SHOWN_DAYS and
+	 * the root server is still advertised automatically - what the Doctor explains.
+	 */
+	public static function held(): bool {
+		return (int) self::state()['held_at'] > time() - self::HELD_SHOWN_DAYS * DAY_IN_SECONDS
+			&& 'root' === self::advertised()
+			&& self::is_automatic();
 	}
 
 	/**

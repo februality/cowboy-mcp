@@ -269,6 +269,7 @@ tr.cmcp-panel-row td { padding: 0 18px 14px; background: #fff; }
 .cmcp-res--fail, .cmcp-res--error { background: var(--cmcp-danger-bg); color: var(--cmcp-danger); }
 .cmcp-res--info { background: var(--cmcp-info-bg); color: #2a3342; }
 .cmcp-signin-ctl { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--cmcp-muted); }
+.cmcp-signin-warn { color: var(--cmcp-warn); }
 .cmcp-doctor-summary { margin: 12px 0 0; font-weight: 600; }
 .wrap.cmcp .mcp-generate-form .cmcp-input { flex: 1 1 220px; max-width: 280px; }
 

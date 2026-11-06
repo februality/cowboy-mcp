@@ -662,11 +662,16 @@ class Cowboy_MCP_Doctor {
 		}
 		$root_blocked = in_array( 'blocked', [ $sc['root_pr'], $sc['root_as'] ], true );
 		$unreachable  = ! empty( $state['unreachable'] ) || ( $checkable && $root_blocked && 'blocked' === $sc['site'] );
-		$detail       = 'Sign-in address: ' . $where . ', because ' . self::signin_reason( Cowboy_MCP_OAuth_Address::reason() ) . '.';
+		// A switch held while apps are connected (R12): new apps cannot sign in at the root
+		// address until the host lets /.well-known/ through (the fix) or the owner switches.
+		$held         = ! $unreachable && Cowboy_MCP_OAuth_Address::held();
+		$detail       = $held
+			? 'Sign-in address: root. This host appears to block /.well-known/, but connected apps are using the root address; switching would make some of them sign in again.'
+			: 'Sign-in address: ' . $where . ', because ' . self::signin_reason( Cowboy_MCP_OAuth_Address::reason() ) . '.';
 		if ( $unreachable ) {
 			$detail .= ' Neither sign-in address can be reached from outside, so browser sign-in fails here; API-key connections still work.';
 		}
-		return self::result( 'signin_address', 'Sign-in address', $unreachable ? 'warn' : 'info', $detail, $evidence, $unreachable ? 'signin_unreachable' : null, $unreachable ? self::well_known_fix() : null );
+		return self::result( 'signin_address', 'Sign-in address', $unreachable || $held ? 'warn' : 'info', $detail, $evidence, $unreachable ? 'signin_unreachable' : null, $unreachable || $held ? self::well_known_fix() : null );
 	}
 
 	/** Why the sign-in address is what it is, for the Doctor line. */
@@ -837,8 +842,9 @@ class Cowboy_MCP_Doctor {
 
 	/**
 	 * The override buttons next to the sign-in line: the advertised address, the other one, the
-	 * stored override and a nonce. Null when the address is fixed before the override applies
-	 * (plain permalinks, a subfolder site, the filter).
+	 * stored override, a nonce, and `warn` - a browser sign-in connection was active in the last
+	 * 30 days, so a change may make some apps sign in again (R14). Null when the address is fixed
+	 * before the override applies (plain permalinks, a subfolder site, the filter).
 	 */
 	private static function signin_controls(): ?array {
 		if ( in_array( Cowboy_MCP_OAuth_Address::reason(), [ 'plain_permalinks', 'subfolder', 'filter' ], true ) ) {
@@ -850,6 +856,7 @@ class Cowboy_MCP_Doctor {
 			'other'    => 'site' === $mode ? 'root' : 'site',
 			'override' => (string) Cowboy_MCP_OAuth_Address::state()['override'],
 			'nonce'    => wp_create_nonce( 'cowboy_mcp_signin_override' ),
+			'warn'     => Cowboy_MCP_OAuth_Address::connections_active(),
 		];
 	}
 

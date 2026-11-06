@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cowboy MCP 1.6.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
-"POT-Creation-Date: 2026-11-06 01:43-0800\n"
+"POT-Creation-Date: 2026-11-06 02:29-0800\n"
 "PO-Revision-Date: 2026-08-24 12:26-0700\n"
 "Last-Translator: februality\n"
 "Language-Team: Chinese (China)\n"
@@ -2219,7 +2219,7 @@ msgid "Save Settings"
 msgstr "保存设置"
 
 #: admin/class-mcp-admin.php:35 admin/class-mcp-admin.php:36
-#: admin/class-mcp-admin.php:700
+#: admin/class-mcp-admin.php:701
 msgid "Cowboy MCP"
 msgstr "Cowboy MCP"
 
@@ -2314,76 +2314,80 @@ msgid "Back to automatic"
 msgstr "恢复自动"
 
 #: admin/class-mcp-admin.php:315
+msgid "Some connected apps may need to sign in again after this change."
+msgstr "此更改后，部分已连接的应用可能需要重新登录。"
+
+#: admin/class-mcp-admin.php:316
 msgid "Saved. Run the checks again to see the result."
 msgstr "已保存。请再次运行检查以查看结果。"
 
-#: admin/class-mcp-admin.php:316
+#: admin/class-mcp-admin.php:317
 msgid "Could not save the change. Reload the page and try again."
 msgstr "无法保存更改。请重新加载页面后重试。"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:319
+#: admin/class-mcp-admin.php:320
 #, php-format
 msgid "Failed: %d"
 msgstr "失败：%d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:321
+#: admin/class-mcp-admin.php:322
 #, php-format
 msgid "Errors: %d"
 msgstr "错误：%d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:323
+#: admin/class-mcp-admin.php:324
 #, php-format
 msgid "Warnings: %d"
 msgstr "警告：%d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:325
+#: admin/class-mcp-admin.php:326
 #, php-format
 msgid "Passed: %d"
 msgstr "通过：%d"
 
 #. translators: %d: number of checks
-#: admin/class-mcp-admin.php:327
+#: admin/class-mcp-admin.php:328
 #, php-format
 msgid "Skipped: %d"
 msgstr "跳过：%d"
 
-#: admin/class-mcp-admin.php:329
+#: admin/class-mcp-admin.php:330
 msgid "GET MCP endpoint"
 msgstr "GET 请求 MCP 端点"
 
-#: admin/class-mcp-admin.php:330
+#: admin/class-mcp-admin.php:331
 msgid "POST MCP endpoint"
 msgstr "POST 请求 MCP 端点"
 
 #. translators: %s: discovery URL path, e.g. /oauth-authorization-server
-#: admin/class-mcp-admin.php:332
+#: admin/class-mcp-admin.php:333
 #, php-format
 msgid "OAuth discovery %s"
 msgstr "OAuth 发现 %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:334
+#: admin/class-mcp-admin.php:335
 #, php-format
 msgid "HTTP %s"
 msgstr "HTTP %s"
 
 #. translators: %s: HTTP status code
-#: admin/class-mcp-admin.php:336
+#: admin/class-mcp-admin.php:337
 #, php-format
 msgid "HTTP %s, non-JSON body"
 msgstr "HTTP %s，非 JSON 响应"
 
 #. translators: %s: browser error message
-#: admin/class-mcp-admin.php:338
+#: admin/class-mcp-admin.php:339
 #, php-format
 msgid "Network error: %s"
 msgstr "网络错误：%s"
 
-#: admin/class-mcp-admin.php:339
+#: admin/class-mcp-admin.php:340
 msgid ""
 "See the server-side result for this URL; if that passed, the block is at "
 "your network edge (CDN/WAF)."
@@ -2391,7 +2395,7 @@ msgstr ""
 "请查看此 URL 的服务器端结果；如果已通过，则请求在您的网络边缘（CDN/WAF）被拦"
 "截。"
 
-#: admin/class-mcp-admin.php:340
+#: admin/class-mcp-admin.php:341
 msgid ""
 "Your browser could not reach the site at all (DNS, TLS, or connection "
 "refused). Remote AI clients will hit the same wall."
@@ -2399,72 +2403,72 @@ msgstr ""
 "您的浏览器完全无法访问该网站（DNS、TLS 或连接被拒绝）。远程 AI 客户端也会遇到"
 "同样的问题。"
 
-#: admin/class-mcp-admin.php:390 admin/class-mcp-admin.php:411
-#: admin/class-mcp-admin.php:433
+#: admin/class-mcp-admin.php:391 admin/class-mcp-admin.php:412
+#: admin/class-mcp-admin.php:434
 msgid "Select an access level before saving."
 msgstr "保存前请选择访问级别。"
 
-#: admin/class-mcp-admin.php:395
+#: admin/class-mcp-admin.php:396
 msgid "API key created. Copy it now — it will only be shown once."
 msgstr "API 密钥已创建。请立即复制——它只会显示一次。"
 
-#: admin/class-mcp-admin.php:403
+#: admin/class-mcp-admin.php:404
 msgid "API key revoked."
 msgstr "API 密钥已吊销。"
 
-#: admin/class-mcp-admin.php:413
+#: admin/class-mcp-admin.php:414
 msgid "Key scope updated. It takes effect on the key's next request."
 msgstr "密钥范围已更新，将在该密钥的下一次请求时生效。"
 
-#: admin/class-mcp-admin.php:415
+#: admin/class-mcp-admin.php:416
 msgid "Could not update key scope."
 msgstr "无法更新密钥范围。"
 
-#: admin/class-mcp-admin.php:424
+#: admin/class-mcp-admin.php:425
 msgid "Connection revoked."
 msgstr "连接已吊销。"
 
-#: admin/class-mcp-admin.php:435
+#: admin/class-mcp-admin.php:436
 msgid ""
 "Connection scope updated. It takes effect on the connection's next request."
 msgstr "连接范围已更新，将在该连接的下一次请求时生效。"
 
-#: admin/class-mcp-admin.php:437
+#: admin/class-mcp-admin.php:438
 msgid "Could not update connection scope."
 msgstr "无法更新连接范围。"
 
-#: admin/class-mcp-admin.php:493
+#: admin/class-mcp-admin.php:494
 msgid "Browser sign-in enabled."
 msgstr "浏览器登录已启用。"
 
-#: admin/class-mcp-admin.php:527
+#: admin/class-mcp-admin.php:528
 msgid "Settings saved."
 msgstr "设置已保存。"
 
-#: admin/class-mcp-admin.php:534
+#: admin/class-mcp-admin.php:535
 msgid "Audit log cleared."
 msgstr "审计日志已清除。"
 
 #. translators: 1: change ID number, 2: optional note appended after the message
-#: admin/class-mcp-admin.php:552
+#: admin/class-mcp-admin.php:553
 #, php-format
 msgid "Change #%1$d undone.%2$s"
 msgstr "已撤销变更 #%1$d。%2$s"
 
 #. translators: 1: number of entries undone, 2: total number of entries in the batch
-#: admin/class-mcp-admin.php:567
+#: admin/class-mcp-admin.php:568
 #, php-format
 msgid "%1$d of %2$d batch entries undone."
 msgstr "已撤销 %2$d 个批处理条目中的 %1$d 个。"
 
 #. translators: 1: checkpoint ID number, 2: human-readable file size
-#: admin/class-mcp-admin.php:583
+#: admin/class-mcp-admin.php:584
 #, php-format
 msgid "Checkpoint #%1$d created (%2$s)."
 msgstr "已创建检查点 #%1$d（%2$s）。"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:596
+#: admin/class-mcp-admin.php:597
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows, verified. "
@@ -2474,7 +2478,7 @@ msgstr ""
 "点：#%4$d。"
 
 #. translators: 1: restored checkpoint ID, 2: number of tables, 3: number of rows (formatted), 4: pre-restore safety checkpoint ID
-#: admin/class-mcp-admin.php:599
+#: admin/class-mcp-admin.php:600
 #, php-format
 msgid ""
 "Database restored from checkpoint #%1$d — %2$d tables, %3$s rows checked. "
@@ -2483,123 +2487,123 @@ msgstr ""
 "已从检查点 #%1$d 恢复数据库 — %2$d 个表，%3$s 行已检查。恢复前的安全检查点："
 "#%4$d。"
 
-#: admin/class-mcp-admin.php:612
+#: admin/class-mcp-admin.php:613
 msgid "Checkpoint deleted."
 msgstr "检查点已删除。"
 
-#: admin/class-mcp-admin.php:689
+#: admin/class-mcp-admin.php:690
 msgid "Connections"
 msgstr "连接"
 
-#: admin/class-mcp-admin.php:690
+#: admin/class-mcp-admin.php:691
 msgid "Activity"
 msgstr "活动"
 
-#: admin/class-mcp-admin.php:691
+#: admin/class-mcp-admin.php:692
 msgid "Logs"
 msgstr "日志"
 
-#: admin/class-mcp-admin.php:692
+#: admin/class-mcp-admin.php:693
 msgid "Settings"
 msgstr "设置"
 
-#: admin/class-mcp-admin.php:693
+#: admin/class-mcp-admin.php:694
 msgid "About"
 msgstr "关于"
 
-#: admin/class-mcp-admin.php:705
+#: admin/class-mcp-admin.php:706
 msgid "Cowboy MCP sections"
 msgstr "Cowboy MCP 分区"
 
-#: admin/class-mcp-admin.php:744
+#: admin/class-mcp-admin.php:745
 msgid "Power mode is on. Open Power mode settings."
 msgstr "强力模式已开启。打开强力模式设置。"
 
-#: admin/class-mcp-admin.php:744
+#: admin/class-mcp-admin.php:745
 msgid "Power mode on"
 msgstr "强力模式已开启"
 
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:747
 msgid "Power mode is off. Open Power mode settings."
 msgstr "强力模式已关闭。打开强力模式设置。"
 
-#: admin/class-mcp-admin.php:746
+#: admin/class-mcp-admin.php:747
 msgid "Power mode off"
 msgstr "强力模式已关闭"
 
-#: admin/class-mcp-admin.php:749
+#: admin/class-mcp-admin.php:750
 msgid "Safe mode off"
 msgstr "安全模式已关闭"
 
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:773
 msgid "Every request from AI apps is rejected."
 msgstr "来自 AI 应用的所有请求都会被拒绝。"
 
-#: admin/class-mcp-admin.php:772
+#: admin/class-mcp-admin.php:773
 msgid "MCP server is off."
 msgstr "MCP 服务器已关闭。"
 
-#: admin/class-mcp-admin.php:773
+#: admin/class-mcp-admin.php:774
 msgid "Turn on in Settings"
 msgstr "在设置中开启"
 
-#: admin/class-mcp-admin.php:801
+#: admin/class-mcp-admin.php:802
 msgid "Pagination"
 msgstr "分页"
 
-#: admin/class-mcp-admin.php:802
+#: admin/class-mcp-admin.php:803
 msgid "Previous"
 msgstr "上一页"
 
 #. translators: 1: current page number, 2: total number of pages
-#: admin/class-mcp-admin.php:805
+#: admin/class-mcp-admin.php:806
 #, php-format
 msgid "Page %1$d of %2$d"
 msgstr "第 %1$d 页，共 %2$d 页"
 
-#: admin/class-mcp-admin.php:807
+#: admin/class-mcp-admin.php:808
 msgid "Next"
 msgstr "下一页"
 
-#: admin/class-mcp-admin.php:816
+#: admin/class-mcp-admin.php:817
 msgid "Project home, guides, and news."
 msgstr "项目主页、指南和新闻。"
 
-#: admin/class-mcp-admin.php:816
+#: admin/class-mcp-admin.php:817
 msgid "Website"
 msgstr "网站"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:818
 msgid "GitHub"
 msgstr "GitHub"
 
-#: admin/class-mcp-admin.php:817
+#: admin/class-mcp-admin.php:818
 msgid "Source, issues & releases."
 msgstr "源代码、问题与发布。"
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:819
 msgid ""
 "Ask in the WordPress.org support forum. Paste your Connection Doctor report "
 "for a fast answer."
 msgstr "在 WordPress.org 支持论坛提问。粘贴您的连接诊断报告，可更快获得解答。"
 
-#: admin/class-mcp-admin.php:818
+#: admin/class-mcp-admin.php:819
 msgid "Get help"
 msgstr "获取帮助"
 
-#: admin/class-mcp-admin.php:819
+#: admin/class-mcp-admin.php:820
 msgid ""
 "Enjoying Cowboy MCP? A review on WordPress.org helps other site owners find "
 "it."
 msgstr ""
 "喜欢 Cowboy MCP？在 WordPress.org 上留下评价，可以帮助更多站点所有者发现它。"
 
-#: admin/class-mcp-admin.php:819 admin/class-mcp-feedback.php:192
+#: admin/class-mcp-admin.php:820 admin/class-mcp-feedback.php:192
 msgid "Leave a review"
 msgstr "留下评价"
 
 #. translators: %s: Model Context Protocol website URL.
-#: admin/class-mcp-admin.php:827
+#: admin/class-mcp-admin.php:828
 #, php-format
 msgid ""
 "<strong>Cowboy MCP</strong> turns this WordPress site into a <a href=\"%s\" "

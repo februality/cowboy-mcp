@@ -312,6 +312,7 @@ class Cowboy_MCP_Admin {
                 ],
                 'signinOther'  => __( 'Use the other sign-in address', 'cowboy-mcp' ),
                 'signinAuto'   => __( 'Back to automatic', 'cowboy-mcp' ),
+                'signinWarn'   => __( 'Some connected apps may need to sign in again after this change.', 'cowboy-mcp' ),
                 'signinSaved'  => __( 'Saved. Run the checks again to see the result.', 'cowboy-mcp' ),
                 'signinFailed' => __( 'Could not save the change. Reload the page and try again.', 'cowboy-mcp' ),
                 'summary'      => [
