@@ -655,7 +655,7 @@ class Cowboy_MCP_Doctor {
 			]
 			: [ 'Not checked: a local site, a subfolder site, or browser sign-in off.' ];
 		if ( 'broken' === ( $sc['loopback'] ?? '' ) ) {
-			$evidence[] = 'WordPress could not load its own REST index over loopback, so the sign-in documents were not judged.';
+			$evidence[] = 'WordPress could not load its own sign-in route (/wp-json/cowboy-mcp/v1/oauth/jwks) over loopback, so the sign-in documents were not judged.';
 		}
 		if ( ! empty( $sc['switched'] ) ) {
 			$evidence[] = 'Switched during this run.';

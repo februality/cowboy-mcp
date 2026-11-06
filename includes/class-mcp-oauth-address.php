@@ -236,9 +236,9 @@ class Cowboy_MCP_OAuth_Address {
 	 * and on hosts host_looks_local() flags - ADVISORY: that only skips the check, so those
 	 * sites stay on the root server. With $store = false nothing is written (the agent-run
 	 * Doctor, capped at READ_ONLY_BUDGET); the marker transient lives only while the fetches run.
-	 * The REST index is fetched first as a control (R17): when the loopback cannot even load
-	 * that as JSON (a wrong vhost, a firewall, a Basic-auth wall in front of WordPress), every
-	 * result is 'unknown' and 'loopback' is 'broken'.
+	 * The plugin's own jwks route is fetched first as a control (R17, R18): when the loopback
+	 * cannot load it as JSON (a wrong vhost, a firewall, a Basic-auth wall in front of
+	 * WordPress), every result is 'unknown' and 'loopback' is 'broken'.
 	 *
 	 * @return array{root_pr:string,root_as:string,site:string,loopback:string,mode:string,switched:bool}
 	 */
@@ -340,7 +340,7 @@ class Cowboy_MCP_OAuth_Address {
 	 * Fetch only the site server's openid-configuration (marked like the self-check) and
 	 * record site_ok_at when it works. For callers that need a fresh site-server result
 	 * without re-testing the root documents. Like run_self_check(): 'unknown' when the
-	 * loopback cannot load the REST index (R17) or a "works" bypassed the CDN (R16).
+	 * loopback cannot load the jwks control route (R17, R18) or a "works" bypassed the CDN (R16).
 	 */
 	public static function check_site(): string {
 		$site = self::site_issuer();
@@ -747,16 +747,20 @@ class Cowboy_MCP_OAuth_Address {
 	}
 
 	/**
-	 * R17 control: the loopback loads the REST index as HTTP 200 JSON. Anything else (an
-	 * error, another vhost's page, a firewall, a Basic-auth wall) means the fetches do not
-	 * reach this WordPress the way an app's would, so their answers prove nothing.
+	 * R17 control: the loopback loads this plugin's own dot-free jwks route as HTTP 200 JSON
+	 * with a `keys` array. Anything else (an error, another vhost's page, a firewall, a
+	 * Basic-auth wall) means the fetches do not reach this WordPress the way an app's would,
+	 * so their answers prove nothing. Not the public REST index (R18): security plugins often
+	 * close /wp-json/ to anonymous requests while plugin namespaces, which MCP needs anyway,
+	 * stay open. The route answers while browser sign-in is on, the only time checks run.
 	 */
 	private static function loopback_ok( string $marker, float $deadline ): bool {
-		$r = self::fetch( rest_url(), $marker, $deadline );
+		$r = self::fetch( rest_url( 'cowboy-mcp/v1/oauth/jwks' ), $marker, $deadline );
 		if ( is_wp_error( $r ) || 200 !== (int) wp_remote_retrieve_response_code( $r ) ) {
 			return false;
 		}
-		return is_array( json_decode( (string) wp_remote_retrieve_body( $r ), true ) );
+		$json = json_decode( (string) wp_remote_retrieve_body( $r ), true );
+		return is_array( $json ) && is_array( $json['keys'] ?? null );
 	}
 
 	/**
