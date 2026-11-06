@@ -26,6 +26,17 @@ class Cowboy_MCP_OAuth_Address {
 	const MARKER_PREFIX = 'cowboy_mcp_signin_self_check_';
 
 	const LOCK_SECONDS      = 60;
+	/**
+	 * Wall-clock budget for one run's fetches. Worst case without it: 3 documents + 2 retries,
+	 * each up to MAX_HOPS + 1 requests of FETCH_TIMEOUT s = 75 s, plus the 2 s retry pause.
+	 * Every request gets min( FETCH_TIMEOUT, time left ), and a document whose turn comes
+	 * after the budget is spent is "unknown", so a run ends within RUN_BUDGET + RETRY_PAUSE
+	 * (~47 s) plus a few DB writes - inside LOCK_SECONDS.
+	 */
+	const RUN_BUDGET    = 45;
+	const FETCH_TIMEOUT = 5;
+	const MAX_HOPS      = 2;
+	const RETRY_PAUSE   = 2;
 	const STALE_SECONDS     = HOUR_IN_SECONDS;
 	const REAL_TRAFFIC_DAYS = 7;
 	const SWITCH_BACK_RUNS  = 3;
@@ -66,9 +77,25 @@ class Cowboy_MCP_OAuth_Address {
 	 * The stored row always carries every key.
 	 */
 	public static function save( array $changes ): void {
+		self::forget_cached();
 		$stored = get_option( self::OPTION, [] );
 		$stored = is_array( $stored ) ? $stored : [];
 		update_option( self::OPTION, array_merge( self::defaults(), $stored, $changes ), false );
+	}
+
+	/**
+	 * Drop this request's cached copy of the option (and a cached "does not exist"), so the
+	 * next read sees what other requests wrote since: a self-check holds its first read for
+	 * up to a minute of fetches, and writing that copy back would undo an admin's override or
+	 * a real-traffic root_seen_at stored meanwhile.
+	 */
+	private static function forget_cached(): void {
+		wp_cache_delete( self::OPTION, 'options' );
+		$missing = wp_cache_get( 'notoptions', 'options' );
+		if ( is_array( $missing ) && isset( $missing[ self::OPTION ] ) ) {
+			unset( $missing[ self::OPTION ] );
+			wp_cache_set( 'notoptions', $missing, 'options' );
+		}
 	}
 
 	/**
@@ -146,14 +173,21 @@ class Cowboy_MCP_OAuth_Address {
 
 	/**
 	 * Class one fetch: 'works' = HTTP 200 JSON whose $key equals $value; 'blocked' = any
-	 * other HTTP answer (403, 404, HTML, wrong JSON); 'unknown' = no answer (WP_Error:
-	 * timeout, refused, DNS, TLS), which never changes anything.
+	 * other HTTP answer (403, 404, HTML, wrong JSON), and a 429/5xx only when it is a
+	 * firewall's or challenge page; 'unknown' = no answer (WP_Error: timeout, refused, DNS,
+	 * TLS) or a plain 429/5xx, which never changes anything.
 	 */
 	public static function classify( array|WP_Error $response, string $key, string $value ): string {
 		if ( is_wp_error( $response ) ) {
 			return 'unknown';
 		}
-		if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 429 === $code || $code >= 500 ) {
+			// Overloaded or failing for a moment says nothing about the path, unless the answer
+			// is a firewall's or a challenge (the Doctor's fingerprints, e.g. Cloudflare's 503).
+			return null !== Cowboy_MCP_Doctor::waf_fingerprint( $code, self::headers_of( $response ), (string) wp_remote_retrieve_body( $response ) ) ? 'blocked' : 'unknown';
+		}
+		if ( 200 !== $code ) {
 			return 'blocked';
 		}
 		$json = json_decode( (string) wp_remote_retrieve_body( $response ), true );
@@ -189,9 +223,11 @@ class Cowboy_MCP_OAuth_Address {
 				return $out + [ 'mode' => self::advertised(), 'switched' => false ];
 			}
 		}
+		$marker = null;
 		try {
-			$marker  = self::mint_marker();
-			$issuer  = Cowboy_MCP_OAuth::issuer();
+			$marker   = self::mint_marker();
+			$deadline = microtime( true ) + self::RUN_BUDGET;
+			$issuer   = Cowboy_MCP_OAuth::issuer();
 			$targets = [
 				'root_pr' => [ $issuer . '/.well-known/oauth-protected-resource', 'resource', Cowboy_MCP_OAuth::resource_url() ],
 				'root_as' => [ $issuer . '/.well-known/oauth-authorization-server', 'issuer', $issuer ],
@@ -204,20 +240,20 @@ class Cowboy_MCP_OAuth_Address {
 			}
 			$responses = [];
 			foreach ( $targets as $k => [ $url, $key, $value ] ) {
-				$responses[ $k ] = self::fetch( $url, $marker );
+				$responses[ $k ] = self::fetch( $url, $marker, $deadline );
 				$out[ $k ]       = self::classify( $responses[ $k ], $key, $value );
 			}
 			// A blocked root is confirmed by one retry a moment later (a hiccup is not a block).
+			// Out of time for the retry: unconfirmed, so "can't tell".
 			$retry = array_filter( [ 'root_pr', 'root_as' ], static fn( $k ) => 'blocked' === $out[ $k ] );
 			if ( $retry ) {
-				sleep( 2 );
+				sleep( self::RETRY_PAUSE );
 				foreach ( $retry as $k ) {
 					[ $url, $key, $value ] = $targets[ $k ];
-					$responses[ $k ]       = self::fetch( $url, $marker );
+					$responses[ $k ]       = self::fetch( $url, $marker, $deadline + self::RETRY_PAUSE );
 					$out[ $k ]             = self::classify( $responses[ $k ], $key, $value );
 				}
 			}
-			self::drop_marker( $marker );
 
 			// Many hosts resolve their own name internally, so the check may never cross the
 			// CDN that blocks apps. Cloudflare in front of the site but absent from a root
@@ -225,7 +261,7 @@ class Cowboy_MCP_OAuth_Address {
 			$headers = [];
 			foreach ( $responses as $r ) {
 				if ( ! is_wp_error( $r ) ) {
-					$headers = array_merge( $headers, array_change_key_case( wp_remote_retrieve_headers( $r )->getAll(), CASE_LOWER ) );
+					$headers = array_merge( $headers, self::headers_of( $r ) );
 				}
 			}
 			$cdn_now = Cowboy_MCP_Doctor::cdn_expected( $headers );
@@ -248,6 +284,9 @@ class Cowboy_MCP_OAuth_Address {
 			}
 			return $out + [ 'mode' => self::advertised(), 'switched' => $switched ];
 		} finally {
+			if ( null !== $marker ) {
+				self::drop_marker( $marker );
+			}
 			if ( null !== $lock ) {
 				self::release_lock( $lock );
 			}
@@ -268,8 +307,11 @@ class Cowboy_MCP_OAuth_Address {
 			return 'blocked';
 		}
 		$marker = self::mint_marker();
-		$result = self::classify( self::fetch( $site . '/.well-known/openid-configuration', $marker ), 'issuer', $site );
-		self::drop_marker( $marker );
+		try {
+			$result = self::classify( self::fetch( $site . '/.well-known/openid-configuration', $marker, microtime( true ) + self::RUN_BUDGET ), 'issuer', $site );
+		} finally {
+			self::drop_marker( $marker );
+		}
 		if ( 'works' === $result ) {
 			self::save( [ 'site_ok_at' => time() ] );
 		}
@@ -284,7 +326,8 @@ class Cowboy_MCP_OAuth_Address {
 	 * changes the mode or the streak. Returns true when the advertised server changed.
 	 */
 	public static function apply( string $root, string $site, string $source, array $detail = [] ): bool {
-		$now     = time();
+		$now = time();
+		self::forget_cached(); // judge the 7-day rule and the streak on what is stored now
 		$state   = self::state();
 		$changes = [
 			'checked_at' => $now,
@@ -387,10 +430,13 @@ class Cowboy_MCP_OAuth_Address {
 
 	/* ── Internals ─────────────────────────────────────────── */
 
-	/** The check needs the documents (sign-in on) and a host apps can reach (not local; advisory). */
+	/** The check needs the documents (sign-in on), WordPress at the domain root, and a host apps can reach (not local; advisory). */
 	private static function check_allowed(): bool {
 		if ( ! Cowboy_MCP_OAuth::is_enabled() ) {
 			return false;
+		}
+		if ( '' !== self::home_path() ) {
+			return false; // subfolder site / subsite: decision step 2 fixes the mode, the root documents are not ours
 		}
 		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		return ! Cowboy_MCP_Security::host_looks_local( $host ) || (bool) apply_filters( 'cowboy_mcp_oauth_address_check_local', false );
@@ -416,17 +462,21 @@ class Cowboy_MCP_OAuth_Address {
 	 * home_url()/rest_url() (never caller input), so it is not SSRF-validated: a host's
 	 * public name may resolve to a private address from inside its own network.
 	 */
-	private static function fetch( string $url, string $marker ): array|WP_Error {
+	private static function fetch( string $url, string $marker, float $deadline ): array|WP_Error {
 		$args = [
-			'timeout'     => 10,
 			'redirection' => 0,
 			'user-agent'  => self::USER_AGENT,
 			'headers'     => [ 'Accept' => 'application/json', self::SELF_CHECK_HEADER => $marker ],
 		];
 		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
 		for ( $hop = 0; ; $hop++ ) {
-			$r = wp_remote_get( $url, $args );
-			if ( is_wp_error( $r ) || $hop >= 3 || ! in_array( (int) wp_remote_retrieve_response_code( $r ), [ 301, 302, 303, 307, 308 ], true ) ) {
+			$left = $deadline - microtime( true );
+			if ( $left < 1 ) {
+				return new WP_Error( 'cowboy_mcp_check_budget', 'Self-check time budget spent.' );
+			}
+			$args['timeout'] = min( (float) self::FETCH_TIMEOUT, $left );
+			$r               = wp_remote_get( $url, $args );
+			if ( is_wp_error( $r ) || $hop >= self::MAX_HOPS || ! in_array( (int) wp_remote_retrieve_response_code( $r ), [ 301, 302, 303, 307, 308 ], true ) ) {
 				return $r;
 			}
 			$location = (string) wp_remote_retrieve_header( $r, 'location' );
@@ -436,6 +486,13 @@ class Cowboy_MCP_OAuth_Address {
 			}
 			$url = $next;
 		}
+	}
+
+	/** Lower-cased response headers; tolerant of mocked/filtered responses without a headers object. */
+	private static function headers_of( array $response ): array {
+		$h = wp_remote_retrieve_headers( $response );
+		$h = is_object( $h ) ? $h->getAll() : (array) $h;
+		return array_change_key_case( $h, CASE_LOWER );
 	}
 
 	private static function mint_marker(): string {

@@ -592,6 +592,19 @@ class Cowboy_MCP_Doctor {
 			&& str_starts_with( (string) ( $json['message'] ?? '' ), 'Missing or invalid Authorization header' );
 	}
 
+	/** Fingerprints that mean a firewall or challenge answered instead of WordPress. */
+	const WAF_FINGERPRINTS = [ 'cloudflare_challenge', 'cloudflare_block', 'modsecurity' ];
+
+	/**
+	 * The firewall/challenge fingerprint classify() finds for a response, or null (also for
+	 * non-WAF matches such as an HTML error page). Used by the sign-in self-check to tell a
+	 * blocking edge from a site that is merely overloaded or down.
+	 */
+	public static function waf_fingerprint( int $code, array $headers, string $body ): ?string {
+		$id = self::classify( $code, $headers, $body )[0];
+		return in_array( $id, self::WAF_FINGERPRINTS, true ) ? $id : null;
+	}
+
 	/** Match a response against the table. Returns [fingerprint_id|null, fix|null]. */
 	private static function classify( int $code, array $headers, string $body ): array {
 		$headers = array_change_key_case( $headers, CASE_LOWER );
