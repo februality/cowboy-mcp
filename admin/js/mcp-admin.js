@@ -851,7 +851,7 @@ document.addEventListener( 'click', function( e ) {
 		fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', keepalive: true, body: body } )
 			.then( function( r ) { return r.json(); } )
 			.then( function( r ) {
-				if ( r && r.success === true && r.data ) {
+				if ( r && r.success === true && r.data && ( el.getAttribute( 'data-cmcp-mode' ) || 'oauth' ) === 'oauth' ) {
 					document.dispatchEvent( new CustomEvent( 'cmcp:connect-started', { detail: { signin: r.data.signin || null } } ) );
 				}
 				if ( ! r || r.success !== true || ! r.data || ! r.data.html ) { return; }
@@ -932,7 +932,7 @@ document.addEventListener( 'click', function( e ) {
 			onPanel( item.getAttribute( 'data-client' ) );
 		}
 	} );
-	// Copy / Add / Install started a connection: run now if this page view has not yet
+	// Copy / Add / Install started a browser sign-in connection (never an API-key Copy): run now if this page view has not yet
 	// (sign-in may have been turned on by that click, so its data can come with the answer).
 	document.addEventListener( 'cmcp:connect-started', function( e ) {
 		signinBrowserCheck( l10n.signinCheck || ( e.detail && e.detail.signin ) );

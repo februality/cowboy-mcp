@@ -66,6 +66,7 @@ class Cowboy_MCP_OAuth_Address {
 			'last'          => [],
 			'retry'         => null,
 			'cdn_seen_at'   => 0,
+			'browser_site_ok_at' => 0,
 		];
 	}
 
@@ -331,19 +332,24 @@ class Cowboy_MCP_OAuth_Address {
 	 * changes the mode or the streak. Returns true when the advertised server changed.
 	 * checked_at records server-side checks only: a browser report or an abandoned sign-in
 	 * leaves it alone, so maybe_check() still runs the self-check after them.
+	 * Only server-side sources stamp site_ok_at (browser/abandoned callers pass the
+	 * server's own site result in $detail['site'], which then becomes last.site), and
+	 * browser evidence only ever moves toward site mode (R9): a browser root 'works' may
+	 * clear `unreachable` but never grows the switch-back streak.
 	 */
 	public static function apply( string $root, string $site, string $source, array $detail = [] ): bool {
 		$now = time();
 		self::forget_cached(); // judge the 7-day rule and the streak on what is stored now
 		$state   = self::state();
+		$server  = ! in_array( $source, [ 'browser', 'abandoned' ], true );
 		$changes = [
 			'last' => array_merge( [ 'root' => $root, 'site' => $site, 'source' => $source, 'at' => $now ], $detail ),
 		];
-		if ( ! in_array( $source, [ 'browser', 'abandoned' ], true ) ) {
+		if ( $server ) {
 			$changes['checked_at'] = $now;
-		}
-		if ( 'works' === $site ) {
-			$changes['site_ok_at'] = $now;
+			if ( 'works' === $site ) {
+				$changes['site_ok_at'] = $now;
+			}
 		}
 		if ( 'blocked' === $root && 'blocked' === $site ) {
 			$changes['unreachable'] = true;
@@ -358,7 +364,7 @@ class Cowboy_MCP_OAuth_Address {
 			if ( 'blocked' === $root && 'works' === $site && (int) $state['root_seen_at'] < $now - self::REAL_TRAFFIC_DAYS * DAY_IN_SECONDS ) {
 				$to = 'site';
 			}
-		} elseif ( 'works' === $root ) {
+		} elseif ( 'works' === $root && 'browser' !== $source ) {
 			$runs  = (int) $state['root_ok_runs'];
 			$since = $runs > 0 ? (int) $state['root_ok_since'] : $now;
 			$runs++;
@@ -428,7 +434,7 @@ class Cowboy_MCP_OAuth_Address {
 		if ( '' !== trim( (string) $request->get_header( 'Authorization' ) ) || '' !== trim( (string) $request->get_header( Cowboy_MCP_Auth::KEY_HEADER ) ) ) {
 			return; // carries some credential: not an app looking for sign-in
 		}
-		if ( ! Cowboy_MCP_OAuth::is_enabled() || ! is_array( get_transient( self::WATCH_TRANSIENT ) ) ) {
+		if ( ! self::looks_like_app_request( $request ) || ! Cowboy_MCP_OAuth::is_enabled() || ! is_array( get_transient( self::WATCH_TRANSIENT ) ) ) {
 			return;
 		}
 		[ $mode, $reason ] = self::decide();
@@ -444,14 +450,30 @@ class Cowboy_MCP_OAuth_Address {
 	/**
 	 * Admin requests only (the Connections tab and its live-status poll). A pending 401 at
 	 * least ABANDON_SECONDS old with no root discovery fetch since counts as one blocked
-	 * root observation (apps fetch discovery within a second or two of the 401). The site
-	 * server must pass: the stored result when it worked within the hour, else a fresh
-	 * site-only fetch. Returns true when this switched the advertised server.
+	 * root observation (apps fetch discovery within a second or two of the 401). Only for
+	 * hosted apps (R10): terminal/IDE apps wait for a human click before discovery, so their
+	 * silence proves nothing. The site server must pass server-side (confirmed_site()).
+	 * $may_fetch = false (page render): never block on a fetch; with a stale server-side
+	 * site result the pending is left for the next status poll. Runs once per request.
+	 * Returns true when this switched the advertised server.
 	 */
-	public static function evaluate_pending(): bool {
+	public static function evaluate_pending( bool $may_fetch = true ): bool {
+		static $ran = false;
+		if ( $ran ) {
+			return false;
+		}
+		$ran     = true; // the first call in a request decides, including a render's no-fetch call
 		$pending = get_transient( self::PENDING_TRANSIENT );
 		if ( false === $pending || (int) $pending > time() - self::ABANDON_SECONDS ) {
 			return false;
+		}
+		$watch = get_transient( self::WATCH_TRANSIENT );
+		if ( ! is_array( $watch ) || ! self::watch_is_hosted( (string) ( $watch['app'] ?? '' ) ) ) {
+			delete_transient( self::PENDING_TRANSIENT );
+			return false;
+		}
+		if ( ! $may_fetch && (int) self::state()['site_ok_at'] <= time() - self::STALE_SECONDS ) {
+			return false; // the status poll (AJAX) may fetch the site server; a page render must not wait for it
 		}
 		$lock = self::acquire_lock();
 		if ( null === $lock ) {
@@ -463,13 +485,10 @@ class Cowboy_MCP_OAuth_Address {
 			if ( ( false !== $fetched && (int) $fetched >= (int) $pending ) || ! self::check_allowed() ) {
 				return false;
 			}
-			$state = self::state();
-			$last  = is_array( $state['last'] ) ? $state['last'] : [];
-			$site  = ( (int) $state['site_ok_at'] > time() - self::STALE_SECONDS && 'works' === ( $last['site'] ?? null ) ) ? 'works' : self::check_site();
-			$switched = self::apply( 'blocked', $site, 'abandoned' );
+			[ $site, $server ] = self::confirmed_site();
+			$switched = self::apply( 'blocked', $site, 'abandoned', [ 'site' => $server ] );
 			if ( $switched ) {
-				$watch = get_transient( self::WATCH_TRANSIENT );
-				self::save( [ 'retry' => [ 'app' => is_array( $watch ) ? (string) ( $watch['app'] ?? '' ) : '', 'at' => time() ] ] );
+				self::save( [ 'retry' => [ 'app' => (string) ( $watch['app'] ?? '' ), 'at' => time() ] ] );
 			}
 			return $switched;
 		} finally {
@@ -482,7 +501,10 @@ class Cowboy_MCP_OAuth_Address {
 	 * mcp-admin.js) from outside the host, through the same CDN and edge rules as an app.
 	 * $report = [ 'root_pr' => [ 'status' => int, 'ok' => bool ], 'root_as' => …, 'site' => … ].
 	 * Status 0 (network error) and 429/5xx (R8: flaky, no fingerprint from a browser) are
-	 * can't-tell; ok is works; anything else is blocked.
+	 * can't-tell; ok is works; anything else is blocked. The browser's site result is never
+	 * taken as the server's (R9b): a blocked root is judged against confirmed_site(), and
+	 * the browser's site ok only counts where the server cannot tell. A browser root that
+	 * works never moves the site back to root (R9, see apply()).
 	 *
 	 * @return array{mode:string,switched:bool}
 	 */
@@ -501,19 +523,28 @@ class Cowboy_MCP_OAuth_Address {
 		if ( ! self::check_allowed() ) {
 			return $out;
 		}
-		$pr   = $read( $report['root_pr'] ?? null );
-		$as   = $read( $report['root_as'] ?? null );
-		$site = null === self::site_issuer() ? 'blocked' : $read( $report['site'] ?? null );
-		$root = self::worse( $pr, $as );
-		if ( 'unknown' === $root && 'unknown' === $site ) {
-			return $out; // nothing learnt
+		$pr      = $read( $report['root_pr'] ?? null );
+		$as      = $read( $report['root_as'] ?? null );
+		$browser = null === self::site_issuer() ? 'blocked' : $read( $report['site'] ?? null );
+		$root    = self::worse( $pr, $as );
+		if ( 'works' === $browser ) {
+			self::save( [ 'browser_site_ok_at' => time() ] );
+		}
+		if ( 'unknown' === $root ) {
+			return $out; // nothing learnt about the root documents
 		}
 		$lock = self::acquire_lock();
 		if ( null === $lock ) {
 			return $out; // a check is running; it decides
 		}
 		try {
-			$switched = self::apply( $root, $site, 'browser', [ 'root_pr' => $pr, 'root_as' => $as ] );
+			if ( 'blocked' === $root ) {
+				[ $site, $server ] = self::confirmed_site();
+			} else {
+				$server = (int) self::state()['site_ok_at'] > time() - self::STALE_SECONDS ? 'works' : 'unknown';
+				$site   = $server;
+			}
+			$switched = self::apply( $root, $site, 'browser', [ 'root_pr' => $pr, 'root_as' => $as, 'site' => $server, 'browser_site' => $browser ] );
 		} finally {
 			self::release_lock( $lock );
 		}
@@ -669,6 +700,56 @@ class Cowboy_MCP_OAuth_Address {
 		set_transient( $key, $value, self::WATCH_SECONDS );
 		set_transient( self::MARKER_PREFIX . $value, 1, self::WATCH_SECONDS );
 		return $value;
+	}
+
+	/**
+	 * The site server's result for a browser- or abandoned-driven switch (R9b), as
+	 * [ result used for the decision, server-side result ]. Server-side = a stored
+	 * site_ok_at under an hour old, else a fresh check_site(). 'blocked' never switches;
+	 * 'unknown' (the server cannot reach itself) counts as works only when the admin's
+	 * browser fetched the site document successfully within the hour.
+	 */
+	private static function confirmed_site(): array {
+		$state  = self::state();
+		$server = (int) $state['site_ok_at'] > time() - self::STALE_SECONDS ? 'works' : self::check_site();
+		$site   = ( 'unknown' === $server && (int) $state['browser_site_ok_at'] > time() - self::STALE_SECONDS ) ? 'works' : $server;
+		return [ $site, $server ];
+	}
+
+	/**
+	 * R10: whether a watch slug belongs to a hosted app (registry type oauth/oauth-cloud),
+	 * which starts discovery on its own right after the 401. Terminal/IDE apps (oauth-cli,
+	 * oauth-link, n8n) wait for a human click first.
+	 */
+	private static function watch_is_hosted( string $slug ): bool {
+		if ( '' === $slug || ! class_exists( 'Cowboy_MCP_Admin_Connections' ) ) {
+			return false;
+		}
+		foreach ( Cowboy_MCP_Admin_Connections::client_registry() as $c ) {
+			if ( ( $c['watch'] ?? null ) === $slug && in_array( $c['type'] ?? '', [ 'oauth', 'oauth-cloud' ], true ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** R10: an app's MCP request (POST) whose Accept does not prefer HTML (a browser tab or scanner). */
+	private static function looks_like_app_request( WP_REST_Request $request ): bool {
+		if ( 'POST' !== strtoupper( (string) $request->get_method() ) ) {
+			return false;
+		}
+		$accept = strtolower( (string) $request->get_header( 'Accept' ) );
+		$html   = strpos( $accept, 'text/html' );
+		if ( false === $html ) {
+			return true;
+		}
+		foreach ( [ 'application/json', 'text/event-stream' ] as $type ) {
+			$at = strpos( $accept, $type );
+			if ( false !== $at && $at < $html ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

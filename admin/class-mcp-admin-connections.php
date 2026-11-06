@@ -1548,7 +1548,10 @@ class Cowboy_MCP_Admin_Connections {
             $active = '';
         }
         if ( class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
-            Cowboy_MCP_OAuth_Address::evaluate_pending(); // a sign-in abandoned while this tab was closed
+            // A sign-in abandoned while this tab was closed. Never fetches during a render (a stale
+            // site result waits for the status poll), and runs once per request, so the strip's
+            // connect_status() below does not evaluate again.
+            Cowboy_MCP_OAuth_Address::evaluate_pending( false );
         }
         self::render_blocked_callout();
         self::render_connect_status();
