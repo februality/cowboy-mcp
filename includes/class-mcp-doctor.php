@@ -654,6 +654,9 @@ class Cowboy_MCP_Doctor {
 				'/wp-json sign-in server: ' . $read( (string) $sc['site'] ),
 			]
 			: [ 'Not checked: a local site, a subfolder site, or browser sign-in off.' ];
+		if ( 'broken' === ( $sc['loopback'] ?? '' ) ) {
+			$evidence[] = 'WordPress could not load its own REST index over loopback, so the sign-in documents were not judged.';
+		}
 		if ( ! empty( $sc['switched'] ) ) {
 			$evidence[] = 'Switched during this run.';
 		}
@@ -661,7 +664,8 @@ class Cowboy_MCP_Doctor {
 			$evidence[] = 'Read-only run: the stored choice is not changed here.';
 		}
 		$root_blocked = in_array( 'blocked', [ $sc['root_pr'], $sc['root_as'] ], true );
-		$unreachable  = ! empty( $state['unreachable'] ) || ( $checkable && $root_blocked && 'blocked' === $sc['site'] );
+		// R17: this run's own blocked/blocked counts only without a browser success in the last hour.
+		$unreachable  = ! empty( $state['unreachable'] ) || ( $checkable && $root_blocked && 'blocked' === $sc['site'] && ! Cowboy_MCP_OAuth_Address::browser_ok_recently() );
 		// A switch held while apps are connected (R12): new apps cannot sign in at the root
 		// address until the host lets /.well-known/ through (the fix) or the owner switches.
 		$held         = ! $unreachable && Cowboy_MCP_OAuth_Address::held();

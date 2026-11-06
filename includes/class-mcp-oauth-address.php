@@ -37,10 +37,17 @@ class Cowboy_MCP_OAuth_Address {
 	 * (~47 s) plus a few DB writes - inside LOCK_SECONDS.
 	 */
 	const RUN_BUDGET    = 45;
+	/**
+	 * Budget of a read-only run (the Doctor an agent runs over MCP): with the retry pause it
+	 * stays under 15 s, so the tool call answers before the client gives up on it.
+	 */
+	const READ_ONLY_BUDGET = 13;
 	const FETCH_TIMEOUT = 5;
 	const MAX_HOPS      = 2;
 	const RETRY_PAUSE   = 2;
 	const STALE_SECONDS     = HOUR_IN_SECONDS;
+	/** A root discovery fetch within this many seconds of the last recorded one is not recorded again. */
+	const ROOT_FETCH_THROTTLE = 5;
 	const REAL_TRAFFIC_DAYS = 7;
 	/**
 	 * A browser sign-in connection used within this many days holds an automatic switch (R12):
@@ -75,6 +82,7 @@ class Cowboy_MCP_OAuth_Address {
 			'retry'         => null,
 			'cdn_seen_at'   => 0,
 			'browser_site_ok_at' => 0,
+			'browser_root_ok_at' => 0,
 		];
 	}
 
@@ -88,23 +96,28 @@ class Cowboy_MCP_OAuth_Address {
 
 	/**
 	 * Merge changes into the freshly read option (so stale copies do not drop each other's fields).
-	 * The stored row always carries every key.
+	 * The stored row always carries every key. Autoloaded: prm_url() reads it on every 401, and
+	 * it is written at most about hourly (a row stored by an earlier build, not autoloaded, is
+	 * switched over by its next changing save).
 	 */
 	public static function save( array $changes ): void {
 		self::forget_cached();
 		$stored = get_option( self::OPTION, [] );
 		$stored = is_array( $stored ) ? $stored : [];
-		update_option( self::OPTION, array_merge( self::defaults(), $stored, $changes ), false );
+		update_option( self::OPTION, array_merge( self::defaults(), $stored, $changes ), true );
 	}
 
 	/**
 	 * Drop this request's cached copy of the option (and a cached "does not exist"), so the
 	 * next read sees what other requests wrote since: a self-check holds its first read for
 	 * up to a minute of fetches, and writing that copy back would undo an admin's override or
-	 * a real-traffic root_seen_at stored meanwhile.
+	 * a real-traffic root_seen_at stored meanwhile. The option is autoloaded, so its copy also
+	 * sits in `alloptions`: that whole entry is dropped (reloaded with one query), never
+	 * edited and written back, which could put a stale copy into a persistent object cache.
 	 */
 	private static function forget_cached(): void {
 		wp_cache_delete( self::OPTION, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
 		$missing = wp_cache_get( 'notoptions', 'options' );
 		if ( is_array( $missing ) && isset( $missing[ self::OPTION ] ) ) {
 			unset( $missing[ self::OPTION ] );
@@ -113,11 +126,18 @@ class Cowboy_MCP_OAuth_Address {
 	}
 
 	/**
-	 * Path of home_url() without a trailing slash; '' at the host root.
+	 * Path of the stored home address without a trailing slash; '' at the host root. Read from
+	 * the raw `home` option, not home_url(): multilingual plugins filter home_url() to add a
+	 * language directory (/en), which is not where WordPress is installed.
 	 */
 	public static function home_path(): string {
-		$path = wp_parse_url( home_url(), PHP_URL_PATH );
+		$path = wp_parse_url( (string) get_option( 'home' ), PHP_URL_PATH );
 		return is_string( $path ) ? untrailingslashit( $path ) : '';
+	}
+
+	/** The site server's authorize address, built like the root one (issuer + home path), so handle_root_requests() answers it. */
+	public static function site_authorize_url(): string {
+		return Cowboy_MCP_OAuth::issuer() . self::home_path() . self::SITE_AUTHORIZE_PATH;
 	}
 
 	public static function pretty_permalinks(): bool {
@@ -215,12 +235,15 @@ class Cowboy_MCP_OAuth_Address {
 	 * an app request. Skipped (all 'unknown', nothing written) while browser sign-in is off
 	 * and on hosts host_looks_local() flags - ADVISORY: that only skips the check, so those
 	 * sites stay on the root server. With $store = false nothing is written (the agent-run
-	 * Doctor); the marker transient lives only while the fetches run.
+	 * Doctor, capped at READ_ONLY_BUDGET); the marker transient lives only while the fetches run.
+	 * The REST index is fetched first as a control (R17): when the loopback cannot even load
+	 * that as JSON (a wrong vhost, a firewall, a Basic-auth wall in front of WordPress), every
+	 * result is 'unknown' and 'loopback' is 'broken'.
 	 *
-	 * @return array{root_pr:string,root_as:string,site:string,mode:string,switched:bool}
+	 * @return array{root_pr:string,root_as:string,site:string,loopback:string,mode:string,switched:bool}
 	 */
 	public static function run_self_check( bool $store = true ): array {
-		$out = [ 'root_pr' => 'unknown', 'root_as' => 'unknown', 'site' => 'unknown' ];
+		$out = [ 'root_pr' => 'unknown', 'root_as' => 'unknown', 'site' => 'unknown', 'loopback' => 'unknown' ];
 		if ( ! self::check_allowed() ) {
 			return $out + [ 'mode' => self::advertised(), 'switched' => false ];
 		}
@@ -230,7 +253,7 @@ class Cowboy_MCP_OAuth_Address {
 			if ( null === $lock ) {
 				// Another run is in progress: report what it last stored, fetch nothing.
 				$last = self::state()['last'];
-				foreach ( array_keys( $out ) as $k ) {
+				foreach ( [ 'root_pr', 'root_as', 'site' ] as $k ) {
 					if ( is_array( $last ) && in_array( $last[ $k ] ?? null, [ 'works', 'blocked', 'unknown' ], true ) ) {
 						$out[ $k ] = $last[ $k ];
 					}
@@ -241,7 +264,16 @@ class Cowboy_MCP_OAuth_Address {
 		$marker = null;
 		try {
 			$marker   = self::mint_marker();
-			$deadline = microtime( true ) + self::RUN_BUDGET;
+			$deadline = microtime( true ) + ( $store ? self::RUN_BUDGET : self::READ_ONLY_BUDGET );
+			if ( ! self::loopback_ok( $marker, $deadline ) ) {
+				// The loopback does not reach this WordPress: its answers say nothing about apps.
+				$out['loopback'] = 'broken';
+				if ( $store ) {
+					self::apply( 'unknown', 'unknown', 'self', [ 'root_pr' => 'unknown', 'root_as' => 'unknown', 'loopback' => 'broken' ] );
+				}
+				return $out + [ 'mode' => self::advertised(), 'switched' => false ];
+			}
+			$out['loopback'] = 'works';
 			$issuer   = Cowboy_MCP_OAuth::issuer();
 			$targets = [
 				'root_pr' => [ $issuer . '/.well-known/oauth-protected-resource', 'resource', Cowboy_MCP_OAuth::resource_url() ],
@@ -271,8 +303,8 @@ class Cowboy_MCP_OAuth_Address {
 			}
 
 			// Many hosts resolve their own name internally, so the check may never cross the
-			// CDN that blocks apps. Cloudflare in front of the site but absent from a root
-			// answer: that "works" proves nothing.
+			// CDN that blocks apps. Cloudflare in front of the site but absent from an answer
+			// (root or site server, R16): that "works" proves nothing.
 			$headers = [];
 			foreach ( $responses as $r ) {
 				if ( ! is_wp_error( $r ) ) {
@@ -280,13 +312,9 @@ class Cowboy_MCP_OAuth_Address {
 				}
 			}
 			$cdn_now = Cowboy_MCP_Doctor::cdn_expected( $headers );
-			$state   = self::state();
-			$cdn     = $cdn_now ?? ( (int) $state['cdn_seen_at'] > time() - self::CDN_MEMORY ? 'cloudflare' : null );
-			if ( null !== $cdn ) {
-				foreach ( [ 'root_pr', 'root_as' ] as $k ) {
-					if ( 'works' === $out[ $k ] && '' === (string) wp_remote_retrieve_header( $responses[ $k ], 'cf-ray' ) ) {
-						$out[ $k ] = 'unknown';
-					}
+			foreach ( $responses as $k => $r ) {
+				if ( 'works' === $out[ $k ] && self::bypassed_cdn( $r, $cdn_now ) ) {
+					$out[ $k ] = 'unknown';
 				}
 			}
 
@@ -295,7 +323,7 @@ class Cowboy_MCP_OAuth_Address {
 				if ( null !== $cdn_now ) {
 					self::save( [ 'cdn_seen_at' => time() ] );
 				}
-				$switched = self::apply( self::worse( $out['root_pr'], $out['root_as'] ), $out['site'], 'self', [ 'root_pr' => $out['root_pr'], 'root_as' => $out['root_as'] ] );
+				$switched = self::apply( self::worse( $out['root_pr'], $out['root_as'] ), $out['site'], 'self', [ 'root_pr' => $out['root_pr'], 'root_as' => $out['root_as'], 'loopback' => 'works' ] );
 			}
 			return $out + [ 'mode' => self::advertised(), 'switched' => $switched ];
 		} finally {
@@ -311,7 +339,8 @@ class Cowboy_MCP_OAuth_Address {
 	/**
 	 * Fetch only the site server's openid-configuration (marked like the self-check) and
 	 * record site_ok_at when it works. For callers that need a fresh site-server result
-	 * without re-testing the root documents.
+	 * without re-testing the root documents. Like run_self_check(): 'unknown' when the
+	 * loopback cannot load the REST index (R17) or a "works" bypassed the CDN (R16).
 	 */
 	public static function check_site(): string {
 		$site = self::site_issuer();
@@ -321,14 +350,27 @@ class Cowboy_MCP_OAuth_Address {
 		if ( null === $site ) {
 			return 'blocked';
 		}
-		$marker = self::mint_marker();
+		$marker   = self::mint_marker();
+		$deadline = microtime( true ) + self::RUN_BUDGET;
 		try {
-			$result = self::classify( self::fetch( $site . '/.well-known/openid-configuration', $marker, microtime( true ) + self::RUN_BUDGET ), 'issuer', $site );
+			if ( ! self::loopback_ok( $marker, $deadline ) ) {
+				return 'unknown';
+			}
+			$response = self::fetch( $site . '/.well-known/openid-configuration', $marker, $deadline );
 		} finally {
 			self::drop_marker( $marker );
 		}
-		if ( 'works' === $result ) {
-			self::save( [ 'site_ok_at' => time() ] );
+		$result  = self::classify( $response, 'issuer', $site );
+		$cdn_now = is_wp_error( $response ) ? null : Cowboy_MCP_Doctor::cdn_expected( self::headers_of( $response ) );
+		if ( 'works' === $result && self::bypassed_cdn( $response, $cdn_now ) ) {
+			$result = 'unknown';
+		}
+		$changes = 'works' === $result ? [ 'site_ok_at' => time() ] : [];
+		if ( null !== $cdn_now ) {
+			$changes['cdn_seen_at'] = time();
+		}
+		if ( $changes ) {
+			self::save( $changes );
 		}
 		return $result;
 	}
@@ -348,6 +390,10 @@ class Cowboy_MCP_OAuth_Address {
 	 * Only server-side sources stamp site_ok_at (browser/abandoned callers pass the
 	 * server's own site result in $detail['site'], which then becomes last.site), and
 	 * browser evidence only ever moves toward site mode (R9).
+	 * Both servers blocked sets `unreachable` only while the admin's browser has not loaded a
+	 * sign-in document within STALE_SECONDS (R17): a loopback wall must not tell a working
+	 * site's owner that apps cannot connect. browser_report() clears those stamps when the
+	 * browser itself sees both blocked (R16), so its own report always counts.
 	 */
 	public static function apply( string $root, string $site, string $source, array $detail = [] ): bool {
 		$now = time();
@@ -364,7 +410,9 @@ class Cowboy_MCP_OAuth_Address {
 			}
 		}
 		if ( 'blocked' === $root && 'blocked' === $site ) {
-			$changes['unreachable'] = true;
+			if ( ! self::browser_ok_recently( $state ) ) {
+				$changes['unreachable'] = true;
+			}
 		} elseif ( 'works' === $root || 'works' === $site ) {
 			$changes['unreachable'] = false;
 		}
@@ -399,10 +447,10 @@ class Cowboy_MCP_OAuth_Address {
 
 	/**
 	 * Whether any browser sign-in connection was active in the last ACTIVE_DAYS: an access
-	 * token used, a refresh token issued by a rotation (or a `last_used` on one), or a client
-	 * row's `last_call` (carried over from expired access tokens by prune_expired()). The same
-	 * activity the Connections tab's "Last used" reads; an approved connection that never
-	 * called does not count. Option reads only.
+	 * token used, any refresh token issued (by a rotation or by the approval itself) or used,
+	 * or a client row's `last_call` (carried over from expired access tokens by
+	 * prune_expired()). An approved app that has not called yet counts too: under the MCP SDK
+	 * from 1.31 it already holds credentials bound to the root server. Option reads only.
 	 */
 	public static function connections_active(): bool {
 		$since = time() - self::ACTIVE_DAYS * DAY_IN_SECONDS;
@@ -415,7 +463,7 @@ class Cowboy_MCP_OAuth_Address {
 			if ( ! is_array( $r ) ) {
 				continue;
 			}
-			$at = array_key_exists( 'last_used', $r ) ? (int) $r['last_used'] : ( ( $r['rotated'] ?? true ) ? (int) ( $r['created'] ?? 0 ) : 0 );
+			$at = max( (int) ( $r['last_used'] ?? 0 ), (int) ( $r['created'] ?? 0 ) );
 			if ( $at > $since ) {
 				return true;
 			}
@@ -440,15 +488,20 @@ class Cowboy_MCP_OAuth_Address {
 
 	/**
 	 * Real-traffic signal: a root discovery document was just served. Ignored for the
-	 * self-check's own (marked) fetches. The transient is always refreshed; root_seen_at
-	 * at most once an hour.
+	 * self-check's own (marked) fetches. The transient is refreshed unless it is under
+	 * ROOT_FETCH_THROTTLE s old (scanners hit these URLs unauthenticated) - always when a
+	 * pending sign-in 401 is newer than it, which evaluate_pending() compares against;
+	 * root_seen_at at most once an hour.
 	 */
 	public static function note_root_fetch(): void {
 		if ( self::is_self_check_request() ) {
 			return;
 		}
-		$now = time();
-		set_transient( self::ROOT_FETCH_TRANSIENT, $now, HOUR_IN_SECONDS );
+		$now  = time();
+		$last = get_transient( self::ROOT_FETCH_TRANSIENT );
+		if ( false === $last || (int) $last <= $now - self::ROOT_FETCH_THROTTLE || (int) get_transient( self::PENDING_TRANSIENT ) > (int) $last ) {
+			set_transient( self::ROOT_FETCH_TRANSIENT, $now, HOUR_IN_SECONDS );
+		}
 		$state = self::state();
 		if ( (int) $state['root_seen_at'] <= $now - HOUR_IN_SECONDS ) {
 			$changes = [ 'root_seen_at' => $now ];
@@ -551,6 +604,10 @@ class Cowboy_MCP_OAuth_Address {
 	 * taken as the server's (R9b): a blocked root is judged against confirmed_site(), and
 	 * the browser's site ok only counts where the server cannot tell. A browser root that
 	 * works never moves the site back to root (R9, see apply()).
+	 * The browser crosses the CDN like apps do (R16): root and site both blocked there means
+	 * neither server can be reached - `unreachable`, and never a switch, whatever the server
+	 * says. Each report's root/site result replaces the matching browser_*_ok_at stamp
+	 * (works = now, blocked = cleared), which apply() reads (R17).
 	 *
 	 * @return array{mode:string,switched:bool}
 	 */
@@ -573,8 +630,14 @@ class Cowboy_MCP_OAuth_Address {
 		$as      = $read( $report['root_as'] ?? null );
 		$browser = null === self::site_issuer() ? 'blocked' : $read( $report['site'] ?? null );
 		$root    = self::worse( $pr, $as );
-		if ( 'works' === $browser ) {
-			self::save( [ 'browser_site_ok_at' => time() ] );
+		$stamps  = [];
+		foreach ( [ 'browser_root_ok_at' => $root, 'browser_site_ok_at' => $browser ] as $field => $seen ) {
+			if ( 'unknown' !== $seen ) {
+				$stamps[ $field ] = 'works' === $seen ? time() : 0;
+			}
+		}
+		if ( $stamps ) {
+			self::save( $stamps );
 		}
 		if ( 'unknown' === $root ) {
 			return $out; // nothing learnt about the root documents
@@ -584,7 +647,11 @@ class Cowboy_MCP_OAuth_Address {
 			return $out; // a check is running; it decides
 		}
 		try {
-			if ( 'blocked' === $root ) {
+			if ( 'blocked' === $root && 'blocked' === $browser ) {
+				// R16: blocked for the browser on both servers is what apps meet; no server-side check is needed.
+				$server = (int) self::state()['site_ok_at'] > time() - self::STALE_SECONDS ? 'works' : 'unknown';
+				$site   = 'blocked';
+			} elseif ( 'blocked' === $root ) {
 				[ $site, $server ] = self::confirmed_site();
 			} else {
 				$server = (int) self::state()['site_ok_at'] > time() - self::STALE_SECONDS ? 'works' : 'unknown';
@@ -667,6 +734,41 @@ class Cowboy_MCP_OAuth_Address {
 		}
 		$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		return ! Cowboy_MCP_Security::host_looks_local( $host ) || (bool) apply_filters( 'cowboy_mcp_oauth_address_check_local', false );
+	}
+
+	/**
+	 * Whether the admin's browser loaded a root or site sign-in document within STALE_SECONDS
+	 * (R17): then server-side evidence alone never marks the site unreachable.
+	 */
+	public static function browser_ok_recently( ?array $state = null ): bool {
+		$state = $state ?? self::state();
+		$since = time() - self::STALE_SECONDS;
+		return (int) $state['browser_root_ok_at'] > $since || (int) $state['browser_site_ok_at'] > $since;
+	}
+
+	/**
+	 * R17 control: the loopback loads the REST index as HTTP 200 JSON. Anything else (an
+	 * error, another vhost's page, a firewall, a Basic-auth wall) means the fetches do not
+	 * reach this WordPress the way an app's would, so their answers prove nothing.
+	 */
+	private static function loopback_ok( string $marker, float $deadline ): bool {
+		$r = self::fetch( rest_url(), $marker, $deadline );
+		if ( is_wp_error( $r ) || 200 !== (int) wp_remote_retrieve_response_code( $r ) ) {
+			return false;
+		}
+		return is_array( json_decode( (string) wp_remote_retrieve_body( $r ), true ) );
+	}
+
+	/**
+	 * R16: Cloudflare is in front of the site (seen on this run, $cdn_now, or remembered for
+	 * CDN_MEMORY) but this answer carries no CF-Ray, so it came round the CDN that apps cross.
+	 */
+	private static function bypassed_cdn( array|WP_Error $response, ?string $cdn_now ): bool {
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+		$cdn = $cdn_now ?? ( (int) self::state()['cdn_seen_at'] > time() - self::CDN_MEMORY ? 'cloudflare' : null );
+		return null !== $cdn && '' === (string) wp_remote_retrieve_header( $response, 'cf-ray' );
 	}
 
 	/** step 4 of the decision: nothing above the stored result decides. */

@@ -328,7 +328,11 @@ class Cowboy_MCP_Checkpoint {
 
 	/* ── Restore ───────────────────────────────────────────── */
 
-	/** Options whose LIVE values survive a restore (bootstrap invariant). */
+	/**
+	 * Options whose LIVE values survive a restore (bootstrap invariant). The sign-in address
+	 * too: a restore must not move the advertised sign-in server (connected apps are bound to
+	 * it, and automatic switching never moves it back), nor let an agent move it.
+	 */
 	private const PRESERVED_OPTIONS = [
 		'cowboy_mcp_api_keys',
 		'cowboy_mcp_settings',
@@ -336,6 +340,7 @@ class Cowboy_MCP_Checkpoint {
 		'cowboy_mcp_oauth_refresh',
 		'cowboy_mcp_oauth_clients',
 		'cowboy_mcp_client_info',
+		'cowboy_mcp_oauth_address',
 	];
 
 	public static function restore( int $id, string $actor = 'mcp' ): array|WP_Error {

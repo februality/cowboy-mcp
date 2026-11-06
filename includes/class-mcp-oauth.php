@@ -1346,7 +1346,7 @@ class Cowboy_MCP_OAuth {
     /** Authorize address of the server handling the current request (consent form action). */
     private static function server_authorize_url(): string {
         if ( 'site' === self::$server && null !== Cowboy_MCP_OAuth_Address::site_issuer() ) {
-            return home_url( Cowboy_MCP_OAuth_Address::SITE_AUTHORIZE_PATH );
+            return Cowboy_MCP_OAuth_Address::site_authorize_url();
         }
         return self::issuer() . Cowboy_MCP_OAuth_Address::home_path() . '/cowboy-mcp-oauth/authorize';
     }
@@ -1570,7 +1570,7 @@ class Cowboy_MCP_OAuth {
         $issuer = $site ?? self::issuer();
         $doc = [
             'issuer'                                => $issuer,
-            'authorization_endpoint'                => null !== $site ? home_url( Cowboy_MCP_OAuth_Address::SITE_AUTHORIZE_PATH ) : $issuer . '/cowboy-mcp-oauth/authorize',
+            'authorization_endpoint'                => null !== $site ? Cowboy_MCP_OAuth_Address::site_authorize_url() : $issuer . '/cowboy-mcp-oauth/authorize',
             'token_endpoint'                        => rest_url( 'cowboy-mcp/v1/oauth/token' ),
             'registration_endpoint'                 => rest_url( 'cowboy-mcp/v1/oauth/register' ),
             'response_types_supported'              => [ 'code' ],
