@@ -1623,6 +1623,14 @@ class Cowboy_MCP_OAuth {
             'callback'            => [ __CLASS__, 'rest_protected_resource' ],
             'permission_callback' => '__return_true',
         ] );
+        // The resource's own path + /.well-known/oauth-protected-resource: where clients look when the PRM the
+        // 401 names cannot be loaded (ChatGPT, seen live 2026-11-06 behind a /.well-known/ block). It names the
+        // site server, the only one such a client can still reach; SDK apps that reach the root PRM never come here.
+        register_rest_route( 'cowboy-mcp/v1', '/endpoint/.well-known/oauth-protected-resource', [
+            'methods'             => 'GET',
+            'callback'            => [ __CLASS__, 'rest_endpoint_protected_resource' ],
+            'permission_callback' => '__return_true',
+        ] );
         register_rest_route( 'cowboy-mcp/v1', '/oauth/jwks', [
             'methods'             => 'GET',
             'callback'            => [ __CLASS__, 'rest_jwks' ],
@@ -1642,6 +1650,15 @@ class Cowboy_MCP_OAuth {
             return self::rest_error( 'oauth_disabled', 'OAuth connector is not enabled.', 404 );
         }
         return self::rest_json( self::prm_document() );
+    }
+
+    /** The endpoint-relative PRM: like prm_document(), naming the site server (404 without one: plain permalinks). */
+    public static function rest_endpoint_protected_resource(): WP_REST_Response {
+        $site = Cowboy_MCP_OAuth_Address::site_issuer();
+        if ( ! self::is_enabled() || null === $site ) {
+            return self::rest_error( 'oauth_disabled', 'OAuth connector is not enabled.', 404 );
+        }
+        return self::rest_json( [ 'authorization_servers' => [ $site ] ] + self::prm_document() );
     }
 
     /** Empty key set: no ID tokens are issued; OpenID discovery parsers require the URL. */

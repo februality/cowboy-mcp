@@ -504,9 +504,10 @@ class Cowboy_MCP_Admin_Connections {
         <?php self::step_open( $approve_num, __( 'Approve access', 'cowboy-mcp' ), '' ); ?>
                 <p><?php echo wp_kses( $approve_text, [ 'strong' => [] ] ); ?></p>
                 <?php if ( $is_chatgpt ) : ?>
+                    <?php // Plus verified live 2026-11-06 (personal account: added, signed in, tool call); workspace rule from help.openai.com 12584461. ?>
                     <details class="mcp-local-details">
                         <summary><?php esc_html_e( 'Which ChatGPT plans work?', 'cowboy-mcp' ); ?></summary>
-                        <div class="mcp-local-details-body"><p><?php echo wp_kses( __( 'Custom MCP servers need a ChatGPT <strong>Business, Enterprise or Edu</strong> workspace, on the web; Pro can connect one for read-only use. On Business only workspace admins and owners can add it; on Enterprise and Edu an admin grants that permission by role.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p></div>
+                        <div class="mcp-local-details-body"><p><?php echo wp_kses( __( 'Custom MCP servers work in ChatGPT on the web. A personal <strong>Plus</strong> account can add and use one. In a <strong>Business, Enterprise or Edu</strong> workspace you need the <strong>Create plugins with MCPs</strong> permission: on Business only workspace admins and owners have it; on Enterprise and Edu an admin grants it by role.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p></div>
                     </details>
                 <?php else : ?>
                     <?php self::render_claude_plan_details( $oauth_on, false ); ?>
