@@ -201,6 +201,8 @@ Questions and connection problems: post in the [support forum](https://wordpress
 
 Headless or CI? Click **Generate API key** on the Connections tab (it is shown once - copy it) and add `--header "Authorization: Bearer YOUR_API_KEY"` to the first line instead of running the second.
 
+WordPress in a subfolder (or a multisite subsite)? Run only the first line, then start `claude`, run `/mcp`, choose the server and pick **Authenticate**.
+
 **Claude desktop / web (no terminal):** click **Add to Claude** on the Connections tab (Claude opens with your site already filled in; browser sign-in is switched on for you) and approve with one click. (Requires a public HTTPS site; on a local site use the `mcp-remote` bridge shown on the Connections tab.)
 
 **Every other client:** the Connections tab shows a ready-to-copy setup for each, and [cowboymcp.com](https://cowboymcp.com/?utm_source=wporg&utm_medium=listing) has step-by-step guides.

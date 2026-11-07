@@ -432,8 +432,8 @@ class Cowboy_MCP_Doctor {
 			$want = 'well_known_pr' === $id ? 'resource' : 'issuer';
 			$ok   = 200 === $code && isset( $json[ $want ] );
 			[ $fp, $fix ] = $ok ? [ null, null ] : self::classify( $code, wp_remote_retrieve_headers( $r )->getAll(), (string) wp_remote_retrieve_body( $r ) );
-			if ( 'html_error_page' === $fp ) {
-				$fix = null; // its fix names /wp-json/ caching; a refused /.well-known/ path needs the rule below
+			if ( in_array( $fp, [ 'html_error_page', 'cloudflare_block' ], true ) ) {
+				$fix = null; // their fixes name /wp-json/ (caching, the endpoint's skip rule); a refused /.well-known/ path needs the rule below
 			}
 			$checks[] = self::result( $id, 'OAuth discovery: ' . $path, $ok ? 'pass' : 'fail', $ok ? 'Discovery document served correctly.' : "Expected JSON with '{$want}', got HTTP {$code}.", [ 'HTTP ' . $code ], $fp, $ok ? null : ( $fix ?? self::well_known_fix() ) );
 		}
@@ -607,7 +607,7 @@ class Cowboy_MCP_Doctor {
 	public static function fingerprints_for_js(): array {
 		return [
 			[ 'id' => 'cloudflare_challenge', 'status' => [ 403, 503 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/just a moment|cf-chl|challenge-platform/i', 'fix' => 'Cloudflare is challenging the request. Add a WAF skip rule (or disable Bot Fight Mode) for /wp-json/cowboy-mcp/* and /.well-known/oauth-*.' ],
-			[ 'id' => 'cloudflare_block', 'status' => [ 403 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/error code:?\s*1\d{3}|used Cloudflare to restrict access/i', 'fix' => 'Cloudflare blocked the request (error 1010 = Browser Integrity Check, 1020 = a firewall rule). Add a custom rule with the Skip action for /wp-json/cowboy-mcp/* that skips Browser Integrity Check.' ],
+			[ 'id' => 'cloudflare_block', 'status' => [ 403 ], 'header' => [ 'server', '/cloudflare/i' ], 'body_regex' => '/error code:?\s*1\d{3}|used Cloudflare to restrict access|you have been blocked/i', 'fix' => 'Cloudflare blocked the request (error 1010 = Browser Integrity Check, 1020 = a firewall rule). Add a custom rule with the Skip action for /wp-json/cowboy-mcp/* that skips Browser Integrity Check.' ],
 			[ 'id' => 'modsecurity', 'status' => [ 403, 406 ], 'header' => null, 'body_regex' => '/mod_security|modsecurity|not acceptable/i', 'fix' => 'A web application firewall (likely ModSecurity) is blocking JSON POSTs. Ask your host to allowlist POST /wp-json/cowboy-mcp/v1/endpoint.' ],
 			[ 'id' => 'basic_auth', 'status' => [ 401 ], 'header' => [ 'www-authenticate', '/basic/i' ], 'body_regex' => null, 'fix' => 'Server-level Basic Auth answers before WordPress. Exclude /wp-json/cowboy-mcp/ and /.well-known/ from Basic Auth - MCP clients cannot send two Authorization headers.' ],
 			[ 'id' => 'dirty_json', 'status' => null, 'header' => null, 'body_regex' => '/^(\xEF\xBB\xBF|\s+)[\{\[]/', 'fix' => 'The JSON response has junk before it (BOM, whitespace, or a PHP notice). Set WP_DEBUG_DISPLAY to false and deactivate plugins one by one to find the one printing output.' ],
@@ -630,10 +630,15 @@ class Cowboy_MCP_Doctor {
 			$paths .= ' and ' . wp_parse_url( $site, PHP_URL_PATH ) . '/.well-known/openid-configuration';
 			$nginx .= ' and location ^~ ' . wp_parse_url( rest_url(), PHP_URL_PATH ) . ' { try_files $uri /index.php?$args; }';
 		}
+		$server = ' Nginx: a rule such as location ~ /\\. { deny all; } refuses them; add ' . $nginx . ' (a ^~ location is used before any regex location).'
+			. ' Apache: a rule such as RewriteRule (^|/)\\. - [F] refuses them - put RewriteCond %{REQUEST_URI} !/\\.well-known/ on the line before it; a RedirectMatch 403 /\\. rule becomes RedirectMatch 403 /\\.(?!well-known/).';
+		$cdn    = ' Cloudflare: find the rule that blocked the request under Security > Analytics > Events and exempt these paths.';
+		// Cloudflare in front of the site (seen now, or remembered by the sign-in check): it is the likeliest blocker, so it comes first.
+		$via_cf = self::request_via_cloudflare()
+			|| ( class_exists( 'Cowboy_MCP_OAuth_Address' ) && (int) Cowboy_MCP_OAuth_Address::state()['cdn_seen_at'] > time() - Cowboy_MCP_OAuth_Address::CDN_MEMORY );
 		return 'Let requests for ' . $paths . ' reach WordPress.'
-			. ' Nginx: a rule such as location ~ /\\. { deny all; } refuses them; add ' . $nginx . ' (a ^~ location is used before any regex location).'
-			. ' Apache: a rule such as RewriteRule (^|/)\\. - [F] refuses them - put RewriteCond %{REQUEST_URI} !/\\.well-known/ on the line before it; a RedirectMatch 403 /\\. rule becomes RedirectMatch 403 /\\.(?!well-known/).'
-			. ' Cloudflare: find the rule that blocked the request under Security > Analytics > Events and exempt these paths. On managed hosting, ask the host to allow them.'
+			. ( $via_cf ? $cdn . $server : $server . $cdn )
+			. ' On managed hosting, ask the host to allow them.'
 			. ( null === $site ? ' Also turn on pretty permalinks (Settings > Permalinks), which the /wp-json sign-in server needs.' : '' );
 	}
 
@@ -669,9 +674,11 @@ class Cowboy_MCP_Doctor {
 		// A switch held while apps are connected (R12): new apps cannot sign in at the root
 		// address until the host lets /.well-known/ through (the fix) or the owner switches.
 		$held         = ! $unreachable && Cowboy_MCP_OAuth_Address::held();
-		$detail       = $held
-			? 'Sign-in address: root. This host appears to block /.well-known/, but connected apps are using the root address; switching would make some of them sign in again.'
-			: 'Sign-in address: ' . $where . ', because ' . self::signin_reason( Cowboy_MCP_OAuth_Address::reason() ) . '.';
+		$detail       = ! $held
+			? 'Sign-in address: ' . $where . ', because ' . self::signin_reason( Cowboy_MCP_OAuth_Address::reason() ) . '.'
+			: ( 'traffic' === Cowboy_MCP_OAuth_Address::held_reason()
+				? 'Sign-in address: root. This host appears to block /.well-known/, but an app read the root sign-in documents in the last ' . Cowboy_MCP_OAuth_Address::REAL_TRAFFIC_DAYS . ' days, so it was not switched automatically. New apps cannot sign in at the root address until the host lets /.well-known/ through, or you use the other sign-in address.'
+				: 'Sign-in address: root. This host appears to block /.well-known/, but connected apps are using the root address; switching would make some of them sign in again.' );
 		if ( $unreachable ) {
 			$detail .= ' Neither sign-in address can be reached from outside, so browser sign-in fails here; API-key connections still work.';
 		}

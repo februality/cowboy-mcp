@@ -76,6 +76,9 @@ class Cowboy_MCP_OAuth_Address {
 			'root_seen_at'  => 0,
 			'held_at'       => 0,
 			'held_logged_at' => 0,
+			'held_reason'   => '',
+			'root_blocked_self_at'    => 0,
+			'root_blocked_browser_at' => 0,
 			'site_ok_at'    => 0,
 			'unreachable'   => false,
 			'last'          => [],
@@ -419,19 +422,35 @@ class Cowboy_MCP_OAuth_Address {
 		if ( 'works' === $root ) {
 			$changes['held_at'] = 0; // nothing to hold: apps reach the root server again
 		}
+		// When each source (the server's own check, the owner's browser) last saw the root documents
+		// blocked, since anyone last saw them work: a "works" from either clears both.
+		if ( 'works' === $root ) {
+			$changes['root_blocked_self_at']    = 0;
+			$changes['root_blocked_browser_at'] = 0;
+		} elseif ( 'blocked' === $root && ( $server || 'browser' === $source ) ) {
+			$changes[ $server ? 'root_blocked_self_at' : 'root_blocked_browser_at' ] = $now;
+		}
+		$state = array_merge( $state, $changes );
 
 		$mode = 'site' === $state['mode'] ? 'site' : 'root';
-		// Switch at once: the owner is usually mid-connection when the first check runs.
-		$wanted = 'root' === $mode && 'blocked' === $root && 'works' === $site
-			&& (int) $state['root_seen_at'] < $now - self::REAL_TRAFFIC_DAYS * DAY_IN_SECONDS
-			&& self::is_automatic();
-		$held     = $wanted && self::connections_active();
-		$switched = $wanted && ! $held;
+		// Recent real traffic at the root documents vetoes a switch: apps evidently reach them. Unless the
+		// server's check and the owner's browser have both seen them blocked since that traffic: a blocked
+		// request never reaches WordPress, so no traffic can follow a real block.
+		$seen         = (int) $state['root_seen_at'];
+		$corroborated = min( (int) $state['root_blocked_self_at'], (int) $state['root_blocked_browser_at'] ) > $seen;
+		$traffic_veto = $seen >= $now - self::REAL_TRAFFIC_DAYS * DAY_IN_SECONDS && ! $corroborated;
+		// Switch at once: the owner is usually mid-connection when the first check runs. A blocked root
+		// that is not switched is "held", so the Doctor says why (connected apps, or recent root traffic).
+		$blocked  = 'root' === $mode && 'blocked' === $root && 'works' === $site && self::is_automatic();
+		$reason   = $traffic_veto ? 'traffic' : ( $blocked && self::connections_active() ? 'connections' : '' );
+		$held     = $blocked && '' !== $reason;
+		$switched = $blocked && ! $held;
 		$log_held = $held && (int) $state['held_logged_at'] <= $now - self::HELD_LOG_SECONDS;
 		if ( $switched ) {
 			$changes += [ 'mode' => 'site', 'reason' => 'blocked', 'switched_at' => $now ];
 		} elseif ( $held ) {
-			$changes['held_at'] = $now;
+			$changes['held_at']     = $now;
+			$changes['held_reason'] = $reason;
 			if ( $log_held ) {
 				$changes['held_logged_at'] = $now;
 			}
@@ -440,7 +459,7 @@ class Cowboy_MCP_OAuth_Address {
 		if ( $switched ) {
 			Cowboy_MCP_Auth::log( 'oauth_address_switched', [ 'args' => [ 'from' => 'root', 'to' => 'site', 'reason' => 'blocked', 'source' => $source ] ] );
 		} elseif ( $log_held ) {
-			Cowboy_MCP_Auth::log( 'oauth_address_switch_held', [ 'args' => [ 'source' => $source ] ] );
+			Cowboy_MCP_Auth::log( 'oauth_address_switch_held', [ 'args' => [ 'source' => $source, 'reason' => $reason ] ] );
 		}
 		return $switched;
 	}
@@ -484,6 +503,26 @@ class Cowboy_MCP_OAuth_Address {
 		return (int) self::state()['held_at'] > time() - self::HELD_SHOWN_DAYS * DAY_IN_SECONDS
 			&& 'root' === self::advertised()
 			&& self::is_automatic();
+	}
+
+	/** Why the last automatic switch was held: 'connections' (apps connected, R12) or 'traffic' (apps read the root documents recently). */
+	public static function held_reason(): string {
+		return 'traffic' === self::state()['held_reason'] ? 'traffic' : 'connections';
+	}
+
+	/**
+	 * Whether the root server is advertised while the latest word of the server's check or of the
+	 * owner's browser is that its documents are blocked. Apps on the MCP SDK then find no metadata
+	 * and fall back to registering at /register, even those with a Client ID Metadata Document.
+	 */
+	public static function root_known_blocked(): bool {
+		return 'root' === self::advertised() && self::root_blocked_recently();
+	}
+
+	/** Whether the latest word of the server's check or of the owner's browser is that the root documents are blocked. */
+	public static function root_blocked_recently(): bool {
+		$state = self::state();
+		return max( (int) $state['root_blocked_self_at'], (int) $state['root_blocked_browser_at'] ) > time() - self::HELD_SHOWN_DAYS * DAY_IN_SECONDS;
 	}
 
 	/**

@@ -150,8 +150,9 @@ class Cowboy_MCP_Admin {
         if ( 'oauth' === $mode && class_exists( 'Cowboy_MCP_OAuth' ) ) {
             self::enable_oauth_connector();
             // CIMD clients (Claude Code, Codex) never register, so their Copy leaves the window alone,
-            // unless no discovery document is reachable: the SDK then falls back to DCR at /register.
-            if ( empty( $reg[ $client ]['cimd'] ) || ! empty( Cowboy_MCP_OAuth_Address::state()['unreachable'] ) ) {
+            // unless no discovery document is reachable, or the advertised root ones are blocked: the SDK
+            // then finds no metadata and falls back to DCR at /register.
+            if ( empty( $reg[ $client ]['cimd'] ) || ! empty( Cowboy_MCP_OAuth_Address::state()['unreachable'] ) || Cowboy_MCP_OAuth_Address::root_known_blocked() ) {
                 Cowboy_MCP_OAuth::open_registration_window();
             }
         }
