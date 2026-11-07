@@ -237,6 +237,8 @@ class Cowboy_MCP_Admin_Connections {
         $cc_step     = sprintf( __( 'in Claude Code, run /mcp, choose “%s” and pick Authenticate', 'cowboy-mcp' ), $name );
         /* translators: %s: a terminal command, e.g. codex mcp login example-com */
         $cli_step    = static fn( string $command ): string => sprintf( __( 'run “%s” in your terminal', 'cowboy-mcp' ), $command );
+        /* translators: Cursor's own menu names (Customize, MCPs, Reload, Authenticate), as Cursor shows them in your language. Verified with Cursor 3.24 on 2026-11-07. */
+        $cursor_step = __( 'in Cursor, open Customize → MCPs, click your site, choose Reload, then click Authenticate', 'cowboy-mcp' );
         $registry    = [
             'claude-ai'      => [ 'label' => 'claude.ai',      'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'tunnel', 'retry_step' => $claude_step ],
             'claude-desktop' => [ 'label' => 'Claude Desktop', 'group' => 'no-terminal', 'type' => 'oauth',      'watch' => 'claude',      'local' => 'bridge', 'retry_step' => $claude_step ],
@@ -251,7 +253,7 @@ class Cowboy_MCP_Admin_Connections {
             // registers and the "New connections" window is irrelevant to it (verified 2026-10-09).
             'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'claude-code', 'local' => 'works', 'cimd' => true, 'retry_step' => $cc_step ],
             'codex'          => [ 'label' => 'Codex',          'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'codex',       'local' => 'works', 'cimd' => true, 'retry_step' => $cli_step( 'codex mcp login ' . $name ) ],
-            'cursor'         => [ 'label' => 'Cursor',         'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'cursor',      'local' => 'works' ],
+            'cursor'         => [ 'label' => 'Cursor',         'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'cursor',      'local' => 'works', 'retry_step' => $cursor_step ],
             'vscode'         => [ 'label' => 'VS Code',        'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'vscode',      'local' => 'works' ],
             'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'gemini-cli',  'local' => 'works' ],
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'opencode',    'local' => 'works', 'retry_step' => $cli_step( 'opencode mcp auth ' . $name ) ],

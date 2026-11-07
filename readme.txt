@@ -75,7 +75,7 @@ Plus 17 read-only MCP resources, 4 resource templates and 8 guided workflow prom
 
 = One-click sign-in for every app =
 
-Every app sends you to a sign-in page on your own site: the cloud apps and IDEs with one button, the terminal tools with one command. The consent screen names the app and lets you grant full access, read-only, or a hand-picked list of tools; nothing is granted until you click **Approve**. Keys remain for scripts and CI.
+Every app sends you to a sign-in page on your own site: the cloud apps and IDEs with one button, the terminal tools with one command. The consent screen names the app and lets you grant full access, read-only, drafts only, or a hand-picked list of tools; nothing is granted until you click **Approve**. Keys remain for scripts and CI.
 
 = Connect Claude Code to WordPress =
 
@@ -161,7 +161,7 @@ Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in o
 * **Database checkpoints** - one-click database snapshots, taken automatically before plugin and theme updates and mutating WP-CLI commands (tables only, not uploads or code).
 * **Safe plugin and theme updates** - file backup and database checkpoint first, then a health check that restores the previous version if the site breaks.
 * **Audit log** - every tool call, error and authentication event on the Logs tab; pruned after 30 days.
-* **AI agent permissions** - each API key and OAuth connection can be full access, read-only, or a custom list of tools.
+* **AI agent permissions** - each API key and OAuth connection can be full access, read-only, drafts only, or a custom list of tools.
 * **Inert until you connect something** - the endpoint goes live on activation but refuses every request until you create an API key or approve an app in your browser; there is no default credential and browser sign-in is off until you turn it on.
 * **Hashed keys, rate limits, origin checks** - keys are shown once and stored as one-way hashes, requests are rate-limited per key, and unknown browser origins are rejected.
 * **Guardrails you cannot talk your way past** - a denylist of sensitive options, dangerous SQL and WP-CLI commands, SSRF protection, file writes confined to `wp-content`, and last-administrator protection. Power mode lifts some for rare jobs; only a human can switch it on in wp-admin.
@@ -231,7 +231,7 @@ It is built so a mistake can be reversed. Keys are hashed and shown once, reques
 
 = Can I limit what an AI agent is allowed to do? =
 
-Yes. Every API key and every OAuth connection carries a scope: full access, read-only, or a custom list of allowed tools, chosen when the key is created or the connection is approved. Safe mode adds confirmation for destructive tools on top, and the most powerful operations stay locked behind Power mode, which only an administrator can enable in wp-admin.
+Yes. Every API key and every OAuth connection carries a scope: full access, read-only, drafts only, or a custom list of allowed tools, chosen when the key is created or the connection is approved. Drafts only lets the AI write drafts and upload images but never publish: an edit to a live post goes to a draft copy that you review and publish yourself. Safe mode adds confirmation for destructive tools on top, and the most powerful operations stay locked behind Power mode, which only an administrator can enable in wp-admin.
 
 = Do I need to be a developer? =
 
