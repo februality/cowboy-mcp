@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the Cowboy MCP package.
 msgid ""
 msgstr ""
-"Project-Id-Version: Cowboy MCP 1.7.6\n"
+"Project-Id-Version: Cowboy MCP 1.7.7\n"
 "Report-Msgid-Bugs-To: https://cowboymcp.com\n"
 "POT-Creation-Date: 2026-11-06 16:52-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"

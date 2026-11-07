@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, claude-code
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.6
+Stable tag: 1.7.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -307,17 +307,17 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.6 =
-* Changed: Editors count as a privileged role on single sites, like Administrators. Creating or promoting an Editor, or changing an Editor's email, needs Power mode.
-* Changed: more tools refuse script content unless the call passes `allow_unfiltered_html: true`.
-* Changed: `wp_cli` database commands are stricter, with and without Power mode. To change options, use `wp option`.
-* Changed: custom-access keys and connections list and read only the resources their access covers.
-* Improved: every approval of Claude Code, Codex, ChatGPT, Claude or Perplexity is now its own entry under Connected apps, with its own access level, Edit access and Revoke. Reconnecting an app adds a new entry with the access you choose on the approval screen; the earlier one stays listed until it expires.
-* Improved: API keys are recognised faster, and a valid key keeps working while failed attempts from the same IP address are being rate limited. Existing keys are upgraded automatically on their first use.
-* Fix: WooCommerce reports filtered by order status count completed and cancelled orders.
-* Fix: listing WooCommerce orders no longer fails on a store that has refunds. The order tools now answer a refund's ID with a clear error. Before, reading or editing one failed, and deleting one removed the refund.
-* Fix: malformed requests get a JSON-RPC error instead of a server error.
-* Security: hardening. Updating is recommended, and no action is needed afterwards.
+= 1.7.7 =
+* New: Claude, ChatGPT and other apps can now sign in to sites where they could not before: WordPress installed in a subfolder (example.com/blog), multisite subsites, and hosts or Cloudflare rules that block /.well-known/. Cowboy MCP finds the sign-in address that works on your host by itself. There is nothing to configure, and apps that are already connected are never moved.
+* New: if a connection attempt fails, you no longer have to guess why. The Connections tab tells you the first sign-in did not finish and shows the one step to retry in that app.
+* New: "Drafts only" access. Let an AI write and update posts without letting it publish anything. Changes to a live post land in a draft copy you review and publish yourself. With Yoast Duplicate Post active, one click on Republish puts them live. The AI can still read the whole site and upload images.
+* New: API keys now work on hosts that strip the Authorization header and on staging sites behind an HTTP password. Send the key in an `X-Cowboy-MCP-Key` header instead.
+* Improved: the Connection Doctor names the host problem and the fix. That includes a blocked /.well-known/ (with Cloudflare steps when Cloudflare fronts the site) and a stripped Authorization header. It also offers a one-click switch to the other sign-in address.
+* Improved: the setup steps match what Claude, ChatGPT, Gemini and Grok show today. ChatGPT Plus accounts can add the server, and ChatGPT workspaces need the "Create plugins with MCPs" permission. On subfolder sites, Claude Code signs in from /mcp, and server names include the folder so two sites on one domain do not collide.
+* Improved: newer AI apps (MCP 2025-11-25) see a refused tool call as an error they can read and correct, so they fix their own mistakes instead of stopping.
+* Changed: on single sites, an API key acts as the administrator who created it. If that person is deleted or stops being an administrator, the key stops working, so a former admin's key no longer keeps access. Keys created before 1.7.5 are not affected.
+* Changed: page caches and CDNs no longer store Cowboy MCP's responses, so an outdated "not signed in" answer cannot get stuck in a cache.
+* Fix: some Apache hosts hid a valid API key from WordPress, and connections failed with "Missing Authorization header". Those connections now work.
 
 = Earlier versions =
 

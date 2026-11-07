@@ -243,7 +243,7 @@ return [
 		 * ---------------------------------------------------------------- */
 		Cowboy_MCP_Tools::tool(
 			'wp_connection_doctor',
-			'[Diagnostics] Run the MCP connection self-test: config, loopback reachability, OAuth discovery. Returns per-check pass/warn/fail with fingerprinted causes, fix hints, and a plain-text report. The authenticated-path check auto-passes (calling this tool proves it).',
+			'[Diagnostics] Run the MCP connection self-test: config, loopback reachability, OAuth discovery and the browser sign-in address in use. Returns per-check pass/warn/fail/info with fingerprinted causes, fix hints, and a plain-text report; info lines (e.g. which sign-in address the site uses) need no action. Read-only: it never changes the sign-in address. The authenticated-path check auto-passes (calling this tool proves it).',
 			[],
 			[ 'title' => 'Connection Doctor', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false ],
 			[
