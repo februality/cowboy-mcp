@@ -74,6 +74,11 @@ foreach ( wp_get_abilities() as $cowboy_mcp_ability ) {
     if ( in_array( $cowboy_mcp_ns, [ 'cowboy-mcp', 'mcp-adapter' ], true ) ) {
         continue;
     }
+    // Other plugins' generic dispatchers run any ability by name, so a Custom scope
+    // that allowed one would reach abilities outside its list. Angie ships one.
+    if ( in_array( $cowboy_mcp_name, [ 'angie/execute-ability' ], true ) ) {
+        continue;
+    }
     // A built-in domain covers this ability with undoable tools (e.g. SiteOrigin layouts).
     if ( in_array( $cowboy_mcp_name, $cowboy_mcp_superseded, true ) ) {
         continue;
