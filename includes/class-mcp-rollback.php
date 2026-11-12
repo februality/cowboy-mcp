@@ -2264,6 +2264,10 @@ class Cowboy_MCP_Rollback {
 	private static function verifiable( array $state ): array {
 		// reassigned_to records what a user delete did; a live user snapshot always has null.
 		unset( $state['_volatile'], $state['reassigned_to'] );
+		// WooCommerce stamps date_modified on every save, the undo's own included.
+		if ( isset( $state['class'], $state['data'] ) && is_array( $state['data'] ) ) {
+			unset( $state['data']['date_modified'] );
+		}
 		if ( isset( $state['post'] ) && is_array( $state['post'] ) ) {
 			unset( $state['post']['post_modified'], $state['post']['post_modified_gmt'] );
 			// Before-states journaled by 1.7.4 and earlier still include the ping queue.
