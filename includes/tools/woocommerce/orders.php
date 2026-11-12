@@ -46,6 +46,15 @@ function cowboy_mcp_woo_check_order_args( array $a ): array|WP_Error {
 }
 
 /**
+ * PRE_DISPATCH check for wp_woo_update_order: the order lookup plus the meta keys.
+ */
+function cowboy_mcp_woo_check_order_update_args( array $a ): array|WP_Error {
+    $a = cowboy_mcp_woo_check_order_args( $a );
+
+    return is_wp_error( $a ) ? $a : cowboy_mcp_check_meta_arg( $a );
+}
+
+/**
  * Format a WC_Order into a standardized array for MCP responses.
  */
 function cowboy_mcp_woo_format_order( WC_Order $order ): array {
@@ -387,6 +396,14 @@ return [
         },
 
         'wp_woo_create_order' => function ( array $a ) {
+            $allowed_meta = null;
+            if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
+                $allowed_meta = Cowboy_MCP_Security::writable_meta_or_error( $a['meta'] );
+                if ( is_wp_error( $allowed_meta ) ) {
+                    return $allowed_meta;
+                }
+            }
+
             $order = wc_create_order( [
                 'customer_id' => (int) ( $a['customer_id'] ?? 0 ),
                 'status'      => $a['status'] ?? 'pending',
@@ -431,23 +448,19 @@ return [
             $order->calculate_totals();
             $order->save();
 
-            // Set meta data (internal / sensitive keys refused: an internal order key is
-            // a property setter, and the posts tools refuse the same keys).
-            $rejected_meta = [];
-            if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
-                [ $allowed_meta, $rejected_meta ] = cowboy_mcp_woo_filter_meta( $a['meta'] );
+            // Set meta data (blocked keys already refused above, before the create).
+            if ( is_array( $allowed_meta ) ) {
                 foreach ( $allowed_meta as $key => $value ) {
                     $order->update_meta_data( $key, $value );
                 }
                 $order->save_meta_data();
             }
 
-            return array_filter( [
-                'created'            => true,
-                'order_id'           => $order->get_id(),
-                'order'              => cowboy_mcp_woo_format_order( $order ),
-                'rejected_meta_keys' => $rejected_meta,
-            ], static fn( $v ) => [] !== $v );
+            return [
+                'created'  => true,
+                'order_id' => $order->get_id(),
+                'order'    => cowboy_mcp_woo_format_order( $order ),
+            ];
         },
 
         'wp_woo_update_order' => function ( array $a ) {
@@ -456,6 +469,14 @@ return [
 
             if ( is_wp_error( $order ) ) {
                 return $order;
+            }
+
+            $allowed_meta = null;
+            if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
+                $allowed_meta = Cowboy_MCP_Security::writable_meta_or_error( $a['meta'] );
+                if ( is_wp_error( $allowed_meta ) ) {
+                    return $allowed_meta;
+                }
             }
 
             if ( isset( $a['status'] ) )         $order->set_status( $a['status'] );
@@ -470,11 +491,8 @@ return [
                 cowboy_mcp_woo_set_address_fields( $order, 'shipping', $a['shipping'] );
             }
 
-            // Set meta data (internal / sensitive keys refused: an internal order key is
-            // a property setter, and the posts tools refuse the same keys).
-            $rejected_meta = [];
-            if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
-                [ $allowed_meta, $rejected_meta ] = cowboy_mcp_woo_filter_meta( $a['meta'] );
+            // Set meta data (blocked keys already refused above, before other writes).
+            if ( is_array( $allowed_meta ) ) {
                 foreach ( $allowed_meta as $key => $value ) {
                     $order->update_meta_data( $key, $value );
                 }
@@ -483,12 +501,11 @@ return [
 
             $order->save();
 
-            return array_filter( [
-                'updated'            => true,
-                'order_id'           => $id,
-                'order'              => cowboy_mcp_woo_format_order( wc_get_order( $id ) ),
-                'rejected_meta_keys' => $rejected_meta,
-            ], static fn( $v ) => [] !== $v );
+            return [
+                'updated'  => true,
+                'order_id' => $id,
+                'order'    => cowboy_mcp_woo_format_order( wc_get_order( $id ) ),
+            ];
         },
 
         'wp_woo_delete_order' => function ( array $a ) {

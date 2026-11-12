@@ -2,6 +2,21 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * PRE_DISPATCH check for tools with a `meta` argument (posts, products, orders), so
+ * a dry run refuses a blocked key exactly as the handler does. Also used by the
+ * WooCommerce domain files, which always load with this one.
+ */
+function cowboy_mcp_check_meta_arg( array $a ): array|WP_Error {
+    if ( isset( $a['meta'] ) && is_array( $a['meta'] ) ) {
+        $meta = Cowboy_MCP_Security::writable_meta_or_error( $a['meta'] );
+        if ( is_wp_error( $meta ) ) {
+            return $meta;
+        }
+    }
+    return $a;
+}
+
+/**
  * Format a WP_Post into a consistent response shape.
  * Superset of resource_single_post(): adds meta, terms, author_id, parent, menu_order.
  */
@@ -279,6 +294,13 @@ return [
             if ( $gate ) {
                 return $gate;
             }
+            $allowed_meta = null;
+            if ( isset( $a['meta'] ) && is_array( $a['meta'] ) ) {
+                $allowed_meta = Cowboy_MCP_Security::writable_meta_or_error( $a['meta'] );
+                if ( is_wp_error( $allowed_meta ) ) {
+                    return $allowed_meta;
+                }
+            }
             cowboy_mcp_set_post_fields( $data, $a );
             if ( isset( $a['date'] ) ) {
                 $when = cowboy_mcp_parse_post_date( (string) $a['date'] );
@@ -304,24 +326,14 @@ return [
                 wp_set_post_tags( $post_id, array_map( 'sanitize_text_field', $a['tags'] ) );
             }
 
-            // Set meta (block internal/sensitive keys; report what was skipped).
-            $rejected_meta = [];
-            if ( isset( $a['meta'] ) && is_array( $a['meta'] ) ) {
-                foreach ( $a['meta'] as $key => $value ) {
-                    $key = sanitize_key( $key );
-                    if ( Cowboy_MCP_Security::is_blocked_meta_key( $key ) ) {
-                        $rejected_meta[] = $key;
-                        continue;
-                    }
+            // Set meta (blocked keys already refused above, before the insert).
+            if ( is_array( $allowed_meta ) ) {
+                foreach ( $allowed_meta as $key => $value ) {
                     update_post_meta( $post_id, $key, $value );
                 }
             }
 
-            $response = cowboy_mcp_format_post( get_post( $post_id ) );
-            if ( ! empty( $rejected_meta ) ) {
-                $response['rejected_meta_keys'] = $rejected_meta;
-            }
-            return $response;
+            return cowboy_mcp_format_post( get_post( $post_id ) );
         },
 
         'wp_update_post' => function ( array $a ): array|WP_Error {
@@ -338,6 +350,13 @@ return [
             $gate = cowboy_mcp_post_content_gate( $a, (string) $post->post_content );
             if ( $gate ) {
                 return $gate;
+            }
+            $allowed_meta = null;
+            if ( isset( $a['meta'] ) && is_array( $a['meta'] ) ) {
+                $allowed_meta = Cowboy_MCP_Security::writable_meta_or_error( $a['meta'] );
+                if ( is_wp_error( $allowed_meta ) ) {
+                    return $allowed_meta;
+                }
             }
             $data = [ 'ID' => $post_id ];
             cowboy_mcp_set_post_fields( $data, $a );
@@ -368,24 +387,14 @@ return [
                 wp_set_post_tags( $post_id, array_map( 'sanitize_text_field', $a['tags'] ) );
             }
 
-            // Update meta (block internal/sensitive keys; report what was skipped).
-            $rejected_meta = [];
-            if ( isset( $a['meta'] ) && is_array( $a['meta'] ) ) {
-                foreach ( $a['meta'] as $key => $value ) {
-                    $key = sanitize_key( $key );
-                    if ( Cowboy_MCP_Security::is_blocked_meta_key( $key ) ) {
-                        $rejected_meta[] = $key;
-                        continue;
-                    }
+            // Update meta (blocked keys already refused above, before any write).
+            if ( is_array( $allowed_meta ) ) {
+                foreach ( $allowed_meta as $key => $value ) {
                     update_post_meta( $post_id, $key, $value );
                 }
             }
 
-            $response = cowboy_mcp_format_post( get_post( $post_id ) );
-            if ( ! empty( $rejected_meta ) ) {
-                $response['rejected_meta_keys'] = $rejected_meta;
-            }
-            return $response;
+            return cowboy_mcp_format_post( get_post( $post_id ) );
         },
 
         'wp_delete_post' => function ( array $a ): array|WP_Error {

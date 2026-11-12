@@ -499,6 +499,56 @@ class Cowboy_MCP_Security {
     }
 
     /**
+     * Judge agent-supplied meta before any write.
+     *
+     * Returns the writable key => value map (keys sanitize_key()'d), or a WP_Error
+     * naming every refused key (underscore-prefixed internal keys except
+     * WRITABLE_UNDERSCORE_META, credential-looking names, names that sanitize to '')
+     * with a hint pointing at the tool or argument that writes it. All or nothing:
+     * one refused key refuses the whole call, so a caller never reports success for
+     * a write it skipped. Runs from PRE_DISPATCH (dry runs refuse the same) and again
+     * in the handlers.
+     *
+     * @param array<string,mixed> $meta
+     * @return array<string,mixed>|WP_Error
+     */
+    public static function writable_meta_or_error( array $meta ): array|WP_Error {
+        $allowed  = [];
+        $rejected = [];
+        foreach ( $meta as $key => $value ) {
+            $key = sanitize_key( (string) $key );
+            if ( '' === $key || self::is_blocked_meta_key( $key ) ) {
+                $rejected[] = $key;
+                continue;
+            }
+            $allowed[ $key ] = $value;
+        }
+        if ( ! $rejected ) {
+            return $allowed;
+        }
+
+        $hints = [];
+        foreach ( $rejected as $key ) {
+            if ( '_product_image_gallery' === $key ) {
+                $hints['gallery'] = 'A product gallery is set with gallery_image_ids (image attachment IDs; [] clears it) on wp_woo_create_product / wp_woo_update_product, and the featured image with image_id.';
+            } elseif ( preg_match( '/^_(yoast_wpseo_|aioseo_|seopress_)/', $key ) ) {
+                $hints['seo'] = 'SEO fields are written with wp_seo_update_meta.';
+            } elseif ( preg_match( '/^_(regular_price|sale_price|price|sku|stock|stock_status|manage_stock|weight|length|width|height|virtual|downloadable|tax_status|tax_class)$/', $key ) ) {
+                $hints['product'] = 'Product data is written with the named arguments of wp_woo_create_product / wp_woo_update_product.';
+            } elseif ( preg_match( '/^_(billing|shipping)_/', $key ) ) {
+                $hints['address'] = 'Order addresses are written with the billing / shipping arguments of wp_woo_create_order / wp_woo_update_order.';
+            }
+        }
+        $hints['generic'] = 'Underscore-prefixed (internal) and credential-looking keys cannot be written through meta (ACF fields: wp_acf_update_field). Nothing was written; resend without these keys.';
+
+        return new WP_Error(
+            'meta_key_blocked',
+            'Refused meta key(s): ' . implode( ', ', array_map( static fn( $k ) => '' === $k ? '(empty)' : $k, $rejected ) ) . '. ' . implode( ' ', $hints ),
+            [ 'rejected_meta_keys' => $rejected ]
+        );
+    }
+
+    /**
      * Redact a meta map ([key => value] or [key => [values]]) by key sensitivity.
      * Hard-masks credential columns, masks sensitive-named keys, and scrubs
      * Bearer/MCP tokens from any remaining string values.
