@@ -50,6 +50,9 @@ class Cowboy_MCP_Auth {
      */
     private static $request_decision = "\0unset";
 
+    /** Which header carried this request's credential: 'authorization' or 'key_header' (set by request_token()). */
+    private static $token_source = '';
+
     /**
      * Bootstrap hook — intentionally empty.
      *
@@ -288,10 +291,12 @@ class Cowboy_MCP_Auth {
             if ( self::ip_limited( $client_ip ) ) {
                 return self::ip_limit_error( $client_ip );
             }
-            self::log( 'auth_missing_header', [
-                'ip'              => sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) ),
-                'x_forwarded_for' => $request->get_header( 'X-Forwarded-For' ) ?: null,
-            ] );
+            if ( ! self::is_self_check() ) { // the site's own header probe and Doctor runs: not an app, keep them out of the Logs tab
+                self::log( 'auth_missing_header', [
+                    'ip'              => sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) ),
+                    'x_forwarded_for' => $request->get_header( 'X-Forwarded-For' ) ?: null,
+                ] );
+            }
             self::note_auth_failure( $client_ip );
             if ( class_exists( 'Cowboy_MCP_OAuth_Address' ) ) {
                 Cowboy_MCP_OAuth_Address::note_unauthenticated_401( $request ); // cheap: reads + one transient write, no fetches
@@ -313,7 +318,9 @@ class Cowboy_MCP_Auth {
                 if ( self::ip_limited( $client_ip ) ) {
                     return self::ip_limit_error( $client_ip );
                 }
-                self::log( 'auth_invalid_oauth', [ 'reason' => $user_id->get_error_code() ] );
+                if ( ! self::is_self_check() ) {
+                    self::log( 'auth_invalid_oauth', [ 'reason' => $user_id->get_error_code() ] );
+                }
                 self::note_auth_failure( $client_ip );
                 self::send_www_authenticate();
                 return new WP_Error( 'mcp_unauthorized', 'oauth_disabled' === $user_id->get_error_code() ? 'OAuth connector is not enabled.' : 'Invalid or expired access token.', [ 'status' => 401 ] );
@@ -354,10 +361,12 @@ class Cowboy_MCP_Auth {
 
         if ( null !== $match ) {
             $record = $keys[ $match ];
-            // Throttle last_used updates (at most once per minute).
+            // Throttle last_used updates (at most once per minute). `via` = the header the key came in:
+            // a key that last worked through Authorization on a server that now strips it is failing,
+            // and only then does the Connections tab ask the owner to act (Cowboy_MCP_Auth_Header).
             $now = time();
-            if ( empty( $record['last_used'] ) || ( $now - $record['last_used'] ) >= 60 ) {
-                self::update_key_record( $match, [ 'last_used' => $now ] );
+            if ( empty( $record['last_used'] ) || ( $now - $record['last_used'] ) >= 60 || ( $record['via'] ?? '' ) !== self::$token_source ) {
+                self::update_key_record( $match, [ 'last_used' => $now, 'via' => self::$token_source ] );
             }
 
             // Populate key context for structured logging.
@@ -499,13 +508,20 @@ class Cowboy_MCP_Auth {
             $auth = self::server_authorization_header();
         }
         if ( preg_match( '/^Bearer\s+(\S+)$/i', $auth, $m ) ) {
+            self::$token_source = 'authorization';
             return $m[1];
         }
         $alt = trim( (string) $request->get_header( self::KEY_HEADER ) );
         if ( preg_match( '/^(?:Bearer\s+)?(\S+)$/i', $alt, $m ) ) {
+            self::$token_source = 'key_header';
             return $m[1];
         }
         return null;
+    }
+
+    /** The request carries a live self-check marker (Cowboy_MCP_OAuth_Address). Only consulted on refused requests. */
+    private static function is_self_check(): bool {
+        return class_exists( 'Cowboy_MCP_OAuth_Address' ) && Cowboy_MCP_OAuth_Address::is_self_check_request();
     }
 
     /** Authorization as the web server reports it (getallheaders / apache_request_headers), or ''. */

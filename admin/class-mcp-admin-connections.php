@@ -849,6 +849,20 @@ class Cowboy_MCP_Admin_Connections {
     }
 
     /**
+     * The header an API key travels in, as [name, value]. Normally Authorization with Bearer;
+     * when this site's server removes Authorization (Cowboy_MCP_Auth_Header), the key header
+     * Cowboy also reads, which servers pass through. Switches quietly: no notice, the copied
+     * command simply works.
+     */
+    private static function key_header( string $key_display ): array {
+        return self::header_stripped() ? [ Cowboy_MCP_Auth::KEY_HEADER, $key_display ] : [ 'Authorization', 'Bearer ' . $key_display ];
+    }
+
+    private static function header_stripped(): bool {
+        return class_exists( 'Cowboy_MCP_Auth_Header' ) && Cowboy_MCP_Auth_Header::stripped();
+    }
+
+    /**
      * claude_desktop_config.json snippet for the mcp-remote bridge. An empty $key_display
      * means OAuth (mcp-remote registers and opens the browser itself); otherwise the
      * Authorization header value goes through mcp-remote's ${VAR} env expansion so the
@@ -863,7 +877,8 @@ class Cowboy_MCP_Admin_Connections {
         if ( '' === $key_display ) {
             return "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"mcp-remote\", \"{$endpoint}\"{$allow}]\n    }\n  }\n}";
         }
-        return "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"mcp-remote\", \"{$endpoint}\"{$allow},\n        \"--header\", \"Authorization:\${AUTH_HEADER}\"],\n      \"env\": { \"AUTH_HEADER\": \"Bearer {$key_display}\" }\n    }\n  }\n}";
+        [ $hname, $hvalue ] = self::key_header( $key_display );
+        return "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"mcp-remote\", \"{$endpoint}\"{$allow},\n        \"--header\", \"{$hname}:\${AUTH_HEADER}\"],\n      \"env\": { \"AUTH_HEADER\": \"{$hvalue}\" }\n    }\n  }\n}";
     }
 
     /**
@@ -1142,7 +1157,14 @@ class Cowboy_MCP_Admin_Connections {
                 <details class="mcp-local-details cmcp-key-fallback" <?php echo $new_key ? 'open' : ''; ?>>
                     <summary><?php esc_html_e( 'Use an API key instead', 'cowboy-mcp' ); ?></summary>
                     <div class="mcp-local-details-body cmcp-key-fallback-body">
-                        <p><?php echo wp_kses( __( 'Set Authentication to <strong>Bearer Auth</strong> instead and paste the key into a new Bearer Auth credential.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                        <?php if ( self::header_stripped() ) : ?>
+                            <p><?php
+                                /* translators: %s: header name, X-Cowboy-MCP-Key */
+                                echo wp_kses( sprintf( __( 'Set Authentication to <strong>Header Auth</strong> instead and create a new Header Auth credential: Name <code>%s</code>, Value the key.', 'cowboy-mcp' ), esc_html( Cowboy_MCP_Auth::KEY_HEADER ) ), [ 'strong' => [], 'code' => [] ] );
+                            ?></p>
+                        <?php else : ?>
+                            <p><?php echo wp_kses( __( 'Set Authentication to <strong>Bearer Auth</strong> instead and paste the key into a new Bearer Auth credential.', 'cowboy-mcp' ), [ 'strong' => [] ] ); ?></p>
+                        <?php endif; ?>
                         <?php self::render_key_step( 'n8n', 'n8n', $new_key, ! empty( $keys ), 'a' ); ?>
                     </div>
                 </details>
@@ -1195,6 +1217,8 @@ class Cowboy_MCP_Admin_Connections {
                     <p class="description"><?php echo wp_kses( __( 'Codex reads the key each time it starts, so also add the <code>export</code> line to your shell profile (e.g. <code>~/.zshrc</code>).', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'opencode' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Opencode 1.x: leave out <code>--global</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                <?php elseif ( 'hermes' === $slug && self::header_stripped() ) : ?>
+                    <p class="description"><?php echo wp_kses( __( 'Add this to <code>~/.hermes/config.yaml</code> (if the file already has an <code>mcp_servers:</code> line, put the entry under it), then restart Hermes.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'hermes' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Hermes asks for the key when you run this and stores it in <code>~/.hermes/.env</code>; the config file only references it.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php endif; ?>
@@ -1259,6 +1283,9 @@ class Cowboy_MCP_Admin_Connections {
 
     /** Title shown on a snippet's terminal bar: the file it goes into (Cursor only), or "terminal". */
     private static function snippet_title( string $slug ): string {
+        if ( 'hermes' === $slug && self::header_stripped() ) {
+            return '~/.hermes/config.yaml';
+        }
         return match ( $slug ) {
             'cursor'    => '~/.cursor/mcp.json',
             'muse-code' => '~/.config/muse/settings.json',
@@ -1275,7 +1302,8 @@ class Cowboy_MCP_Admin_Connections {
     private static function openclaw_config_json( string $domain, string $endpoint, string $key_display ): string {
         $entry = [ 'url' => $endpoint, 'transport' => 'streamable-http' ];
         if ( '' !== $key_display ) {
-            $entry['headers'] = [ 'Authorization' => 'Bearer ' . $key_display ];
+            [ $hname, $hvalue ] = self::key_header( $key_display );
+            $entry['headers']   = [ $hname => $hvalue ];
         } else {
             $entry['auth'] = 'oauth';
         }
@@ -1286,29 +1314,38 @@ class Cowboy_MCP_Admin_Connections {
     private static function hermes_config_yaml( string $domain, string $endpoint, string $key_display ): string {
         $yaml = "mcp_servers:\n  {$domain}:\n    url: \"{$endpoint}\"\n";
         if ( '' !== $key_display ) {
-            return $yaml . "    headers:\n      Authorization: \"Bearer {$key_display}\"\n";
+            [ $hname, $hvalue ] = self::key_header( $key_display );
+            return $yaml . "    headers:\n      {$hname}: \"{$hvalue}\"\n";
         }
         return $yaml . "    auth: oauth\n";
     }
 
     /** Raw (unescaped) setup snippet for an API-key client: a command wherever the client has one. Escaped at output. */
     private static function install_snippet( string $slug, string $domain, string $endpoint, string $key_display ): string {
+        [ $hname, $hvalue ] = self::key_header( $key_display );
+        $stripped           = self::header_stripped();
         return match ( $slug ) {
-            'claude-code'    => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
-            'codex'          => 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'codex mcp add ' . $domain . ' --url ' . $endpoint . ' --bearer-token-env-var COWBOY_MCP_API_KEY',
+            'claude-code'    => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "' . $hname . ': ' . $hvalue . '"',
+            // `codex mcp add` has no header option besides --bearer-token-env-var (Authorization only); config.toml's
+            // env_http_headers takes any header name (codex mcp get --json, 0.167.2, 2026-11-12).
+            'codex'          => $stripped
+                ? 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'mkdir -p "${CODEX_HOME:-$HOME/.codex}" && cat >> "${CODEX_HOME:-$HOME/.codex}/config.toml" <<\'EOF\'' . "\n\n[mcp_servers." . $domain . "]\nurl = \"" . $endpoint . "\"\nenv_http_headers = { \"" . $hname . "\" = \"COWBOY_MCP_API_KEY\" }\nEOF"
+                : 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'codex mcp add ' . $domain . ' --url ' . $endpoint . ' --bearer-token-env-var COWBOY_MCP_API_KEY',
             // opencode's --header takes KEY=VALUE (opencode mcp add --help, 1.18 and 2.1). 2.x writes to the project config unless
             // --global is given; 1.x always writes globally and rejects --global (both checked 2026-10-26), hence the panel's note.
-            'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint . ' --global --header "Authorization=Bearer ' . $key_display . '"',
-            'cursor'         => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"Authorization\": \"Bearer {$key_display}\"\n      }\n    }\n  }\n}",
-            'gemini-cli'     => 'gemini mcp add --scope user --transport http ' . $domain . ' ' . $endpoint . ' --header "Authorization: Bearer ' . $key_display . '"',
-            'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint, 'headers' => [ 'Authorization' => 'Bearer ' . $key_display ] ], JSON_UNESCAPED_SLASHES ) . "'",
+            'opencode'       => 'opencode mcp add ' . $domain . ' --url ' . $endpoint . ' --global --header "' . $hname . '=' . $hvalue . '"',
+            'cursor'         => "{\n  \"mcpServers\": {\n    \"{$domain}\": {\n      \"url\": \"{$endpoint}\",\n      \"headers\": {\n        \"{$hname}\": \"{$hvalue}\"\n      }\n    }\n  }\n}",
+            'gemini-cli'     => 'gemini mcp add --scope user --transport http ' . $domain . ' ' . $endpoint . ' --header "' . $hname . ': ' . $hvalue . '"',
+            'vscode'         => "code --add-mcp '" . wp_json_encode( [ 'name' => $domain, 'type' => 'http', 'url' => $endpoint, 'headers' => [ $hname => $hvalue ] ], JSON_UNESCAPED_SLASHES ) . "'",
             'claude-desktop' => self::bridge_command_snippet( $domain, $endpoint, $key_display ),
             // A key never goes into the chat message (it would reach the model); the key path edits the file instead.
             'muse-code'      => self::muse_settings_json( $domain, $endpoint, $key_display ),
             // `--header <key=value>`, repeatable (openclaw mcp add --help, 2026.10.4); `add` probes the server before saving.
-            'openclaw'       => 'openclaw mcp add ' . $domain . ' --url ' . $endpoint . ' --transport streamable-http --header "Authorization=Bearer ' . $key_display . '"',
+            'openclaw'       => 'openclaw mcp add ' . $domain . ' --url ' . $endpoint . ' --transport streamable-http --header "' . $hname . '=' . $hvalue . '"',
             // `--auth header` prompts for the token (masked) and keeps it in ~/.hermes/.env, so the key is never on the command line (hermes_cli/mcp_config.py, 2026-10-16).
-            'hermes'         => 'hermes mcp add ' . $domain . ' --url ' . $endpoint . ' --auth header',
+            // `--auth header` always writes Authorization: Bearer (hermes_cli/mcp_config.py _bearer_auth_headers); the
+            // config file's `headers` map takes any name, so a stripping server gets the file instead.
+            'hermes'         => $stripped ? self::hermes_config_yaml( $domain, $endpoint, $key_display ) : 'hermes mcp add ' . $domain . ' --url ' . $endpoint . ' --auth header',
             default          => '',
         };
     }
@@ -1333,7 +1370,8 @@ class Cowboy_MCP_Admin_Connections {
     private static function muse_settings_json( string $domain, string $endpoint, string $key_display ): string {
         $entry = [ 'type' => 'streamable-http', 'url' => $endpoint, 'mode' => 'optional' ];
         if ( '' !== $key_display ) {
-            $entry['headers'] = [ 'Authorization' => 'Bearer ' . $key_display ];
+            [ $hname, $hvalue ] = self::key_header( $key_display );
+            $entry['headers']   = [ $hname => $hvalue ];
         }
         return (string) wp_json_encode( [ 'schema_version' => 1, 'mcpServers' => [ $domain => $entry ] ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
     }
@@ -1351,7 +1389,8 @@ class Cowboy_MCP_Admin_Connections {
         $args  = '"-y","mcp-remote","' . $endpoint . '"' . ( $http ? ',"--allow-http"' : '' );
         $entry = '{command:"npx",args:[' . $args . ']}';
         if ( '' !== $key_display ) {
-            $entry = '{command:"npx",args:[' . $args . ',"--header","Authorization:${AUTH_HEADER}"],env:{AUTH_HEADER:"Bearer ' . $key_display . '"}}';
+            [ $hname, $hvalue ] = self::key_header( $key_display );
+            $entry              = '{command:"npx",args:[' . $args . ',"--header","' . $hname . ':${AUTH_HEADER}"],env:{AUTH_HEADER:"' . $hvalue . '"}}';
         }
         $path = 'const f=(process.platform==="win32"?process.env.APPDATA+"\\\\Claude":process.platform==="darwin"?process.env.HOME+"/Library/Application Support/Claude":process.env.HOME+"/.config/Claude")+"/claude_desktop_config.json";';
         $js   = 'const fs=require("fs"),p=require("path");' . $path
@@ -1698,6 +1737,50 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
+    /**
+     * The Authorization-header warning (Cowboy_MCP_Auth_Header). Always renders its wrapper so
+     * the page's script can fill it: with a stale answer it asks for a fresh probe after the
+     * page has loaded (a render never waits on a loopback). $just_checked: answering "Check
+     * again", so a header that now gets through says so instead of disappearing silently.
+     */
+    public static function render_auth_header_warning( bool $just_checked = false, bool $wrap = false ): void {
+        if ( ! class_exists( 'Cowboy_MCP_Auth_Header' ) ) {
+            return;
+        }
+        if ( $wrap ) {
+            echo '<div class="cmcp-authhdr"' . ( Cowboy_MCP_Auth_Header::is_stale() ? ' data-cmcp-authhdr-check="1"' : '' ) . '>';
+        }
+        $result = Cowboy_MCP_Auth_Header::state()['result'];
+        if ( 'stripped' === $result && Cowboy_MCP_Auth_Header::needs_owner() ) {
+            ?>
+            <div class="cmcp-callout cmcp-callout--warn cmcp-authhdr-stripped" role="status">
+                <p><strong><?php esc_html_e( 'Your server removes the Authorization header.', 'cowboy-mcp' ); ?></strong> <?php esc_html_e( 'Apps can sign in, but every call they make then reaches WordPress without its key or sign-in token, so WordPress refuses it.', 'cowboy-mcp' ); ?></p>
+                <p><?php esc_html_e( 'What to change on the server (or send this to your host):', 'cowboy-mcp' ); ?></p>
+                <p class="cmcp-signin-fix"><?php echo esc_html( Cowboy_MCP_Doctor::AUTH_HEADER_FIX ); ?></p>
+                <?php if ( [] !== Cowboy_MCP_Auth_Header::failing_keys() ) : ?>
+                    <p><?php esc_html_e( 'Or, for apps connected with an API key: copy their setup command from this page again. It now sends the key in a header your server keeps.', 'cowboy-mcp' ); ?></p>
+                <?php endif; ?>
+                <p><button type="button" class="cmcp-btn cmcp-btn--sm" data-cmcp-authhdr-recheck><?php esc_html_e( 'Check again', 'cowboy-mcp' ); ?></button></p>
+            </div>
+            <?php
+        } elseif ( $just_checked && 'passes' === $result ) {
+            ?>
+            <div class="cmcp-callout cmcp-authhdr-ok" role="status">
+                <p><?php esc_html_e( 'The Authorization header now reaches WordPress.', 'cowboy-mcp' ); ?></p>
+            </div>
+            <?php
+        } elseif ( $just_checked ) {
+            ?>
+            <div class="cmcp-callout cmcp-callout--warn cmcp-authhdr-unknown" role="status">
+                <p><?php esc_html_e( 'The check could not reach this site from its own server, so it cannot tell whether the header gets through. The Connection Doctor below shows what failed.', 'cowboy-mcp' ); ?></p>
+            </div>
+            <?php
+        }
+        if ( $wrap ) {
+            echo '</div>';
+        }
+    }
+
     public static function render_tab( string $endpoint, $new_key ): void {
         $registry    = self::client_registry();
         $is_local    = self::site_looks_local();
@@ -1718,6 +1801,7 @@ class Cowboy_MCP_Admin_Connections {
         }
         self::render_blocked_callout();
         self::render_signin_unreachable();
+        self::render_auth_header_warning( false, true );
         $strip = self::connect_watch();
         if ( ! $strip || 'retry' !== self::connect_status( $strip )['stage'] ) {
             self::render_retry_notice(); // unless the strip below already says it: same words

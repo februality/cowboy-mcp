@@ -853,6 +853,28 @@ document.addEventListener( 'click', function( e ) {
 	if ( box ) { box.remove(); }
 } );
 
+// Authorization-header probe: after load when the stored answer is stale, and from "Check again".
+( function() {
+	var box = document.querySelector( '.cmcp-authhdr' );
+	if ( ! box || typeof cowboyMcpAdmin === 'undefined' ) { return; }
+	function check( force, btn ) {
+		if ( btn ) { btn.disabled = true; btn.textContent = cowboyMcpAdmin.checking; }
+		var body = new URLSearchParams( { action: 'cowboy_mcp_auth_header_check', _ajax_nonce: cowboyMcpAdmin.headerNonce, force: force ? '1' : '' } );
+		fetch( cowboyMcpAdmin.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } )
+			.then( function( r ) { return r.json(); } )
+			.then( function( j ) {
+				if ( j && j.success ) { box.innerHTML = j.data.html; }
+			} )
+			.catch( function() {} )
+			.then( function() { box.removeAttribute( 'data-cmcp-authhdr-check' ); } );
+	}
+	if ( box.hasAttribute( 'data-cmcp-authhdr-check' ) ) { check( false, null ); }
+	box.addEventListener( 'click', function( e ) {
+		var btn = e.target.closest && e.target.closest( '[data-cmcp-authhdr-recheck]' );
+		if ( btn ) { check( true, btn ); }
+	} );
+} )();
+
 // Live "Connected": poll while a strip is on screen and the tab is visible. Also started by [data-cmcp-start].
 ( function() {
 	var timer = null;
