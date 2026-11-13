@@ -1359,7 +1359,7 @@ msgstr ""
 msgid ""
 "Set Authentication to <strong>Header Auth</strong> instead and create a new "
 "Header Auth credential: Name <code>%s</code>, Value the key."
-msgstr "Pon la autenticación en <strong>Header Auth</strong> y crea una nueva credencial Header Auth: Name <code>%s</code>, Value la clave."
+msgstr "Ponga la autenticación en <strong>Header Auth</strong> y cree una nueva credencial Header Auth: Name <code>%s</code>, Value la clave."
 
 #: admin/class-mcp-admin-connections.php:1166
 msgid ""
@@ -1405,7 +1405,7 @@ msgstr ""
 msgid ""
 "Add this to <code>~/.hermes/config.yaml</code> (if the file already has an "
 "<code>mcp_servers:</code> line, put the entry under it), then restart Hermes."
-msgstr "Añade esto a <code>~/.hermes/config.yaml</code> (si el archivo ya tiene una línea <code>mcp_servers:</code>, pon la entrada debajo) y reinicia Hermes."
+msgstr "Añada esto a <code>~/.hermes/config.yaml</code> (si el archivo ya tiene una línea <code>mcp_servers:</code>, ponga la entrada debajo) y reinicie Hermes."
 
 #: admin/class-mcp-admin-connections.php:1223
 msgid ""
@@ -1760,13 +1760,13 @@ msgstr ""
 
 #: admin/class-mcp-admin-connections.php:1757
 msgid "Your server removes the Authorization header."
-msgstr "Tu servidor elimina la cabecera Authorization."
+msgstr "Su servidor elimina la cabecera Authorization."
 
 #: admin/class-mcp-admin-connections.php:1761
 msgid ""
 "Or, for apps connected with an API key: copy their setup command from this "
 "page again. It now sends the key in a header your server keeps."
-msgstr "O bien, para las apps conectadas con una clave API: vuelve a copiar su comando de configuración desde esta página. Ahora envía la clave en una cabecera que tu servidor conserva."
+msgstr "O bien, para las apps conectadas con una clave API: vuelva a copiar su comando de configuración desde esta página. Ahora envía la clave en una cabecera que su servidor conserva."
 
 #: admin/class-mcp-admin-connections.php:1763
 msgid "Check again"
