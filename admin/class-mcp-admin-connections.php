@@ -1080,13 +1080,19 @@ class Cowboy_MCP_Admin_Connections {
         $after    = $cursor
             ? __( 'Accept in Cursor. It opens your browser to sign in.', 'cowboy-mcp' )
             : __( 'Confirm in VS Code and trust the server. It opens your browser to sign in.', 'cowboy-mcp' );
+        // Cursor's sign-in listener closes about two minutes after the browser opens (observed 2026-11-07); a later
+        // Approve succeeds on the site but never reaches Cursor. VS Code's limit is not measured, so no note there.
+        $after_more = $cursor ? __( 'Approve there within about two minutes. If it takes longer, click Authenticate again in Cursor.', 'cowboy-mcp' ) : '';
         ?>
         <?php self::step_open( '1', $btn, '' ); ?>
+                <?php if ( ! $cursor ) : // VS Code's MCP support runs in Copilot Chat; without Copilot the tools have nowhere to appear. ?>
+                    <p><?php esc_html_e( 'You need GitHub Copilot in VS Code for this (the free plan works).', 'cowboy-mcp' ); ?></p>
+                <?php endif; ?>
                 <p><a class="cmcp-btn cmcp-btn--primary cmcp-install" href="<?php echo esc_url( self::install_link( $slug, $domain, $endpoint ), [ 'https', 'cursor' ] ); ?>"<?php echo $cursor ? '' : ' target="_blank" rel="noopener"'; ?> data-cmcp-start="<?php echo esc_attr( $slug ); ?>" data-cmcp-mode="oauth"><?php
                     echo esc_html( $btn );
                     echo Cowboy_MCP_Admin::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG.
                 ?></a></p>
-                <p><?php echo esc_html( $after ); ?></p>
+                <p><?php echo esc_html( trim( $after . ' ' . $after_more ) ); ?></p>
                 <div class="cmcp-inline-sum">
                 <?php if ( ! $cursor ) : ?>
                     <details class="mcp-local-details">
