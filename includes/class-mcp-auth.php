@@ -297,7 +297,7 @@ class Cowboy_MCP_Auth {
                 Cowboy_MCP_OAuth_Address::note_unauthenticated_401( $request ); // cheap: reads + one transient write, no fetches
             }
             self::send_www_authenticate();
-            return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.', [ 'status' => 401 ] );
+            return new WP_Error( 'mcp_unauthorized', 'Missing or invalid Authorization header.' . self::signin_off_hint(), [ 'status' => 401 ] );
         }
 
 
@@ -506,6 +506,19 @@ class Cowboy_MCP_Auth {
             return $m[1];
         }
         return null;
+    }
+
+    /**
+     * Appended to the credential-less 401 while browser sign-in is off: apps that sign in through
+     * the browser find nothing to sign in with, and terminal/IDE apps (Claude Code, Cursor) show
+     * the server's message to the user. English, like every message agents receive. ASCII only:
+     * the REST response escapes other characters, and some apps print the raw JSON.
+     */
+    private static function signin_off_hint(): string {
+        if ( class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::is_enabled() ) {
+            return '';
+        }
+        return ' Browser sign-in is off on this site: to connect without an API key, a site administrator can turn it on under Settings > Cowboy MCP > Connections.';
     }
 
     /** Authorization as the web server reports it (getallheaders / apache_request_headers), or ''. */
