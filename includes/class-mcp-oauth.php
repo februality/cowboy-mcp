@@ -30,6 +30,14 @@ class Cowboy_MCP_OAuth {
     const CIMD_GRANT_PREFIX = 'cimd_g_';
     /** Used refresh records kept per connection for reuse detection (see rotate_refresh_token()). */
     const MAX_USED_REFRESH = 20;
+    /**
+     * Seconds a just-used refresh token may come back and still get a new pair instead of
+     * revoking the connection: an app whose refresh reply was lost retries, or two parallel
+     * requests refresh with the same token. Filter `cowboy_mcp_oauth_refresh_grace` (0 = off).
+     */
+    const REFRESH_GRACE = 30;
+    /** Extra pairs one used refresh token may get inside the grace window. */
+    const MAX_GRACE_REUSES = 3;
     // Registration is unauthenticated by design (RFC 7591), so everything it stores is bounded.
     const MAX_CLIENT_NAME_LEN  = 100;
     const MAX_REDIRECT_URIS    = 10;  // VS Code registers six; leave headroom
@@ -842,15 +850,27 @@ class Cowboy_MCP_OAuth {
         // the consent screen, which sets the scope again. revoke_connection() finds no
         // row here and just clears the client's access + refresh tokens.
         self::revoke_connection( $client_id );
-        $clients = get_option( self::CLIENTS_OPTION, [] );
-        if ( count( $clients ) >= self::MAX_CLIENTS ) {
-            $clients = self::prune_unused_clients( $clients );
-        }
-        $client['rehydrated']  = time();
-        $clients[ $client_id ] = $client;
-        update_option( self::CLIENTS_OPTION, $clients, false );
+        $client['rehydrated'] = time();
+        self::add_client_row( $client_id, $client );
         Cowboy_MCP_Auth::log( 'oauth_client_rehydrated', [ 'client_name' => $client['client_name'] ] );
         return $client;
+    }
+
+    /**
+     * Store a client row under the store lock, making room by pruning unused clients first.
+     * With $cap, refuses (returns false) when the store is still full after pruning.
+     */
+    private static function add_client_row( string $key, array $row, bool $cap = false ): bool {
+        return self::change_store( self::CLIENTS_OPTION, static function ( array &$clients ) use ( $key, $row, $cap ): bool {
+            if ( count( $clients ) >= self::MAX_CLIENTS ) {
+                $clients = self::prune_unused_clients( $clients );
+            }
+            if ( $cap && count( $clients ) >= self::MAX_CLIENTS ) {
+                return false;
+            }
+            $clients[ $key ] = $row;
+            return true;
+        } );
     }
 
     public static function client_is_known( string $client_id ): bool {
@@ -883,63 +903,139 @@ class Cowboy_MCP_OAuth {
         return false;
     }
 
-    /* ── Tokens ────────────────────────────────────────────── */
+    /* ── Store lock ────────────────────────────────────────── */
 
-    private static function revoke_token_record( string $access_id ): void {
-        $tokens = get_option( self::TOKENS_OPTION, [] );
-        if ( isset( $tokens[ $access_id ] ) ) {
-            unset( $tokens[ $access_id ] );
-            update_option( self::TOKENS_OPTION, $tokens, false );
+    /** Nesting depth of with_store_lock() in this request (the database lock is taken once). */
+    private static int $store_lock_depth = 0;
+
+    /**
+     * Run $fn holding the lock every write to the token, refresh-token and client stores takes.
+     * Each store is one option, so two requests that read, change and save it at the same
+     * moment would otherwise drop each other's rows (seen as connections that need a reconnect
+     * after simultaneous refreshes). MySQL/MariaDB GET_LOCK, named per database and options
+     * table; released on the way out, and by the server if the request dies. Where it is not
+     * available (an SQLite drop-in) or does not come within 5 s, $fn runs unlocked as before.
+     *
+     * @return mixed What $fn returns.
+     */
+    private static function with_store_lock( callable $fn ) {
+        if ( self::$store_lock_depth > 0 ) {
+            ++self::$store_lock_depth;
+            try {
+                return $fn();
+            } finally {
+                --self::$store_lock_depth;
+            }
+        }
+        global $wpdb;
+        $name = '|' . $wpdb->options . '|cowboy_mcp_oauth';
+        $prev = $wpdb->suppress_errors( true );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter -- an advisory lock, not data
+        $got = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( SHA1( CONCAT( DATABASE(), %s ) ), %d )', $name, 5 ) );
+        $wpdb->suppress_errors( $prev );
+        self::$store_lock_depth = 1;
+        try {
+            return $fn();
+        } finally {
+            self::$store_lock_depth = 0;
+            if ( '1' === (string) $got ) {
+                $prev = $wpdb->suppress_errors( true );
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter -- an advisory lock, not data
+                $wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( SHA1( CONCAT( DATABASE(), %s ) ) )', $name ) );
+                $wpdb->suppress_errors( $prev );
+            }
         }
     }
 
+    /**
+     * One store as the database holds it now, not as this request (or the object cache) first
+     * read it. The cache is primed with that value, so get_option() and update_option() that
+     * follow in this request see it too.
+     */
+    private static function fresh_store( string $option ): array {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter -- must bypass the request's option cache
+        $raw = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1", $option ) );
+        if ( null === $raw ) {
+            wp_cache_delete( $option, 'options' );
+            return [];
+        }
+        wp_cache_set( $option, $raw, 'options' );
+        $notoptions = wp_cache_get( 'notoptions', 'options' );
+        if ( is_array( $notoptions ) && isset( $notoptions[ $option ] ) ) {
+            unset( $notoptions[ $option ] );
+            wp_cache_set( 'notoptions', $notoptions, 'options' );
+        }
+        $value = maybe_unserialize( $raw );
+        return is_array( $value ) ? $value : [];
+    }
+
+    /**
+     * Change one store under the lock, starting from what the database holds. $change receives
+     * the array by reference (`function ( array &$rows )`); the option is written only when the
+     * array changed.
+     *
+     * @return mixed What $change returns.
+     */
+    private static function change_store( string $option, callable $change ) {
+        return self::with_store_lock( static function () use ( $option, $change ) {
+            $rows   = self::fresh_store( $option );
+            $before = $rows;
+            $out    = $change( $rows );
+            if ( $rows !== $before ) {
+                update_option( $option, $rows, false );
+            }
+            return $out;
+        } );
+    }
+
+    /* ── Tokens ────────────────────────────────────────────── */
+
+    private static function revoke_token_record( string $access_id ): void {
+        self::change_store( self::TOKENS_OPTION, static function ( array &$tokens ) use ( $access_id ) {
+            unset( $tokens[ $access_id ] );
+        } );
+    }
+
     public static function prune_expired(): void {
-        $now = time();
+        self::with_store_lock( static function () {
+            $now = time();
 
-        $tokens  = get_option( self::TOKENS_OPTION, [] );
-        $changed = false;
-        $carry   = []; // client_id => last use recorded on an access token that is about to be dropped
-        foreach ( $tokens as $id => $t ) {
-            if ( (int) ( $t['expires'] ?? 0 ) < $now ) {
-                $cid = (string) ( $t['client_id'] ?? '' );
-                if ( '' !== $cid && ! empty( $t['last_used'] ) ) {
-                    $carry[ $cid ] = max( (int) ( $carry[ $cid ] ?? 0 ), (int) $t['last_used'] );
+            // client_id => last use recorded on an access token that is about to be dropped
+            $carry = self::change_store( self::TOKENS_OPTION, static function ( array &$tokens ) use ( $now ) {
+                $carry = [];
+                foreach ( $tokens as $id => $t ) {
+                    if ( (int) ( $t['expires'] ?? 0 ) < $now ) {
+                        $cid = (string) ( $t['client_id'] ?? '' );
+                        if ( '' !== $cid && ! empty( $t['last_used'] ) ) {
+                            $carry[ $cid ] = max( (int) ( $carry[ $cid ] ?? 0 ), (int) $t['last_used'] );
+                        }
+                        unset( $tokens[ $id ] );
+                    }
                 }
-                unset( $tokens[ $id ] );
-                $changed = true;
+                return $carry;
+            } );
+            if ( $carry ) {
+                // Keep "Last used" on the Connections tab truthful after the hour-long access token
+                // expires: the row remembers the last call until the client refreshes (seen live
+                // 2026-10-12 — Gemini read "Never" an hour after its last tool run).
+                self::change_store( self::CLIENTS_OPTION, static function ( array &$clients ) use ( $carry ) {
+                    foreach ( $carry as $cid => $ts ) {
+                        if ( isset( $clients[ $cid ] ) && is_array( $clients[ $cid ] ) && (int) ( $clients[ $cid ]['last_call'] ?? 0 ) < $ts ) {
+                            $clients[ $cid ]['last_call'] = $ts; // not `last_used`: that one is the grant time and must keep reading "Never" until a real call
+                        }
+                    }
+                } );
             }
-        }
-        if ( $changed ) {
-            update_option( self::TOKENS_OPTION, $tokens, false );
-        }
-        if ( $carry ) {
-            // Keep "Last used" on the Connections tab truthful after the hour-long access token
-            // expires: the row remembers the last call until the client refreshes (seen live
-            // 2026-10-12 — Gemini read "Never" an hour after its last tool run).
-            $clients = get_option( self::CLIENTS_OPTION, [] );
-            $touched = false;
-            foreach ( $carry as $cid => $ts ) {
-                if ( isset( $clients[ $cid ] ) && is_array( $clients[ $cid ] ) && (int) ( $clients[ $cid ]['last_call'] ?? 0 ) < $ts ) {
-                    $clients[ $cid ]['last_call'] = $ts; // not `last_used`: that one is the grant time and must keep reading "Never" until a real call
-                    $touched                      = true;
-                }
-            }
-            if ( $touched ) {
-                update_option( self::CLIENTS_OPTION, $clients, false );
-            }
-        }
 
-        $refresh = get_option( self::REFRESH_OPTION, [] );
-        $changed = false;
-        foreach ( $refresh as $id => $r ) {
-            if ( (int) ( $r['expires'] ?? 0 ) < $now ) {
-                unset( $refresh[ $id ] );
-                $changed = true;
-            }
-        }
-        if ( $changed ) {
-            update_option( self::REFRESH_OPTION, $refresh, false );
-        }
+            self::change_store( self::REFRESH_OPTION, static function ( array &$refresh ) use ( $now ) {
+                foreach ( $refresh as $id => $r ) {
+                    if ( (int) ( $r['expires'] ?? 0 ) < $now ) {
+                        unset( $refresh[ $id ] );
+                    }
+                }
+            } );
+        } );
     }
 
     public static function issue_authorization_code( array $ctx ): string {
@@ -958,7 +1054,6 @@ class Cowboy_MCP_OAuth {
      *                      active then); false for the initial authorization-code grant.
      */
     public static function issue_tokens( int $user_id, string $client_id, string $aud, ?string $scope = 'mcp', bool $rotated = false ): array {
-        self::prune_expired();
         $now = time();
 
         $at_id     = self::random_id();
@@ -966,8 +1061,7 @@ class Cowboy_MCP_OAuth {
         $rt_id     = self::random_id();
         $rt_secret = self::random_secret();
 
-        $tokens = get_option( self::TOKENS_OPTION, [] );
-        $tokens[ $at_id ] = [
+        $access = [
             'id'          => $at_id,
             'secret_hash' => hash( 'sha256', $at_secret ),
             'user_id'     => $user_id,
@@ -979,10 +1073,7 @@ class Cowboy_MCP_OAuth {
             'last_used'   => null,
             'refresh_id'  => $rt_id,
         ];
-        update_option( self::TOKENS_OPTION, $tokens, false );
-
-        $refresh = get_option( self::REFRESH_OPTION, [] );
-        $refresh[ $rt_id ] = [
+        $refresh = [
             'id'          => $rt_id,
             'secret_hash' => hash( 'sha256', $rt_secret ),
             'user_id'     => $user_id,
@@ -995,7 +1086,15 @@ class Cowboy_MCP_OAuth {
             'used'        => false,
             'rotated'     => $rotated,
         ];
-        update_option( self::REFRESH_OPTION, $refresh, false );
+        self::with_store_lock( static function () use ( $at_id, $access, $rt_id, $refresh ) {
+            self::prune_expired();
+            self::change_store( self::TOKENS_OPTION, static function ( array &$tokens ) use ( $at_id, $access ) {
+                $tokens[ $at_id ] = $access;
+            } );
+            self::change_store( self::REFRESH_OPTION, static function ( array &$rows ) use ( $rt_id, $refresh ) {
+                $rows[ $rt_id ] = $refresh;
+            } );
+        } );
 
         return [
             'access_token'  => 'cmcp_at_' . $at_id . '.' . $at_secret,
@@ -1046,14 +1145,11 @@ class Cowboy_MCP_OAuth {
         // not this request's copy, so a token revoked meanwhile is never written back.
         $now = time();
         if ( empty( $rec['last_used'] ) || ( $now - (int) $rec['last_used'] ) >= 60 ) {
-            global $wpdb;
-            wp_cache_delete( self::TOKENS_OPTION, 'options' );
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- must bypass the request's option cache
-            $fresh = maybe_unserialize( (string) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::TOKENS_OPTION ) ) );
-            if ( is_array( $fresh ) && isset( $fresh[ $id ] ) ) {
-                $fresh[ $id ]['last_used'] = $now;
-                update_option( self::TOKENS_OPTION, $fresh, false );
-            }
+            self::change_store( self::TOKENS_OPTION, static function ( array &$tokens ) use ( $id, $now ) {
+                if ( isset( $tokens[ $id ] ) && is_array( $tokens[ $id ] ) ) {
+                    $tokens[ $id ]['last_used'] = $now;
+                }
+            } );
         }
 
         $clients = get_option( self::CLIENTS_OPTION, [] );
@@ -1109,55 +1205,105 @@ class Cowboy_MCP_OAuth {
      * @return array{access_token:string,refresh_token:string,expires_in:int,scope:?string}|WP_Error
      */
     public static function rotate_refresh_token( string $token, string $client_id ): array|WP_Error {
-        $found = self::refresh_record( $token );
-        if ( is_wp_error( $found ) ) {
-            return $found;
-        }
-        [ $id, $rec, $refresh ] = $found;
-        if ( $client_id !== '' && ! self::row_belongs_to( (string) $rec['client_id'], $client_id ) ) {
-            return new WP_Error( 'invalid_grant', 'Client mismatch.' );
-        }
-        if ( time() > (int) $rec['expires'] ) {
-            unset( $refresh[ $id ] );
-            update_option( self::REFRESH_OPTION, $refresh, false );
-            return new WP_Error( 'invalid_grant', 'Refresh token expired.' );
-        }
-        if ( ! empty( $rec['used'] ) ) {
-            // Replay → revoke the whole connection.
-            self::revoke_connection( (string) $rec['client_id'] );
-            return new WP_Error( 'invalid_grant', 'Refresh token reuse detected; connection revoked.' );
-        }
-
-        $user = get_user_by( 'id', (int) $rec['user_id'] );
-        if ( ! $user || ! Cowboy_MCP_Security::user_is_plugin_admin( $user ) ) {
-            unset( $refresh[ $id ] );
-            update_option( self::REFRESH_OPTION, $refresh, false );
-            if ( ! empty( $rec['access_id'] ) ) {
-                self::revoke_token_record( (string) $rec['access_id'] );
+        // One refresh at a time per site, judged on the stored records as they are now: two
+        // requests with the same token can no longer both pass the "used" check, and a
+        // rotation can no longer drop the pair another connection was just issued.
+        return self::with_store_lock( static function () use ( $token, $client_id ) {
+            self::fresh_store( self::REFRESH_OPTION ); // primes the cache refresh_record() reads
+            $found = self::refresh_record( $token );
+            if ( is_wp_error( $found ) ) {
+                return $found;
             }
-            return new WP_Error( 'invalid_grant', 'Bound user no longer permitted.' );
-        }
-
-        // Single-use: mark old refresh used, drop its access token, issue a new pair.
-        // used=true records are intentionally retained until TTL expiry — do NOT prune them early;
-        // they are the replay-detection proof that a token was already consumed.
-        $refresh[ $id ]['used'] = true;
-        // Bounded: a connection that refreshes in a loop must not grow this option until
-        // writes fail. Only its newest used records are kept for reuse detection; an older
-        // replayed token is simply unknown (still refused).
-        $used = array_filter( $refresh, static fn( $r ) => ! empty( $r['used'] ) && ( $r['client_id'] ?? '' ) === $rec['client_id'] );
-        if ( count( $used ) > self::MAX_USED_REFRESH ) {
-            uasort( $used, static fn( $a, $b ) => (int) ( $b['created'] ?? 0 ) <=> (int) ( $a['created'] ?? 0 ) );
-            foreach ( array_slice( array_keys( $used ), self::MAX_USED_REFRESH ) as $old ) {
-                unset( $refresh[ $old ] );
+            [ $id, $rec ] = $found;
+            if ( $client_id !== '' && ! self::row_belongs_to( (string) $rec['client_id'], $client_id ) ) {
+                return new WP_Error( 'invalid_grant', 'Client mismatch.' );
             }
-        }
-        update_option( self::REFRESH_OPTION, $refresh, false );
-        if ( ! empty( $rec['access_id'] ) ) {
-            self::revoke_token_record( (string) $rec['access_id'] );
-        }
+            if ( time() > (int) $rec['expires'] ) {
+                self::change_store( self::REFRESH_OPTION, static function ( array &$refresh ) use ( $id ) {
+                    unset( $refresh[ $id ] );
+                } );
+                return new WP_Error( 'invalid_grant', 'Refresh token expired.' );
+            }
+            $grace = false;
+            if ( ! empty( $rec['used'] ) ) {
+                if ( ! self::within_refresh_grace( $rec ) ) {
+                    // Replay → revoke the whole connection.
+                    $name = self::connection_name( (string) $rec['client_id'] ); // before the row goes
+                    self::revoke_connection( (string) $rec['client_id'] );
+                    Cowboy_MCP_Auth::log( 'oauth_refresh_reuse_revoked', [ 'args' => [ 'client_name' => $name ] ] );
+                    return new WP_Error( 'invalid_grant', 'Refresh token reuse detected; connection revoked.' );
+                }
+                $grace = true;
+            }
 
-        return self::issue_tokens( (int) $rec['user_id'], (string) $rec['client_id'], (string) $rec['aud'], (string) $rec['scope'], true );
+            $user = get_user_by( 'id', (int) $rec['user_id'] );
+            if ( ! $user || ! Cowboy_MCP_Security::user_is_plugin_admin( $user ) ) {
+                self::change_store( self::REFRESH_OPTION, static function ( array &$refresh ) use ( $id ) {
+                    unset( $refresh[ $id ] );
+                } );
+                if ( ! empty( $rec['access_id'] ) ) {
+                    self::revoke_token_record( (string) $rec['access_id'] );
+                }
+                return new WP_Error( 'invalid_grant', 'Bound user no longer permitted.' );
+            }
+
+            if ( $grace ) {
+                // The same token again within seconds of its first use: the app lost the reply,
+                // or sent two requests at once. It gets another pair; the pair issued first stays
+                // valid. Reuse after the window still revokes the connection.
+                self::change_store( self::REFRESH_OPTION, static function ( array &$refresh ) use ( $id ) {
+                    if ( isset( $refresh[ $id ] ) ) {
+                        $refresh[ $id ]['grace_reuses'] = (int) ( $refresh[ $id ]['grace_reuses'] ?? 0 ) + 1;
+                    }
+                } );
+                Cowboy_MCP_Auth::log( 'oauth_refresh_grace', [ 'args' => [ 'client_name' => self::connection_name( (string) $rec['client_id'] ), 'seconds' => time() - (int) $rec['used_at'] ] ] );
+            } else {
+                // Single-use: mark old refresh used, drop its access token, issue a new pair.
+                // used=true records are intentionally retained until TTL expiry — do NOT prune them early;
+                // they are the replay-detection proof that a token was already consumed.
+                $rec_client = (string) $rec['client_id'];
+                self::change_store( self::REFRESH_OPTION, static function ( array &$refresh ) use ( $id, $rec_client ) {
+                    $refresh[ $id ]['used']    = true;
+                    $refresh[ $id ]['used_at'] = time();
+                    // Bounded: a connection that refreshes in a loop must not grow this option until
+                    // writes fail. Only its newest used records are kept for reuse detection; an older
+                    // replayed token is simply unknown (still refused).
+                    $used = array_filter( $refresh, static fn( $r ) => ! empty( $r['used'] ) && ( $r['client_id'] ?? '' ) === $rec_client );
+                    if ( count( $used ) > self::MAX_USED_REFRESH ) {
+                        uasort( $used, static fn( $a, $b ) => (int) ( $b['created'] ?? 0 ) <=> (int) ( $a['created'] ?? 0 ) );
+                        foreach ( array_slice( array_keys( $used ), self::MAX_USED_REFRESH ) as $old ) {
+                            unset( $refresh[ $old ] );
+                        }
+                    }
+                } );
+                if ( ! empty( $rec['access_id'] ) ) {
+                    self::revoke_token_record( (string) $rec['access_id'] );
+                }
+            }
+
+            return self::issue_tokens( (int) $rec['user_id'], (string) $rec['client_id'], (string) $rec['aud'], (string) $rec['scope'], true );
+        } );
+    }
+
+    /** Seconds a used refresh token may come back (REFRESH_GRACE, filter `cowboy_mcp_oauth_refresh_grace`, 0–300). */
+    public static function refresh_grace_seconds(): int {
+        return max( 0, min( 300, (int) apply_filters( 'cowboy_mcp_oauth_refresh_grace', self::REFRESH_GRACE ) ) );
+    }
+
+    /** A used refresh record that may still be exchanged: used moments ago, not too many times. */
+    private static function within_refresh_grace( array $rec ): bool {
+        $grace = self::refresh_grace_seconds();
+        if ( $grace <= 0 || empty( $rec['used_at'] ) ) {
+            return false; // records used before the grace window existed carry no used_at
+        }
+        $since = time() - (int) $rec['used_at'];
+        return $since >= 0 && $since <= $grace && (int) ( $rec['grace_reuses'] ?? 0 ) < self::MAX_GRACE_REUSES;
+    }
+
+    /** Display name of a connection row, for audit entries. */
+    private static function connection_name( string $row_key ): string {
+        $clients = get_option( self::CLIENTS_OPTION, [] );
+        return (string) ( $clients[ $row_key ]['client_name'] ?? $row_key );
     }
 
     /**
@@ -1248,34 +1394,28 @@ class Cowboy_MCP_OAuth {
     }
 
     public static function revoke_connection( string $client_id ): bool {
-        $found = false;
-
-        $clients = get_option( self::CLIENTS_OPTION, [] );
-        if ( isset( $clients[ $client_id ] ) ) {
-            unset( $clients[ $client_id ] );
-            update_option( self::CLIENTS_OPTION, $clients, false );
-            $found = true;
-        }
+        $found = self::with_store_lock( static function () use ( $client_id ) {
+            $drop = static function ( array &$rows ) use ( $client_id ): bool {
+                $hit = false;
+                foreach ( $rows as $key => $row ) {
+                    if ( ( $row['client_id'] ?? '' ) === $client_id ) {
+                        unset( $rows[ $key ] );
+                        $hit = true;
+                    }
+                }
+                return $hit;
+            };
+            $found = self::change_store( self::CLIENTS_OPTION, static function ( array &$clients ) use ( $client_id ): bool {
+                if ( ! isset( $clients[ $client_id ] ) ) {
+                    return false;
+                }
+                unset( $clients[ $client_id ] );
+                return true;
+            } );
+            $found = self::change_store( self::TOKENS_OPTION, $drop ) || $found;
+            return self::change_store( self::REFRESH_OPTION, $drop ) || $found;
+        } );
         Cowboy_MCP_Auth::forget_client_info( 'oauth', $client_id );
-
-        $tokens = get_option( self::TOKENS_OPTION, [] );
-        foreach ( $tokens as $tid => $t ) {
-            if ( ( $t['client_id'] ?? '' ) === $client_id ) {
-                unset( $tokens[ $tid ] );
-                $found = true;
-            }
-        }
-        update_option( self::TOKENS_OPTION, $tokens, false );
-
-        $refresh = get_option( self::REFRESH_OPTION, [] );
-        foreach ( $refresh as $rid => $r ) {
-            if ( ( $r['client_id'] ?? '' ) === $client_id ) {
-                unset( $refresh[ $rid ] );
-                $found = true;
-            }
-        }
-        update_option( self::REFRESH_OPTION, $refresh, false );
-
         return $found;
     }
 
@@ -1284,18 +1424,18 @@ class Cowboy_MCP_OAuth {
      * Takes effect on the connection's next request — tokens are untouched.
      */
     public static function update_connection_scope( string $client_id, ?array $scope ): bool {
-        $clients = get_option( self::CLIENTS_OPTION, [] );
-        if ( ! isset( $clients[ $client_id ] ) ) {
-            return false;
-        }
         $sanitized = Cowboy_MCP_Auth::sanitize_scope( $scope );
-        if ( null === $sanitized ) {
-            unset( $clients[ $client_id ]['tool_scope'] );
-        } else {
-            $clients[ $client_id ]['tool_scope'] = $sanitized;
-        }
-        update_option( self::CLIENTS_OPTION, $clients, false );
-        return true;
+        return self::change_store( self::CLIENTS_OPTION, static function ( array &$clients ) use ( $client_id, $sanitized ): bool {
+            if ( ! isset( $clients[ $client_id ] ) ) {
+                return false;
+            }
+            if ( null === $sanitized ) {
+                unset( $clients[ $client_id ]['tool_scope'] );
+            } else {
+                $clients[ $client_id ]['tool_scope'] = $sanitized;
+            }
+            return true;
+        } );
     }
 
     /* ── Response helpers ──────────────────────────────────── */
@@ -1733,17 +1873,6 @@ class Cowboy_MCP_OAuth {
             return self::rest_error( 'invalid_redirect_uri', 'No valid redirect_uris supplied.', 400 );
         }
 
-        $clients = get_option( self::CLIENTS_OPTION, [] );
-        if ( count( $clients ) >= self::MAX_CLIENTS ) {
-            // Bound DCR abuse: drop the oldest clients that hold no active tokens.
-            $clients = self::prune_unused_clients( $clients );
-        }
-        if ( count( $clients ) >= self::MAX_CLIENTS ) {
-            // Pruning spares rows from the last few minutes (an approval not yet
-            // exchanged), so a flood inside that window must not grow the option.
-            return self::rest_error( 'temporarily_unavailable', 'Too many apps registered in the last few minutes. Try again shortly.', 429 );
-        }
-
         $now  = time();
         // Truncate, never reject: a long display name must not stop a real client connecting.
         $raw_name = $body['client_name'] ?? '';
@@ -1757,7 +1886,7 @@ class Cowboy_MCP_OAuth {
         $client_id = self::mint_signed_client_id( $name, $clean, $now )
             ?? 'cmcp_client_' . bin2hex( random_bytes( 8 ) );
 
-        $clients[ $client_id ] = [
+        $row = [
             'client_id'                  => $client_id,
             'client_name'                => $name,
             'redirect_uris'              => $clean,
@@ -1765,7 +1894,12 @@ class Cowboy_MCP_OAuth {
             'last_used'                  => null,
             'token_endpoint_auth_method' => 'none',
         ];
-        update_option( self::CLIENTS_OPTION, $clients, false );
+        // Bound DCR abuse: the oldest clients that hold no active tokens are dropped to make
+        // room. Pruning spares rows from the last few minutes (an approval not yet exchanged),
+        // so a flood inside that window must not grow the option.
+        if ( ! self::add_client_row( $client_id, $row, true ) ) {
+            return self::rest_error( 'temporarily_unavailable', 'Too many apps registered in the last few minutes. Try again shortly.', 429 );
+        }
         self::clear_blocked_attempts();
 
         return self::rest_json( [
@@ -2024,8 +2158,7 @@ class Cowboy_MCP_OAuth {
 
         // An administrator is present: a signature-only client may now be persisted
         // (this also clears any token that outlived its row — see resolve_client()).
-        $client  = $cimd ? $client : ( self::resolve_client( $client_id, true ) ?? $client );
-        $clients = get_option( self::CLIENTS_OPTION, [] );
+        $client = $cimd ? $client : ( self::resolve_client( $client_id, true ) ?? $client );
 
         if ( $is_post ) {
             if ( ! isset( $_POST['_wpnonce'] )
@@ -2040,12 +2173,7 @@ class Cowboy_MCP_OAuth {
                 // old row (it would come back unscoped), then record the client so the
                 // code exchange and later refreshes find it.
                 self::revoke_connection( $client_id );
-                $clients = get_option( self::CLIENTS_OPTION, [] );
-                if ( count( $clients ) >= self::MAX_CLIENTS ) {
-                    $clients = self::prune_unused_clients( $clients );
-                }
-                $clients[ $client_id ] = $client;
-                update_option( self::CLIENTS_OPTION, $clients, false );
+                self::add_client_row( $client_id, $client );
                 self::clear_blocked_attempts(); // the "<App> tried to connect" notice is answered, same as after a registration
                 Cowboy_MCP_Auth::log( 'oauth_client_adopted', [ 'redirect_host' => (string) wp_parse_url( $redirect_uri, PHP_URL_HOST ) ] );
             }
@@ -2053,13 +2181,8 @@ class Cowboy_MCP_OAuth {
             if ( $cimd ) {
                 // A metadata-document client gets a connection row of its own on every
                 // Approve: the client_id is shared by every user of that app.
-                $clients = get_option( self::CLIENTS_OPTION, [] );
-                if ( count( $clients ) >= self::MAX_CLIENTS ) {
-                    $clients = self::prune_unused_clients( $clients );
-                }
-                $row_key             = self::CIMD_GRANT_PREFIX . self::random_id();
-                $clients[ $row_key ] = array_merge( $client, [ 'client_id' => $row_key, 'cimd_url' => $client_id, 'created' => time() ] );
-                update_option( self::CLIENTS_OPTION, $clients, false );
+                $row_key = self::CIMD_GRANT_PREFIX . self::random_id();
+                self::add_client_row( $row_key, array_merge( $client, [ 'client_id' => $row_key, 'cimd_url' => $client_id, 'created' => time() ] ) );
                 Cowboy_MCP_Auth::log( 'oauth_client_cimd', [ 'args' => [ 'client_name' => $client['client_name'], 'host' => (string) wp_parse_url( $client_id, PHP_URL_HOST ) ] ] );
             }
 
@@ -2077,24 +2200,28 @@ class Cowboy_MCP_OAuth {
             }
             $code = self::issue_authorization_code( $code_ctx );
 
-            $scope_mode   = sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_oauth_scope_mode'] ?? 'full' ) );
-            $current_mode = $clients[ $row_key ]['tool_scope']['mode'] ?? 'full';
-            if ( 'read_only' === $scope_mode ) {
-                $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'read_only', 'allowed_tools' => [] ];
-            } elseif ( 'drafts' === $scope_mode ) {
-                $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'drafts', 'allowed_tools' => [] ];
-            } elseif ( 'keep_custom' === $scope_mode && 'custom' === $current_mode ) {
-                // Re-consent without touching the existing custom scope.
-            } else {
-                // Latest consent wins: an earlier read-only/custom grant is
-                // replaced by this full-access approval (read-only and drafts have their own branches). A stale "keep_custom"
-                // posted against a scope that is no longer custom falls back to
-                // full, fail-safe, rather than silently discarding nothing.
-                unset( $clients[ $row_key ]['tool_scope'] );
-            }
-            unset( $clients[ $row_key ]['rehydrated'] );
-            $clients[ $row_key ]['last_used'] = time();
-            update_option( self::CLIENTS_OPTION, $clients, false );
+            $scope_mode = sanitize_text_field( wp_unslash( $_POST['cowboy_mcp_oauth_scope_mode'] ?? 'full' ) );
+            self::change_store( self::CLIENTS_OPTION, static function ( array &$clients ) use ( $row_key, $scope_mode ) {
+                if ( ! isset( $clients[ $row_key ] ) || ! is_array( $clients[ $row_key ] ) ) {
+                    return; // revoked in another tab meanwhile: never write a stub row holding only a scope
+                }
+                $current_mode = $clients[ $row_key ]['tool_scope']['mode'] ?? 'full';
+                if ( 'read_only' === $scope_mode ) {
+                    $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'read_only', 'allowed_tools' => [] ];
+                } elseif ( 'drafts' === $scope_mode ) {
+                    $clients[ $row_key ]['tool_scope'] = [ 'mode' => 'drafts', 'allowed_tools' => [] ];
+                } elseif ( 'keep_custom' === $scope_mode && 'custom' === $current_mode ) {
+                    // Re-consent without touching the existing custom scope.
+                } else {
+                    // Latest consent wins: an earlier read-only/custom grant is
+                    // replaced by this full-access approval (read-only and drafts have their own branches). A stale "keep_custom"
+                    // posted against a scope that is no longer custom falls back to
+                    // full, fail-safe, rather than silently discarding nothing.
+                    unset( $clients[ $row_key ]['tool_scope'] );
+                }
+                unset( $clients[ $row_key ]['rehydrated'] );
+                $clients[ $row_key ]['last_used'] = time();
+            } );
 
             $sep = ( strpos( $redirect_uri, '?' ) === false ) ? '?' : '&';
             $loc = $redirect_uri . $sep . http_build_query( [ 'code' => $code, 'state' => $state, 'iss' => self::server_issuer() ] );
