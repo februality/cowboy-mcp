@@ -41,6 +41,31 @@ class Cowboy_MCP_Auth_Header {
 		return 'stripped' === self::state()['result'];
 	}
 
+	/**
+	 * Whether the owner has to act on a stripped header. API keys copied from the Connections
+	 * tab switch to Cowboy_MCP_Auth::KEY_HEADER on their own, so the warning is for what cannot
+	 * route around it: browser sign-in apps (they always send Authorization), and a key that
+	 * last worked through Authorization (its app keeps sending it and now fails). Keys from
+	 * before `via` was recorded count as Authorization.
+	 */
+	public static function needs_owner(): bool {
+		if ( ! self::stripped() ) {
+			return false;
+		}
+		return ( class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::is_enabled() ) || [] !== self::failing_keys();
+	}
+
+	/** Labels of used API keys whose last call came through Authorization. */
+	public static function failing_keys(): array {
+		$out = [];
+		foreach ( (array) get_option( Cowboy_MCP_Auth::OPTION_KEY, [] ) as $record ) {
+			if ( is_array( $record ) && ! empty( $record['last_used'] ) && 'key_header' !== ( $record['via'] ?? '' ) ) {
+				$out[] = (string) ( $record['label'] ?? '' );
+			}
+		}
+		return $out;
+	}
+
 	/** No answer yet, an old one, or one from another plugin version. */
 	public static function is_stale(): bool {
 		$s = self::state();

@@ -50,6 +50,9 @@ class Cowboy_MCP_Auth {
      */
     private static $request_decision = "\0unset";
 
+    /** Which header carried this request's credential: 'authorization' or 'key_header' (set by request_token()). */
+    private static $token_source = '';
+
     /**
      * Bootstrap hook — intentionally empty.
      *
@@ -358,10 +361,12 @@ class Cowboy_MCP_Auth {
 
         if ( null !== $match ) {
             $record = $keys[ $match ];
-            // Throttle last_used updates (at most once per minute).
+            // Throttle last_used updates (at most once per minute). `via` = the header the key came in:
+            // a key that last worked through Authorization on a server that now strips it is failing,
+            // and only then does the Connections tab ask the owner to act (Cowboy_MCP_Auth_Header).
             $now = time();
-            if ( empty( $record['last_used'] ) || ( $now - $record['last_used'] ) >= 60 ) {
-                self::update_key_record( $match, [ 'last_used' => $now ] );
+            if ( empty( $record['last_used'] ) || ( $now - $record['last_used'] ) >= 60 || ( $record['via'] ?? '' ) !== self::$token_source ) {
+                self::update_key_record( $match, [ 'last_used' => $now, 'via' => self::$token_source ] );
             }
 
             // Populate key context for structured logging.
@@ -503,10 +508,12 @@ class Cowboy_MCP_Auth {
             $auth = self::server_authorization_header();
         }
         if ( preg_match( '/^Bearer\s+(\S+)$/i', $auth, $m ) ) {
+            self::$token_source = 'authorization';
             return $m[1];
         }
         $alt = trim( (string) $request->get_header( self::KEY_HEADER ) );
         if ( preg_match( '/^(?:Bearer\s+)?(\S+)$/i', $alt, $m ) ) {
+            self::$token_source = 'key_header';
             return $m[1];
         }
         return null;
