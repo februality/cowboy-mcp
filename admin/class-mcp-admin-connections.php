@@ -1335,7 +1335,7 @@ class Cowboy_MCP_Admin_Connections {
             // `codex mcp add` has no header option besides --bearer-token-env-var (Authorization only); config.toml's
             // env_http_headers takes any header name (codex mcp get --json, 0.167.2, 2026-11-12).
             'codex'          => $stripped
-                ? 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'mkdir -p "${CODEX_HOME:-$HOME/.codex}" && cat >> "${CODEX_HOME:-$HOME/.codex}/config.toml" <<\'EOF\'' . "\n\n[mcp_servers." . $domain . "]\nurl = \"" . $endpoint . "\"\nenv_http_headers = { \"" . $hname . "\" = \"COWBOY_MCP_API_KEY\" }\nEOF"
+                ? 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'mkdir -p "${CODEX_HOME:-$HOME/.codex}" && cat >> "${CODEX_HOME:-$HOME/.codex}/config.toml" <<\'EOF\'' . "\n\n[mcp_servers.\"" . $domain . "\"]\nurl = \"" . $endpoint . "\"\nenv_http_headers = { \"" . $hname . "\" = \"COWBOY_MCP_API_KEY\" }\nEOF"
                 : 'export COWBOY_MCP_API_KEY="' . $key_display . "\"\n" . 'codex mcp add ' . $domain . ' --url ' . $endpoint . ' --bearer-token-env-var COWBOY_MCP_API_KEY',
             // opencode's --header takes KEY=VALUE (opencode mcp add --help, 1.18 and 2.1). 2.x writes to the project config unless
             // --global is given; 1.x always writes globally and rejects --global (both checked 2026-10-26), hence the panel's note.

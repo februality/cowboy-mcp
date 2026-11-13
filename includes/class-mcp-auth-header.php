@@ -26,6 +26,8 @@ class Cowboy_MCP_Auth_Header {
 	/** A stored answer older than this is checked again. */
 	const STALE_SECONDS = 3 * DAY_IN_SECONDS;
 	const TIMEOUT       = 8;
+	/** A key last used longer ago than this does not count as a failing connection. */
+	const FAILING_KEY_DAYS = 30;
 
 	public static function state(): array {
 		$s = get_option( self::OPTION, [] );
@@ -55,11 +57,16 @@ class Cowboy_MCP_Auth_Header {
 		return ( class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::is_enabled() ) || [] !== self::failing_keys();
 	}
 
-	/** Labels of used API keys whose last call came through Authorization. */
+	/**
+	 * Labels of API keys used in the last FAILING_KEY_DAYS whose last call came through
+	 * Authorization. A key idle for longer belongs to an app that is gone or long broken, and
+	 * must not hold the warning on screen for good.
+	 */
 	public static function failing_keys(): array {
-		$out = [];
+		$out   = [];
+		$since = time() - self::FAILING_KEY_DAYS * DAY_IN_SECONDS;
 		foreach ( (array) get_option( Cowboy_MCP_Auth::OPTION_KEY, [] ) as $record ) {
-			if ( is_array( $record ) && ! empty( $record['last_used'] ) && 'key_header' !== ( $record['via'] ?? '' ) ) {
+			if ( is_array( $record ) && (int) ( $record['last_used'] ?? 0 ) > $since && 'key_header' !== ( $record['via'] ?? '' ) ) {
 				$out[] = (string) ( $record['label'] ?? '' );
 			}
 		}
@@ -99,8 +106,8 @@ class Cowboy_MCP_Auth_Header {
 	 * One POST to this site's endpoint with a well-formed but unknown sign-in token.
 	 * 'passes' = refused as an invalid token (the header arrived), 'stripped' = refused as a
 	 * missing header, 'unknown' = anything else (server off, loopback blocked, a firewall page).
-	 * The request carries a self-check marker, so the endpoint neither logs it nor counts it
-	 * against this server's IP. One same-host redirect is followed by hand, keeping the header.
+	 * The request carries a self-check marker, so the endpoint keeps it out of the audit log; it
+	 * still counts once toward the per-IP failure limit (one probe every few days). One same-host redirect is followed by hand, keeping the header.
 	 */
 	public static function probe(): string {
 		$marker = Cowboy_MCP_OAuth_Address::mint_marker();
