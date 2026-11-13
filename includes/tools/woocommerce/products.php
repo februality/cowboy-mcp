@@ -2,23 +2,59 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Split agent-supplied meta into keys that may be written and keys refused by the
- * same rule as the posts tools (internal `_` keys, credential-looking names).
+ * Validate gallery_image_ids: each value must be an existing image attachment.
+ * An empty array is allowed and clears the gallery. Order is preserved; duplicates are dropped.
  *
- * @return array{0: array<string,mixed>, 1: string[]} [ allowed key => value, rejected keys ]
+ * @param mixed $ids
+ * @return int[]|WP_Error
  */
-function cowboy_mcp_woo_filter_meta( array $meta ): array {
-    $allowed  = [];
-    $rejected = [];
-    foreach ( $meta as $key => $value ) {
-        $key = sanitize_key( (string) $key );
-        if ( '' === $key || Cowboy_MCP_Security::is_blocked_meta_key( $key ) ) {
-            $rejected[] = $key;
-            continue;
-        }
-        $allowed[ $key ] = $value;
+function cowboy_mcp_woo_normalize_gallery_image_ids( $ids ): array|WP_Error {
+    if ( ! is_array( $ids ) ) {
+        return new WP_Error( 'invalid_param', 'gallery_image_ids must be an array of image attachment IDs.' );
     }
-    return [ $allowed, $rejected ];
+
+    $normalized = [];
+    foreach ( $ids as $raw ) {
+        if ( is_bool( $raw ) || is_array( $raw ) || is_object( $raw ) ) {
+            return new WP_Error( 'invalid_param', 'gallery_image_ids must be an array of image attachment IDs.' );
+        }
+        $id = (int) $raw;
+        if ( $id <= 0 || trim( (string) $raw ) !== (string) $id ) {
+            return new WP_Error( 'invalid_param', 'gallery_image_ids must contain positive integer attachment IDs.' );
+        }
+        if ( ! wp_attachment_is_image( $id ) ) {
+            return new WP_Error( 'invalid_param', "gallery_image_ids contains a value that is not an image attachment: {$id}" );
+        }
+        $normalized[] = $id;
+    }
+
+    return array_values( array_unique( $normalized ) );
+}
+
+/**
+ * Validate gallery and meta arguments before any product write. PRE_DISPATCH for
+ * wp_woo_create_product / wp_woo_update_product (dry runs refuse the same), and
+ * called again by both handlers.
+ *
+ * @param array<string,mixed> $a
+ * @return array<string,mixed>|WP_Error
+ */
+function cowboy_mcp_woo_check_product_args( array $a ): array|WP_Error {
+    if ( array_key_exists( 'gallery_image_ids', $a ) ) {
+        $ids = cowboy_mcp_woo_normalize_gallery_image_ids( $a['gallery_image_ids'] );
+        if ( is_wp_error( $ids ) ) {
+            return $ids;
+        }
+        $a['gallery_image_ids'] = $ids;
+    }
+    if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
+        $allowed = Cowboy_MCP_Security::writable_meta_or_error( $a['meta'] );
+        if ( is_wp_error( $allowed ) ) {
+            return $allowed;
+        }
+        $a['meta'] = $allowed;
+    }
+    return $a;
 }
 
 /**
@@ -52,6 +88,9 @@ function cowboy_mcp_woo_set_product_fields( WC_Product $product, array $a ): voi
     if ( isset( $a['tax_status'] ) )        $product->set_tax_status( $a['tax_status'] );
     if ( isset( $a['tax_class'] ) )         $product->set_tax_class( $a['tax_class'] );
     if ( isset( $a['image_id'] ) )          $product->set_image_id( $a['image_id'] );
+    if ( array_key_exists( 'gallery_image_ids', $a ) ) {
+        $product->set_gallery_image_ids( $a['gallery_image_ids'] );
+    }
 
     if ( isset( $a['categories'] ) ) {
         $product->set_category_ids( array_map( 'intval', $a['categories'] ) );
@@ -95,6 +134,7 @@ function cowboy_mcp_woo_format_product( WC_Product $product ): array {
         'date_created'      => $product->get_date_created()?->date( 'c' ),
         'date_modified'     => $product->get_date_modified()?->date( 'c' ),
         'featured_image'    => wp_get_attachment_url( $product->get_image_id() ) ?: null,
+        'gallery_image_ids' => array_values( array_map( 'intval', $product->get_gallery_image_ids() ) ),
     ];
 
     if ( $product->is_type( 'variable' ) && $product instanceof WC_Product_Variable ) {
@@ -188,6 +228,7 @@ return [
                             'date_created'      => [ 'type' => 'string' ],
                             'date_modified'     => [ 'type' => 'string' ],
                             'featured_image'    => [ 'type' => 'string' ],
+                            'gallery_image_ids' => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ] ],
                         ],
                     ],
                 ],
@@ -234,6 +275,7 @@ return [
                 'date_created'      => [ 'type' => 'string' ],
                 'date_modified'     => [ 'type' => 'string' ],
                 'featured_image'    => [ 'type' => 'string' ],
+                'gallery_image_ids' => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ] ],
             ],
         ]),
 
@@ -263,7 +305,8 @@ return [
             'children'          => [ 'type' => 'array',   'description' => 'Child product IDs (grouped type only)', 'items' => [ 'type' => 'integer' ] ],
             'attributes'        => [ 'type' => 'array',   'description' => 'Product attributes array: [{name, options[], visible, variation}]', 'items' => [ 'type' => 'object' ] ],
             'image_id'          => [ 'type' => 'integer', 'description' => 'Featured image attachment ID' ],
-            'meta'              => [ 'type' => 'object',  'description' => 'Key-value meta data to set' ],
+            'gallery_image_ids' => [ 'type' => 'array',   'description' => 'Gallery image attachment IDs (not the featured image). An empty array clears the gallery. Do not pass _product_image_gallery via meta.', 'items' => [ 'type' => 'integer' ] ],
+            'meta'              => [ 'type' => 'object',  'description' => 'Key-value meta data to set. Underscore-prefixed keys are refused; use image_id and gallery_image_ids for product images.' ],
         ], [
             'title'           => 'Create Product',
             'readOnlyHint'    => false,
@@ -294,7 +337,8 @@ return [
             'tax_status'        => [ 'type' => 'string',  'description' => 'Tax status' ],
             'tax_class'         => [ 'type' => 'string',  'description' => 'Tax class' ],
             'image_id'          => [ 'type' => 'integer', 'description' => 'Featured image attachment ID' ],
-            'meta'              => [ 'type' => 'object',  'description' => 'Key-value meta data to set' ],
+            'gallery_image_ids' => [ 'type' => 'array',   'description' => 'Gallery image attachment IDs (not the featured image). An empty array clears the gallery. Do not pass _product_image_gallery via meta.', 'items' => [ 'type' => 'integer' ] ],
+            'meta'              => [ 'type' => 'object',  'description' => 'Key-value meta data to set. Underscore-prefixed keys are refused; use image_id and gallery_image_ids for product images.' ],
         ], [
             'title'           => 'Update Product',
             'readOnlyHint'    => false,
@@ -433,6 +477,11 @@ return [
         },
 
         'wp_woo_create_product' => function ( array $a ) {
+            $a = cowboy_mcp_woo_check_product_args( $a );
+            if ( is_wp_error( $a ) ) {
+                return $a;
+            }
+
             $type = $a['type'] ?? 'simple';
 
             $product = match ( $type ) {
@@ -475,21 +524,18 @@ return [
                 return new WP_Error( 'create_failed', 'Failed to create product.' );
             }
 
-            // Set meta data (internal / sensitive keys refused, as in wp_update_post).
-            $rejected_meta = [];
+            // Set meta data (blocked keys already refused above, before the save).
             if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
-                [ $allowed_meta, $rejected_meta ] = cowboy_mcp_woo_filter_meta( $a['meta'] );
-                foreach ( $allowed_meta as $key => $value ) {
+                foreach ( $a['meta'] as $key => $value ) {
                     update_post_meta( $id, $key, $value );
                 }
             }
 
-            return array_filter( [
-                'created'            => true,
-                'product_id'         => $id,
-                'product'            => cowboy_mcp_woo_format_product( wc_get_product( $id ) ),
-                'rejected_meta_keys' => $rejected_meta,
-            ], static fn( $v ) => [] !== $v );
+            return [
+                'created'    => true,
+                'product_id' => $id,
+                'product'    => cowboy_mcp_woo_format_product( wc_get_product( $id ) ),
+            ];
         },
 
         'wp_woo_update_product' => function ( array $a ) {
@@ -500,25 +546,27 @@ return [
                 return new WP_Error( 'not_found', "Product not found: {$id}" );
             }
 
+            $a = cowboy_mcp_woo_check_product_args( $a );
+            if ( is_wp_error( $a ) ) {
+                return $a;
+            }
+
             cowboy_mcp_woo_set_product_fields( $product, $a );
 
             $product->save();
 
-            // Set meta data (internal / sensitive keys refused, as in wp_update_post).
-            $rejected_meta = [];
+            // Set meta data (blocked keys already refused above, before the save).
             if ( ! empty( $a['meta'] ) && is_array( $a['meta'] ) ) {
-                [ $allowed_meta, $rejected_meta ] = cowboy_mcp_woo_filter_meta( $a['meta'] );
-                foreach ( $allowed_meta as $key => $value ) {
+                foreach ( $a['meta'] as $key => $value ) {
                     update_post_meta( $id, $key, $value );
                 }
             }
 
-            return array_filter( [
-                'updated'            => true,
-                'product_id'         => $id,
-                'product'            => cowboy_mcp_woo_format_product( wc_get_product( $id ) ),
-                'rejected_meta_keys' => $rejected_meta,
-            ], static fn( $v ) => [] !== $v );
+            return [
+                'updated'    => true,
+                'product_id' => $id,
+                'product'    => cowboy_mcp_woo_format_product( wc_get_product( $id ) ),
+            ];
         },
 
         'wp_woo_delete_product' => function ( array $a ) {
