@@ -1698,6 +1698,47 @@ class Cowboy_MCP_Admin_Connections {
         <?php
     }
 
+    /**
+     * The Authorization-header warning (Cowboy_MCP_Auth_Header). Always renders its wrapper so
+     * the page's script can fill it: with a stale answer it asks for a fresh probe after the
+     * page has loaded (a render never waits on a loopback). $just_checked: answering "Check
+     * again", so a header that now gets through says so instead of disappearing silently.
+     */
+    public static function render_auth_header_warning( bool $just_checked = false, bool $wrap = false ): void {
+        if ( ! class_exists( 'Cowboy_MCP_Auth_Header' ) ) {
+            return;
+        }
+        if ( $wrap ) {
+            echo '<div class="cmcp-authhdr"' . ( Cowboy_MCP_Auth_Header::is_stale() ? ' data-cmcp-authhdr-check="1"' : '' ) . '>';
+        }
+        $result = Cowboy_MCP_Auth_Header::state()['result'];
+        if ( 'stripped' === $result ) {
+            ?>
+            <div class="cmcp-callout cmcp-callout--warn cmcp-authhdr-stripped" role="status">
+                <p><strong><?php esc_html_e( 'Your server removes the Authorization header.', 'cowboy-mcp' ); ?></strong> <?php esc_html_e( 'Apps can sign in, but every call they make then reaches WordPress without its key or sign-in token, so WordPress refuses it.', 'cowboy-mcp' ); ?></p>
+                <p><?php esc_html_e( 'What to change on the server (or send this to your host):', 'cowboy-mcp' ); ?></p>
+                <p class="cmcp-signin-fix"><?php echo esc_html( Cowboy_MCP_Doctor::AUTH_HEADER_FIX ); ?></p>
+                <p><button type="button" class="cmcp-btn cmcp-btn--sm" data-cmcp-authhdr-recheck><?php esc_html_e( 'Check again', 'cowboy-mcp' ); ?></button></p>
+            </div>
+            <?php
+        } elseif ( $just_checked && 'passes' === $result ) {
+            ?>
+            <div class="cmcp-callout cmcp-authhdr-ok" role="status">
+                <p><?php esc_html_e( 'The Authorization header now reaches WordPress.', 'cowboy-mcp' ); ?></p>
+            </div>
+            <?php
+        } elseif ( $just_checked ) {
+            ?>
+            <div class="cmcp-callout cmcp-callout--warn cmcp-authhdr-unknown" role="status">
+                <p><?php esc_html_e( 'The check could not reach this site from its own server, so it cannot tell whether the header gets through. The Connection Doctor below shows what failed.', 'cowboy-mcp' ); ?></p>
+            </div>
+            <?php
+        }
+        if ( $wrap ) {
+            echo '</div>';
+        }
+    }
+
     public static function render_tab( string $endpoint, $new_key ): void {
         $registry    = self::client_registry();
         $is_local    = self::site_looks_local();
@@ -1718,6 +1759,7 @@ class Cowboy_MCP_Admin_Connections {
         }
         self::render_blocked_callout();
         self::render_signin_unreachable();
+        self::render_auth_header_warning( false, true );
         $strip = self::connect_watch();
         if ( ! $strip || 'retry' !== self::connect_status( $strip )['stage'] ) {
             self::render_retry_notice(); // unless the strip below already says it: same words

@@ -28,6 +28,7 @@ class Cowboy_MCP_Admin {
         add_action( 'wp_ajax_cowboy_mcp_set_conn_client', [ __CLASS__, 'ajax_set_conn_client' ] );
         add_action( 'wp_ajax_cowboy_mcp_signin_browser_check', [ __CLASS__, 'ajax_signin_browser_check' ] );
         add_action( 'wp_ajax_cowboy_mcp_signin_override', [ __CLASS__, 'ajax_signin_override' ] );
+        add_action( 'wp_ajax_cowboy_mcp_auth_header_check', [ __CLASS__, 'ajax_auth_header_check' ] );
     }
 
     public static function add_menu(): void {
@@ -184,6 +185,25 @@ class Cowboy_MCP_Admin {
     }
 
     /**
+     * The Connections tab's Authorization-header probe (authHeaderCheck() in mcp-admin.js):
+     * runs after the page has loaded when the stored answer is stale, or from "Check again"
+     * (`force`). Answers with the warning's markup ('' when the header gets through).
+     */
+    public static function ajax_auth_header_check(): void {
+        check_ajax_referer( Cowboy_MCP_Auth_Header::NONCE );
+        if ( ! current_user_can( Cowboy_MCP_Security::admin_capability() ) ) {
+            wp_send_json_error( null, 403 );
+        }
+        $force = rest_sanitize_boolean( sanitize_text_field( wp_unslash( $_POST['force'] ?? '' ) ) );
+        if ( $force || Cowboy_MCP_Auth_Header::is_stale() ) {
+            Cowboy_MCP_Auth_Header::refresh();
+        }
+        ob_start();
+        Cowboy_MCP_Admin_Connections::render_auth_header_warning( $force );
+        wp_send_json_success( [ 'result' => Cowboy_MCP_Auth_Header::state()['result'], 'html' => (string) ob_get_clean() ] );
+    }
+
+    /**
      * The Connection Doctor's "Use the other sign-in address" / "Back to automatic" buttons:
      * stores the override (auto|root|site). Admins only; never reachable by an agent.
      */
@@ -279,6 +299,8 @@ class Cowboy_MCP_Admin {
             'startNonce'   => wp_create_nonce( 'cowboy_mcp_start_connect' ),
             'connNonce'    => wp_create_nonce( 'cowboy_mcp_set_conn_client' ),
             'blockedNonce' => wp_create_nonce( 'cowboy_mcp_dismiss_blocked' ),
+            'headerNonce'  => wp_create_nonce( Cowboy_MCP_Auth_Header::NONCE ),
+            'checking'     => __( 'Checking…', 'cowboy-mcp' ),
             'hubNonce'     => wp_create_nonce( Cowboy_MCP_Hub_Promo::NONCE ),
             'cancel'       => __( 'Cancel', 'cowboy-mcp' ),
             'confirm'      => __( 'Confirm', 'cowboy-mcp' ),
@@ -662,6 +684,9 @@ class Cowboy_MCP_Admin {
         update_option( 'cowboy_mcp_settings', $s );
         Cowboy_MCP_Tools::forget_settings(); // the rest of this request (start_connect's answer) sees sign-in on
         Cowboy_MCP_OAuth::open_registration_window();
+        if ( class_exists( 'Cowboy_MCP_Auth_Header' ) ) {
+            Cowboy_MCP_Auth_Header::forget(); // sign-in apps need the header: check it on the next Connections tab load
+        }
         if ( '' !== $notice ) {
             add_settings_error( 'cowboy_mcp', 'oauth_on', $notice, 'success' );
         }

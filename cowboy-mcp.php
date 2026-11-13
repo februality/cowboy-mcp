@@ -64,6 +64,7 @@ require_once COWBOY_MCP_PATH . 'includes/class-mcp-prompts.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-completion.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-oauth.php';
 require_once COWBOY_MCP_PATH . 'includes/class-mcp-oauth-address.php';
+require_once COWBOY_MCP_PATH . 'includes/class-mcp-auth-header.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-connections.php';
 require_once COWBOY_MCP_PATH . 'admin/class-mcp-admin-activity.php';
@@ -123,6 +124,9 @@ add_action( 'init', function () {
 add_action( 'init', [ 'Cowboy_MCP_OAuth_Address', 'maybe_schedule_upgrade_check' ] );
 add_action( Cowboy_MCP_OAuth_Address::UPGRADE_HOOK, [ 'Cowboy_MCP_OAuth_Address', 'run_upgrade_check' ] );
 add_action( Cowboy_MCP_Audit_Log::CRON_HOOK, [ 'Cowboy_MCP_OAuth_Address', 'maybe_check' ] );
+
+/* ── Authorization-header probe: when its stored answer is over 3 days old (also checked from the Connections tab) ── */
+add_action( Cowboy_MCP_Audit_Log::CRON_HOOK, [ 'Cowboy_MCP_Auth_Header', 'maybe_refresh' ] );
 
 /* ── Translations ─────────────────────────────────────────── */
 // REQUIRED — do not remove. Plugin Check warns that load_plugin_textdomain()
@@ -214,6 +218,7 @@ function cowboy_mcp_uninstall(): void {
     // Sign-in address: stored decision, version gate, lock row, signals, scheduled check.
     delete_option( 'cowboy_mcp_oauth_address' );
     delete_option( 'cowboy_mcp_oauth_address_ver' );
+    delete_option( 'cowboy_mcp_auth_header' );
     delete_option( 'cowboy_mcp_oauth_address_lock' );
     delete_transient( 'cowboy_mcp_oauth_address_lock' );
     delete_transient( 'cowboy_mcp_signin_root_fetch' );

@@ -377,6 +377,14 @@ class Cowboy_MCP_Doctor {
 					$body = (string) wp_remote_retrieve_body( $r );
 					$json = json_decode( $body, true );
 					$ok   = 200 === $code && isset( $json['result']['serverInfo'] );
+					if ( ! empty( $opts['store'] ) && class_exists( 'Cowboy_MCP_Auth_Header' ) ) {
+						// The Connections tab's header warning follows what this real-key handshake found.
+						if ( $ok ) {
+							Cowboy_MCP_Auth_Header::record( 'passes' );
+						} elseif ( self::auth_header_was_stripped( $code, $json ) ) {
+							Cowboy_MCP_Auth_Header::record( 'stripped' );
+						}
+					}
 					if ( $ok ) {
 						$checks[] = self::result( 'loopback_endpoint_auth', 'Authenticated MCP handshake', 'pass', 'Full initialize handshake succeeded with a self-test key.', [ 'HTTP ' . $code ] );
 					} elseif ( self::auth_header_was_stripped( $code, $json ) ) {
