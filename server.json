@@ -3,7 +3,7 @@
   "name": "io.github.februality/cowboy-mcp",
   "title": "Cowboy MCP",
   "description": "Self-hosted WordPress MCP server with 203 tools and per-change undo. OAuth sign-in or API key. Free.",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "websiteUrl": "https://cowboymcp.com",
   "repository": {
     "url": "https://github.com/februality/cowboy-mcp",

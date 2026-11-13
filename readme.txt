@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, ai-agent
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.7
+Stable tag: 1.7.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -307,17 +307,14 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.7 =
-* New: Claude, ChatGPT and other apps can now sign in to sites where they could not before: WordPress installed in a subfolder (example.com/blog), multisite subsites, and hosts or Cloudflare rules that block /.well-known/. Cowboy MCP finds the sign-in address that works on your host by itself. There is nothing to configure, and apps that are already connected are never moved.
-* New: if a connection attempt fails, you no longer have to guess why. The Connections tab tells you the first sign-in did not finish and shows the one step to retry in that app.
-* New: "Drafts only" access. Let an AI write and update posts without letting it publish anything. Changes to a live post land in a draft copy you review and publish yourself. With Yoast Duplicate Post active, one click on Republish puts them live. The AI can still read the whole site and upload images.
-* New: API keys now work on hosts that strip the Authorization header and on staging sites behind an HTTP password. Send the key in an `X-Cowboy-MCP-Key` header instead.
-* Improved: the Connection Doctor names the host problem and the fix. That includes a blocked /.well-known/ (with Cloudflare steps when Cloudflare fronts the site) and a stripped Authorization header. It also offers a one-click switch to the other sign-in address.
-* Improved: the setup steps match what Claude, ChatGPT, Gemini and Grok show today. ChatGPT Plus accounts can add the server, and ChatGPT workspaces need the "Create plugins with MCPs" permission. On subfolder sites, Claude Code signs in from /mcp, and server names include the folder so two sites on one domain do not collide.
-* Improved: newer AI apps (MCP 2025-11-25) see a refused tool call as an error they can read and correct, so they fix their own mistakes instead of stopping.
-* Changed: on single sites, an API key acts as the administrator who created it. If that person is deleted or stops being an administrator, the key stops working, so a former admin's key no longer keeps access. Keys created before 1.7.5 are not affected.
-* Changed: page caches and CDNs no longer store Cowboy MCP's responses, so an outdated "not signed in" answer cannot get stuck in a cache.
-* Fix: some Apache hosts hid a valid API key from WordPress, and connections failed with "Missing Authorization header". Those connections now work.
+= 1.7.8 =
+* New: set, reorder and clear WooCommerce product galleries with `gallery_image_ids`. Thanks to Darren Ford for the report and the patch.
+* Improved: on servers that strip the Authorization header, API-key setup commands now use a header the server keeps, and the Connections tab says when the server needs fixing.
+* Improved: clearer VS Code and Cursor steps, and a hint on where to turn on browser sign-in when it is off.
+* Changed: a post, product or order write that includes a protected custom field is now refused as a whole, instead of saving the rest.
+* Fix: browser sign-in connections no longer drop when apps refresh at the same moment.
+* Fix: undoing a WooCommerce change no longer reports a false verification mismatch.
+* Security: hardening. Updating is recommended.
 
 = Earlier versions =
 
