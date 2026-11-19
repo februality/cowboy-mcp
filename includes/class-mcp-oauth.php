@@ -168,6 +168,20 @@ class Cowboy_MCP_OAuth {
         return true;
     }
 
+    /**
+     * Whether Claude's hosted apps (claude.ai, Claude Desktop's cloud connector) can use this
+     * site's address: publicly reachable AND on the standard HTTPS port. "Claude can't connect
+     * to a URL that specifies another port" (support.claude.com article 11175166). Advisory:
+     * picks which Claude buttons the Connections tab offers, nothing else.
+     */
+    public static function claude_can_reach(): bool {
+        if ( ! self::site_is_publicly_reachable() ) {
+            return false;
+        }
+        $port = wp_parse_url( home_url(), PHP_URL_PORT );
+        return null === $port || 443 === (int) $port;
+    }
+
     /* ── Registration window (safety lock) ─────────────────── */
 
     /** Open (or extend) the registration window. Admin-context callers only. Returns the closing timestamp. */

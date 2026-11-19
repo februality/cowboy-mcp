@@ -1835,4 +1835,28 @@ class Cowboy_MCP_Security {
         }
         return (bool) preg_match( '/\.(localhost|local|test)$/', $host );
     }
+
+    /**
+     * Whether apps on the current MCP SDKs refuse to finish browser sign-in against this
+     * address: plain http on a host that is not a loopback name. Claude Code sends OAuth token
+     * requests only to https or localhost/127.0.0.1/::1 (code.claude.com/docs/en/errors.md,
+     * "Refusing to send credentials to non-https token endpoint"), and mcp-remote 0.16.x does
+     * the same through @modelcontextprotocol/client's assertSecureTokenEndpoint(), which also
+     * exempts *.localhost. So http://mysite.local or http://mysite.test fails after Approve.
+     * Same ADVISORY-ONLY invariant as host_looks_local(): it picks Connections-tab copy and
+     * panels, never auth, rate limits or scope.
+     */
+    public static function http_signin_blocked( string $url ): bool {
+        if ( 'http' !== strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ) {
+            return false;
+        }
+        $host = rtrim( strtolower( trim( (string) wp_parse_url( $url, PHP_URL_HOST ), '[]' ) ), '.' );
+        if ( '' === $host ) {
+            return false;
+        }
+        if ( in_array( $host, [ 'localhost', '127.0.0.1', '::1' ], true ) || str_ends_with( $host, '.localhost' ) ) {
+            return false;
+        }
+        return true;
+    }
 }
