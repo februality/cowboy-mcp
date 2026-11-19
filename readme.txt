@@ -151,7 +151,7 @@ Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0): point Openco
 
 = Local development sites =
 
-Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in on this computer with no public URL, and Claude Desktop uses the `mcp-remote` bridge. Cloud apps such as claude.ai and ChatGPT need a public HTTPS address.
+Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools connect with no public URL; apps that can't sign in locally get a one-click API key. claude.ai and ChatGPT need public HTTPS.
 
 = Secure by design: built for live sites =
 
@@ -251,7 +251,7 @@ Yes. When The Events Calendar is active, your agent can create and edit events, 
 
 = Does it work on a local development site (Local, Studio, MAMP, DevKinsta)? =
 
-Yes. Terminal tools like Claude Code, Cursor, Codex and Gemini CLI run on the same computer as your local site, so they sign in with OAuth in your browser - no public URL needed. An API key works too, for headless use. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connections tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
+Yes. Terminal tools like Codex, Cursor and Opencode run on the same computer as your local site, so they sign in with OAuth in your browser - no public URL needed. Claude Code signs in that way on localhost and https sites; on http:// sites such as Local's `.local` addresses (and Gemini CLI on most local sites) they use an API key, which the Connections tab creates in one click. An API key works for headless use too. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connections tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
 
 = My host or Jetpack already offers MCP. Do I need this? =
 
