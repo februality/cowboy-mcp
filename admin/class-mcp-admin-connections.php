@@ -384,6 +384,12 @@ class Cowboy_MCP_Admin_Connections {
             $label = (string) ( self::client_registry()[ $slug ]['label'] ?? $slug );
             /* translators: %s: AI app name, e.g. Perplexity */
             $text = sprintf( __( 'This site does not appear to be on a public HTTPS address, so %s cannot reach it from the vendor\'s cloud. Use a terminal tool from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' ), $label );
+        } elseif ( class_exists( 'Cowboy_MCP_OAuth' ) && Cowboy_MCP_OAuth::site_is_publicly_reachable() && ! Cowboy_MCP_OAuth::claude_can_reach() ) {
+            $text = sprintf(
+                /* translators: %s: a port number, e.g. 8443 */
+                __( 'Claude only connects to sites on the standard HTTPS port (443), so this site\'s address with port %s won\'t work in Claude. Use a terminal tool from the sidebar instead, or serve the site on port 443.', 'cowboy-mcp' ),
+                (string) wp_parse_url( home_url(), PHP_URL_PORT )
+            );
         } else {
             $text = __( 'This site does not appear to be on a public HTTPS address, so the Claude apps cannot reach it from Anthropic\'s cloud. Use a terminal tool or Claude Desktop from the sidebar instead, or set the WordPress Site Address to a tunnel or staging URL.', 'cowboy-mcp' );
         }
@@ -441,9 +447,10 @@ class Cowboy_MCP_Admin_Connections {
         // the very response that enable_oauth_connector() just turned it on.
         $settings    = get_option( 'cowboy_mcp_settings', [] );
         $oauth_on    = $oauth_avail && ! empty( $settings['enabled'] ) && ! empty( $settings['oauth_enabled'] );
-        $reachable   = ! $oauth_avail || Cowboy_MCP_OAuth::site_is_publicly_reachable();
         $is_desktop  = ( $slug === 'claude-desktop' );
         $is_chatgpt  = ( $slug === 'chatgpt' );
+        // Claude also refuses addresses on a port other than 443 (claude_can_reach()); ChatGPT documents no such rule.
+        $reachable   = ! $oauth_avail || ( $is_chatgpt ? Cowboy_MCP_OAuth::site_is_publicly_reachable() : Cowboy_MCP_OAuth::claude_can_reach() );
 
         // Whole sentences per client (not sprintf'd names) so translators get
         // complete, grammatical strings.
