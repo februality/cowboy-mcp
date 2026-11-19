@@ -1843,10 +1843,12 @@ class Cowboy_MCP_Security {
      * "Refusing to send credentials to non-https token endpoint"), and mcp-remote 0.16.x does
      * the same through @modelcontextprotocol/client's assertSecureTokenEndpoint(), which also
      * exempts *.localhost. So http://mysite.local or http://mysite.test fails after Approve.
+     * $dot_localhost_ok = false applies Claude Code's stricter rule (exact names only, so
+     * http://mysite.localhost is blocked too); true applies mcp-remote's.
      * Same ADVISORY-ONLY invariant as host_looks_local(): it picks Connections-tab copy and
      * panels, never auth, rate limits or scope.
      */
-    public static function http_signin_blocked( string $url ): bool {
+    public static function http_signin_blocked( string $url, bool $dot_localhost_ok = true ): bool {
         if ( 'http' !== strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ) {
             return false;
         }
@@ -1854,7 +1856,7 @@ class Cowboy_MCP_Security {
         if ( '' === $host ) {
             return false;
         }
-        if ( in_array( $host, [ 'localhost', '127.0.0.1', '::1' ], true ) || str_ends_with( $host, '.localhost' ) ) {
+        if ( in_array( $host, [ 'localhost', '127.0.0.1', '::1' ], true ) || ( $dot_localhost_ok && str_ends_with( $host, '.localhost' ) ) ) {
             return false;
         }
         return true;

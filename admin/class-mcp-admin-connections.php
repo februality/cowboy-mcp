@@ -251,15 +251,16 @@ class Cowboy_MCP_Admin_Connections {
             'muse'           => [ 'label' => 'Muse',           'group' => 'no-terminal', 'type' => 'oauth-cloud', 'watch' => 'muse',        'local' => 'tunnel', 'open_url' => 'https://muse.ai/',                             'open_host' => 'muse.ai' ],
             // 'cimd': the client identifies itself with a Client ID Metadata Document, so it never
             // registers and the "New connections" window is irrelevant to it (verified 2026-10-09).
-            // 'http_signin' => false: the app refuses to finish browser sign-in over plain http unless the host is a
-            // loopback name, so such sites get the API-key steps (Claude Code 2.1.328 and mcp-remote 0.16.7, verified
-            // 2026-11-19 against http://cmcp.localtest.me). 'private_signin' => false: the app also refuses any local
-            // host other than localhost/127.0.0.1/::1, https included (Gemini CLI 0.69 oauth-utils.ts). Missing = works.
-            'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'claude-code', 'local' => 'works', 'cimd' => true, 'retry_step' => $cc_step, 'http_signin' => false ],
+            // 'http_signin': the app refuses to finish browser sign-in over plain http unless the host is a loopback name,
+            // so such sites get the API-key steps. false = localhost, *.localhost, 127.0.0.1, ::1 are exempt (mcp-remote
+            // 0.16.7); 'exact' = only localhost, 127.0.0.1, ::1 (Claude Code 2.1.328; Gemini CLI 0.69). Verified 2026-11-19
+            // against http://cmcp.localtest.me. 'private_signin' => false: the app also refuses any local host other than
+            // localhost/127.0.0.1/::1, https included (Gemini CLI 0.69 oauth-utils.ts). Missing = works.
+            'claude-code'    => [ 'label' => 'Claude Code',    'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'claude-code', 'local' => 'works', 'cimd' => true, 'retry_step' => $cc_step, 'http_signin' => 'exact' ],
             'codex'          => [ 'label' => 'Codex',          'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'codex',       'local' => 'works', 'cimd' => true, 'retry_step' => $cli_step( 'codex mcp login ' . $name ) ],
             'cursor'         => [ 'label' => 'Cursor',         'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'cursor',      'local' => 'works', 'retry_step' => $cursor_step ],
             'vscode'         => [ 'label' => 'VS Code',        'group' => 'terminal',    'type' => 'oauth-link', 'watch' => 'vscode',      'local' => 'works' ],
-            'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'gemini-cli',  'local' => 'works', 'http_signin' => false, 'private_signin' => false ],
+            'gemini-cli'     => [ 'label' => 'Gemini CLI',     'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'gemini-cli',  'local' => 'works', 'http_signin' => 'exact', 'private_signin' => false ],
             'opencode'       => [ 'label' => 'Opencode',       'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'opencode',    'local' => 'works', 'retry_step' => $cli_step( 'opencode mcp auth ' . $name ) ],
             // Meta's terminal agent: no `mcp add` command, so the panel writes ~/.config/muse/settings.json and then runs `muse mcp login` (verified against Muse Code 1.4.8, 2026-10-14).
             'muse-code'      => [ 'label' => 'Muse Code',      'group' => 'terminal',    'type' => 'oauth-cli',  'watch' => 'muse-code',   'local' => 'works', 'retry_step' => $cli_step( 'muse mcp login ' . $name ) ],
@@ -317,7 +318,8 @@ class Cowboy_MCP_Admin_Connections {
      */
     private static function signin_block_reason( string $slug, string $endpoint ): string {
         $def = self::client_registry()[ $slug ] ?? [];
-        if ( false === ( $def['http_signin'] ?? true ) && Cowboy_MCP_Security::http_signin_blocked( $endpoint ) ) {
+        $http = $def['http_signin'] ?? true;
+        if ( true !== $http && Cowboy_MCP_Security::http_signin_blocked( $endpoint, 'exact' !== $http ) ) {
             return 'http';
         }
         if ( false === ( $def['private_signin'] ?? true ) && self::site_looks_local() ) {
@@ -1060,11 +1062,11 @@ class Cowboy_MCP_Admin_Connections {
                     <?php self::render_code( 'mcp-oauth-cmd-' . $slug, self::oauth_snippet( $slug, $domain, $endpoint ), __( 'terminal', 'cowboy-mcp' ), __( 'Copy setup command', 'cowboy-mcp' ), [ 'start' => $slug, 'mode' => 'oauth' ] ); ?>
                 <?php endif; ?>
                 <?php if ( 'claude-code' === $slug && ! self::claude_code_signs_in_from_menu() ) : ?>
-                    <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--no-browser</code> to the second line and open the printed URL in a local browser.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
+                    <p class="description"><?php echo wp_kses( __( 'Over SSH? Add <code>--no-browser</code> to the second line, open the printed URL in a local browser, then paste the address your browser ends on back into the terminal.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
                 <?php elseif ( 'codex' === $slug ) : ?>
                     <p class="description"><?php
                         /* translators: %s: the MCP server name used in the command */
-                        echo wp_kses( sprintf( __( 'Over SSH? Run <code>codex mcp login %s --no-browser</code> and open the printed URL in a local browser.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
+                        echo wp_kses( sprintf( __( 'Over SSH? Run <code>codex mcp login %s --no-browser</code>, open the printed URL in a local browser, then paste the address your browser ends on back into the terminal.', 'cowboy-mcp' ), esc_html( $domain ) ), [ 'code' => [] ] );
                     ?></p>
                 <?php elseif ( 'opencode' === $slug ) : ?>
                     <p class="description"><?php echo wp_kses( __( 'Opencode 1.x: leave out <code>--global</code>.', 'cowboy-mcp' ), [ 'code' => [] ] ); ?></p>
