@@ -81,7 +81,7 @@ Every app sends you to a sign-in page on your own site: the cloud apps and IDEs 
 
 Two lines, ready to copy on the Connections tab:
 
-    claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
+    claude mcp add -s user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
     claude mcp login your-site
 
 Headless or CI? Use an API key with `--header`.
@@ -196,7 +196,7 @@ Questions and connection problems: post in the [support forum](https://wordpress
 
 **Claude Code:**
 
-    claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
+    claude mcp add -s user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
     claude mcp login your-site
 
 Headless or CI? Click **Generate API key** on the Connections tab (it is shown once - copy it) and add `--header "Authorization: Bearer YOUR_API_KEY"` to the first line instead of running the second.

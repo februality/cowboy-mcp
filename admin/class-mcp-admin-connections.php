@@ -1414,7 +1414,7 @@ class Cowboy_MCP_Admin_Connections {
         [ $hname, $hvalue ] = self::key_header( $key_display );
         $stripped           = self::header_stripped();
         return match ( $slug ) {
-            'claude-code'    => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ' --header "' . $hname . ': ' . $hvalue . '"',
+            'claude-code'    => 'claude mcp add -s user --transport http ' . $domain . ' ' . $endpoint . ' --header "' . $hname . ': ' . $hvalue . '"',
             // `codex mcp add` has no header option besides --bearer-token-env-var (Authorization only); config.toml's
             // env_http_headers takes any header name (codex mcp get --json, 0.167.2, 2026-11-12).
             'codex'          => $stripped
@@ -1498,7 +1498,7 @@ class Cowboy_MCP_Admin_Connections {
      */
     private static function oauth_snippet( string $slug, string $domain, string $endpoint ): string {
         return match ( $slug ) {
-            'claude-code'    => 'claude mcp add --transport http ' . $domain . ' ' . $endpoint . ( self::claude_code_signs_in_from_menu() ? '' : "\n" . 'claude mcp login ' . $domain ),
+            'claude-code'    => 'claude mcp add -s user --transport http ' . $domain . ' ' . $endpoint . ( self::claude_code_signs_in_from_menu() ? '' : "\n" . 'claude mcp login ' . $domain ),
             'codex'          => 'codex mcp add ' . $domain . ' --url ' . $endpoint,
             'gemini-cli'     => 'gemini mcp add -s user -t http ' . $domain . ' ' . $endpoint,
             // 2.x does not sign in on its own (opencode.ai/v2/docs/mcp-servers: /mcps or `mcp auth`); 1.x has the same `mcp auth`.
