@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, ai-agent
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.8
+Stable tag: 1.7.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,7 +81,7 @@ Every app sends you to a sign-in page on your own site: the cloud apps and IDEs 
 
 Two lines, ready to copy on the Connections tab:
 
-    claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
+    claude mcp add -s user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
     claude mcp login your-site
 
 Headless or CI? Use an API key with `--header`.
@@ -151,7 +151,7 @@ Cowboy MCP is a standard Streamable HTTP MCP server (JSON-RPC 2.0): point Openco
 
 = Local development sites =
 
-Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools sign in on this computer with no public URL, and Claude Desktop uses the `mcp-remote` bridge. Cloud apps such as claude.ai and ChatGPT need a public HTTPS address.
+Local, Studio, MAMP, DevKinsta, wp-env, Docker: terminal and IDE tools connect with no public URL; apps that can't sign in locally get a one-click API key. claude.ai and ChatGPT need public HTTPS.
 
 = Secure by design: built for live sites =
 
@@ -196,7 +196,7 @@ Questions and connection problems: post in the [support forum](https://wordpress
 
 **Claude Code:**
 
-    claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
+    claude mcp add -s user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint
     claude mcp login your-site
 
 Headless or CI? Click **Generate API key** on the Connections tab (it is shown once - copy it) and add `--header "Authorization: Bearer YOUR_API_KEY"` to the first line instead of running the second.
@@ -251,7 +251,7 @@ Yes. When The Events Calendar is active, your agent can create and edit events, 
 
 = Does it work on a local development site (Local, Studio, MAMP, DevKinsta)? =
 
-Yes. Terminal tools like Claude Code, Cursor, Codex and Gemini CLI run on the same computer as your local site, so they sign in with OAuth in your browser - no public URL needed. An API key works too, for headless use. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connections tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
+Yes. Terminal tools like Codex, Cursor and Opencode run on the same computer as your local site, so they sign in with OAuth in your browser - no public URL needed. Claude Code and Claude Desktop sign in that way on localhost and https sites; on http:// sites such as Local's `.local` addresses they use an API key instead, and so does Gemini CLI on most local sites. The Connections tab creates the key in one click. An API key works for headless use too. Claude Desktop connects through a small local bridge (`mcp-remote`); the Connections tab detects local sites and shows the ready-to-copy config. Only the cloud-side apps - claude.ai and ChatGPT - require a public HTTPS address, because they connect from the vendor's servers; a tunnel works for temporary testing, but be aware it exposes your whole dev site while it runs.
 
 = My host or Jetpack already offers MCP. Do I need this? =
 
@@ -307,14 +307,11 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.8 =
-* New: set, reorder and clear WooCommerce product galleries with `gallery_image_ids`. Thanks to Darren Ford for the report and the patch.
-* Improved: on servers that strip the Authorization header, API-key setup commands now use a header the server keeps, and the Connections tab says when the server needs fixing.
-* Improved: clearer VS Code and Cursor steps, and a hint on where to turn on browser sign-in when it is off.
-* Changed: a post, product or order write that includes a protected custom field is now refused as a whole, instead of saving the rest.
-* Fix: browser sign-in connections no longer drop when apps refresh at the same moment.
-* Fix: undoing a WooCommerce change no longer reports a false verification mismatch.
-* Security: hardening. Updating is recommended.
+= 1.7.9 =
+* Improved: Claude Code, Claude Desktop and Gemini CLI connect to local http sites with a one-click API key, since they can't use browser sign-in there.
+* Improved: connection steps updated for Claude's new Plugins page and ChatGPT's current steps. Claude Code now adds the site for every folder.
+* Changed: no "Add to Claude" button on sites using a port other than 443, which Claude can't reach.
+* Improved: clearer tool descriptions for agents.
 
 = Earlier versions =
 
