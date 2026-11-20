@@ -2,7 +2,7 @@
 
 Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site into a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server over Streamable HTTP, so **Claude, ChatGPT, Gemini, Grok, Perplexity, Muse, Cursor, VS Code, Claude Code, Codex, n8n, OpenClaw, Hermes Agent** and any other MCP client can manage the site in plain English through **203 tools** — with per-change undo, database checkpoints and an audit log, so it can be trusted on a live site.
 
-![Version](https://img.shields.io/badge/version-1.7.8-34ff7a) ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4) ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b) ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue) [![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
+![Version](https://img.shields.io/badge/version-1.7.9-34ff7a) ![WordPress](https://img.shields.io/badge/WordPress-6.2%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-8.0%2B-777bb4) ![Tested](https://img.shields.io/badge/tested_up_to-7.1-21759b) ![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue) [![Glama score](https://glama.ai/mcp/servers/februality/cowboy-mcp/badges/score.svg)](https://glama.ai/mcp/servers/februality/cowboy-mcp)
 
 **Install:** [WordPress.org plugin directory](https://wordpress.org/plugins/cowboy-mcp/)\
 **Website & guides:** [cowboymcp.com](https://cowboymcp.com)
@@ -20,7 +20,7 @@ Cowboy MCP is a free, open-source WordPress plugin that turns any WordPress site
 - **Nothing in the middle.** The MCP endpoint runs inside your WordPress install. No hosted relay, no account, no telemetry — your AI client connects straight to your site.
 - **Safe by default.** Safe mode (confirmation for destructive tools), dry run on every write tool, per-credential read-only, drafts-only or custom scoping, hashed keys shown once, per-key rate limits, denylists for sensitive options / dangerous SQL / WP-CLI commands, SSRF protection, path confinement to `wp-content`, and a Power mode only a human can enable in wp-admin.
 - **One-click sign-in for every app.** Every app sends you to a sign-in page on your own site: Claude, ChatGPT, Gemini, Grok, Perplexity, Cursor and VS Code with one button or a pasted link, Claude Code, Codex, Gemini CLI and Muse Code with one command, Muse, OpenClaw and Hermes Agent from one pasted message, n8n through OAuth2. The consent screen names the app and lets you grant full access, read-only, drafts only or a hand-picked list of tools; nothing is granted until you click **Approve**. Sign-in also works on subfolder installs, multisite subsites and hosts or Cloudflare rules that block `/.well-known/`. API keys remain for scripts, CI and editors without browser sign-in (Windsurf, Cline, Zed); on hosts that strip the Authorization header, send the key in an `X-Cowboy-MCP-Key` header.
-- **Works locally too.** Local, Studio, MAMP, DevKinsta, wp-env: terminal tools connect with a key as on a live site; Claude Desktop connects through an `mcp-remote` bridge the Connections tab generates for you.
+- **Works locally too.** Local, Studio, MAMP, DevKinsta, wp-env: terminal and IDE tools connect with no public URL; apps that can't sign in over local http get a one-click API key, and Claude Desktop connects through an `mcp-remote` bridge the Connections tab generates for you.
 - **Context-efficient.** `tools/list` returns two gateway tools (`cowboy_discover`, `cowboy_run`); the agent discovers and runs the other tools on demand instead of loading 203 schemas into its context. On WordPress 6.9+ every tool is also a `cowboy-mcp/*` ability for WP-CLI, REST and the official MCP Adapter — with undo.
 - **Zero dependencies.** Native WordPress APIs only — no Composer, no npm, no build step, no `wp-admin/includes` at request time. Works on hosts without WP-CLI or `shell_exec()`.
 
@@ -67,8 +67,8 @@ Every app signs in through a consent screen on your own site; no API key to past
 | App | Plan needed | Button or command | Guide |
 |---|---|---|---|
 | Claude (claude.ai) | Any Claude plan; Free allows one custom connector. Team and Enterprise: an owner adds it first | Connections tab → **Add to Claude** | [connect-wordpress-to-claude](https://cowboymcp.com/connect-wordpress-to-claude) |
-| Claude Desktop | Same as claude.ai | Connections tab → **Add to Claude**, or Customize → Connectors → Add custom connector | [connect-wordpress-to-claude-desktop](https://cowboymcp.com/connect-wordpress-to-claude-desktop) |
-| Claude Code | A Claude plan that includes Claude Code (Pro or Max), or API billing | Connections tab → Claude Code panel → run two lines (`claude mcp add`, `claude mcp login`); on a subfolder site run `claude mcp add`, then `/mcp` → Authenticate | [connect-wordpress-to-claude-code](https://cowboymcp.com/connect-wordpress-to-claude-code) |
+| Claude Desktop | Same as claude.ai | Connections tab → **Add to Claude**, or Plugins (or Customize → Connectors) → Add custom connector | [connect-wordpress-to-claude-desktop](https://cowboymcp.com/connect-wordpress-to-claude-desktop) |
+| Claude Code | A Claude plan that includes Claude Code (Pro or Max), or API billing | Connections tab → Claude Code panel → run two lines (`claude mcp add -s user`, `claude mcp login`); on a subfolder site run `claude mcp add`, then `/mcp` → Authenticate; on an http:// local site the panel gives a one-click API key instead | [connect-wordpress-to-claude-code](https://cowboymcp.com/connect-wordpress-to-claude-code) |
 | ChatGPT | A personal Plus account, or a Business, Enterprise or Edu workspace with the **Create plugins with MCPs** permission; on the web. No Developer mode | Connections tab → **Open ChatGPT**, then Plugins → Add → Add custom MCP server → Create as a plugin | [connect-wordpress-to-chatgpt](https://cowboymcp.com/connect-wordpress-to-chatgpt) |
 | Codex CLI and app | A ChatGPT plan that includes Codex (Plus, Pro, Business, Enterprise or Edu), or an API key | Connections tab → Codex panel → one `codex mcp add` command | [connect-wordpress-to-codex](https://cowboymcp.com/connect-wordpress-to-codex) |
 | Perplexity | Pro, Max or Enterprise. Free has no custom connectors | Connections tab → **Open Perplexity**, then Plugins (or Customize → Connectors) → Add custom → Add MCP connector | [connect-wordpress-to-perplexity](https://cowboymcp.com/connect-wordpress-to-perplexity) |
@@ -92,7 +92,7 @@ The endpoint is `https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint` (JSON-RPC 
 **Claude Code**
 
 ```bash
-claude mcp add --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
+claude mcp add -s user --transport http your-site https://yoursite.com/wp-json/cowboy-mcp/v1/endpoint \
   --header "Authorization: Bearer YOUR_API_KEY"
 ```
 

@@ -3,6 +3,12 @@
 Full version history for Cowboy MCP. The readme.txt lists the most recent
 release; older entries are kept here.
 
+= 1.7.9 =
+* Improved: Claude Code, Claude Desktop and Gemini CLI connect to local http sites with a one-click API key, since they can't use browser sign-in there.
+* Improved: connection steps updated for Claude's new Plugins page and ChatGPT's current steps. Claude Code now adds the site for every folder.
+* Changed: no "Add to Claude" button on sites using a port other than 443, which Claude can't reach.
+* Improved: clearer tool descriptions for agents.
+
 = 1.7.8 =
 * New: set, reorder and clear WooCommerce product galleries with `gallery_image_ids`. Thanks to Darren Ford for the report and the patch.
 * Improved: on servers that strip the Authorization header, API-key setup commands now use a header the server keeps, and the Connections tab says when the server needs fixing.

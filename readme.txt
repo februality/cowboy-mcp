@@ -5,7 +5,7 @@ Tags: mcp, mcp-server, model-context-protocol, claude, ai-agent
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.7.8
+Stable tag: 1.7.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -307,14 +307,11 @@ Still stuck? Paste the Doctor report into a new topic in the [support forum](htt
 
 == Changelog ==
 
-= 1.7.8 =
-* New: set, reorder and clear WooCommerce product galleries with `gallery_image_ids`. Thanks to Darren Ford for the report and the patch.
-* Improved: on servers that strip the Authorization header, API-key setup commands now use a header the server keeps, and the Connections tab says when the server needs fixing.
-* Improved: clearer VS Code and Cursor steps, and a hint on where to turn on browser sign-in when it is off.
-* Changed: a post, product or order write that includes a protected custom field is now refused as a whole, instead of saving the rest.
-* Fix: browser sign-in connections no longer drop when apps refresh at the same moment.
-* Fix: undoing a WooCommerce change no longer reports a false verification mismatch.
-* Security: hardening. Updating is recommended.
+= 1.7.9 =
+* Improved: Claude Code, Claude Desktop and Gemini CLI connect to local http sites with a one-click API key, since they can't use browser sign-in there.
+* Improved: connection steps updated for Claude's new Plugins page and ChatGPT's current steps. Claude Code now adds the site for every folder.
+* Changed: no "Add to Claude" button on sites using a port other than 443, which Claude can't reach.
+* Improved: clearer tool descriptions for agents.
 
 = Earlier versions =
 
